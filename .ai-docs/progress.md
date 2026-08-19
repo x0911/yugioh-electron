@@ -769,8 +769,48 @@
 - Phase 12 will build the Battle System & Damage Calculation (attack declaration targeting, damage step calculations, LP animation counters, and battle destruction animations).
 
 **How to manually verify this phase:**
-1. Run `npm test` to verify all 5 unit test scenarios pass.
-2. Run `npm run typecheck` and `npm run build` to verify clean builds.
-3. Run `npm run dev` to launch the duel simulator and play through the 4-scenario duel test guide.
+---
+
+## 2026-08-19 — Card Movement Animations, AI Turn Pacing & Duel Logic Fixes
+
+**What was done:**
+- **Hand Card Duplication Fix**: Centralized hand management in `DuelEngineService.ts`, preventing duplicate card creation on initial draws and turn draws.
+- **Monotonic Hand Sequence Re-indexing**: Implemented `reindexHand(pf)` ensuring that hand sequences are strictly `0..N-1` when cards are drawn, summoned, set, or discarded, keeping frontend models in perfect synchronization with `ocgcore-wasm`.
+- **Similar / Duplicate Card Action Menu Fix**: Enhanced `getLegalActionsForHandCard` in `duelStore.ts` with explicit `location === 2` (Hand) filtering and fallback matching so clicking any hand card cleanly opens its action menu even if duplicate copies exist on the field or in hand.
+- **AI Turn Pacing**: Implemented `scheduleAiResponse` with a 650ms delay in `DuelEngineService.ts`, transforming instant 0ms AI turns into readable, step-by-step observable gameplay.
+- **Spatial 3D Card Animation System**:
+  - Built `CardAnimationOverlay.vue` for GPU-accelerated spatial card animations.
+  - Implemented 3D card flips (`rotateY(180deg)`) for face-down card sets (monsters and spells/traps).
+  - Implemented 90° defense rotations (`rotateZ(90deg)`), golden landing shockwaves for summons, dark dissolve effects for Graveyard moves, and attack trajectory surges with impact hit flashes.
+  - Created `animationService.ts` and `duelAnimationQueue` ensuring events and animations execute in non-overlapping FIFO order and block subsequent engine updates until the active flight completes.
+- **Unit Test Suite**:
+  - Added `tests/hand-and-pacing.test.ts` testing FIFO queue execution, duplicate card action resolution, and hand re-indexing.
+  - Updated `npm test` script to run both test suites.
+
+**Files created/modified:**
+- `src/main/engine/DuelEngineService.ts`: Added AI step pacing (`scheduleAiResponse`) and `reindexHand()`.
+- `src/main/engine/messageDecoder.ts`: Added coordinate and move metadata to `DecodedDuelEvent`.
+- `src/shared/types/duel.ts`: Updated `DuelEventPayload` interface.
+- `src/renderer/assets/styles/base/_animations.scss`: Added 3D card flip, defense rotation, summon burst, and dissolve keyframes.
+- `src/renderer/utils/animationService.ts`: Created bounding rect resolver, flying card state tracker, and `AnimationQueue`.
+- `src/renderer/components/duel/CardAnimationOverlay.vue`: Created 3D spatial animation overlay component.
+- `src/renderer/components/duel/FieldZoneSlot.vue`: Added `data-zone-id` attribute.
+- `src/renderer/components/duel/HandFan.vue`: Added `data-hand-fan-id` and `data-hand-card-id` attributes.
+- `src/renderer/components/duel/DeckStack.vue`: Added `data-stack-id` attribute.
+- `src/renderer/components/duel/index.ts`: Exported `CardAnimationOverlay`.
+- `src/renderer/stores/duelStore.ts`: Updated `getLegalActionsForHandCard` for robust matching.
+- `src/renderer/views/DuelView.vue`: Integrated `<CardAnimationOverlay />` and wired `duelAnimationQueue`.
+- `tests/hand-and-pacing.test.ts`: Created unit tests.
+- `package.json`: Updated `test` script.
+
+**How to manually verify this phase:**
+1. Run `npm test` to verify all unit tests pass.
+2. Run `npm run typecheck` and `npm run build` to verify clean compilation.
+3. Run `npm run dev` to launch the duel simulator and play a match:
+   - Verify hand starts with exactly 5 cards.
+   - Verify setting a card face-down smoothly flips the card 180° in 3D to its card-back and lands in the target slot.
+   - Verify clicking multiple copies of the same card in hand opens the context menu reliably.
+   - Click "End Turn" -> observe the AI turn executing step-by-step with paced delays and smooth card movements.
+
 
 
