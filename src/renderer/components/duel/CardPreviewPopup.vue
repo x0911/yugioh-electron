@@ -1,10 +1,6 @@
 <template>
   <Transition name="preview-fade">
-    <div
-      v-if="card"
-      class="card-preview-popup"
-      :class="[`card-preview-popup--${position}`]"
-    >
+    <div v-if="card" class="card-preview-popup" :class="[`card-preview-popup--${position}`]">
       <div class="preview-panel glass-panel glass-panel--accent-gold">
         <!-- Close / Dismiss button if pinned -->
         <button
@@ -47,19 +43,13 @@
             >
               {{ card.attribute }}
             </span>
-            <span
-              v-else-if="card.code === 0"
-              class="attribute-badge attribute-badge--secret"
-            >
+            <span v-else-if="card.code === 0" class="attribute-badge attribute-badge--secret">
               SECRET
             </span>
           </div>
 
           <!-- Level / Rank Stars Row (Dedicated Line - only for revealed monsters) -->
-          <div
-            v-if="card.code > 0 && card.level && card.level > 0"
-            class="card-level-row"
-          >
+          <div v-if="card.code > 0 && card.level && card.level > 0" class="card-level-row">
             <div class="level-stars">
               <span v-for="i in card.level" :key="i" class="star">★</span>
             </div>
@@ -69,9 +59,24 @@
           <!-- Type & Race Bracket Row (Dedicated Line) -->
           <div class="card-type-row">
             <span v-if="card.code > 0" class="type-bracket">
-              [{{ card.race || (card.attribute === 'SPELL' ? 'Spell' : card.attribute === 'TRAP' ? 'Trap' : 'Monster') }}
+              [{{
+                card.race ||
+                (card.attribute === 'SPELL'
+                  ? 'Spell'
+                  : card.attribute === 'TRAP'
+                    ? 'Trap'
+                    : 'Monster')
+              }}
               /
-              {{ card.level && card.level > 0 ? 'Monster' : card.attribute === 'SPELL' ? 'Spell Card' : card.attribute === 'TRAP' ? 'Trap Card' : 'Effect' }}]
+              {{
+                card.level && card.level > 0
+                  ? 'Monster'
+                  : card.attribute === 'SPELL'
+                    ? 'Spell Card'
+                    : card.attribute === 'TRAP'
+                      ? 'Trap Card'
+                      : 'Effect'
+              }}]
             </span>
             <span v-else class="type-bracket type-bracket--secret">
               [Face-Down Card / Unknown]
@@ -434,7 +439,8 @@ defineEmits<{
   }
 
   .card-footer-row {
-    display: flex;
+    display: none; // TODO: We can enable this later if we want to show passcode and location in the preview, but for now it's hidden
+    // display: flex;
     justify-content: space-between;
     align-items: center;
     padding-top: 4px;
