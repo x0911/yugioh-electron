@@ -912,12 +912,35 @@
 - `tests/stack-inspection.test.ts`: Added automated test for Extra Deck monster classification and detail enrichment.
 
 **How to manually verify this phase:**
-1. Run `npm test` to verify all automated test suites pass.
-2. Run `npm run typecheck` and `npm run build` to verify clean compilation.
-3. In a duel, click on Extra Deck:
-   - Verify card tiles are compact, centered, and razor sharp.
-   - Verify monster cards like Blue-Eyes Ultimate Dragon show level stars, ATK/DEF, and LIGHT attribute.
-   - Hover over the card and verify the sticky left previewer displays full stats, type bracket, and lore text.
+---
+
+## 2026-08-20 — On-Field Card Selection Streamlining & Effect Prompt Translation
+
+**What was done:**
+- **Accurate Effect Prompt Translation (Fixed False "Hand Size Limit")**:
+  - In `messageDecoder.ts` and `guidanceHelper.ts`, restricted "Hand Size Limit Exceeded" rules cleanup exclusively to End Phase (`currentPhase === 'EP'`).
+  - Card effects selecting from hand (e.g. *The Flute of Summoning Dragon*, Polymerization, Special Summons) now accurately display:
+    - *Instruction*: `"Card Effect: Select up to 2 card(s) from your hand to proceed."` (or `"Select 1 to 2 card(s) from your hand."`).
+    - *SubText*: `"You can select up to 2 card(s), or press Confirm (0/2) to summon none / pass."`
+- **Streamlined Single-Dialog Direct Board & Hand Interaction**:
+  - Removed duplicate modal dialog popups for card selections and tribute selections in `PromptModal.vue`.
+  - Players now interact directly with the duel field and hand via the on-card target indicators (`(1)`, `(2)`, etc.) and the floating bottom action guide / target confirmation bar.
+  - `PromptModal.vue` is kept exclusively for non-field decision points (Chain Windows, Battle Position selection, Optional Effect Yes/No, and Multiple Choice Options).
+
+**Files created/modified:**
+- `src/main/engine/messageDecoder.ts`: Fixed `SELECT_CARD` description and removed naive `isDiscardPrompt` flag.
+- `src/renderer/utils/guidanceHelper.ts`: Enforced End Phase guard for hand limit cleanups and added hand effect translation with pass/cancel support.
+- `src/renderer/components/duel/PromptModal.vue`: Removed card selection & tribute overlays in favor of on-field/in-hand selection with bottom banner.
+- `tests/guidance-targeting.test.ts`: Added Test 6 verifying *The Flute of Summoning Dragon* prompt translation.
+
+**How to manually verify this phase:**
+1. Run `npm test` to verify all 4 test suites pass.
+2. In a duel, activate *The Flute of Summoning Dragon*:
+   - Verify NO modal dialog covers the field.
+   - Verify the bottom action banner displays: `"Card Effect: Select up to 2 card(s) from your hand to proceed."`
+   - Verify eligible Dragon monsters in your hand have target indicators and can be clicked directly in hand.
+   - Verify you can confirm 0 dragons or up to 2 dragons.
+
 
 
 
