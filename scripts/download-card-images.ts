@@ -262,6 +262,49 @@ async function processCard(
 }
 
 /**
+ * Download official card-back image from official server/CDN.
+ */
+async function downloadCardBack(rateLimiter: RateLimiter): Promise<void> {
+  const cardBackPath = path.resolve(process.cwd(), 'resources/cards/card-back.jpg');
+  const uiCardBackPath = path.resolve(process.cwd(), 'resources/ui/card-back.png');
+  const miniCardBackPath = path.resolve(process.cwd(), 'resources/cards/mini/card-back.jpg');
+
+  if (fileIsValid(cardBackPath) && fileIsValid(uiCardBackPath) && fileIsValid(miniCardBackPath)) {
+    return;
+  }
+
+  console.log('[INFO] Downloading official card back image from server...');
+  // Attempt high-res official Yugipedia asset first, fallback to YGOPRODeck back.jpg
+  let buf: Buffer | null = await fetchWithRetry(
+    'https://ms.yugipedia.com/e/e5/Back-EN.png',
+    rateLimiter,
+  );
+  if (!buf) {
+    buf = await fetchWithRetry('https://images.ygoprodeck.com/images/cards/back.jpg', rateLimiter);
+  }
+
+  if (buf) {
+    try {
+      await sharp(buf)
+        .resize(813, 1185, { fit: 'cover' })
+        .jpeg({ quality: 95, progressive: true })
+        .toFile(cardBackPath);
+
+      await sharp(buf).resize(813, 1185, { fit: 'cover' }).png().toFile(uiCardBackPath);
+
+      await sharp(buf)
+        .resize(MINI_TARGET_WIDTH, MINI_TARGET_HEIGHT, { fit: 'cover', kernel: 'lanczos3' })
+        .jpeg({ quality: 90 })
+        .toFile(miniCardBackPath);
+
+      console.log('[INFO] Successfully downloaded and optimized official card back assets.');
+    } catch (err) {
+      console.warn('[WARN] Failed to process official card back image:', err);
+    }
+  }
+}
+
+/**
  * Main downloader routine.
  */
 async function main() {
@@ -319,6 +362,8 @@ async function main() {
   console.log('---------------------------------------------------------------');
 
   const rateLimiter = new RateLimiter(options.rateLimitPerSec || DEFAULT_RATE_LIMIT);
+  await downloadCardBack(rateLimiter);
+
   let completed = 0;
   let skippedCount = 0;
   let downloadedCount = 0;
