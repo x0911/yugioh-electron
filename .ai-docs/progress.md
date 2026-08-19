@@ -409,7 +409,7 @@
     - Cards in deck are automatically sorted cleanly (Monsters by Level/ATK, then Spells, then Traps) with category-colored top border accents (gold, orange, teal, magenta, purple) and hover remove overlay `✕`.
     - Real-time validity state banner: green "✓ Legal Deck (Main: 40/40-60, Extra: 0/0-15)" vs. red/orange "⚠️ Illegal Deck (Main: 24/40-60 • Needs 16 more cards)" with granular error callouts (minimum 40 cards, maximum 60 cards, maximum 15 Extra deck cards, and strict 3-copy rule per card).
     - Custom deck management toolbar: active deck selector dropdown, inline deck name editor, "💾 Save Deck", "➕ New Deck", "📋 Clone Deck", "🧹 Clear Deck" (with confirmation modal), and "🗑️ Delete Deck" (with confirmation modal).
-    - Single-click to decrement / remove cards; hover to preview in Col-3.
+    - Drag-and-drop exclusive: drag cards to add/remove; clicking or hovering selects and previews cards in Col-3.
   - **Col-2 (Card Database & Virtualized Grid — ~39%)**:
     - `CardFilterBar.vue`: Comprehensive multi-criteria filter bar featuring:
       - Instant name and card lore/effect text search with quick clear button.
@@ -418,10 +418,10 @@
       - Advanced collapsible filter controls: Sub-type (Normal, Effect, Ritual, Fusion, Continuous, Equip, Quick-Play, Field, Counter, Flip, Toon, Spirit, Union, Gemini), Attribute (DARK, LIGHT, EARTH, WATER, FIRE, WIND, DIVINE), Monster Race (Warrior, Spellcaster, Dragon, Fiend, Zombie, Machine, Aqua, Pyro, Rock, Winged Beast, Plant, Insect, Thunder, Beast, Beast-Warrior, Dinosaur, Fish, Sea Serpent, Reptile, Psychic, Divine-Beast), Level/Rank (★1 to ★12), ATK range min/max, DEF range min/max, Sort By (Name, ATK, DEF, Level, Type, ID), and Sort Order (Ascending / Descending).
       - "Reset All Filters" CTA and live match count indicator (`Showing X / 2,826 Cards`).
     - `CardGridVirtualized.vue`: Windowed virtualized card grid algorithm that dynamically calculates row geometry, columns per row, and scroll offset to render only visible items ($\pm$ overscan buffer, $\sim 24-36$ card DOM nodes in memory instead of 2,826), guaranteeing 60fps scrolling performance with zero GPU/DOM lag.
-    - Mini image cards (`96x140px`) with quantity-in-deck badges (`x0`, `x1`, `x2`, `x3`), Extra Deck badges, and era pills. Click to add to deck up to 3-copy rule; right-click / hover to preview.
+    - Mini image cards (`96x140px`) with quantity-in-deck badges (`x0`, `x1`, `x2`, `x3`), Extra Deck badges, era pills, and drag indicator. Drag to add to deck; clicking or hovering previews in Col-3.
   - **Col-3 (Sticky Live Card Previewer — ~28%)**:
-    - `CardPreviewer.vue`: High-resolution card inspector showing full card artwork (`resources/cards/full/<id>.jpg`), card frame, holographic foil sheen, title, Attribute emblem, Level/Rank stars, Type/Race badges, ATK/DEF scores in tabular Oxanium numerals, scrollable effect lore description in Barlow Semi Condensed typography, passcode ID, and in-deck copy status with "+ Add to Deck" and "- Remove" quick action buttons.
-- Built premium interactive **Drag & Drop** mechanics:
+    - `CardPreviewer.vue`: High-resolution card inspector showing full card artwork (`resources/cards/full/<id>.jpg`), card frame, holographic foil sheen, title, Attribute emblem, Level/Rank stars, Type/Race badges, ATK/DEF scores in tabular Oxanium numerals, scrollable effect lore description in Barlow Semi Condensed typography, passcode ID, in-deck quantity badge, and direct draggable artwork (`✋ Drag image to Deck`).
+- Built premium interactive **Drag & Drop** mechanics (exclusive interaction model, no accidental click modifications):
   - Drag from Col-2 (Card Pool) or Col-3 (Previewer) and drop directly into Main Deck (glowing gold dropzone) or Extra Deck (glowing purple dropzone).
   - Drag from Col-1 (Deck) and drop into Col-2 (Card Pool) or the header Trash dropzone to remove copies.
   - Fusion monsters auto-route to Extra Deck when dropped on Main Deck.
