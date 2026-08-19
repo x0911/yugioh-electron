@@ -485,7 +485,7 @@ function handleArtFallback(event: Event): void {
   }
 
   &--target .header-title {
-    color: $color-gold-200;
+    color: $color-gold-300;
   }
 }
 

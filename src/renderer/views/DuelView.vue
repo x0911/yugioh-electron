@@ -132,10 +132,10 @@
     <!-- Floating Target Selection Confirmation Bar (On-Field micro-dialog) -->
     <div v-if="duelStore.hasActiveSelectionPrompt" class="target-confirmation-bar glass-panel">
       <div class="target-bar-info">
-        <span class="target-bar-icon">{{ actionGuideInfo?.icon || '🎯' }}</span>
+        <span class="target-bar-icon">{{ actionGuideInfo?.categoryIcon || '🎯' }}</span>
         <div class="target-bar-text">
-          <span class="target-bar-title">{{ actionGuideInfo?.title }}</span>
-          <span class="target-bar-detail">{{ actionGuideInfo?.detail }}</span>
+          <span class="target-bar-title">{{ actionGuideInfo?.instruction }}</span>
+          <span v-if="actionGuideInfo?.subText" class="target-bar-detail">{{ actionGuideInfo.subText }}</span>
         </div>
       </div>
       <div class="target-bar-actions">
@@ -322,20 +322,19 @@ const isUserWinner = computed(() => {
 
 // Dynamic Plain-Language Action Guide Calculation
 const actionGuideInfo = computed(() => {
-  return getActionGuideInfo({
-    activeSelectCard: duelStore.activeSelectCard,
-    activeSelectTribute: duelStore.activeSelectTribute,
-    activeSelectChain: duelStore.activeSelectChain,
-    activeSelectPosition: duelStore.activeSelectPosition,
-    activeSelectEffectYn: duelStore.activeSelectEffectYn,
-    activeSelectOption: duelStore.activeSelectOption,
-    activeIdleCmd: duelStore.activeIdleCmd,
-    activeBattleCmd: duelStore.activeBattleCmd,
-    selectedTargetIndices: duelStore.selectedTargetIndices,
-    userPlayerId: duelStore.userPlayerId,
-    currentPhase: duelStore.boardState.currentPhase,
-    isUserTurn: duelStore.boardState.userField.isTurn,
-  });
+  return getActionGuideInfo(
+    duelStore.boardState,
+    duelStore.boardState.userField.isTurn,
+    {
+      selectCard: duelStore.activeSelectCard,
+      selectTribute: duelStore.activeSelectTribute,
+      selectChain: duelStore.activeSelectChain,
+      selectPosition: duelStore.activeSelectPosition,
+      selectEffectYn: duelStore.activeSelectEffectYn,
+      selectOption: duelStore.activeSelectOption,
+    },
+    duelStore.selectedTargetIndices.length,
+  );
 });
 
 // Live Logs

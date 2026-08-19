@@ -30,15 +30,17 @@
         >
           {{ isUserTurn ? 'YOUR TURN' : "OPPONENT'S TURN" }}
         </span>
-        <template v-if="guideInfo?.badge">
+        <template v-if="guideInfo?.categoryLabel">
           <span class="turn-divider">•</span>
-          <span class="guide-badge">{{ guideInfo.badge }}</span>
+          <span class="guide-badge">{{ guideInfo.categoryLabel }}</span>
         </template>
       </div>
       <div class="guide-prompt">
-        <span class="guide-icon">{{ guideInfo?.icon || '⚡' }}</span>
-        <span class="guide-text">{{ guideInfo?.title || guideText || defaultGuideText }}</span>
-        <span v-if="guideInfo?.progress" class="guide-progress-chip">{{ guideInfo.progress }}</span>
+        <span class="guide-icon">{{ guideInfo?.categoryIcon || '⚡' }}</span>
+        <span class="guide-text">{{ guideInfo?.instruction || guideText || defaultGuideText }}</span>
+        <span v-if="guideInfo?.selectionProgress" class="guide-progress-chip">
+          {{ guideInfo.selectionProgress.current }} / {{ guideInfo.selectionProgress.requiredMax }}
+        </span>
       </div>
 
       <!-- Turn Phase Progression Actions -->
