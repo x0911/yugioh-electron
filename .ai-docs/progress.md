@@ -988,11 +988,35 @@
 **Files created/modified:**
 - `src/renderer/views/DuelView.vue`: Retained `lastHoveredCard` state in `activePreviewCard` and updated all hover listeners.
 
+---
+
+## 2026-08-20 — Graveyard Top Card Indexing & Flip Summon Position Change Fix
+
+**What was done:**
+- **Graveyard & Banished Top Card Resolution**:
+  - In `DuelEngineService.ts`, cards moved to graveyard and banished piles are inserted via `unshift()` (placing the most recently sent card at index `0`).
+  - `DuelField.vue` previously referenced `[graveyard.length - 1]`, which was pointing to the bottom/oldest card in the graveyard.
+  - Updated all Graveyard and Banished stack `:top-card` props in `DuelField.vue` to `[0]`, correctly displaying the top / most recent card.
+- **Flip Summoning & Position Change Board State Sync**:
+  - In Yu-Gi-Oh / ocgcore, changing a monster from face-down defense to face-up attack is a **FLIP SUMMON** emitting `FLIPSUMMONING` (type 64) and `FLIPSUMMONED` (type 65).
+  - Previously, `messageDecoder.ts` and `DuelEngineService.ts` lacked handlers for `FLIPSUMMONING`, causing `card.position` to stay as `'facedown_defense'` on the field even though the engine allowed attacking.
+  - Added `FLIPSUMMONING` & `FLIPSUMMONED` decoders and engine state handlers in `DuelEngineService.ts` to reveal the card code, update `card.position = 'faceup_attack'`, and hydrate full combat stats (ATK, DEF, Level, Lore).
+  - Handled `POS_CHANGE` and `FLIPSUMMONING` in `DuelView.vue` with visual animation and prompt clearing.
+
+**Files created/modified:**
+- `src/main/engine/messageDecoder.ts`: Added `FLIPSUMMONING` and `FLIPSUMMONED` decoding.
+- `src/main/engine/DuelEngineService.ts`: Handled `FLIPSUMMONING` and enriched `POS_CHANGE` to reveal monster attributes and set `card.position = 'faceup_attack'`.
+- `src/renderer/components/duel/DuelField.vue`: Changed graveyard and banished `:top-card` props to `[0]`.
+- `src/renderer/views/DuelView.vue`: Added `POS_CHANGE` and `FLIPSUMMONING` visual card flip animations.
+- `src/renderer/stores/duelStore.ts`: Cleared prompts on `FLIPSUMMONED` and `POS_CHANGE`.
+- `tests/stack-inspection.test.ts`: Added Tests 4 & 5 verifying graveyard top-card resolution and flip summon state transformation.
+
 **How to manually verify this phase:**
-1. Start a duel.
-2. Notice the card previewer is visible immediately on the left showing your first hand card.
-3. Hover over any monster, spell, or trap in your hand or on the field.
-4. Move your mouse away into empty space — observe that the previewer stays open, displaying the card you just hovered.
+1. Run `npm test` — all 5 test suites pass.
+2. In a duel:
+   - Send multiple cards to the graveyard (e.g. activate Pot of Greed, then Dark Hole) — verify the graveyard spot shows the card most recently sent (Dark Hole), not the first card.
+   - Set a monster in face-down defense position. On a subsequent turn, select "Change Position" to Flip Summon it into face-up attack position — verify the card flips face-up with full artwork, ATK/DEF score, and is in vertical Attack position.
+
 
 
 
