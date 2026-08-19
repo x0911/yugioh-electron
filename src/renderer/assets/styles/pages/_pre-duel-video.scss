@@ -1,0 +1,297 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+// =============================================================================
+// Pre-Duel Video Screen Styles — Ancient Duel Arena
+// =============================================================================
+
+.pre-duel-video-view {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  cursor: pointer;
+
+  // Real HTML5 Video Player
+  &__video-player {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: #000;
+  }
+
+  // Cinematic Fallback Container (When video file is pending)
+  &__fallback-stage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-6;
+    background-color: $color-bg-void;
+    background-image: 
+      radial-gradient(ellipse at 50% 40%, rgba(201, 162, 39, 0.15) 0%, transparent 70%),
+      radial-gradient(circle at 50% 100%, rgba(10, 12, 16, 0.98) 0%, $color-bg-void 100%),
+      url('app-resource://backgrounds/loading-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+  }
+
+  &__backdrop-particles {
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba($color-gold-300, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba($color-gold-500, 0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+
+  // Top Title Bar
+  &__header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+  }
+
+  &__series-pill {
+    font-family: $font-display;
+    font-size: $font-size-xs;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    padding: 3px 14px;
+    border-radius: 12px;
+
+    &--dm {
+      background: rgba($color-gold-500, 0.2);
+      border: 1px solid $color-gold-300;
+      color: $color-gold-100;
+    }
+
+    &--gx {
+      background: rgba($color-info, 0.2);
+      border: 1px solid $color-info;
+      color: #bae6fd;
+    }
+  }
+
+  &__intro-heading {
+    font-family: $font-display;
+    font-size: $font-size-lg;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: $color-text-secondary;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  // Center Cutscene Hero Panel
+  &__hero-card {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: $space-6;
+    max-width: 960px;
+    width: 100%;
+    padding: $space-5 $space-6;
+    @include glass-panel-elevated;
+    border-color: rgba($color-gold-500, 0.45);
+    box-shadow: 
+      0 16px 48px rgba(0, 0, 0, 0.8),
+      0 0 40px rgba($color-gold-500, 0.2);
+    animation: modal-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  &__portrait-col {
+    position: relative;
+    width: 220px;
+    height: 280px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 30%, rgba(201, 162, 39, 0.25) 0%, rgba(18, 22, 30, 0.95) 100%);
+    border: 2px solid rgba($color-gold-500, 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  &__portrait-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__portrait-silhouette {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-gold-300;
+
+    svg {
+      width: 130px;
+      height: 130px;
+      filter: drop-shadow(0 0 16px rgba($color-gold-500, 0.6));
+    }
+  }
+
+  &__info-col {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    flex: 1;
+  }
+
+  &__char-name {
+    font-family: $font-display;
+    font-size: $font-size-2xl;
+    font-weight: 800;
+    color: $color-gold-100;
+    letter-spacing: 0.06em;
+    margin: 0;
+    text-shadow: 0 0 20px rgba($color-gold-500, 0.5);
+  }
+
+  &__char-title {
+    font-family: $font-display;
+    font-size: $font-size-md;
+    font-weight: 700;
+    color: $color-gold-300;
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
+
+  &__char-quote {
+    font-family: $font-body;
+    font-size: $font-size-base;
+    color: $color-text-primary;
+    line-height: 1.5;
+    font-style: italic;
+    padding-left: $space-3;
+    border-left: 3px solid $color-gold-500;
+    margin: 0;
+  }
+
+  &__deck-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: $space-2 $space-3;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba($color-gold-500, 0.2);
+  }
+
+  &__deck-label {
+    font-family: $font-display;
+    font-size: $font-size-xs;
+    font-weight: 700;
+    color: $color-text-secondary;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  &__deck-name {
+    font-family: $font-body;
+    font-size: $font-size-sm;
+    font-weight: 600;
+    color: $color-gold-100;
+  }
+
+  // Watermark for Missing Video File
+  &__watermark-badge {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-2 $space-4;
+    background: rgba(18, 22, 30, 0.85);
+    border: 1px dashed rgba($color-warning, 0.6);
+    border-radius: 20px;
+    backdrop-filter: blur(8px);
+
+    .watermark-icon {
+      font-size: 1.1rem;
+    }
+
+    .watermark-title {
+      font-family: $font-display;
+      font-size: $font-size-xs;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: $color-warning;
+      text-transform: uppercase;
+    }
+
+    .watermark-path {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: $color-text-secondary;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+  }
+
+  // Skip Overlay & Hotkey Prompt
+  &__skip-overlay {
+    position: absolute;
+    bottom: $space-4;
+    right: $space-6;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-2 $space-4;
+    @include glass-panel;
+    border-color: rgba($color-gold-500, 0.5);
+    border-radius: 24px;
+    animation: pulse-glow 2s ease-in-out infinite;
+    pointer-events: auto;
+
+    span {
+      font-family: $font-display;
+      font-size: $font-size-sm;
+      font-weight: 700;
+      color: $color-gold-100;
+      letter-spacing: 0.04em;
+    }
+
+    .skip-icon {
+      font-size: 1rem;
+      color: $color-gold-300;
+    }
+  }
+
+  // Auto-advance Progress Bar
+  &__progress-bar-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 10;
+  }
+
+  &__progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $color-gold-500, $color-gold-100);
+    transition: width 0.1s linear;
+  }
+}

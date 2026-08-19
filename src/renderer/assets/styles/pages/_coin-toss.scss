@@ -1,0 +1,542 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+// =============================================================================
+// Coin Toss View Styles — Ancient Duel Arena
+// =============================================================================
+
+.coin-toss-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-5 $space-6;
+  background-color: $color-bg-void;
+  background-image: 
+    radial-gradient(ellipse at 50% 30%, rgba(201, 162, 39, 0.12) 0%, transparent 65%),
+    radial-gradient(circle at 50% 80%, rgba(10, 12, 16, 0.95) 0%, $color-bg-void 100%),
+    url('app-resource://backgrounds/settings-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  user-select: none;
+
+  &__ambient-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 50%, rgba(201, 162, 39, 0.08) 0%, transparent 70%);
+    z-index: 1;
+  }
+
+  // Top Header & Matchup
+  &__header {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-3 $space-5;
+    @include glass-panel;
+    border-color: rgba($color-gold-500, 0.4);
+  }
+
+  &__matchup-title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: $font-size-xl;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: $color-gold-100;
+    text-shadow: 0 0 16px rgba($color-gold-500, 0.5);
+    margin: 0;
+  }
+
+  &__subtitle {
+    font-family: $font-body;
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
+
+  &__matchup-rivals {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+  }
+
+  &__rival {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+
+    &--user {
+      .coin-toss-view__rival-name {
+        color: $color-user;
+      }
+      .coin-toss-view__rival-tag {
+        background: rgba($color-user, 0.18);
+        border: 1px solid rgba($color-user, 0.5);
+        color: #93c5fd;
+      }
+    }
+
+    &--opponent {
+      .coin-toss-view__rival-name {
+        color: $color-ai;
+      }
+      .coin-toss-view__rival-tag {
+        background: rgba($color-ai, 0.18);
+        border: 1px solid rgba($color-ai, 0.5);
+        color: #fca5a5;
+      }
+    }
+  }
+
+  &__rival-name {
+    font-family: $font-display;
+    font-weight: 700;
+    font-size: $font-size-md;
+    letter-spacing: 0.04em;
+  }
+
+  &__rival-tag {
+    font-family: $font-body;
+    font-size: $font-size-xs;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  &__vs-badge {
+    font-family: $font-display;
+    font-size: $font-size-md;
+    font-weight: 800;
+    color: $color-gold-300;
+    padding: 4px 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba($color-gold-500, 0.3);
+    border-radius: 8px;
+    text-shadow: 0 0 10px rgba($color-gold-500, 0.6);
+  }
+
+  // Center Stage: 3D Coin Arena
+  &__stage {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: $space-4 0;
+    width: 100%;
+    max-width: 860px;
+  }
+
+  &__coin-wrapper {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    perspective: 1200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: $space-5;
+  }
+
+  &__coin-pedestal {
+    position: absolute;
+    bottom: -18px;
+    width: 200px;
+    height: 36px;
+    background: radial-gradient(ellipse at center, rgba($color-gold-500, 0.45) 0%, rgba(0, 0, 0, 0.8) 70%, transparent 100%);
+    border-radius: 50%;
+    filter: blur(4px);
+    pointer-events: none;
+  }
+
+  &__coin-aura {
+    position: absolute;
+    inset: -30px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba($color-gold-300, 0.25) 0%, rgba($color-gold-500, 0.08) 50%, transparent 75%);
+    animation: pulse-glow 2.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  &__coin {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &--flipping-heads {
+      animation: coinFlipToHeads 2.2s cubic-bezier(0.12, 0.8, 0.32, 1) forwards;
+    }
+
+    &--flipping-tails {
+      animation: coinFlipToTails 2.2s cubic-bezier(0.12, 0.8, 0.32, 1) forwards;
+    }
+
+    &--landed-heads {
+      transform: rotateY(0deg);
+    }
+
+    &--landed-tails {
+      transform: rotateY(180deg);
+    }
+  }
+
+  &__coin-face {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+      0 0 35px rgba($color-gold-500, 0.4),
+      inset 0 0 20px rgba(0, 0, 0, 0.6);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 50%;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.7));
+    }
+
+    &--heads {
+      transform: rotateY(0deg);
+    }
+
+    &--tails {
+      transform: rotateY(180deg);
+    }
+  }
+
+  // Interactive Choice Section
+  &__choice-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-4;
+    width: 100%;
+  }
+
+  &__prompt-text {
+    font-family: $font-display;
+    font-size: $font-size-lg;
+    font-weight: 700;
+    color: $color-gold-300;
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 12px rgba($color-gold-500, 0.4);
+    margin: 0;
+    text-align: center;
+  }
+
+  &__choices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $space-4;
+    width: 100%;
+    max-width: 580px;
+  }
+
+  &__choice-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: $space-4 $space-3;
+    @include glass-panel;
+    border: 2px solid rgba($color-gold-500, 0.35);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    outline: none;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 20%, rgba($color-gold-300, 0.15), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    &:hover:not(:disabled) {
+      transform: translateY(-4px) scale(1.02);
+      border-color: $color-gold-300;
+      box-shadow: 
+        0 12px 32px rgba(0, 0, 0, 0.6),
+        0 0 24px rgba($color-gold-500, 0.45);
+
+      &::before {
+        opacity: 1;
+      }
+
+      .coin-toss-view__choice-coin-img {
+        transform: scale(1.06) rotate(6deg);
+      }
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(-1px) scale(0.99);
+    }
+
+    &:focus-visible {
+      border-color: $color-info;
+      box-shadow: 0 0 0 3px rgba($color-info, 0.4);
+    }
+
+    &--selected {
+      border-color: $color-gold-100;
+      background: rgba(201, 162, 39, 0.22);
+      box-shadow: 0 0 28px rgba($color-gold-300, 0.5);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+  }
+
+  &__choice-coin-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 50%;
+    margin-bottom: $space-2;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+  }
+
+  &__choice-label {
+    font-family: $font-display;
+    font-size: $font-size-xl;
+    font-weight: 800;
+    color: $color-gold-100;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+  }
+
+  &__choice-sub {
+    font-family: $font-body;
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    letter-spacing: 0.04em;
+  }
+
+  &__choice-hotkey {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-family: $font-display;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: $color-gold-300;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba($color-gold-500, 0.4);
+    border-radius: 6px;
+    padding: 2px 6px;
+  }
+
+  // Flipping State Text
+  &__flipping-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-3 $space-5;
+    @include glass-panel;
+    border-color: rgba($color-gold-500, 0.5);
+    border-radius: 24px;
+    animation: pulse-glow 1.5s ease-in-out infinite;
+
+    span {
+      font-family: $font-display;
+      font-size: $font-size-lg;
+      font-weight: 700;
+      color: $color-gold-300;
+      letter-spacing: 0.06em;
+    }
+  }
+
+  // Result Announcement Banner
+  &__result-banner {
+    width: 100%;
+    max-width: 680px;
+    padding: $space-4 $space-5;
+    @include glass-panel-elevated;
+    border-radius: 18px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-3;
+    animation: modal-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+
+    &--user-won {
+      border: 2px solid $color-user;
+      box-shadow: 
+        0 12px 36px rgba(0, 0, 0, 0.7),
+        0 0 32px rgba($color-user, 0.45);
+      background: radial-gradient(ellipse at 50% 0%, rgba($color-user, 0.22) 0%, rgba(18, 22, 30, 0.9) 70%);
+
+      .coin-toss-view__outcome-badge {
+        background: rgba($color-user, 0.25);
+        border-color: $color-user;
+        color: #bfdbfe;
+      }
+      .coin-toss-view__winner-title {
+        color: #93c5fd;
+        text-shadow: 0 0 16px rgba($color-user, 0.7);
+      }
+    }
+
+    &--opponent-won {
+      border: 2px solid $color-ai;
+      box-shadow: 
+        0 12px 36px rgba(0, 0, 0, 0.7),
+        0 0 32px rgba($color-ai, 0.45);
+      background: radial-gradient(ellipse at 50% 0%, rgba($color-ai, 0.22) 0%, rgba(18, 22, 30, 0.9) 70%);
+
+      .coin-toss-view__outcome-badge {
+        background: rgba($color-ai, 0.25);
+        border-color: $color-ai;
+        color: #fecaca;
+      }
+      .coin-toss-view__winner-title {
+        color: #fca5a5;
+        text-shadow: 0 0 16px rgba($color-ai, 0.7);
+      }
+    }
+  }
+
+  &__outcome-badge {
+    font-family: $font-display;
+    font-size: $font-size-sm;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 16px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+  }
+
+  &__winner-title {
+    font-family: $font-display;
+    font-size: $font-size-2xl;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    margin: 0;
+  }
+
+  &__turn-announcement {
+    font-family: $font-body;
+    font-size: $font-size-md;
+    color: $color-text-primary;
+    letter-spacing: 0.02em;
+    margin: 0;
+
+    strong {
+      color: $color-gold-100;
+      font-weight: 700;
+    }
+  }
+
+  &__result-actions {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    margin-top: $space-2;
+    width: 100%;
+    justify-content: center;
+  }
+
+  // Footer Navigation Bar
+  &__footer {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-3 0;
+  }
+}
+
+// =============================================================================
+// 3D Coin Flip Keyframes
+// =============================================================================
+
+@keyframes coinFlipToHeads {
+  0% {
+    transform: translateY(0) rotateY(0deg) scale(1);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.35, 1);
+  }
+  30% {
+    transform: translateY(-160px) rotateY(1080deg) scale(1.15);
+    animation-timing-function: ease-in;
+  }
+  65% {
+    transform: translateY(-40px) rotateY(1800deg) scale(1.05);
+    animation-timing-function: cubic-bezier(0.3, 0.1, 0.2, 1);
+  }
+  85% {
+    transform: translateY(10px) rotateY(2160deg) scale(0.96);
+  }
+  95% {
+    transform: translateY(-5px) rotateY(2160deg) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) rotateY(2160deg) scale(1);
+  }
+}
+
+@keyframes coinFlipToTails {
+  0% {
+    transform: translateY(0) rotateY(0deg) scale(1);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.35, 1);
+  }
+  30% {
+    transform: translateY(-160px) rotateY(1170deg) scale(1.15);
+    animation-timing-function: ease-in;
+  }
+  65% {
+    transform: translateY(-40px) rotateY(1980deg) scale(1.05);
+    animation-timing-function: cubic-bezier(0.3, 0.1, 0.2, 1);
+  }
+  85% {
+    transform: translateY(10px) rotateY(2340deg) scale(0.96);
+  }
+  95% {
+    transform: translateY(-5px) rotateY(2340deg) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) rotateY(2340deg) scale(1);
+  }
+}

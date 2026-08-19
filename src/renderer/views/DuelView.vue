@@ -13,6 +13,14 @@
       </div>
 
       <div class="controls-row">
+        <button
+          v-if="duelStore.isMatchPrepared"
+          class="btn btn-accent"
+          :disabled="duelState.isActive"
+          @click="startPreparedMatch"
+        >
+          ⚔️ Start Match vs {{ selectedOpponentName }} ({{ firstPlayerLabel }})
+        </button>
         <button class="btn btn-primary" :disabled="duelState.isActive" @click="startYugiVsKaiba">
           ▶ Yugi vs Kaiba (DM)
         </button>
@@ -20,11 +28,11 @@
           ▶ Jaden vs Zane (GX)
         </button>
         <button
-          class="btn btn-accent"
+          class="btn btn-primary"
           :disabled="duelState.isActive"
           @click="startVsSelectedOpponent"
         >
-          ⚔️ Duel vs {{ selectedOpponentName }} (Random Deck)
+          🎲 vs {{ selectedOpponentName }} (New Deck)
         </button>
         <button class="btn btn-secondary" :disabled="!duelState.isActive" @click="stepDuel">
           ⏩ Next Step
@@ -50,11 +58,11 @@
 
     <!-- Live Duel HUD Scoreboard -->
     <div class="scoreboard-row">
-      <!-- Player 0 (Human / P1) -->
+      <!-- Player 0 (First Turn) -->
       <div class="player-card glass-panel" :class="{ 'player-card--active': isPlayer0Active }">
         <div class="player-header">
-          <span class="player-name">Player 0 (User / P1)</span>
-          <span class="player-tag">YOU</span>
+          <span class="player-name">{{ p0Label }}</span>
+          <span class="player-tag" :class="{ 'player-tag--ai': !p0IsUser }">{{ p0Tag }}</span>
         </div>
         <div class="lp-display">
           <span class="lp-label">LP</span>
@@ -85,11 +93,11 @@
         </div>
       </div>
 
-      <!-- Player 1 (Opponent / AI) -->
+      <!-- Player 1 (Second Turn) -->
       <div class="player-card glass-panel" :class="{ 'player-card--active': isPlayer1Active }">
         <div class="player-header">
-          <span class="player-name">Player 1 (Opponent / P2)</span>
-          <span class="player-tag player-tag--ai">AI</span>
+          <span class="player-name">{{ p1Label }}</span>
+          <span class="player-tag" :class="{ 'player-tag--ai': !p1IsUser }">{{ p1Tag }}</span>
         </div>
         <div class="lp-display">
           <span class="lp-label">LP</span>
@@ -109,7 +117,7 @@
     <!-- Victory Banner if duel finished -->
     <div v-if="duelState.winner !== null" class="victory-banner glass-panel">
       🎉 DUEL FINISHED! WINNER: PLAYER {{ duelState.winner }} ({{
-        duelState.winner === 0 ? 'Player 0 / User' : 'Player 1 / Opponent'
+        getWinnerDisplayName(duelState.winner)
       }}) — Reason: {{ getWinReasonText(duelState.winReason) }}
     </div>
 
@@ -142,6 +150,7 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue';
 import type { DuelEventPayload, DuelStateSummary } from '../../shared/types/duel.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
+import { useDuelStore } from '../stores/duelStore.js';
 
 interface LogEntry {
   time: string;
@@ -150,10 +159,47 @@ interface LogEntry {
 }
 
 const settingsStore = useSettingsStore();
+const duelStore = useDuelStore();
 
 const selectedOpponentName = computed(() => {
-  return settingsStore.selectedCharacter?.name || 'Opponent';
+  return duelStore.selectedOpponent?.name || settingsStore.selectedCharacter?.name || 'Opponent';
 });
+
+const firstPlayerLabel = computed(() => {
+  return duelStore.startingPlayer === 'user' ? 'You Go First' : `${selectedOpponentName.value} Goes First`;
+});
+
+const p0IsUser = computed(() => {
+  return duelStore.startingPlayer === 'user';
+});
+
+const p0Label = computed(() => {
+  return p0IsUser.value ? 'Player 0 (User / First Turn)' : `Player 0 (${selectedOpponentName.value} / First Turn)`;
+});
+
+const p0Tag = computed(() => {
+  return p0IsUser.value ? 'YOU (1st)' : 'AI (1st)';
+});
+
+const p1IsUser = computed(() => {
+  return !p0IsUser.value;
+});
+
+const p1Label = computed(() => {
+  return p1IsUser.value ? 'Player 1 (User / Second Turn)' : `Player 1 (${selectedOpponentName.value} / Second Turn)`;
+});
+
+const p1Tag = computed(() => {
+  return p1IsUser.value ? 'YOU (2nd)' : 'AI (2nd)';
+});
+
+function getWinnerDisplayName(winner: number | null): string {
+  if (winner === null) return 'None';
+  if (winner === 0) {
+    return p0IsUser.value ? 'Player 0 / User' : `Player 0 / ${selectedOpponentName.value}`;
+  }
+  return p1IsUser.value ? 'Player 1 / User' : `Player 1 / ${selectedOpponentName.value}`;
+}
 
 const logs = ref<LogEntry[]>([]);
 const logContainer = ref<HTMLElement | null>(null);
@@ -211,6 +257,7 @@ function getWinReasonText(reason: number | null): string {
   if (reason === 3) return 'Surrender / Forfeit';
   return `Code ${reason}`;
 }
+
 
 // 40-Card Yugi Deck (Real cards from DM filtered card pool)
 const YUGI_DECK = [
@@ -388,6 +435,36 @@ async function updateStateFromMain(): Promise<void> {
   }
 }
 
+async function startPreparedMatch(): Promise<void> {
+  clearLog();
+  const oppName = duelStore.opponentName;
+  const oppSeries = duelStore.opponentSeries;
+  const oppDeck = duelStore.selectedOpponentDeck;
+  const userDeck = duelStore.selectedUserDeck;
+  const isUserFirst = duelStore.startingPlayer === 'user';
+
+  appendLog('MATCH_SETUP', `⚔️ Preparing Match: You vs ${oppName} [${oppSeries}]`);
+  if (duelStore.coinResult) {
+    appendLog(
+      'COIN_TOSS',
+      `🪙 Coin Toss: Result is ${duelStore.coinResult.toUpperCase()} (You chose ${duelStore.userChoice?.toUpperCase()}) → ${isUserFirst ? 'YOU GO FIRST (Player 0)' : `${oppName.toUpperCase()} GOES FIRST (Player 0)`}`,
+    );
+  }
+  appendLog('DECKS', `🃏 Your Deck: "${userDeck?.name || 'Starter Deck'}" vs Opponent Deck: "${oppDeck?.name || 'Random Archetype'}"`);
+
+  try {
+    const success = await duelStore.startPreparedDuel();
+    if (success) {
+      appendLog('SYSTEM', 'Duel Engine successfully initialized with determined turn order.');
+      await updateStateFromMain();
+    } else {
+      appendLog('ERROR', 'Duel Engine failed to initialize.');
+    }
+  } catch (err) {
+    appendLog('ERROR', `Failed starting prepared duel: ${err}`);
+  }
+}
+
 async function startDuel(p0Deck: number[], p1Deck: number[], title: string): Promise<void> {
   clearLog();
   appendLog('SYSTEM', `Initializing ${title}...`);
@@ -400,6 +477,7 @@ async function startDuel(p0Deck: number[], p1Deck: number[], title: string): Pro
       startingDrawCount: 5,
       drawCountPerTurn: 1,
       autoPlay: isAutoPlaying.value,
+      humanPlayerId: 0,
     });
 
     if (success) {
@@ -503,7 +581,12 @@ onMounted(async () => {
   await settingsStore.initializeSettings();
   if (window.duelAPI) {
     unsubscribeEvents = window.duelAPI.onEvent(handleDuelEvent);
-    updateStateFromMain();
+    await updateStateFromMain();
+  }
+
+  // If entering with a prepared match from CoinToss/PreDuelVideo, auto-start!
+  if (duelStore.isMatchPrepared && !duelState.isActive) {
+    await startPreparedMatch();
   }
 });
 

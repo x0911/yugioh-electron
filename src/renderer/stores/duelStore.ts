@@ -129,8 +129,8 @@ export const useDuelStore = defineStore('duel', {
       if (customUserDeck) {
         this.selectedUserDeck = customUserDeck;
       } else {
-        if (!deckEditStore.isLoaded && window.deckAPI) {
-          await deckEditStore.loadCustomDecks();
+        if (!deckEditStore.isLoaded) {
+          await deckEditStore.initStore();
         }
         if (deckEditStore.activeDeck && deckEditStore.activeDeck.main.length >= 40) {
           this.selectedUserDeck = deckEditStore.activeDeck;
