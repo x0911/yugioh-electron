@@ -6,7 +6,12 @@ import {
   type SettingsAPI,
   type AppAPI,
 } from '../shared/types/ipc.js';
-import type { DuelInitOptions, DuelEventPayload, DuelStateSummary } from '../shared/types/duel.js';
+import type {
+  DuelInitOptions,
+  DuelEventPayload,
+  DuelStateSummary,
+  CardVideoPayload,
+} from '../shared/types/duel.js';
 
 const duelAPI: DuelAPI = {
   newDuel: (options: DuelInitOptions): Promise<boolean> => {
@@ -39,8 +44,8 @@ const duelAPI: DuelAPI = {
       ipcRenderer.removeListener(IPC_CHANNELS.DUEL_EVENT, handler);
     };
   },
-  playVideo: (callback: (video: unknown) => void) => {
-    const handler = (_e: Electron.IpcRendererEvent, video: unknown) => callback(video);
+  playVideo: (callback: (video: CardVideoPayload) => void) => {
+    const handler = (_e: Electron.IpcRendererEvent, video: CardVideoPayload) => callback(video);
     ipcRenderer.on(IPC_CHANNELS.DUEL_PLAY_VIDEO, handler);
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.DUEL_PLAY_VIDEO, handler);

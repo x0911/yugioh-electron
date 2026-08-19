@@ -63,7 +63,7 @@ export interface DuelAPI {
   getBoardState: () => Promise<import('./field.js').DuelBoardState>;
   getCardName: (code: number) => Promise<string>;
   onEvent: (callback: (event: DuelEventPayload) => void) => () => void;
-  playVideo: (callback: (video: unknown) => void) => () => void;
+  playVideo: (callback: (video: import('./duel.js').CardVideoPayload) => void) => () => void;
   notifyVideoFinished: () => Promise<void>;
 }
 

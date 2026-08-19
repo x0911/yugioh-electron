@@ -1,0 +1,72 @@
+{
+  "46986414": {
+    "cardName": "Dark Magician",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_46986414.mp4",
+    "attack": "resources/videos/cards/attack_46986414.mp4",
+    "isPlaceholder": true
+  },
+  "89631139": {
+    "cardName": "Blue-Eyes White Dragon",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_89631139.mp4",
+    "attack": "resources/videos/cards/attack_89631139.mp4",
+    "isPlaceholder": true
+  },
+  "70781052": {
+    "cardName": "Summoned Skull",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_70781052.mp4",
+    "attack": "resources/videos/cards/attack_70781052.mp4",
+    "isPlaceholder": true
+  },
+  "74677422": {
+    "cardName": "Red-Eyes Black Dragon",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_74677422.mp4",
+    "attack": "resources/videos/cards/attack_74677422.mp4",
+    "isPlaceholder": true
+  },
+  "21844576": {
+    "cardName": "Elemental HERO Neos",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_21844576.mp4",
+    "attack": "resources/videos/cards/attack_21844576.mp4",
+    "isPlaceholder": true
+  },
+  "70095154": {
+    "cardName": "Cyber Dragon",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_70095154.mp4",
+    "attack": "resources/videos/cards/attack_70095154.mp4",
+    "isPlaceholder": true
+  },
+  "45231177": {
+    "cardName": "Flame Swordsman",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_45231177.mp4",
+    "attack": "resources/videos/cards/attack_45231177.mp4",
+    "isPlaceholder": true
+  },
+  "10000000": {
+    "cardName": "Obelisk the Tormentor",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_10000000.mp4",
+    "attack": "resources/videos/cards/attack_10000000.mp4",
+    "isPlaceholder": true
+  },
+  "10000010": {
+    "cardName": "The Winged Dragon of Ra",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_10000010.mp4",
+    "attack": "resources/videos/cards/attack_10000010.mp4",
+    "isPlaceholder": true
+  },
+  "10000020": {
+    "cardName": "Slifer the Sky Dragon",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_10000020.mp4",
+    "attack": "resources/videos/cards/attack_10000020.mp4",
+    "isPlaceholder": true
+  }
+}

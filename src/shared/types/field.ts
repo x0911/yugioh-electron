@@ -20,6 +20,15 @@ export type CardPositionState =
   | 'facedown_spell'
   | 'faceup_spell';
 
+export type CardStatusType =
+  | 'negated'
+  | 'no-special-summon'
+  | 'temp-banished'
+  | 'fusion-material'
+  | 'synchro-material'
+  | 'destroyed-battle'
+  | 'no-attack';
+
 export interface FieldCard {
   id: string; // Unique instance id on the board
   code: number; // Card passcode / database ID (e.g. 46986414)
@@ -41,6 +50,7 @@ export interface FieldCard {
   isTargeted?: boolean;
   isSelectable?: boolean;
   counters?: number;
+  statuses?: CardStatusType[];
 }
 
 export interface PlayerFieldState {

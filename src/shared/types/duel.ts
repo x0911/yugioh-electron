@@ -211,5 +211,23 @@ export interface DuelStateSummary {
   winner: number | null;
   winReason: number | null;
   stepCount: number;
+  isVideoPlaying?: boolean;
+}
+
+export interface CardVideoEntry {
+  cardName: string;
+  series: 'DM' | 'GX';
+  summon?: string;
+  attack?: string;
+  isPlaceholder?: boolean;
+}
+
+export interface CardVideoPayload {
+  code: number;
+  cardName: string;
+  videoType: 'summon' | 'attack';
+  videoPath: string;
+  controller: number;
+  isPlaceholder?: boolean;
 }
 
