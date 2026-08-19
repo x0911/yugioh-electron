@@ -82,10 +82,10 @@
         </div>
       </div>
 
-      <!-- Quick Deck Action Controls -->
+      <!-- In-Deck Quantity Status & Drag Indicator -->
       <div class="previewer-actions">
         <div class="deck-quantity-status">
-          <span class="quantity-label">In Current Deck:</span>
+          <span class="quantity-label">In Deck:</span>
           <span
             class="quantity-count"
             :class="{
@@ -93,28 +93,12 @@
               'quantity-count--active': currentCopies > 0,
             }"
           >
-            {{ currentCopies }} / 3
+            x{{ currentCopies }} / 3
           </span>
         </div>
-        <div class="action-buttons-group">
-          <button
-            type="button"
-            class="deck-btn deck-btn--add"
-            :disabled="currentCopies >= 3 || isDeckFull"
-            title="Add a copy of this card to current deck"
-            @click="onAddCard"
-          >
-            <span class="btn-icon">＋</span> Add to Deck
-          </button>
-          <button
-            type="button"
-            class="deck-btn deck-btn--remove"
-            :disabled="currentCopies <= 0"
-            title="Remove a copy of this card from current deck"
-            @click="onRemoveCard"
-          >
-            <span class="btn-icon">－</span> Remove
-          </button>
+        <div class="drag-hint-pill">
+          <span class="drag-hint-icon">✋</span>
+          <span class="drag-hint-text">Drag image to Deck</span>
         </div>
       </div>
     </div>
@@ -132,7 +116,6 @@ import { computed } from 'vue';
 import type { CardDetail } from '../../../shared/types/card.js';
 import { getCardImageUrl, handleImageError } from '../../utils/media.js';
 import { useDeckEditStore } from '../../stores/deckEditStore.js';
-import { DECK_LIMITS } from '../../../shared/types/deck.js';
 
 const store = useDeckEditStore();
 
@@ -147,26 +130,6 @@ const currentCopies = computed(() => {
   if (!card.value) return 0;
   return store.deckCardCounts.get(card.value.id) ?? 0;
 });
-
-const isDeckFull = computed(() => {
-  if (!card.value) return false;
-  if (card.value.isExtraDeck) {
-    return store.extraDeckCount >= DECK_LIMITS.MAX_EXTRA;
-  }
-  return store.mainDeckCount >= DECK_LIMITS.MAX_MAIN;
-});
-
-function onAddCard(): void {
-  if (card.value) {
-    store.addCardToDeck(card.value.id);
-  }
-}
-
-function onRemoveCard(): void {
-  if (card.value) {
-    store.removeCardFromDeck(card.value.id, card.value.isExtraDeck);
-  }
-}
 
 function onPreviewDragStart(e: DragEvent): void {
   if (e.dataTransfer && card.value) {
@@ -580,62 +543,23 @@ function onPreviewDragEnd(): void {
   }
 }
 
-.action-buttons-group {
-  display: flex;
-  gap: $space-2;
-}
-
-.deck-btn {
-  flex: 1;
+.drag-hint-pill {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-radius: 6px;
+  background: rgba(201, 162, 39, 0.12);
+  border: 1px dashed rgba(201, 162, 39, 0.4);
+  color: $color-gold-300;
   font-family: $font-family-display;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  cursor: pointer;
-  transition: all 180ms ease;
-  border: 1px solid transparent;
-
-  &--add {
-    background: linear-gradient(180deg, rgba(201, 162, 39, 0.3) 0%, rgba(140, 110, 22, 0.4) 100%);
-    border-color: $color-gold-500;
-    color: $color-gold-100;
-
-    &:hover:not(:disabled) {
-      background: linear-gradient(180deg, rgba(227, 197, 103, 0.45) 0%, rgba(201, 162, 39, 0.55) 100%);
-      box-shadow: 0 0 10px rgba(201, 162, 39, 0.4);
-      transform: translateY(-1px);
-    }
-  }
-
-  &--remove {
-    background: rgba(235, 87, 87, 0.15);
-    border-color: rgba(235, 87, 87, 0.4);
-    color: #f7a8a8;
-
-    &:hover:not(:disabled) {
-      background: rgba(235, 87, 87, 0.3);
-      border-color: $color-danger;
-      box-shadow: 0 0 10px rgba(235, 87, 87, 0.3);
-      transform: translateY(-1px);
-    }
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
-  }
+  letter-spacing: 0.03em;
 }
 
-.btn-icon {
-  font-size: 1rem;
-  line-height: 1;
+.drag-hint-icon {
+  font-size: 0.95rem;
 }
 
 .previewer-empty {

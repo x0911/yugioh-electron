@@ -243,7 +243,6 @@ function onCardHover(card: CardDetail): void {
 
 function onCardClick(card: CardDetail): void {
   store.setHoveredCard(card);
-  store.addCardToDeck(card.id);
 }
 
 function onCardRightClick(card: CardDetail): void {

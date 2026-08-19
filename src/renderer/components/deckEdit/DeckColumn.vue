@@ -166,9 +166,9 @@
               'deck-card-tile--dragging': store.isDragging && store.draggingCard?.id === item.id,
             }"
             draggable="true"
-            title="Drag to remove, or click to remove 1 copy"
+            title="Drag to remove from deck"
             @mouseenter="onCardHover(item.card)"
-            @click="onRemoveCard(item.id, false)"
+            @click="onCardHover(item.card)"
             @contextmenu.prevent="onCardHover(item.card)"
             @dragstart="onDeckCardDragStart($event, item, false)"
             @dragend="onDeckCardDragEnd"
@@ -193,11 +193,6 @@
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
                   <path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"/>
                 </svg>
-              </div>
-
-              <!-- Remove Overlay on Hover -->
-              <div class="tile-remove-overlay">
-                <span class="remove-icon">✕</span>
               </div>
             </div>
 
@@ -279,9 +274,9 @@
               'deck-card-tile--dragging': store.isDragging && store.draggingCard?.id === item.id,
             }"
             draggable="true"
-            title="Drag to remove, or click to remove 1 copy"
+            title="Drag to remove from deck"
             @mouseenter="onCardHover(item.card)"
-            @click="onRemoveCard(item.id, true)"
+            @click="onCardHover(item.card)"
             @contextmenu.prevent="onCardHover(item.card)"
             @dragstart="onDeckCardDragStart($event, item, true)"
             @dragend="onDeckCardDragEnd"
@@ -306,11 +301,6 @@
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
                   <path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"/>
                 </svg>
-              </div>
-
-              <!-- Remove Overlay on Hover -->
-              <div class="tile-remove-overlay">
-                <span class="remove-icon">✕</span>
               </div>
             </div>
 
@@ -510,10 +500,6 @@ function onCardHover(card: CardDetail | null): void {
   if (card) {
     store.setHoveredCard(card);
   }
-}
-
-function onRemoveCard(cardId: number, isExtra: boolean): void {
-  store.removeCardFromDeck(cardId, isExtra);
 }
 
 function onConfirmClear(): void {
