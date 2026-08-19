@@ -392,9 +392,9 @@ function onClick(): void {
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 3px;
-    padding: 1px 5px;
-    border-radius: 6px;
+    gap: 4px;
+    padding: 1px 6px;
+    border-radius: 7px;
     background: rgba(10, 12, 16, 0.94);
     backdrop-filter: blur(4px);
     font-family: 'Oxanium', monospace, sans-serif;
@@ -406,16 +406,16 @@ function onClick(): void {
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
     .stat-prefix {
-      font-size: 0.48rem;
+      font-size: 0.50rem;
       font-weight: 700;
       letter-spacing: 0.04em;
     }
 
     .stat-value {
-      font-size: 0.52rem;
-      font-weight: 700;
+      font-size: 0.58rem;
+      font-weight: 800;
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0.01em;
+      letter-spacing: 0.02em;
     }
 
     &--atk {

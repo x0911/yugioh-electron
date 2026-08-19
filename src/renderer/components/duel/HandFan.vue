@@ -311,9 +311,9 @@ function onCardClick(card: FieldCard): void {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 2px;
+      gap: 3px;
       font-family: 'Oxanium', monospace, sans-serif;
-      font-size: 0.46rem;
+      font-size: 0.53rem;
       font-weight: 700;
       letter-spacing: 0.01em;
 
@@ -322,8 +322,8 @@ function onCardClick(card: FieldCard): void {
       }
       .stat-slash {
         color: $color-gold-500;
-        font-size: 0.42rem;
-        opacity: 0.7;
+        font-size: 0.48rem;
+        opacity: 0.75;
       }
       .stat-def {
         color: #b8b2a0;
