@@ -1,8 +1,24 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, shell, protocol, net } from 'electron';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { registerIpcHandlers } from './ipc/index';
 import { APP_CONFIG } from '../shared/constants/index';
+
+// Register custom protocol for local game resources (cards, audio, videos, ui)
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'app-resource',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+      bypassCSP: true,
+    },
+  },
+]);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,6 +96,34 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(() => {
+    // Protocol handler for app-resource://
+    protocol.handle('app-resource', async (request) => {
+      try {
+        const urlObj = new URL(request.url);
+        const subPath = path.join(urlObj.hostname, decodeURIComponent(urlObj.pathname));
+        const basePath = app.isPackaged
+          ? path.join(process.resourcesPath, 'resources')
+          : path.resolve(process.cwd(), 'resources');
+
+        let targetPath = path.resolve(basePath, subPath);
+        if (!fs.existsSync(targetPath)) {
+          if (subPath.startsWith('cards/')) {
+            const fallbackPath = path.resolve(basePath, 'cards/placeholder.jpg');
+            if (fs.existsSync(fallbackPath)) {
+              targetPath = fallbackPath;
+            }
+          }
+        }
+
+        if (fs.existsSync(targetPath)) {
+          return net.fetch(pathToFileURL(targetPath).toString());
+        }
+      } catch (err) {
+        console.error('[Protocol app-resource] Error loading resource:', request.url, err);
+      }
+      return new Response('Not Found', { status: 404 });
+    });
+
     registerIpcHandlers();
     createWindow();
 

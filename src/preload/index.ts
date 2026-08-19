@@ -47,6 +47,24 @@ const duelAPI: DuelAPI = {
 };
 
 const deckAPI: DeckAPI = {
+  getAllCards: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DECK_GET_ALL_CARDS);
+  },
+  getCustomDecks: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DECK_GET_CUSTOM_DECKS);
+  },
+  saveCustomDeck: (deck) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DECK_SAVE_CUSTOM_DECK, deck);
+  },
+  deleteCustomDeck: (deckId: string) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DECK_DELETE_CUSTOM_DECK, deckId);
+  },
+  getActiveDeckId: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DECK_GET_ACTIVE_ID);
+  },
+  setActiveDeckId: (deckId: string) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DECK_SET_ACTIVE_ID, deckId);
+  },
   listDecks: (): Promise<string[]> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DECK_LIST);
   },

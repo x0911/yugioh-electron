@@ -369,6 +369,14 @@ export class DuelEngineService {
     return this.cardReader.getCardName(code);
   }
 
+  public getAllCards(): import('../../shared/types/card.js').CardDetail[] {
+    return this.cardReader.getAllCards();
+  }
+
+  public getCardReader(): CardReaderService {
+    return this.cardReader;
+  }
+
   public destroyCurrentDuel(): void {
     if (this.lib && this.currentDuel) {
       this.lib.destroyDuel(this.currentDuel);

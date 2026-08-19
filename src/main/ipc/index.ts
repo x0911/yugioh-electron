@@ -4,7 +4,15 @@ import type { DuelInitOptions } from '../../shared/types/duel.js';
 import { duelEngineService } from '../engine/DuelEngineService.js';
 import type { OcgResponse } from 'ocgcore-wasm';
 
-import { getPersistedSettings, savePersistedSettings } from '../persistence/store.js';
+import {
+  getPersistedSettings,
+  savePersistedSettings,
+  getPersistedCustomDecks,
+  savePersistedCustomDeck,
+  deletePersistedCustomDeck,
+  getPersistedActiveDeckId,
+  savePersistedActiveDeckId,
+} from '../persistence/store.js';
 import {
   loadCharacters,
   getCharacterById,
@@ -83,19 +91,50 @@ export function registerIpcHandlers(): void {
     console.log('[Main IPC] Duel video finished notification received');
   });
 
-  // Deck stubs (will be wired in Phase 7)
+  // Deck & Card Pool Handlers (Phase 7)
+  ipcMain.handle(IPC_CHANNELS.DECK_GET_ALL_CARDS, async () => {
+    return duelEngineService.getAllCards();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DECK_GET_CUSTOM_DECKS, async () => {
+    return getPersistedCustomDecks();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DECK_SAVE_CUSTOM_DECK, async (_event, deck) => {
+    return savePersistedCustomDeck(deck);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DECK_DELETE_CUSTOM_DECK, async (_event, deckId: string) => {
+    return deletePersistedCustomDeck(deckId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DECK_GET_ACTIVE_ID, async () => {
+    return getPersistedActiveDeckId();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DECK_SET_ACTIVE_ID, async (_event, deckId: string) => {
+    return savePersistedActiveDeckId(deckId);
+  });
+
   ipcMain.handle(IPC_CHANNELS.DECK_LIST, async () => {
-    return ['Sample Starter Deck (DM)', 'Sample Hero Deck (GX)'];
+    const decks = getPersistedCustomDecks();
+    return decks.map((d) => d.name);
   });
 
-  ipcMain.handle(IPC_CHANNELS.DECK_SAVE, async (_event, deckName) => {
-    console.log('[Main IPC] Save deck (stub):', deckName);
+  ipcMain.handle(IPC_CHANNELS.DECK_SAVE, async (_event, _deckName, deckData) => {
+    if (deckData && typeof deckData === 'object') {
+      savePersistedCustomDeck(deckData as import('../../shared/types/deck.js').CustomDeck);
+    }
     return true;
   });
 
-  ipcMain.handle(IPC_CHANNELS.DECK_DELETE, async (_event, deckName) => {
-    console.log('[Main IPC] Delete deck (stub):', deckName);
-    return true;
+  ipcMain.handle(IPC_CHANNELS.DECK_DELETE, async (_event, deckName: string) => {
+    const decks = getPersistedCustomDecks();
+    const found = decks.find((d) => d.name === deckName || d.id === deckName);
+    if (found) {
+      return deletePersistedCustomDeck(found.id);
+    }
+    return false;
   });
 
   // Settings & Characters (Phase 6)
