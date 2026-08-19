@@ -95,6 +95,21 @@
             </div>
           </div>
 
+          <!-- Status Icon Row (Shown when card has active status flags) -->
+          <div v-if="activeStatuses.length > 0" class="status-icon-row">
+            <span class="status-row-label">STATUS</span>
+            <div class="status-badges-list">
+              <IconIndicator
+                v-for="st in activeStatuses"
+                :key="st"
+                type="status"
+                :status="st"
+                size="sm"
+                :show-tooltip="true"
+              />
+            </div>
+          </div>
+
           <!-- Scrollable Card Effect Text / Lore -->
           <div class="card-lore-box">
             <p class="lore-text">
@@ -125,9 +140,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { FieldCard } from '../../../shared/types/field.js';
+import type { FieldCard, CardStatusType } from '../../../shared/types/field.js';
 import { useDuelStore } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
+import IconIndicator from '../common/IconIndicator.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -171,6 +187,35 @@ const effectiveCard = computed<FieldCard | null>(() => {
     race: props.card.race || detail.raceName,
     description: props.card.description || detail.desc,
   };
+});
+
+const activeStatuses = computed<CardStatusType[]>(() => {
+  if (!effectiveCard.value || effectiveCard.value.code <= 0) return [];
+  if (effectiveCard.value.statuses && effectiveCard.value.statuses.length > 0) {
+    return effectiveCard.value.statuses;
+  }
+  const statuses: CardStatusType[] = [];
+  const loc = effectiveCard.value.location;
+  if (loc === 'monster' || loc === 'extra-monster') {
+    const isDefense =
+      effectiveCard.value.position === 'faceup_defense' ||
+      effectiveCard.value.position === 'facedown_defense';
+    const isTurn1 = duelStore.turnNumber <= 1;
+    if (isDefense || isTurn1) {
+      statuses.push('no-attack');
+    }
+  }
+  const detail = duelStore.getCardDetail(effectiveCard.value.code);
+  if (
+    detail &&
+    detail.desc &&
+    (detail.desc.includes('Cannot be Special Summoned') ||
+      detail.desc.includes('This card cannot be Special Summoned') ||
+      detail.isSpirit)
+  ) {
+    statuses.push('no-special-summon');
+  }
+  return statuses;
 });
 
 const typeBracketText = computed(() => {
@@ -467,6 +512,32 @@ const typeBracketText = computed(() => {
     .stat-divider {
       color: rgba(201, 162, 39, 0.4);
       font-size: 0.9rem;
+    }
+  }
+
+  // Status Icon Row
+  .status-icon-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    background: rgba(10, 12, 16, 0.75);
+    border: 1px solid rgba(201, 162, 39, 0.3);
+
+    .status-row-label {
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: $color-gold-500;
+      letter-spacing: 0.05em;
+    }
+
+    .status-badges-list {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
     }
   }
 

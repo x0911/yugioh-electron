@@ -7,6 +7,7 @@
         'lp-meter--active-turn': isTurn,
         'lp-meter--low-lp': currentLp <= 2000,
         'lp-meter--zero-lp': currentLp <= 0,
+        'lp-meter--damage-flash': isDamagedFlash,
       },
     ]"
   >
@@ -49,7 +50,7 @@
           <span v-if="title" class="player-title" :title="title">{{ title }}</span>
         </div>
 
-        <!-- Huge Oxanium LP Counter -->
+        <!-- Huge Oxanium LP Counter (Tweened Countdown) -->
         <div class="lp-meter__value-row">
           <span class="lp-label">LP</span>
           <span class="lp-value">{{ formattedLp }}</span>
@@ -69,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import { getCharacterPortraitUrl } from '../../utils/media.js';
 
 const props = withDefaults(
@@ -95,23 +96,74 @@ const props = withDefaults(
 );
 
 const avatarFailed = ref(false);
+const displayLp = ref(props.currentLp);
+const isDamagedFlash = ref(false);
+
+let damageFlashTimeout: ReturnType<typeof setTimeout> | null = null;
+let tweenAnimFrame: number | null = null;
 
 function handleAvatarError(): void {
   avatarFailed.value = true;
 }
 
+watch(
+  () => props.currentLp,
+  (newVal, oldVal) => {
+    if (oldVal !== undefined && newVal < oldVal) {
+      // Trigger damage flash on damage taken
+      isDamagedFlash.value = true;
+      if (damageFlashTimeout) clearTimeout(damageFlashTimeout);
+      damageFlashTimeout = setTimeout(() => {
+        isDamagedFlash.value = false;
+      }, 550);
+    }
+
+    // Tween LP counter
+    if (tweenAnimFrame) {
+      cancelAnimationFrame(tweenAnimFrame);
+    }
+    const startLp = displayLp.value;
+    const targetLp = Math.max(0, newVal);
+    const duration = 460;
+    const startTime = performance.now();
+
+    function step(currentTime: number): void {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // Ease out cubic
+      const ease = 1 - Math.pow(1 - progress, 3);
+      displayLp.value = Math.round(startLp + (targetLp - startLp) * ease);
+
+      if (progress < 1) {
+        tweenAnimFrame = requestAnimationFrame(step);
+      } else {
+        displayLp.value = targetLp;
+        tweenAnimFrame = null;
+      }
+    }
+
+    tweenAnimFrame = requestAnimationFrame(step);
+  },
+  { immediate: true },
+);
+
+onUnmounted(() => {
+  if (damageFlashTimeout) clearTimeout(damageFlashTimeout);
+  if (tweenAnimFrame) cancelAnimationFrame(tweenAnimFrame);
+});
+
 const formattedLp = computed(() => {
-  return Math.max(0, props.currentLp).toString();
+  return Math.max(0, displayLp.value).toString();
 });
 
 const lpPercentage = computed(() => {
   const max = props.maxLp > 0 ? props.maxLp : 8000;
-  return Math.min(100, Math.max(0, (props.currentLp / max) * 100));
+  return Math.min(100, Math.max(0, (displayLp.value / max) * 100));
 });
 
 const lpHealthTier = computed(() => {
-  if (props.currentLp > 4000) return 'healthy';
-  if (props.currentLp > 2000) return 'warning';
+  if (displayLp.value > 4000) return 'healthy';
+  if (displayLp.value > 2000) return 'warning';
   return 'critical';
 });
 </script>
@@ -148,6 +200,23 @@ const lpHealthTier = computed(() => {
       box-shadow:
         0 8px 30px rgba(0, 0, 0, 0.8),
         0 0 18px rgba(201, 162, 39, 0.45);
+    }
+  }
+
+  // Damage Flash (Red Pulse & Vibration on Damage Taken)
+  &--damage-flash {
+    animation: lp-damage-shake 0.45s ease-out;
+
+    .lp-meter__panel {
+      border-color: #eb5757 !important;
+      box-shadow:
+        0 0 28px rgba(235, 87, 87, 0.85),
+        inset 0 0 16px rgba(235, 87, 87, 0.4) !important;
+    }
+
+    .lp-value {
+      color: #ff4d4f !important;
+      text-shadow: 0 0 14px rgba(255, 77, 79, 0.95) !important;
     }
   }
 
@@ -351,6 +420,24 @@ const lpHealthTier = computed(() => {
       box-shadow: 0 0 8px rgba(235, 87, 87, 0.6);
       animation: pulse-glow 1.2s infinite;
     }
+  }
+}
+
+@keyframes lp-damage-shake {
+  0% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(1.05) translateY(-3px);
+  }
+  40% {
+    transform: scale(0.96) translateY(2px);
+  }
+  60% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 </style>
