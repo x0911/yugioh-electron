@@ -1,13 +1,19 @@
 @use '../abstracts' as *;
 
+// =============================================================================
+// GlassPanel Component Styles (design-system.md §4, §5.2)
+// =============================================================================
+
 .glass-panel {
   @include glass-panel;
   padding: $space-4;
+  position: relative;
+  transition:
+    box-shadow $duration-component $ease-snappy,
+    border-color $duration-component $ease-snappy;
 
   &--elevated {
-    box-shadow:
-      0 16px 48px rgba(0, 0, 0, 0.6),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    @include glass-panel-elevated;
   }
 
   &--accent-gold {
@@ -16,9 +22,20 @@
 
   &--accent-user {
     border-top: 2px solid $color-user;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.45),
+      0 -2px 12px $color-user-glow;
   }
 
   &--accent-ai {
     border-top: 2px solid $color-ai;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.45),
+      0 -2px 12px $color-ai-glow;
+  }
+
+  &--accent-none {
+    border-top: 1px solid $color-border-glass;
   }
 }
+

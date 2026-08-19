@@ -1,15 +1,125 @@
 @use '../abstracts' as *;
 
-.tooltip {
+// =============================================================================
+// Tooltip Component Styles (design-system.md §5.3)
+// =============================================================================
+
+.yugi-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.yugi-tooltip-bubble {
   position: absolute;
   z-index: $z-popup;
   padding: $space-1 $space-3;
+  font-family: $font-body;
   font-size: $fs-xs;
+  font-weight: 500;
   color: $color-gold-100;
-  background: rgba(10, 12, 16, 0.92);
-  border: 1px solid rgba($color-gold-500, 0.4);
+  background: rgba(10, 12, 16, 0.94);
+  border: 1px solid rgba($color-gold-500, 0.45);
   border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.6),
+    0 0 8px rgba($color-gold-500, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+
+  // Caret Arrow
+  &::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(10, 12, 16, 0.94);
+    border: 1px solid rgba($color-gold-500, 0.45);
+    transform: rotate(45deg);
+  }
+
+  // --- Positions ---
+  &--top {
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+
+    &::before {
+      bottom: -4px;
+      left: calc(50% - 3px);
+      border-top: none;
+      border-left: none;
+    }
+  }
+
+  &--bottom {
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+
+    &::before {
+      top: -4px;
+      left: calc(50% - 3px);
+      border-bottom: none;
+      border-right: none;
+    }
+  }
+
+  &--left {
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+
+    &::before {
+      right: -4px;
+      top: calc(50% - 3px);
+      border-bottom: none;
+      border-left: none;
+    }
+  }
+
+  &--right {
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+
+    &::before {
+      left: -4px;
+      top: calc(50% - 3px);
+      border-top: none;
+      border-right: none;
+    }
+  }
 }
+
+// Tooltip Vue Transition
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition:
+    opacity $duration-tooltip ease,
+    transform $duration-tooltip ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+
+  &.yugi-tooltip-bubble--top {
+    transform: translate(-50%, 4px);
+  }
+
+  &.yugi-tooltip-bubble--bottom {
+    transform: translate(-50%, -4px);
+  }
+
+  &.yugi-tooltip-bubble--left {
+    transform: translate(4px, -50%);
+  }
+
+  &.yugi-tooltip-bubble--right {
+    transform: translate(-4px, -50%);
+  }
+}
+

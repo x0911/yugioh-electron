@@ -1,24 +1,142 @@
 @use '../abstracts' as *;
 
-.icon-badge {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  @include flex-center;
-  background: rgba(18, 22, 30, 0.7);
-  border: 1px solid rgba($color-gold-500, 0.4);
-  font-size: $fs-xs;
-  font-weight: 700;
+// =============================================================================
+// IconIndicator Component Styles (design-system.md §5.5, §7.1, §7.3)
+// =============================================================================
 
+.icon-indicator {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(18, 22, 30, 0.85);
+  border: 1.5px solid rgba($color-gold-500, 0.4);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: $color-gold-300;
+  transition:
+    transform $duration-micro $ease-snappy,
+    box-shadow $duration-micro $ease-snappy,
+    border-color $duration-micro $ease-snappy;
+  user-select: none;
+
+  // --- Sizes ---
+  &--sm {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+
+    svg {
+      width: 13px;
+      height: 13px;
+    }
+  }
+
+  &--md {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  &--lg {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  // --- Player Identity Variants (Locations) ---
   &--user {
     border-color: $color-user;
     color: $color-user;
-    box-shadow: 0 0 10px $color-user-glow;
+    background: rgba(15, 30, 55, 0.9);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.5),
+      0 0 12px $color-user-glow;
+
+    &.icon-indicator--pulsing {
+      animation: pulse-target 1.5s infinite;
+    }
   }
 
   &--ai {
     border-color: $color-ai;
     color: $color-ai;
-    box-shadow: 0 0 10px $color-ai-glow;
+    background: rgba(55, 18, 22, 0.9);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.5),
+      0 0 12px $color-ai-glow;
+
+    &.icon-indicator--pulsing {
+      animation: pulse-target-ai 1.5s infinite;
+    }
+  }
+
+  // --- Status Variants ---
+  &--status {
+    border-color: rgba($color-gold-300, 0.5);
+    color: $color-gold-100;
+    background: rgba(22, 26, 36, 0.92);
+
+    &-negated {
+      border-color: $color-danger;
+      color: $color-danger;
+      box-shadow: 0 0 8px $color-ai-glow;
+    }
+
+    &-no-special-summon {
+      border-color: $color-warning;
+      color: $color-warning;
+      box-shadow: 0 0 8px rgba($color-warning, 0.4);
+    }
+
+    &-temp-banished {
+      border-color: #bb6bd9;
+      color: #bb6bd9;
+      box-shadow: 0 0 8px rgba(187, 107, 217, 0.4);
+    }
+
+    &-fusion-material {
+      border-color: #9b51e0;
+      color: #bb6bd9;
+      box-shadow: 0 0 8px rgba(155, 81, 224, 0.4);
+    }
+
+    &-synchro-material {
+      border-color: #f2f2f2;
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    }
+
+    &-destroyed-battle {
+      border-color: #eb5757;
+      color: #eb5757;
+      box-shadow: 0 0 8px rgba(235, 87, 87, 0.4);
+    }
+
+    &-no-attack {
+      border-color: #f2994a;
+      color: #f2994a;
+      box-shadow: 0 0 8px rgba(242, 153, 74, 0.4);
+    }
+  }
+
+  svg {
+    display: block;
+    fill: currentColor;
   }
 }
+

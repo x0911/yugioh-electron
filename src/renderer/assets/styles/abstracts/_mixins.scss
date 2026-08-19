@@ -1,6 +1,9 @@
 @use 'variables' as *;
 
-// Glassmorphism recipe
+// =============================================================================
+// Glassmorphism Recipe (design-system.md §4)
+// =============================================================================
+
 @mixin glass-panel($tint: $color-bg-panel, $border: $color-border-glass, $blur: 18px) {
   background: $tint;
   backdrop-filter: blur($blur) saturate(140%);
@@ -12,19 +15,84 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-// Gold Glow & Foil effect
-@mixin gold-glow($color: $color-gold-500, $intensity: 0.5) {
-  box-shadow: 0 0 16px rgba($color, $intensity);
+@mixin glass-panel-elevated($tint: $color-bg-panel, $border: $color-border-glass, $blur: 24px) {
+  @include glass-panel($tint, $border, $blur);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-// Flex Center shortcut
+// =============================================================================
+// Glows & Lighting
+// =============================================================================
+
+@mixin gold-glow($color: $color-gold-500, $intensity: 0.45, $spread: 16px) {
+  box-shadow: 0 0 $spread rgba($color, $intensity);
+}
+
+@mixin user-glow($intensity: 0.55, $spread: 16px) {
+  box-shadow: 0 0 $spread rgba($color-user, $intensity);
+}
+
+@mixin ai-glow($intensity: 0.55, $spread: 16px) {
+  box-shadow: 0 0 $spread rgba($color-ai, $intensity);
+}
+
+@mixin text-glow($color: $color-gold-500, $radius: 12px) {
+  text-shadow: 0 0 $radius rgba($color, 0.45);
+}
+
+// =============================================================================
+// Accessibility Focus Ring (design-system.md §5.1, §11)
+// =============================================================================
+
+@mixin focus-ring {
+  outline: 2px solid $color-info;
+  outline-offset: 2px;
+}
+
+// =============================================================================
+// Foil Light Sweep Effect (design-system.md §5.1)
+// =============================================================================
+
+@mixin foil-sweep-overlay {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(244, 228, 184, 0.08) 25%,
+    rgba(201, 162, 39, 0.28) 45%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(201, 162, 39, 0.28) 55%,
+    rgba(244, 228, 184, 0.08) 75%,
+    transparent 100%
+  );
+  background-size: 250% 250%;
+  opacity: 0;
+  transition: opacity $duration-component $ease-snappy;
+}
+
+// =============================================================================
+// Layout Helpers
+// =============================================================================
+
 @mixin flex-center {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-// Responsive / Media query helper
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// Responsive Helper
 @mixin desktop-only {
   @media (min-width: 1280px) {
     @content;

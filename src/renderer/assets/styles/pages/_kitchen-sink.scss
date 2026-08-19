@@ -1,0 +1,87 @@
+@use '../abstracts' as *;
+
+// =============================================================================
+// Kitchen Sink Dev Showcase Styles
+// =============================================================================
+
+.kitchen-sink-view {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: $space-6 $space-8;
+  color: $color-text-primary;
+
+  &__header {
+    margin-bottom: $space-6;
+    border-bottom: 1px solid rgba($color-gold-500, 0.3);
+    padding-bottom: $space-4;
+  }
+
+  &__title {
+    font-size: $fs-2xl;
+    margin-bottom: $space-1;
+  }
+
+  &__subtitle {
+    color: $color-text-secondary;
+    font-size: $fs-base;
+  }
+
+  &__grid {
+    display: flex;
+    flex-direction: column;
+    gap: $space-8;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+  }
+
+  &__section-title {
+    font-size: $fs-xl;
+    color: $color-gold-300;
+    border-left: 3px solid $color-gold-500;
+    padding-left: $space-3;
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $space-4;
+  }
+
+  &__card-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-5;
+  }
+
+  &__color-swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: $space-3;
+  }
+
+  &__swatch {
+    padding: $space-3;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    font-size: $fs-xs;
+  }
+
+  &__swatch-name {
+    font-weight: 600;
+    font-family: $font-mono;
+  }
+
+  &__swatch-hex {
+    opacity: 0.8;
+    font-family: $font-mono;
+  }
+}
