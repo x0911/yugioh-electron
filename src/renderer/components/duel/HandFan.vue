@@ -209,10 +209,10 @@ function onCardClick(card: FieldCard): void {
       }
     }
 
-    // User Draw & Shift Animations (Originate from User Deck Zone on top-right)
+    // User Draw & Shift Animations (Originate precisely from User Main Deck Zone)
     .hand-card-anim-enter-from {
       opacity: 0;
-      transform: translate(260px, -150px) scale(0.65) rotate(-14deg);
+      transform: translate(170px, -135px) scale(0.65) rotate(-10deg);
     }
 
     .hand-card-anim-leave-to {
@@ -241,10 +241,10 @@ function onCardClick(card: FieldCard): void {
       }
     }
 
-    // AI Draw & Shift Animations (Originate from Opponent Deck Zone on bottom-left)
+    // AI Draw & Shift Animations (Originate precisely from Opponent Main Deck Zone)
     .hand-card-anim-enter-from {
       opacity: 0;
-      transform: translate(-260px, 150px) scale(0.65) rotate(14deg);
+      transform: translate(-490px, 135px) scale(0.65) rotate(12deg);
     }
 
     .hand-card-anim-leave-to {
