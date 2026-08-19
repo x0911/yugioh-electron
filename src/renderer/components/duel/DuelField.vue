@@ -40,6 +40,7 @@
           player="ai"
           :count="opponentState.deckCount"
           label="DECK"
+          class="deck-stack--ai-deck"
           @hover-card="$emit('hover-card', $event)"
         />
 
@@ -269,6 +270,7 @@
           player="user"
           :count="userState.deckCount"
           label="DECK"
+          class="deck-stack--user-deck"
           @hover-card="$emit('hover-card', $event)"
         />
 
