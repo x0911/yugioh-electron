@@ -1,6 +1,7 @@
 <template>
   <div
     class="hand-row"
+    :data-hand-fan-id="`hand-${player}-fan`"
     :class="[
       `hand-row--${player}`,
       {
@@ -29,6 +30,7 @@
         v-for="(card, idx) in cards"
         :key="card.id || `${player}-${card.code}-${idx}`"
         class="hand-card-slot"
+        :data-hand-card-id="`hand-${player}-${card.sequence ?? idx}`"
         :class="{
           'hand-card-slot--selectable': getCardTarget(card, idx)?.isSelectable,
           'hand-card-slot--selected': getCardTarget(card, idx)?.isSelected,

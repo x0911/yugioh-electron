@@ -1,6 +1,7 @@
 <template>
   <div
     class="deck-stack"
+    :data-stack-id="`stack-${player}-${type}`"
     :class="[
       `deck-stack--${type}`,
       `deck-stack--${player}`,

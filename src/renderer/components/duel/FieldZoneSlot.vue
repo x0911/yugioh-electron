@@ -1,6 +1,7 @@
 <template>
   <div
     class="field-zone-slot"
+    :data-zone-id="`slot-${player}-${zoneType}-${zoneIndex}`"
     :class="[
       `field-zone-slot--${player}`,
       `field-zone-slot--${zoneType}`,

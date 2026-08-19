@@ -9,4 +9,6 @@ export { default as DuelMenuModal } from './DuelMenuModal.vue';
 export { default as DuelLogPanel } from './DuelLogPanel.vue';
 export { default as CardActionMenu } from './CardActionMenu.vue';
 export { default as PromptModal } from './PromptModal.vue';
+export { default as CardAnimationOverlay } from './CardAnimationOverlay.vue';
+
 

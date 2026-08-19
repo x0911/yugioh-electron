@@ -9,6 +9,9 @@
 
     <!-- 16:9 Letterboxed Arena Canvas -->
     <main class="duel-canvas-16-9">
+      <!-- 0. Top-Level Spatial 3D Card Animation Overlay -->
+      <CardAnimationOverlay />
+
       <!-- 1. Top HUD Bar with Live Phases and Action Triggers -->
       <DuelHud
         :turn-number="currentBoardState.turnNumber"
@@ -283,7 +286,17 @@ import {
   DuelLogPanel,
   CardActionMenu,
   PromptModal,
+  CardAnimationOverlay,
 } from '../components/duel/index.js';
+import {
+  duelAnimationQueue,
+  playCardFlight,
+  getZoneRect,
+  getHandCardRect,
+  getHandFanRect,
+  getStackRect,
+  getAvatarRect,
+} from '../utils/animationService.js';
 
 interface LogItem {
   time: string;
@@ -558,9 +571,123 @@ let unsubscribeEvents: (() => void) | null = null;
 
 async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
   appendLog(event.type, event.description);
-  if (!isMockMode.value) {
+  if (isMockMode.value) return;
+
+  await duelAnimationQueue.enqueue(async () => {
+    // 1. Draw from Deck -> Hand
+    if (event.type === 'DRAW' && event.player !== undefined) {
+      const isHuman = event.player === duelStore.userPlayerId;
+      const fromRect = getStackRect(event.player as 0 | 1, 'deck');
+      const toRect = getHandFanRect(event.player as 0 | 1);
+      const drawnCode = (event as any).drawn?.[0]?.code || event.code || 0;
+      await playCardFlight({
+        code: isHuman ? drawnCode : 0,
+        cardName: event.cardName || 'Card Drawn',
+        fromRect,
+        toRect,
+        type: 'draw',
+        isFacedown: !isHuman,
+        durationMs: 420,
+      });
+    }
+    // 2. Normal or Special Summon
+    else if ((event.type === 'SUMMONING' || event.type === 'SPSUMMONING') && event.controller !== undefined) {
+      const p = event.controller as 0 | 1;
+      const seq = event.sequence ?? 0;
+      const fromRect = getHandCardRect(p, seq) || getHandFanRect(p);
+      const toRect = getZoneRect(p, 'monster', seq);
+      await playCardFlight({
+        code: event.code || 0,
+        cardName: event.cardName,
+        fromRect,
+        toRect,
+        type: 'summon',
+        isFacedown: false,
+        isDefense: false,
+        durationMs: 480,
+      });
+    }
+    // 3. Set Card (Facedown)
+    else if (event.type === 'SET' && event.controller !== undefined) {
+      const p = event.controller as 0 | 1;
+      const seq = event.sequence ?? 0;
+      const isSpell = event.location === 8;
+      const fromRect = getHandCardRect(p, seq) || getHandFanRect(p);
+      const toRect = getZoneRect(p, isSpell ? 'spell-trap' : 'monster', seq);
+      await playCardFlight({
+        code: event.code || 0,
+        cardName: event.cardName,
+        fromRect,
+        toRect,
+        type: isSpell ? 'set-spell' : 'set-monster',
+        isFacedown: true,
+        isDefense: !isSpell,
+        durationMs: 480,
+      });
+    }
+    // 4. Card Move (Destroy to GY, Discard, Banish)
+    else if (event.type === 'MOVE') {
+      const moveEvt = event as any;
+      const p = moveEvt.controller as 0 | 1;
+      const fromLoc = moveEvt.fromLocation;
+      const fromSeq = moveEvt.fromSequence ?? 0;
+      const toLoc = moveEvt.toLocation;
+
+      if (toLoc === 16) {
+        // Graveyard
+        const fromRect =
+          fromLoc === 2
+            ? getHandCardRect(p, fromSeq) || getHandFanRect(p)
+            : getZoneRect(p, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
+        const toRect = getStackRect(p, 'graveyard');
+        await playCardFlight({
+          code: moveEvt.code || 0,
+          cardName: moveEvt.cardName,
+          fromRect,
+          toRect,
+          type: fromLoc === 2 ? 'discard' : 'destroy-gy',
+          durationMs: 440,
+        });
+      } else if (toLoc === 32) {
+        // Banished
+        const fromRect =
+          fromLoc === 2
+            ? getHandCardRect(p, fromSeq) || getHandFanRect(p)
+            : getZoneRect(p, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
+        const toRect = getStackRect(p, 'banished');
+        await playCardFlight({
+          code: moveEvt.code || 0,
+          cardName: moveEvt.cardName,
+          fromRect,
+          toRect,
+          type: 'banish',
+          durationMs: 440,
+        });
+      }
+    }
+    // 5. Attack Declaration & Surge
+    else if (event.type === 'ATTACK') {
+      const atkEvt = event as any;
+      const p = (atkEvt.controller ?? (duelStore.boardState.userField.isTurn ? duelStore.userPlayerId : duelStore.opponentPlayerId)) as 0 | 1;
+      const opp = (p === duelStore.userPlayerId ? duelStore.opponentPlayerId : duelStore.userPlayerId) as 0 | 1;
+      const seq = atkEvt.sequence ?? 0;
+      const fromRect = getZoneRect(p, 'monster', seq);
+      const toRect = atkEvt.target
+        ? getZoneRect(atkEvt.target.controller, 'monster', atkEvt.target.sequence)
+        : getAvatarRect(opp);
+      await playCardFlight({
+        code: atkEvt.code || 0,
+        cardName: 'Attack Surge',
+        fromRect,
+        toRect,
+        type: 'attack',
+        durationMs: 380,
+      });
+    }
+
+    // Update store
     await duelStore.handleEngineEvent(event);
-  }
+  });
 }
 
 onMounted(async () => {
