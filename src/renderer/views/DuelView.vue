@@ -20,9 +20,9 @@
         :guide-text="currentBoardState.phaseGuideText"
         :guide-info="actionGuideInfo"
         :is-duel-log-open="isDuelLogOpen"
-        :can-go-to-battle-phase="!isMockMode && duelStore.canGoToBattlePhase"
-        :can-go-to-main-phase2="!isMockMode && duelStore.canGoToMainPhase2"
-        :can-end-turn="!isMockMode && duelStore.canEndTurn"
+        :can-go-to-battle-phase="duelStore.canGoToBattlePhase"
+        :can-go-to-main-phase2="duelStore.canGoToMainPhase2"
+        :can-end-turn="duelStore.canEndTurn"
         @open-menu="isMenuOpen = true"
         @toggle-log="isDuelLogOpen = !isDuelLogOpen"
         @to-battle-phase="duelStore.executeToBattlePhase"
@@ -220,53 +220,8 @@
       @clear="duelLogs = []"
     />
 
-    <!-- Floating Dev QA Toolbar -->
+    <!-- Floating Duel Tools -->
     <aside class="dev-floating-controls">
-      <button
-        class="dev-pill-btn"
-        :class="{ 'dev-pill-btn--active': isMockMode }"
-        title="Toggle Static Mock State vs Live Engine"
-        @click="toggleMode"
-      >
-        <span>{{ isMockMode ? '🧪 MOCK FIELD' : '⚙️ LIVE ENGINE' }}</span>
-      </button>
-
-      <button
-        v-if="isMockMode"
-        class="dev-pill-btn"
-        title="Draw 1 extra card into hand (test up to 10+ cards)"
-        @click="drawMockCard"
-      >
-        <span>🃏 +Draw Card</span>
-      </button>
-
-      <button
-        v-if="isMockMode && mockBoardState.userField.hand.length !== 5"
-        class="dev-pill-btn"
-        title="Reset Hand to 5 cards"
-        @click="resetMockHand"
-      >
-        <span>↩ Reset Hand</span>
-      </button>
-
-      <button
-        v-if="isMockMode"
-        class="dev-pill-btn"
-        title="Cycle Monster Battle Positions for QA"
-        @click="cycleMockPositions"
-      >
-        <span>🔄 Cycle Positions</span>
-      </button>
-
-      <button
-        v-if="!isMockMode"
-        class="dev-pill-btn"
-        title="Step Live Engine Turn"
-        @click="stepLiveDuel"
-      >
-        <span>⏩ Step</span>
-      </button>
-
       <button
         class="dev-pill-btn"
         title="Toggle Duel Log Drawer"
@@ -279,11 +234,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { FieldCard, DuelBoardState } from '../../shared/types/field.js';
 import type { DuelEventPayload } from '../../shared/types/duel.js';
-import { createMockDuelState } from '../utils/mockDuelState.js';
 import { getBackgroundUrl } from '../utils/media.js';
 import { useDuelStore, type CardActionOption, type TargetInfo } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
@@ -331,7 +285,6 @@ const settingsStore = useSettingsStore();
 // Modals and Drawers
 const isMenuOpen = ref(false);
 const isDuelLogOpen = ref(false);
-const isMockMode = ref(false); // Default to live engine mode for Phase 10!
 const isInspectModalOpen = ref(false);
 const activeInspectStack = ref<InspectStackState | null>(null);
 
@@ -377,13 +330,8 @@ const activeMenuCard = ref<FieldCard | null>(null);
 const activeCardActions = ref<CardActionOption[]>([]);
 const menuAnchorPos = ref<{ x: number; y: number } | null>(null);
 
-// Mock Board State for testing fallback
-const mockBoardState = reactive<DuelBoardState>(createMockDuelState());
-
 // Reactive board state selector
-const currentBoardState = computed<DuelBoardState>(() => {
-  return isMockMode.value ? mockBoardState : duelStore.boardState;
-});
+const currentBoardState = computed<DuelBoardState>(() => duelStore.boardState);
 
 const isUserWinner = computed(() => {
   return duelStore.boardState.winner === duelStore.userPlayerId;
@@ -429,22 +377,8 @@ function appendLog(type: string, description: string): void {
   });
 }
 
-function toggleMode(): void {
-  isMockMode.value = !isMockMode.value;
-  if (isMockMode.value) {
-    Object.assign(mockBoardState, createMockDuelState());
-    appendLog('MODE', 'Switched to Static Mock Field State.');
-  } else {
-    appendLog('MODE', 'Switched to Live Engine Duel State.');
-  }
-}
-
 function onHandCardClick(card: FieldCard, event: MouseEvent): void {
   hoveredCard.value = card;
-  if (isMockMode.value) {
-    appendLog('SELECT', `Selected hand card: ${card.name}`);
-    return;
-  }
 
   // If there is an active selection prompt (e.g. Cost discard or hand cleanup)
   if (duelStore.hasActiveSelectionPrompt) {
@@ -471,11 +405,6 @@ function onFieldCardClick(card: FieldCard | null, event?: MouseEvent): void {
     return;
   }
   hoveredCard.value = card;
-
-  if (isMockMode.value) {
-    appendLog('SELECT', `Selected field card: ${card.name} (${card.position})`);
-    return;
-  }
 
   // If there is an active selection prompt (e.g. Target selection or Tribute)
   if (duelStore.hasActiveSelectionPrompt) {
@@ -541,75 +470,11 @@ function closeCardActionMenu(): void {
   menuAnchorPos.value = null;
 }
 
-function drawMockCard(): void {
-  const sample = {
-    code: 55144522,
-    name: 'Pot of Greed',
-    controller: 0 as const,
-    location: 'hand' as const,
-    position: 'faceup_spell' as const,
-  };
-  const newCard: FieldCard = {
-    ...sample,
-    id: `hand-extra-${Date.now()}-${mockBoardState.userField.hand.length}`,
-    sequence: mockBoardState.userField.hand.length,
-  };
-  mockBoardState.userField.hand.push(newCard);
-  mockBoardState.opponentField.hand.push({
-    id: `hand-ai-extra-${Date.now()}`,
-    code: 0,
-    name: 'Hidden Card',
-    controller: 1,
-    location: 'hand',
-    sequence: mockBoardState.opponentField.hand.length,
-    position: 'facedown_spell',
-  });
-  appendLog('DRAW', `Drew "${newCard.name}". Hand size: ${mockBoardState.userField.hand.length} cards.`);
-}
-
-function resetMockHand(): void {
-  const fresh = createMockDuelState();
-  mockBoardState.userField.hand = fresh.userField.hand;
-  mockBoardState.opponentField.hand = fresh.opponentField.hand;
-  appendLog('HAND', 'Reset hand size to default 5 cards.');
-}
-
-function cycleMockPositions(): void {
-  const dm = mockBoardState.userField.monsterZones[0];
-  if (dm) {
-    if (dm.position === 'faceup_attack') {
-      dm.position = 'faceup_defense';
-      appendLog('POSITION', 'Shifted to Face-up Defense Position.');
-    } else if (dm.position === 'faceup_defense') {
-      dm.position = 'facedown_defense';
-      appendLog('POSITION', 'Shifted to Face-down Defense (Set) Position.');
-    } else {
-      dm.position = 'faceup_attack';
-      appendLog('POSITION', 'Shifted to Face-up Attack Position.');
-    }
-  }
-}
-
-async function stepLiveDuel(): Promise<void> {
-  if (window.duelAPI) {
-    try {
-      await window.duelAPI.step();
-    } catch (err) {
-      appendLog('ERROR', `Step failed: ${err}`);
-    }
-  }
-}
-
 async function onRestartMatch(): Promise<void> {
   isMenuOpen.value = false;
   closeCardActionMenu();
-  if (isMockMode.value) {
-    Object.assign(mockBoardState, createMockDuelState());
-    appendLog('RESTART', 'Match restarted with fresh mock field.');
-  } else {
-    appendLog('RESTART', 'Restarting live duel...');
-    await duelStore.startPreparedDuel();
-  }
+  appendLog('RESTART', 'Restarting live duel...');
+  await duelStore.startPreparedDuel();
 }
 
 function onSurrender(): void {
@@ -627,7 +492,6 @@ let unsubscribeEvents: (() => void) | null = null;
 
 async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
   appendLog(event.type, event.description);
-  if (isMockMode.value) return;
 
   await duelAnimationQueue.enqueue(async () => {
     // 1. Draw from Deck -> Hand
