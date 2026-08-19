@@ -933,13 +933,40 @@
 - `src/renderer/components/duel/PromptModal.vue`: Removed card selection & tribute overlays in favor of on-field/in-hand selection with bottom banner.
 - `tests/guidance-targeting.test.ts`: Added Test 6 verifying *The Flute of Summoning Dragon* prompt translation.
 
+---
+
+## 2026-08-20 — Spell Activation Animation Sequence, Exit Menu Routing, and Single-Dialog Audit
+
+**What was done:**
+- **Single-Dialog Auditing Across All Actions**:
+  - Audited all decision points, prompts, and modal triggers (`PromptModal.vue`, `CardActionMenu.vue`, `CardListModal.vue`, `DuelMenuModal.vue`, and `target-confirmation-bar`).
+  - Completely decoupled card selection and tribute selection from modal overlays, ensuring only the bottom sheet / target confirmation bar is shown.
+  - Cleaned up `PromptModal.vue` props and emits so only genuine modal choices (Battle Position, Chain Window, Optional Effect Yes/No, and Option Lists) trigger dialogs.
+- **Global 4-Step Spell & Card Activation Sequence**:
+  - Configured `handleLiveDuelEvent` in `DuelView.vue` and `animationService.ts` with `'spell-activate'` flight support.
+  - When activating a Spell (e.g. *Pot of Greed*, *Raigeki*, *Dark Hole*, *Polymerization*), the animation sequence strictly executes in 4 non-overlapping FIFO steps:
+    1. Card flies smoothly from Hand to the Spell/Trap Zone (`spell-activate`, 480ms).
+    2. Spell activation pulse / pacing occurs on the field (`CHAINING`, 400ms).
+    3. Effect resolution executes (e.g. 2 cards drawn sequentially from Deck to Hand for *Pot of Greed*, or monsters destroyed to GY for *Raigeki*).
+    4. Card flies from the Spell/Trap Zone to Graveyard (`destroy-gy`, 440ms).
+- **Fixed "Exit to Menu" Leading to Empty Screen**:
+  - In `DuelView.vue`, updated `returnToCharacters()` and `onSurrender()` to navigate to `router.push('/main-menu')`.
+  - In `router/index.ts`, added `{ path: '/characters', redirect: '/main-menu' }` fallback redirect.
+
+**Files created/modified:**
+- `src/renderer/views/DuelView.vue`: Handled `spell-activate` movement, `CHAINING` pacing, streamlined `PromptModal`, and fixed exit menu routing.
+- `src/renderer/utils/animationService.ts`: Added `'spell-activate'` to `AnimationType`.
+- `src/renderer/components/duel/PromptModal.vue`: Cleaned up props and emits.
+- `src/renderer/router/index.ts`: Added `/characters` -> `/main-menu` redirect.
+- `tests/hand-and-pacing.test.ts`: Added Test 4 verifying the 4-step Spell Activation & Resolution sequence.
+
 **How to manually verify this phase:**
 1. Run `npm test` to verify all 4 test suites pass.
-2. In a duel, activate *The Flute of Summoning Dragon*:
-   - Verify NO modal dialog covers the field.
-   - Verify the bottom action banner displays: `"Card Effect: Select up to 2 card(s) from your hand to proceed."`
-   - Verify eligible Dragon monsters in your hand have target indicators and can be clicked directly in hand.
-   - Verify you can confirm 0 dragons or up to 2 dragons.
+2. Run `npm run typecheck` and `npm run build` to verify clean build.
+3. In a duel:
+   - Activate *Pot of Greed*: Observe the exact sequence: *Pot of Greed* flies from Hand to Field spot -> Activates -> 2 cards fly from Deck to Hand -> *Pot of Greed* flies from Field to Graveyard.
+   - Finish a duel and click "Exit to Menu": Verify it smoothly transitions to the Main Menu Arena screen without a blank screen.
+
 
 
 
