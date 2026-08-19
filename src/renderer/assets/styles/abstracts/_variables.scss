@@ -65,11 +65,15 @@ $space-6: 32px;
 $space-7: 48px;
 $space-8: 64px;
 
-// Transitions & Motion
+// Transitions & Motion (design-system.md §8)
 $ease-snappy: cubic-bezier(0.22, 1, 0.36, 1);
 $duration-micro: 140ms;
+$duration-tooltip: 120ms;
 $duration-component: 260ms;
 $duration-screen: 450ms;
+$duration-card-move: 400ms;
+$duration-card-flip: 240ms;
+
 
 // Z-index hierarchy
 $z-bg: 0;

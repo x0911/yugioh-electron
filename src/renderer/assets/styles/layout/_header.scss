@@ -49,5 +49,12 @@
       border-color: $color-gold-500;
       font-weight: 600;
     }
+
+    &--highlight {
+      border-color: rgba($color-gold-500, 0.6);
+      color: $color-gold-300;
+      background: rgba($color-gold-900, 0.4);
+    }
   }
 }
+
