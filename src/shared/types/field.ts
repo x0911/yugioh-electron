@@ -60,6 +60,7 @@ export interface PlayerFieldState {
   fieldZone: FieldCard | null; // 1 slot
   graveyard: FieldCard[]; // Stack of cards
   banished: FieldCard[]; // Stack of cards
+  extraDeck: FieldCard[]; // Stack of cards in extra deck
   deckCount: number; // Count of cards in deck
   extraDeckCount: number; // Count of cards in extra deck
   hand: FieldCard[]; // Cards in hand

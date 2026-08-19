@@ -36,6 +36,8 @@ export interface EngineInitStatus {
 export interface DuelOptions {
   player0Deck: number[];
   player1Deck: number[];
+  player0ExtraDeck?: number[];
+  player1ExtraDeck?: number[];
   startingLP?: number;
   startingDrawCount?: number;
   drawCountPerTurn?: number;
@@ -115,6 +117,7 @@ export class DuelEngineService {
       fieldZone: null,
       graveyard: [],
       banished: [],
+      extraDeck: [],
       deckCount: 40,
       extraDeckCount: 0,
       hand: [],
@@ -277,6 +280,54 @@ export class DuelEngineService {
       });
     }
 
+    if (options.player0ExtraDeck) {
+      for (const code of options.player0ExtraDeck) {
+        this.lib.duelNewCard(handle, {
+          team: 0,
+          duelist: 0,
+          code,
+          controller: 0,
+          location: OcgLocation.EXTRA,
+          sequence: 0,
+          position: OcgPosition.FACEDOWN,
+        });
+        this.player0Field.extraDeck.push({
+          id: `extra-0-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          code,
+          name: this.cardReader.getCardName(code),
+          controller: 0,
+          location: 'extra-deck',
+          sequence: this.player0Field.extraDeck.length,
+          position: 'facedown_spell',
+        });
+      }
+      this.player0Field.extraDeckCount = this.player0Field.extraDeck.length;
+    }
+
+    if (options.player1ExtraDeck) {
+      for (const code of options.player1ExtraDeck) {
+        this.lib.duelNewCard(handle, {
+          team: 1,
+          duelist: 0,
+          code,
+          controller: 1,
+          location: OcgLocation.EXTRA,
+          sequence: 0,
+          position: OcgPosition.FACEDOWN,
+        });
+        this.player1Field.extraDeck.push({
+          id: `extra-1-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          code,
+          name: this.cardReader.getCardName(code),
+          controller: 1,
+          location: 'extra-deck',
+          sequence: this.player1Field.extraDeck.length,
+          position: 'facedown_spell',
+        });
+      }
+      this.player1Field.extraDeckCount = this.player1Field.extraDeck.length;
+    }
+
     this.lib.startDuel(handle);
 
     // Run initial processing step
@@ -364,6 +415,12 @@ export class DuelEngineService {
       } else if (from.location === OcgLocation.REMOVED) {
         const idx = fromPf.banished.findIndex((c) => c.code === code);
         if (idx >= 0) movedCard = fromPf.banished.splice(idx, 1)[0];
+      } else if (from.location === OcgLocation.EXTRA) {
+        const idx = code > 0 ? fromPf.extraDeck.findIndex((c) => c.code === code) : from.sequence;
+        if (idx >= 0 && idx < fromPf.extraDeck.length) {
+          movedCard = fromPf.extraDeck.splice(idx, 1)[0];
+        }
+        fromPf.extraDeckCount = fromPf.extraDeck.length;
       }
     }
 
@@ -428,6 +485,12 @@ export class DuelEngineService {
         movedCard.sequence = toPf.banished.length;
         movedCard.position = 'faceup_spell';
         toPf.banished.unshift(movedCard);
+      } else if (to.location === OcgLocation.EXTRA) {
+        movedCard.location = 'extra-deck';
+        movedCard.sequence = toPf.extraDeck.length;
+        movedCard.position = 'facedown_spell';
+        toPf.extraDeck.unshift(movedCard);
+        toPf.extraDeckCount = toPf.extraDeck.length;
       }
     }
   }

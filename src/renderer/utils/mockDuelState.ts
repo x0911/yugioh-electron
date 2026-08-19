@@ -246,6 +246,99 @@ export function createMockDuelState(): DuelBoardState {
   // Opponent Banished (0 cards)
   const opponentBanished: FieldCard[] = [];
 
+  // User Extra Deck (3 Fusion Cards)
+  const userExtraDeck: FieldCard[] = [
+    {
+      id: 'ex-u-1',
+      code: 45231177,
+      name: 'Flame Swordsman',
+      controller: 0,
+      location: 'extra-deck',
+      sequence: 0,
+      position: 'facedown_spell',
+      atk: 1800,
+      def: 1600,
+      baseAtk: 1800,
+      baseDef: 1600,
+      level: 5,
+      attribute: 'FIRE',
+      race: 'Warrior',
+      description: '"Flame Manipulator" + "Masaki the Legendary Swordsman"',
+    },
+    {
+      id: 'ex-u-2',
+      code: 41462083,
+      name: 'Thousand Dragon',
+      controller: 0,
+      location: 'extra-deck',
+      sequence: 1,
+      position: 'facedown_spell',
+      atk: 2400,
+      def: 2000,
+      baseAtk: 2400,
+      baseDef: 2000,
+      level: 7,
+      attribute: 'WIND',
+      race: 'Dragon',
+      description: '"Time Wizard" + "Baby Dragon"',
+    },
+    {
+      id: 'ex-u-3',
+      code: 98502113,
+      name: 'Dark Paladin',
+      controller: 0,
+      location: 'extra-deck',
+      sequence: 2,
+      position: 'facedown_spell',
+      atk: 2900,
+      def: 2400,
+      baseAtk: 2900,
+      baseDef: 2400,
+      level: 8,
+      attribute: 'DARK',
+      race: 'Spellcaster',
+      description: '"Dark Magician" + "Buster Blader"\nMust be Fusion Summoned. When a Spell Card is activated (Quick Effect): You can discard 1 card; negate the activation, and if you do, destroy it. Gains 500 ATK for each Dragon monster on the field or in the GY.',
+    },
+  ];
+
+  // Opponent Extra Deck (2 Fusion Cards)
+  const opponentExtraDeck: FieldCard[] = [
+    {
+      id: 'ex-ai-1',
+      code: 23995346,
+      name: 'Blue-Eyes Ultimate Dragon',
+      controller: 1,
+      location: 'extra-deck',
+      sequence: 0,
+      position: 'facedown_spell',
+      atk: 4500,
+      def: 3800,
+      baseAtk: 4500,
+      baseDef: 3800,
+      level: 12,
+      attribute: 'LIGHT',
+      race: 'Dragon',
+      description: '"Blue-Eyes White Dragon" + "Blue-Eyes White Dragon" + "Blue-Eyes White Dragon"',
+    },
+    {
+      id: 'ex-ai-2',
+      code: 62873545,
+      name: 'Dragon Master Knight',
+      controller: 1,
+      location: 'extra-deck',
+      sequence: 1,
+      position: 'facedown_spell',
+      atk: 5000,
+      def: 5000,
+      baseAtk: 5000,
+      baseDef: 5000,
+      level: 12,
+      attribute: 'LIGHT',
+      race: 'Dragon',
+      description: '"Black Luster Soldier" + "Blue-Eyes Ultimate Dragon"\nMust be Fusion Summoned. Gains 500 ATK for each Dragon monster you control, except this card.',
+    },
+  ];
+
   return {
     userField: {
       playerId: 0,
@@ -371,8 +464,9 @@ export function createMockDuelState(): DuelBoardState {
 
       graveyard: userGraveyard,
       banished: userBanished,
+      extraDeck: userExtraDeck,
       deckCount: 34,
-      extraDeckCount: 3,
+      extraDeckCount: userExtraDeck.length,
       hand: userHand,
     },
 
@@ -405,7 +499,7 @@ export function createMockDuelState(): DuelBoardState {
           level: 8,
           attribute: 'LIGHT',
           race: 'Dragon',
-          description: 'This legendary dragon is a powerful engine of destruction. Virtually invincible, very few have faced this awesome beast and lived to tell the tale.',
+          description: 'This legendary dragon is a powerful engine of destruction. Virtually invincible, very few have faced this awesome creature and lived to tell the tale.',
         },
         // Zone 1: Vorse Raider (Face-up Attack)
         {
@@ -491,8 +585,9 @@ export function createMockDuelState(): DuelBoardState {
 
       graveyard: opponentGraveyard,
       banished: opponentBanished,
+      extraDeck: opponentExtraDeck,
       deckCount: 35,
-      extraDeckCount: 2,
+      extraDeckCount: opponentExtraDeck.length,
       hand: opponentHand,
     },
 

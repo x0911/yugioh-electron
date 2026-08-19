@@ -46,6 +46,8 @@ export interface DuelFieldState {
 export interface DuelInitOptions {
   player0Deck: number[];
   player1Deck: number[];
+  player0ExtraDeck?: number[];
+  player1ExtraDeck?: number[];
   startingLP?: number;
   startingDrawCount?: number;
   drawCountPerTurn?: number;

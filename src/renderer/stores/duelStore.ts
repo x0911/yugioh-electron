@@ -45,6 +45,15 @@ const DEFAULT_USER_MAIN_DECK = [
   24068492, 24068492, // Just Desserts x2
 ];
 
+// Default Extra Deck (Fusion Monsters)
+const DEFAULT_USER_EXTRA_DECK = [
+  45231177, // Flame Swordsman
+  41462083, // Thousand Dragon
+  66889139, // Gaia the Dragon Champion
+  98502113, // Dark Paladin
+  11901678, // B. Skull Dragon
+];
+
 export interface CardActionOption {
   type: 'summon' | 'sp_summon' | 'monster_set' | 'spell_set' | 'activate' | 'pos_change' | 'attack';
   index: number;
@@ -110,6 +119,7 @@ function createEmptyPlayerField(playerId: 0 | 1, name: string): PlayerFieldState
     fieldZone: null,
     graveyard: [],
     banished: [],
+    extraDeck: [],
     deckCount: 40,
     extraDeckCount: 0,
     hand: [],
@@ -311,22 +321,38 @@ export const useDuelStore = defineStore('duel', {
           ? this.selectedUserDeck.main
           : DEFAULT_USER_MAIN_DECK;
 
+      const userExtraCards =
+        this.selectedUserDeck && this.selectedUserDeck.extra && this.selectedUserDeck.extra.length > 0
+          ? this.selectedUserDeck.extra
+          : DEFAULT_USER_EXTRA_DECK;
+
       const opponentMainCards =
         this.selectedOpponentDeck && this.selectedOpponentDeck.mainCards.length >= 40
           ? this.selectedOpponentDeck.mainCards
           : DEFAULT_USER_MAIN_DECK;
 
+      const opponentExtraCards =
+        this.selectedOpponentDeck && this.selectedOpponentDeck.extraCards
+          ? this.selectedOpponentDeck.extraCards
+          : [];
+
       let p0Deck: number[];
       let p1Deck: number[];
+      let p0ExtraDeck: number[];
+      let p1ExtraDeck: number[];
       let humanPlayerId: number;
 
       if (this.startingPlayer === 'user') {
         p0Deck = userMainCards;
         p1Deck = opponentMainCards;
+        p0ExtraDeck = userExtraCards;
+        p1ExtraDeck = opponentExtraCards;
         humanPlayerId = 0;
       } else {
         p0Deck = opponentMainCards;
         p1Deck = userMainCards;
+        p0ExtraDeck = opponentExtraCards;
+        p1ExtraDeck = userExtraCards;
         humanPlayerId = 1;
       }
 
@@ -354,10 +380,14 @@ export const useDuelStore = defineStore('duel', {
         try {
           const p0Plain = Array.from(p0Deck).map((c) => Number(c));
           const p1Plain = Array.from(p1Deck).map((c) => Number(c));
+          const p0ExtraPlain = Array.from(p0ExtraDeck).map((c) => Number(c));
+          const p1ExtraPlain = Array.from(p1ExtraDeck).map((c) => Number(c));
 
           const success = await window.duelAPI.newDuel({
             player0Deck: p0Plain,
             player1Deck: p1Plain,
+            player0ExtraDeck: p0ExtraPlain,
+            player1ExtraDeck: p1ExtraPlain,
             startingLP: 8000,
             startingDrawCount: 5,
             drawCountPerTurn: 1,
