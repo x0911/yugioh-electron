@@ -285,7 +285,7 @@ onUnmounted(() => {
     border-radius: 10px;
     overflow: hidden;
     background: #0a0c10;
-    border: 2px solid $color-gold-400;
+    border: 2px solid $color-gold-300;
     box-shadow:
       0 0 40px rgba(201, 162, 39, 0.5),
       0 12px 36px rgba(0, 0, 0, 0.9);
@@ -353,7 +353,7 @@ onUnmounted(() => {
 
     &:hover {
       color: $color-gold-100;
-      border-color: $color-gold-400;
+      border-color: $color-gold-300;
     }
   }
 
