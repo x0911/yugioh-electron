@@ -4,6 +4,13 @@ import type { DuelInitOptions } from '../../shared/types/duel.js';
 import { duelEngineService } from '../engine/DuelEngineService.js';
 import type { OcgResponse } from 'ocgcore-wasm';
 
+import { getPersistedSettings, savePersistedSettings } from '../persistence/store.js';
+import {
+  loadCharacters,
+  getCharacterById,
+  getRandomDeckForCharacter,
+} from '../decks/deckLoader.js';
+
 let isServiceInitialized = false;
 
 export function registerIpcHandlers(): void {
@@ -91,18 +98,25 @@ export function registerIpcHandlers(): void {
     return true;
   });
 
-  // Settings stubs (will be wired to electron-store in Phase 6)
+  // Settings & Characters (Phase 6)
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, async () => {
-    return {
-      bgmVolume: 80,
-      sfxVolume: 100,
-      selectedOpponent: 'yugi',
-      devMode: true,
-    };
+    return getPersistedSettings();
   });
 
   ipcMain.handle(IPC_CHANNELS.SETTINGS_SET, async (_event, settings) => {
-    console.log('[Main IPC] Save settings (stub):', settings);
-    return true;
+    return savePersistedSettings(settings);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CHARACTERS_GET, async () => {
+    return loadCharacters();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CHARACTERS_GET_BY_ID, async (_event, id: string) => {
+    return getCharacterById(id) || null;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CHARACTERS_GET_RANDOM_DECK, async (_event, characterId: string) => {
+    const result = getRandomDeckForCharacter(characterId);
+    return result || null;
   });
 }

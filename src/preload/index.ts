@@ -59,11 +59,17 @@ const deckAPI: DeckAPI = {
 };
 
 const settingsAPI: SettingsAPI = {
-  getSettings: (): Promise<Record<string, unknown>> => {
+  getSettings: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET);
   },
-  saveSettings: (settings: Record<string, unknown>): Promise<boolean> => {
+  saveSettings: (settings) => {
     return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, settings);
+  },
+  getCharacters: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.CHARACTERS_GET);
+  },
+  getRandomOpponentDeck: (characterId: string) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.CHARACTERS_GET_RANDOM_DECK, characterId);
   },
 };
 

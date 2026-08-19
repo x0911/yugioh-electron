@@ -27,9 +27,12 @@ export const IPC_CHANNELS = {
   DECK_SAVE: 'deck:save',
   DECK_DELETE: 'deck:delete',
 
-  // Settings (to be expanded in Phase 6)
+  // Settings & Characters (Phase 6)
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
+  CHARACTERS_GET: 'characters:get',
+  CHARACTERS_GET_BY_ID: 'characters:get-by-id',
+  CHARACTERS_GET_RANDOM_DECK: 'characters:get-random-deck',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
@@ -62,9 +65,19 @@ export interface DeckAPI {
   deleteDeck: (deckName: string) => Promise<boolean>;
 }
 
+export interface RandomOpponentDeckPayload {
+  character: import('./character.js').CharacterData;
+  deck: import('./character.js').CharacterDeckData;
+  deckIndex: number;
+}
+
 export interface SettingsAPI {
-  getSettings: () => Promise<Record<string, unknown>>;
-  saveSettings: (settings: Record<string, unknown>) => Promise<boolean>;
+  getSettings: () => Promise<import('./character.js').SettingsConfig>;
+  saveSettings: (
+    settings: Partial<import('./character.js').SettingsConfig>
+  ) => Promise<import('./character.js').SettingsConfig>;
+  getCharacters: () => Promise<import('./character.js').CharacterData[]>;
+  getRandomOpponentDeck: (characterId: string) => Promise<RandomOpponentDeckPayload | null>;
 }
 
 export interface AppAPI {
