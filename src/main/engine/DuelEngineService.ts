@@ -221,7 +221,11 @@ export class DuelEngineService {
           decoded.description = `Turn ${this.state.currentTurn} begins. Active player: Player ${decoded.player}`;
         }
         if (decoded.phase !== undefined) this.state.currentPhase = decoded.phase;
-        if (decoded.type === 'LPUPDATE' && decoded.player !== undefined && decoded.lp !== undefined) {
+        if (
+          decoded.type === 'LPUPDATE' &&
+          decoded.player !== undefined &&
+          decoded.lp !== undefined
+        ) {
           if (decoded.player === 0) this.state.p0LP = decoded.lp;
           if (decoded.player === 1) this.state.p1LP = decoded.lp;
         }

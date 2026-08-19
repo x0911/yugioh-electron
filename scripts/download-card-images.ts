@@ -29,9 +29,12 @@ const FULL_DIR = path.resolve(process.cwd(), 'resources/cards/full');
 const ART_DIR = path.resolve(process.cwd(), 'resources/cards/art');
 const MINI_DIR = path.resolve(process.cwd(), 'resources/cards/mini');
 
-const CDN_FULL_URL = (id: number | string) => `https://images.ygoprodeck.com/images/cards/${id}.jpg`;
-const CDN_ART_URL = (id: number | string) => `https://images.ygoprodeck.com/images/cards_cropped/${id}.jpg`;
-const CDN_SMALL_URL = (id: number | string) => `https://images.ygoprodeck.com/images/cards_small/${id}.jpg`;
+const CDN_FULL_URL = (id: number | string) =>
+  `https://images.ygoprodeck.com/images/cards/${id}.jpg`;
+const CDN_ART_URL = (id: number | string) =>
+  `https://images.ygoprodeck.com/images/cards_cropped/${id}.jpg`;
+const CDN_SMALL_URL = (id: number | string) =>
+  `https://images.ygoprodeck.com/images/cards_small/${id}.jpg`;
 
 const MINI_TARGET_WIDTH = 96;
 const MINI_TARGET_HEIGHT = 140;
@@ -99,7 +102,7 @@ class RateLimiter {
 async function fetchWithRetry(
   url: string,
   rateLimiter: RateLimiter,
-  retries = MAX_RETRIES
+  retries = MAX_RETRIES,
 ): Promise<Buffer | null> {
   let attempt = 0;
   while (attempt <= retries) {
@@ -186,7 +189,7 @@ function copyFallback(targetPath: string, variant: 'full' | 'art' | 'mini') {
 async function processCard(
   card: CardEntry,
   rateLimiter: RateLimiter,
-  force: boolean
+  force: boolean,
 ): Promise<{ full: boolean; art: boolean; mini: boolean; skipped: boolean }> {
   const fullPath = path.join(FULL_DIR, `${card.id}.jpg`);
   const artPath = path.join(ART_DIR, `${card.id}.jpg`);
@@ -307,8 +310,12 @@ async function main() {
 
   const totalCards = cardList.length;
   console.log(`[INFO] Target card count: ${totalCards.toLocaleString()} cards`);
-  console.log(`[INFO] Rate limit: ~${options.rateLimitPerSec} req/s | Concurrency: ${options.concurrency}`);
-  console.log(`[INFO] Target mini resolution: ${MINI_TARGET_WIDTH}x${MINI_TARGET_HEIGHT}px (Sharp lanczos3)`);
+  console.log(
+    `[INFO] Rate limit: ~${options.rateLimitPerSec} req/s | Concurrency: ${options.concurrency}`,
+  );
+  console.log(
+    `[INFO] Target mini resolution: ${MINI_TARGET_WIDTH}x${MINI_TARGET_HEIGHT}px (Sharp lanczos3)`,
+  );
   console.log('---------------------------------------------------------------');
 
   const rateLimiter = new RateLimiter(options.rateLimitPerSec || DEFAULT_RATE_LIMIT);
@@ -328,7 +335,8 @@ async function main() {
     const speed = elapsedSec > 0 ? (downloadedCount / elapsedSec).toFixed(1) : '0.0';
     const percent = ((completed / totalCards) * 100).toFixed(1);
     const remainingCards = totalCards - completed;
-    const estRemainingSec = speed > '0' && parseFloat(speed) > 0 ? Math.round(remainingCards / parseFloat(speed)) : 0;
+    const estRemainingSec =
+      speed > '0' && parseFloat(speed) > 0 ? Math.round(remainingCards / parseFloat(speed)) : 0;
     const etaFormatted =
       estRemainingSec > 60
         ? `${Math.floor(estRemainingSec / 60)}m ${estRemainingSec % 60}s`

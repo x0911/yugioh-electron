@@ -59,18 +59,18 @@ npm run dev
 
 ## Available NPM Scripts
 
-| Command | Description |
-| :--- | :--- |
-| `npm run dev` | Starts Vite dev server on port 5173 and launches Electron desktop window |
-| `npm run build` | Compiles main process, preload script, and builds production Vite renderer bundle |
-| `npm run spike` | Runs headless mock duel simulation directly against `ocgcore-wasm` in Node.js |
-| `npm run build:cards` | Filters master BabelCDB/YGOPRODeck database to DM+GX cards and generates `resources/cards.cdb` |
-| `npm run download:cards` | Downloads all 3 card image variants (`full`, `art`, `mini`) with Sharp optimization |
-| `npm run typecheck` | Runs `vue-tsc` to verify TypeScript types across main, preload, renderer, and shared code |
-| `npm run lint` | Runs ESLint across all TypeScript and Vue files |
-| `npm run lint:fix` | Automatically fixes ESLint warnings and formatting issues |
-| `npm run format` | Runs Prettier to format all codebase files |
-| `npm run rebuild:native` | Rebuilds `better-sqlite3` native bindings against current Electron ABI |
+| Command                  | Description                                                                                    |
+| :----------------------- | :--------------------------------------------------------------------------------------------- |
+| `npm run dev`            | Starts Vite dev server on port 5173 and launches Electron desktop window                       |
+| `npm run build`          | Compiles main process, preload script, and builds production Vite renderer bundle              |
+| `npm run spike`          | Runs headless mock duel simulation directly against `ocgcore-wasm` in Node.js                  |
+| `npm run build:cards`    | Filters master BabelCDB/YGOPRODeck database to DM+GX cards and generates `resources/cards.cdb` |
+| `npm run download:cards` | Downloads all 3 card image variants (`full`, `art`, `mini`) with Sharp optimization            |
+| `npm run typecheck`      | Runs `vue-tsc` to verify TypeScript types across main, preload, renderer, and shared code      |
+| `npm run lint`           | Runs ESLint across all TypeScript and Vue files                                                |
+| `npm run lint:fix`       | Automatically fixes ESLint warnings and formatting issues                                      |
+| `npm run format`         | Runs Prettier to format all codebase files                                                     |
+| `npm run rebuild:native` | Rebuilds `better-sqlite3` native bindings against current Electron ABI                         |
 
 ---
 
