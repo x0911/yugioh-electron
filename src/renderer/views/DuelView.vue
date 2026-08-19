@@ -122,6 +122,24 @@
       <button
         v-if="isMockMode"
         class="dev-pill-btn"
+        title="Draw 1 extra card into hand (test up to 10+ cards)"
+        @click="drawMockCard"
+      >
+        <span>🃏 +Draw Card</span>
+      </button>
+
+      <button
+        v-if="isMockMode && boardState.userField.hand.length !== 5"
+        class="dev-pill-btn"
+        title="Reset Hand to 5 cards"
+        @click="resetMockHand"
+      >
+        <span>↩ Reset Hand</span>
+      </button>
+
+      <button
+        v-if="isMockMode"
+        class="dev-pill-btn"
         title="Cycle Monster Battle Positions for QA"
         @click="cycleMockPositions"
       >
@@ -225,6 +243,77 @@ const duelLogs = ref<LogItem[]>([
   },
 ]);
 
+// Sample Cards Pool for Extra Hand Draw QA
+const sampleCardsPool: Omit<FieldCard, 'id' | 'sequence'>[] = [
+  {
+    code: 55144522,
+    name: 'Pot of Greed',
+    controller: 0,
+    location: 'hand',
+    position: 'faceup_spell',
+    level: 0,
+    attribute: 'SPELL',
+    race: 'Normal',
+    description: 'Draw 2 cards from your Deck.',
+  },
+  {
+    code: 53129443,
+    name: 'Dark Hole',
+    controller: 0,
+    location: 'hand',
+    position: 'faceup_spell',
+    level: 0,
+    attribute: 'SPELL',
+    race: 'Normal',
+    description: 'Destroy all monsters on the field.',
+  },
+  {
+    code: 70781052,
+    name: 'Summoned Skull',
+    controller: 0,
+    location: 'hand',
+    position: 'faceup_attack',
+    atk: 2500,
+    def: 1200,
+    baseAtk: 2500,
+    baseDef: 1200,
+    level: 6,
+    attribute: 'DARK',
+    race: 'Fiend',
+    description: 'A fiend with dark powers for confusing the enemy. Boasts considerable strength.',
+  },
+  {
+    code: 26202165,
+    name: 'Sangan',
+    controller: 0,
+    location: 'hand',
+    position: 'faceup_attack',
+    atk: 1000,
+    def: 600,
+    baseAtk: 1000,
+    baseDef: 600,
+    level: 3,
+    attribute: 'DARK',
+    race: 'Fiend',
+    description: 'If this card is sent from the field to the GY: Add 1 monster with 1500 or less ATK from your Deck to your hand.',
+  },
+  {
+    code: 78193831,
+    name: 'Buster Blader',
+    controller: 0,
+    location: 'hand',
+    position: 'faceup_attack',
+    atk: 2600,
+    def: 2300,
+    baseAtk: 2600,
+    baseDef: 2300,
+    level: 7,
+    attribute: 'EARTH',
+    race: 'Warrior',
+    description: 'Gains 500 ATK for each Dragon monster your opponent controls or is in their GY.',
+  },
+];
+
 /**
  * Sticky previewer: shows hovered card, or falls back to user's first monster.
  */
@@ -255,6 +344,36 @@ function toggleMode(): void {
   } else {
     appendLog('MODE', 'Switched to Live Engine Duel State.');
   }
+}
+
+function drawMockCard(): void {
+  const sample = sampleCardsPool[boardState.userField.hand.length % sampleCardsPool.length];
+  const newCard: FieldCard = {
+    ...sample,
+    id: `hand-extra-${Date.now()}-${boardState.userField.hand.length}`,
+    sequence: boardState.userField.hand.length,
+  };
+  boardState.userField.hand.push(newCard);
+
+  // Also draw for opponent to test both sides
+  boardState.opponentField.hand.push({
+    id: `hand-ai-extra-${Date.now()}`,
+    code: 0,
+    name: 'Hidden Card',
+    controller: 1,
+    location: 'hand',
+    sequence: boardState.opponentField.hand.length,
+    position: 'facedown_spell',
+  });
+
+  appendLog('DRAW', `Drew "${newCard.name}". Hand size now: ${boardState.userField.hand.length} cards.`);
+}
+
+function resetMockHand(): void {
+  const fresh = createMockDuelState();
+  boardState.userField.hand = fresh.userField.hand;
+  boardState.opponentField.hand = fresh.opponentField.hand;
+  appendLog('HAND', 'Reset hand size to default 5 cards.');
 }
 
 /**

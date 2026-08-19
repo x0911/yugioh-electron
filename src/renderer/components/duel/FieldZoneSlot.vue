@@ -180,8 +180,8 @@ function onClick(): void {
 
 .field-zone-slot {
   position: relative;
-  width: 90px;
-  height: 128px;
+  width: 96px;
+  height: 138px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -279,8 +279,8 @@ function onClick(): void {
   // Card Presentation
   .field-card {
     position: relative;
-    width: 82px;
-    height: 120px;
+    width: 88px;
+    height: 128px;
     border-radius: 5px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
     cursor: pointer;

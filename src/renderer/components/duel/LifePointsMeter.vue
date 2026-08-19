@@ -15,17 +15,17 @@
       <div class="lp-meter__avatar-wrapper">
         <div class="lp-meter__avatar">
           <img
-            v-if="characterId"
+            v-if="characterId && !avatarFailed"
             :src="getCharacterPortraitUrl(characterId)"
             :alt="name"
             class="avatar-image"
             @error="handleAvatarError"
           />
-          <!-- Holographic Silhouette Fallback -->
-          <div v-if="avatarFailed || !characterId" class="avatar-fallback">
-            <svg viewBox="0 0 24 24" class="avatar-glyph" fill="currentColor">
+          <!-- Holographic Medallion Silhouette Fallback -->
+          <div v-else class="avatar-fallback">
+            <svg viewBox="0 0 36 36" class="avatar-glyph" fill="currentColor">
               <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
+                d="M18 4C10.27 4 4 10.27 4 18s6.27 14 14 14 14-6.27 14-14S25.73 4 18 4zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm0 21.2c-3.73 0-6.99-1.87-8.91-4.71.04-2.95 5.94-4.57 8.91-4.57 2.96 0 8.87 1.62 8.91 4.57-1.92 2.84-5.18 4.71-8.91 4.71z"
               />
             </svg>
           </div>
@@ -45,8 +45,8 @@
       <!-- Info & LP Counter -->
       <div class="lp-meter__content">
         <div class="lp-meter__header">
-          <span class="player-name">{{ name }}</span>
-          <span v-if="title" class="player-title">{{ title }}</span>
+          <span class="player-name" :title="name">{{ name }}</span>
+          <span v-if="title" class="player-title" :title="title">{{ title }}</span>
         </div>
 
         <!-- Huge Oxanium LP Counter -->
@@ -121,8 +121,8 @@ const lpHealthTier = computed(() => {
 
 .lp-meter {
   position: relative;
-  min-width: 220px;
-  max-width: 260px;
+  min-width: 270px;
+  max-width: 330px;
   user-select: none;
   transition: all 0.3s ease;
 
@@ -130,13 +130,13 @@ const lpHealthTier = computed(() => {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 14px;
+    padding: 8px 14px;
     border-radius: 12px;
-    background: rgba(14, 18, 26, 0.75);
+    background: rgba(14, 18, 26, 0.85);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(201, 162, 39, 0.3);
+    border: 1px solid rgba(201, 162, 39, 0.35);
     box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.6),
+      0 8px 24px rgba(0, 0, 0, 0.7),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
     transition: all 0.25s ease;
   }
@@ -207,13 +207,13 @@ const lpHealthTier = computed(() => {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, rgba(201, 162, 39, 0.2), rgba(10, 12, 16, 0.8));
+      background: radial-gradient(circle, rgba(201, 162, 39, 0.25) 0%, rgba(10, 12, 16, 0.9) 100%);
       color: $color-gold-300;
 
       .avatar-glyph {
         width: 32px;
         height: 32px;
-        opacity: 0.8;
+        opacity: 0.85;
       }
     }
   }
@@ -267,26 +267,30 @@ const lpHealthTier = computed(() => {
   &__header {
     display: flex;
     align-items: baseline;
+    justify-content: space-between;
     gap: 6px;
     white-space: nowrap;
     overflow: hidden;
 
     .player-name {
       font-family: 'Cinzel', serif, sans-serif;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 700;
       color: #f5f1e6;
       text-overflow: ellipsis;
       overflow: hidden;
+      white-space: nowrap;
     }
 
     .player-title {
       font-family: 'Barlow Semi Condensed', sans-serif;
       font-size: 0.65rem;
       color: $color-gold-300;
-      opacity: 0.8;
+      opacity: 0.85;
       text-overflow: ellipsis;
       overflow: hidden;
+      white-space: nowrap;
+      text-align: right;
     }
   }
 

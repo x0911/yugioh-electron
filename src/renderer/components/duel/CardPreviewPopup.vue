@@ -29,9 +29,9 @@
 
         <!-- Structured Details Block -->
         <div class="card-info-block">
-          <!-- Card Name -->
+          <!-- Card Name & Attribute Row -->
           <div class="card-title-row">
-            <h3 class="card-name">{{ card.name }}</h3>
+            <h3 class="card-name" :title="card.name">{{ card.name }}</h3>
             <span
               v-if="card.attribute"
               class="attribute-badge"
@@ -41,16 +41,21 @@
             </span>
           </div>
 
-          <!-- Level / Rank Stars & Type Row -->
-          <div class="card-meta-row">
-            <div v-if="card.level && card.level > 0" class="level-stars">
+          <!-- Level / Rank Stars Row (Dedicated Line) -->
+          <div v-if="card.level && card.level > 0" class="card-level-row">
+            <div class="level-stars">
               <span v-for="i in card.level" :key="i" class="star">★</span>
-              <span class="level-count">LV {{ card.level }}</span>
             </div>
+            <span class="level-pill">LV {{ card.level }}</span>
+          </div>
 
-            <div v-if="card.race" class="type-bracket">
-              [{{ card.race }} / {{ card.level && card.level > 0 ? 'Monster' : 'Card' }}]
-            </div>
+          <!-- Type & Race Bracket Row (Dedicated Line) -->
+          <div class="card-type-row">
+            <span class="type-bracket">
+              [{{ card.race || (card.attribute === 'SPELL' ? 'Spell' : card.attribute === 'TRAP' ? 'Trap' : 'Monster') }}
+              /
+              {{ card.level && card.level > 0 ? 'Monster' : card.attribute === 'SPELL' ? 'Spell Card' : card.attribute === 'TRAP' ? 'Trap Card' : 'Effect' }}]
+            </span>
           </div>
 
           <!-- ATK / DEF Scores (Monsters) -->
@@ -76,10 +81,12 @@
             </p>
           </div>
 
-          <!-- Passcode Footer -->
+          <!-- Passcode & Location Footer (Neatly Pinned Inside Panel) -->
           <div class="card-footer-row">
-            <span class="passcode-lbl">PASSCODE</span>
-            <span class="passcode-val">{{ card.code }}</span>
+            <div class="passcode-group">
+              <span class="passcode-lbl">PASSCODE</span>
+              <span class="passcode-val">{{ card.code }}</span>
+            </div>
             <span class="location-tag">{{ card.location.toUpperCase() }}</span>
           </div>
         </div>
@@ -115,9 +122,9 @@ defineEmits<{
 
 .card-preview-popup {
   position: absolute;
-  top: 60px;
-  bottom: 60px;
-  width: 280px;
+  top: 64px;
+  max-height: calc(100vh - 128px);
+  width: 290px;
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -133,19 +140,19 @@ defineEmits<{
 
   .preview-panel {
     width: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 14px;
+    padding: 12px;
     box-sizing: border-box;
     overflow: hidden;
-    gap: 12px;
-    background: rgba(14, 18, 26, 0.88);
+    gap: 8px;
+    background: rgba(14, 18, 26, 0.92);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(201, 162, 39, 0.4);
+    border: 1px solid rgba(201, 162, 39, 0.45);
+    border-radius: 12px;
     box-shadow:
-      0 12px 40px rgba(0, 0, 0, 0.8),
-      0 0 20px rgba(201, 162, 39, 0.2);
+      0 12px 40px rgba(0, 0, 0, 0.85),
+      0 0 20px rgba(201, 162, 39, 0.25);
   }
 
   .preview-close-btn {
@@ -176,7 +183,7 @@ defineEmits<{
   .card-art-box {
     position: relative;
     width: 100%;
-    max-height: 260px;
+    height: 240px;
     border-radius: 6px;
     overflow: hidden;
     background: #0a0c10;
@@ -212,11 +219,9 @@ defineEmits<{
 
   // Info Block
   .card-info-block {
-    flex: 1;
-    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     overflow: hidden;
   }
 
@@ -235,7 +240,7 @@ defineEmits<{
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
     }
 
     .attribute-badge {
@@ -248,6 +253,7 @@ defineEmits<{
       text-transform: uppercase;
       background: $color-gold-500;
       color: #1a1406;
+      flex-shrink: 0;
 
       &--spell {
         background: #3ddc97;
@@ -284,32 +290,45 @@ defineEmits<{
     }
   }
 
-  .card-meta-row {
+  // Dedicated Level Row
+  .card-level-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 1px 0;
 
     .level-stars {
       display: flex;
       align-items: center;
-      gap: 1px;
+      gap: 1.5px;
       color: #f2c94c;
       font-size: 0.75rem;
-
-      .level-count {
-        font-family: 'Oxanium', monospace, sans-serif;
-        font-size: 0.65rem;
-        font-weight: 700;
-        color: $color-gold-300;
-        margin-left: 4px;
-      }
+      text-shadow: 0 0 4px rgba(242, 201, 76, 0.6);
     }
 
+    .level-pill {
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: $color-gold-300;
+      background: rgba(201, 162, 39, 0.15);
+      border: 1px solid rgba(201, 162, 39, 0.3);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+  }
+
+  // Dedicated Type Row
+  .card-type-row {
     .type-bracket {
       font-family: 'Barlow Semi Condensed', sans-serif;
       font-size: 0.75rem;
       font-weight: 600;
-      color: #b8b2a0;
+      color: #c9c3b2;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
@@ -318,9 +337,9 @@ defineEmits<{
     display: flex;
     align-items: center;
     justify-content: space-around;
-    padding: 6px 12px;
-    border-radius: 6px;
-    background: rgba(10, 12, 16, 0.7);
+    padding: 4px 10px;
+    border-radius: 5px;
+    background: rgba(10, 12, 16, 0.75);
     border: 1px solid rgba(201, 162, 39, 0.25);
 
     .stat-col {
@@ -337,7 +356,7 @@ defineEmits<{
 
       .stat-val {
         font-family: 'Oxanium', monospace, sans-serif;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         font-weight: 800;
         font-variant-numeric: tabular-nums;
 
@@ -358,18 +377,17 @@ defineEmits<{
 
   // Effect Lore Text
   .card-lore-box {
-    flex: 1;
-    min-height: 0;
+    max-height: 90px;
     overflow-y: auto;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: rgba(10, 12, 16, 0.6);
+    padding: 6px 8px;
+    border-radius: 5px;
+    background: rgba(10, 12, 16, 0.65);
     border: 1px solid rgba(255, 255, 255, 0.05);
 
     .lore-text {
       font-family: 'Barlow Semi Condensed', sans-serif;
       font-size: 0.8rem;
-      line-height: 1.4;
+      line-height: 1.35;
       color: #f5f1e6;
       margin: 0;
       white-space: pre-wrap;
@@ -381,19 +399,34 @@ defineEmits<{
     justify-content: space-between;
     align-items: center;
     padding-top: 4px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     font-family: 'Oxanium', monospace, sans-serif;
     font-size: 0.6rem;
-    color: rgba(184, 178, 160, 0.5);
+
+    .passcode-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .passcode-lbl {
+      color: rgba(184, 178, 160, 0.6);
+      font-weight: 600;
+    }
 
     .passcode-val {
-      font-weight: 700;
+      font-weight: 800;
       color: $color-gold-300;
+      letter-spacing: 0.05em;
     }
 
     .location-tag {
       font-weight: 800;
       color: #56ccf2;
+      background: rgba(86, 204, 242, 0.15);
+      border: 1px solid rgba(86, 204, 242, 0.3);
+      padding: 1px 5px;
+      border-radius: 3px;
     }
   }
 }

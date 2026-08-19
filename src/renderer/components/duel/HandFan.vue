@@ -1,10 +1,10 @@
 <template>
   <div
-    class="hand-fan"
+    class="hand-row"
     :class="[
-      `hand-fan--${player}`,
+      `hand-row--${player}`,
       {
-        'hand-fan--empty': cards.length === 0,
+        'hand-row--empty': cards.length === 0,
       },
     ]"
   >
@@ -15,18 +15,18 @@
       </span>
     </div>
 
-    <!-- Hand Cards Arc Container -->
+    <!-- Horizontal Cards Container -->
     <div class="hand-cards-container">
       <div
         v-for="(card, idx) in cards"
         :key="card.id || idx"
-        class="hand-card-wrapper"
-        :style="getCardStyle(idx, cards.length)"
+        class="hand-card-slot"
+        :style="getSlotStyle(idx, cards.length)"
         @mouseenter="onCardMouseEnter(card)"
         @mouseleave="onCardMouseLeave"
         @click="onCardClick(card)"
       >
-        <!-- User Hand Card (Full Art & Info) -->
+        <!-- User Hand Card (Full Art, Name, Level, Stats) -->
         <div v-if="player === 'user'" class="hand-card hand-card--user">
           <div class="hand-card__frame">
             <img
@@ -39,7 +39,7 @@
 
             <!-- Mini Header with Name & Level -->
             <div class="hand-card__header">
-              <span class="hand-card__name">{{ card.name }}</span>
+              <span class="hand-card__name" :title="card.name">{{ card.name }}</span>
               <span v-if="card.level && card.level > 0" class="hand-card__level">
                 ★{{ card.level }}
               </span>
@@ -96,35 +96,22 @@ const emit = defineEmits<{
 }>();
 
 /**
- * Calculates authentic TCG fanned hand arc geometry.
+ * Calculates adaptive horizontal spacing and negative margin overlap.
+ * When hand size exceeds 5 cards, cards smoothly overlap horizontally so they never overflow.
  */
-function getCardStyle(index: number, total: number): CSSProperties {
-  if (total <= 1) {
-    return {
-      transform: 'none',
-      zIndex: 1,
-    };
+function getSlotStyle(index: number, total: number): CSSProperties {
+  let marginHorizontal = 4; // Standard spacing between cards (px)
+
+  if (total > 5) {
+    // Dynamic overlap when hand size is large (6, 7, 8, 9, 10+ cards)
+    const excess = total - 5;
+    const overlapAmount = Math.min(46, excess * (props.player === 'user' ? 8 : 6));
+    marginHorizontal = -overlapAmount / 2;
   }
 
-  const centerIndex = (total - 1) / 2;
-  const offset = index - centerIndex;
-
-  // Max total spread angle clamped to ±16deg for user, ±12deg for AI
-  const angleStep = Math.min(6, 28 / Math.max(1, total));
-  const angle = offset * angleStep;
-
-  // Parabolic vertical offset for natural arc
-  const arcY = Math.pow(offset, 2) * (props.player === 'user' ? 3.5 : -2.5);
-
-  // Horizontal overlap offset
-  const overlapX = offset * (props.player === 'user' ? 32 : 24);
-
-  const rotate = props.player === 'user' ? `${angle}deg` : `${-angle}deg`;
-  const translateY = props.player === 'user' ? `${arcY}px` : `${arcY}px`;
-  const translateX = `${overlapX}px`;
-
   return {
-    transform: `translate(${translateX}, ${translateY}) rotate(${rotate})`,
+    marginLeft: `${marginHorizontal}px`,
+    marginRight: `${marginHorizontal}px`,
     zIndex: index + 1,
   };
 }
@@ -151,23 +138,21 @@ function onCardClick(card: FieldCard): void {
 <style scoped lang="scss">
 @use '../../assets/styles/abstracts' as *;
 
-.hand-fan {
+.hand-row {
   position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   user-select: none;
-  pointer-events: none;
 
   .hand-meta {
     padding: 2px 10px;
-    background: rgba(10, 12, 16, 0.85);
-    border: 1px solid rgba(201, 162, 39, 0.3);
+    background: rgba(10, 12, 16, 0.88);
+    border: 1px solid rgba(201, 162, 39, 0.35);
     border-radius: 12px;
     margin-bottom: 4px;
     z-index: 10;
-    pointer-events: auto;
 
     &__count {
       font-family: 'Oxanium', monospace, sans-serif;
@@ -179,71 +164,82 @@ function onCardClick(card: FieldCard): void {
   }
 
   .hand-cards-container {
-    position: relative;
-    height: 120px;
     display: flex;
     justify-content: center;
     align-items: center;
-    pointer-events: auto;
+    position: relative;
+    padding: 4px 12px;
+    box-sizing: border-box;
+    max-width: 100%;
   }
 
-  .hand-card-wrapper {
-    position: absolute;
-    width: 80px;
-    height: 116px;
-    transform-origin: center bottom;
-    transition:
-      transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-      z-index 0s;
+  .hand-card-slot {
+    position: relative;
     cursor: pointer;
+    transition:
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+      z-index 0s;
 
     &:hover {
       z-index: 100 !important;
     }
   }
 
-  // User Hand Styling
+  // =========================================================================
+  // User Hand (Flat, Horizontal Side-by-Side, Upward Lift on Hover)
+  // =========================================================================
   &--user {
-    .hand-card-wrapper:hover {
-      transform: translateY(-28px) scale(1.18) !important;
-      .hand-card {
-        box-shadow:
-          0 12px 28px rgba(0, 0, 0, 0.9),
-          0 0 16px rgba(47, 128, 237, 0.6);
-        border-color: $color-gold-300;
+    .hand-card-slot {
+      width: 86px;
+      height: 124px;
+
+      &:hover {
+        transform: translateY(-26px) scale(1.12);
+
+        .hand-card {
+          border-color: $color-gold-300;
+          box-shadow:
+            0 14px 32px rgba(0, 0, 0, 0.95),
+            0 0 16px rgba(47, 128, 237, 0.7);
+        }
       }
     }
   }
 
-  // Opponent Hand Styling (Mirrored / Inverted)
+  // =========================================================================
+  // Opponent Hand (Inverted, Flat Horizontal, Downward Lift on Hover)
+  // =========================================================================
   &--ai {
-    .hand-cards-container {
-      height: 90px;
-    }
+    .hand-card-slot {
+      width: 68px;
+      height: 98px;
 
-    .hand-card-wrapper {
-      width: 65px;
-      height: 94px;
-      transform-origin: center top;
-    }
+      &:hover {
+        transform: translateY(12px) scale(1.08);
 
-    .hand-card-wrapper:hover {
-      transform: translateY(12px) scale(1.08) !important;
+        .hand-card {
+          border-color: $color-gold-500;
+          box-shadow:
+            0 8px 24px rgba(0, 0, 0, 0.9),
+            0 0 14px rgba(235, 87, 87, 0.5);
+        }
+      }
     }
   }
 
+  // Card Content & Visuals
   .hand-card {
     position: relative;
     width: 100%;
     height: 100%;
-    border-radius: 5px;
+    border-radius: 6px;
     background: #0a0c10;
     border: 1px solid rgba(201, 162, 39, 0.4);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75);
     overflow: hidden;
     transition:
-      box-shadow 0.25s ease,
-      border-color 0.25s ease;
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
 
     &__frame {
       position: relative;
@@ -279,7 +275,7 @@ function onCardClick(card: FieldCard): void {
       left: 0;
       right: 0;
       padding: 2px 4px;
-      background: rgba(10, 12, 16, 0.85);
+      background: rgba(10, 12, 16, 0.88);
       border-bottom: 1px solid rgba(201, 162, 39, 0.3);
       display: flex;
       justify-content: space-between;
@@ -288,7 +284,7 @@ function onCardClick(card: FieldCard): void {
 
     &__name {
       font-family: 'Barlow Semi Condensed', sans-serif;
-      font-size: 0.55rem;
+      font-size: 0.6rem;
       font-weight: 600;
       color: #f5f1e6;
       white-space: nowrap;
@@ -298,7 +294,7 @@ function onCardClick(card: FieldCard): void {
 
     &__level {
       font-family: 'Oxanium', monospace, sans-serif;
-      font-size: 0.5rem;
+      font-size: 0.55rem;
       font-weight: 800;
       color: $color-gold-300;
       margin-left: 2px;
@@ -310,14 +306,14 @@ function onCardClick(card: FieldCard): void {
       left: 0;
       right: 0;
       padding: 1px 4px;
-      background: rgba(10, 12, 16, 0.9);
+      background: rgba(10, 12, 16, 0.92);
       border-top: 1px solid rgba(201, 162, 39, 0.3);
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 3px;
       font-family: 'Oxanium', monospace, sans-serif;
-      font-size: 0.55rem;
+      font-size: 0.6rem;
       font-weight: 700;
 
       .stat-atk {
@@ -325,7 +321,7 @@ function onCardClick(card: FieldCard): void {
       }
       .stat-slash {
         color: $color-gold-500;
-        font-size: 0.5rem;
+        font-size: 0.55rem;
       }
       .stat-def {
         color: #b8b2a0;

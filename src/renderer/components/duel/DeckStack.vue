@@ -163,8 +163,8 @@ function onClick(): void {
 
 .deck-stack {
   position: relative;
-  width: 90px;
-  height: 128px;
+  width: 96px;
+  height: 138px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -180,8 +180,8 @@ function onClick(): void {
 
   .stack-container {
     position: relative;
-    width: 82px;
-    height: 120px;
+    width: 88px;
+    height: 128px;
   }
 
   // 3D Physical Stack Layers

@@ -313,15 +313,15 @@ defineEmits<{
 .duel-field {
   position: relative;
   width: 100%;
-  max-width: 1180px;
+  max-width: 1240px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   user-select: none;
-  padding: 8px 16px;
+  padding: 6px 16px;
   box-sizing: border-box;
 
   // Obsidian Arena Floor
