@@ -388,11 +388,44 @@ export class DuelEngineService {
       this.reindexHand(pf);
     } else if (rawType === OcgMessageType.MOVE && 'from' in msg && 'to' in msg && 'card' in msg) {
       this.handleCardMove(msg.card, msg.from, msg.to);
-    } else if (rawType === OcgMessageType.POS_CHANGE && 'position' in msg) {
-      const { controller, location, sequence, position } = msg;
+    } else if (rawType === OcgMessageType.FLIPSUMMONING && 'code' in msg) {
+      const { controller, sequence, code } = msg;
       const pf = this.getPlayerField(controller);
-      if (location === OcgLocation.MZONE && pf.monsterZones[sequence]) {
+      const seq = sequence ?? 0;
+      if (pf.monsterZones[seq]) {
+        const card = pf.monsterZones[seq]!;
+        card.code = code;
+        card.position = 'faceup_attack';
+        const detail = code > 0 ? this.cardReader.getCardDetail(code) : null;
+        card.name = detail?.name ?? this.cardReader.getCardName(code);
+        if (detail?.isMonster) {
+          card.atk = detail.atk;
+          card.def = detail.def;
+          card.level = detail.level;
+          card.attribute = detail.attributeName;
+          card.race = detail.raceName;
+          card.description = detail.desc;
+        }
+      }
+    } else if (rawType === OcgMessageType.POS_CHANGE && 'position' in msg) {
+      const { controller, location, sequence, position, code } = msg;
+      const pf = this.getPlayerField(controller);
+      const isMonsterZone = location === OcgLocation.MZONE || location === undefined;
+      if (isMonsterZone && pf.monsterZones[sequence]) {
         const card = pf.monsterZones[sequence]!;
+        if (code && code > 0) {
+          card.code = code;
+          const detail = this.cardReader.getCardDetail(code);
+          card.name = detail?.name ?? this.cardReader.getCardName(code);
+          if (detail?.isMonster) {
+            card.atk = detail.atk;
+            card.def = detail.def;
+            card.level = detail.level;
+            card.attribute = detail.attributeName;
+            card.race = detail.raceName;
+            card.description = detail.desc;
+          }
+        }
         if ((position & OcgPosition.FACEUP_ATTACK) !== 0) card.position = 'faceup_attack';
         else if ((position & OcgPosition.FACEUP_DEFENSE) !== 0) card.position = 'faceup_defense';
         else if ((position & OcgPosition.FACEDOWN_DEFENSE) !== 0) card.position = 'facedown_defense';

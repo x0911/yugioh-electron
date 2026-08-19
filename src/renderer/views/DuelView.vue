@@ -624,7 +624,7 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
       // Visual pacing so players see the spell activating on field before its effect resolves
       await new Promise((resolve) => setTimeout(resolve, 400));
     }
-    // 5. Attack Declaration & Surge
+    // 6. Attack Declaration & Surge
     else if (event.type === 'ATTACK') {
       const atkEvt = event as any;
       const p = (atkEvt.controller ?? (duelStore.boardState.userField.isTurn ? duelStore.userPlayerId : duelStore.opponentPlayerId)) as 0 | 1;
@@ -641,6 +641,22 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
         toRect,
         type: 'attack',
         durationMs: 380,
+      });
+    }
+    // 7. Monster Position Change / Flip Summon
+    else if (event.type === 'POS_CHANGE' || event.type === 'FLIPSUMMONING') {
+      const p = (event.controller ?? duelStore.userPlayerId) as 0 | 1;
+      const seq = event.sequence ?? 0;
+      const fromRect = getZoneRect(p, 'monster', seq);
+      await playCardFlight({
+        code: event.code || 0,
+        cardName: event.cardName || 'Position Change',
+        fromRect,
+        toRect: fromRect,
+        type: event.type === 'FLIPSUMMONING' ? 'flip' : 'pos-change',
+        isFacedown: event.position === 8,
+        isDefense: event.position === 4 || event.position === 8,
+        durationMs: 360,
       });
     }
 

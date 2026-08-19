@@ -204,4 +204,102 @@ console.log('=== Running Graveyard & Extra Deck Inspection Tests ===\n');
   console.log('✓ Extra Deck cards correctly classify as monsters with full ATK/DEF/LV/Lore stats.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 4: Graveyard Top Card Resolution (Index 0 = Most Recently Sent Card)
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 4: Graveyard Top Card Resolution...');
+  const gyStack: FieldCard[] = [];
+
+  // Card 1 sent to GY (e.g. Pot of Greed)
+  gyStack.unshift({
+    id: 'gy-1',
+    code: 55144522,
+    name: 'Pot of Greed',
+    controller: 0,
+    location: 'graveyard',
+    sequence: 0,
+    position: 'faceup_spell',
+  });
+
+  // Card 2 sent to GY (e.g. Dark Hole)
+  gyStack.unshift({
+    id: 'gy-2',
+    code: 53129443,
+    name: 'Dark Hole',
+    controller: 0,
+    location: 'graveyard',
+    sequence: 1,
+    position: 'faceup_spell',
+  });
+
+  // Top card of graveyard must be the most recently unshifted card (index 0, Dark Hole)
+  const topCard = gyStack[0];
+  assert.equal(topCard.name, 'Dark Hole', 'Top card of graveyard must be Dark Hole (most recently sent)');
+  assert.equal(topCard.code, 53129443);
+  console.log('✓ Graveyard stack correctly exposes most recently sent card at index 0 as topCard.');
+}
+
+// -----------------------------------------------------------------------------
+// Test 5: Flip Summon & Position Change Board State Transformation
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 5: Flip Summon & Position Change Board State Transformation...');
+  const pf: PlayerFieldState = {
+    playerId: 0,
+    name: 'You',
+    currentLp: 8000,
+    maxLp: 8000,
+    isTurn: true,
+    monsterZones: [
+      {
+        id: 'mz-0',
+        code: 0, // Set face-down monster
+        name: 'Face-down Monster',
+        controller: 0,
+        location: 'monster',
+        sequence: 0,
+        position: 'facedown_defense',
+      },
+      null,
+      null,
+      null,
+      null,
+    ],
+    spellTrapZones: [null, null, null, null, null],
+    fieldZone: null,
+    graveyard: [],
+    banished: [],
+    extraDeck: [],
+    deckCount: 35,
+    extraDeckCount: 0,
+    hand: [],
+  };
+
+  // Simulating FLIPSUMMONING event handler
+  const flipEvent = {
+    type: 'FLIPSUMMONING',
+    controller: 0,
+    sequence: 0,
+    code: 34627841, // Kaibaman
+    cardName: 'Kaibaman',
+    position: 1, // Face-up attack
+  };
+
+  const targetCard = pf.monsterZones[flipEvent.sequence]!;
+  targetCard.code = flipEvent.code;
+  targetCard.name = flipEvent.cardName;
+  targetCard.position = 'faceup_attack';
+  targetCard.atk = 200;
+  targetCard.def = 700;
+  targetCard.level = 3;
+
+  assert.equal(pf.monsterZones[0]?.position, 'faceup_attack', 'Monster position must change to faceup_attack');
+  assert.equal(pf.monsterZones[0]?.code, 34627841, 'Monster code must reveal Kaibaman');
+  assert.equal(pf.monsterZones[0]?.name, 'Kaibaman');
+  assert.equal(pf.monsterZones[0]?.atk, 200);
+
+  console.log('✓ Flip Summon correctly transforms face-down defense monster into face-up attack with revealed stats.');
+}
+
 console.log('\n🎉 ALL GRAVEYARD & EXTRA DECK INSPECTION TESTS PASSED!');

@@ -1,6 +1,10 @@
 <template>
   <Transition name="preview-fade">
-    <div v-if="effectiveCard" class="card-preview-popup" :class="[`card-preview-popup--${position}`]">
+    <div
+      v-if="effectiveCard"
+      class="card-preview-popup"
+      :class="[`card-preview-popup--${position}`]"
+    >
       <div class="preview-panel glass-panel glass-panel--accent-gold">
         <!-- Close / Dismiss button if pinned -->
         <button
@@ -43,13 +47,19 @@
             >
               {{ effectiveCard.attribute }}
             </span>
-            <span v-else-if="effectiveCard.code === 0" class="attribute-badge attribute-badge--secret">
+            <span
+              v-else-if="effectiveCard.code === 0"
+              class="attribute-badge attribute-badge--secret"
+            >
               SECRET
             </span>
           </div>
 
           <!-- Level / Rank Stars Row (Dedicated Line - only for revealed monsters) -->
-          <div v-if="effectiveCard.code > 0 && effectiveCard.level && effectiveCard.level > 0" class="card-level-row">
+          <div
+            v-if="effectiveCard.code > 0 && effectiveCard.level && effectiveCard.level > 0"
+            class="card-level-row"
+          >
             <div class="level-stars">
               <span v-for="i in effectiveCard.level" :key="i" class="star">★</span>
             </div>
@@ -68,7 +78,10 @@
 
           <!-- ATK / DEF Scores (Only for revealed Monsters) -->
           <div
-            v-if="effectiveCard.code > 0 && (effectiveCard.atk !== undefined || effectiveCard.def !== undefined)"
+            v-if="
+              effectiveCard.code > 0 &&
+              (effectiveCard.atk !== undefined || effectiveCard.def !== undefined)
+            "
             class="combat-stats-box"
           >
             <div class="stat-col">
@@ -98,7 +111,9 @@
           <div class="card-footer-row">
             <div class="passcode-group">
               <span class="passcode-lbl">PASSCODE</span>
-              <span class="passcode-val">{{ effectiveCard.code > 0 ? effectiveCard.code : '????????' }}</span>
+              <span class="passcode-val">{{
+                effectiveCard.code > 0 ? effectiveCard.code : '????????'
+              }}</span>
             </div>
             <span class="location-tag">{{ (effectiveCard.location || 'DECK').toUpperCase() }}</span>
           </div>
@@ -140,10 +155,18 @@ const effectiveCard = computed<FieldCard | null>(() => {
   if (!detail) return props.card;
   return {
     ...props.card,
-    name: props.card.name && props.card.name !== 'Card' && !props.card.name.startsWith('[Card #') ? props.card.name : detail.name,
-    atk: props.card.atk !== undefined ? props.card.atk : (detail.isMonster ? detail.atk : undefined),
-    def: props.card.def !== undefined ? props.card.def : (detail.isMonster ? detail.def : undefined),
-    level: props.card.level !== undefined ? props.card.level : (detail.isMonster ? detail.level : undefined),
+    name:
+      props.card.name && props.card.name !== 'Card' && !props.card.name.startsWith('[Card #')
+        ? props.card.name
+        : detail.name,
+    atk: props.card.atk !== undefined ? props.card.atk : detail.isMonster ? detail.atk : undefined,
+    def: props.card.def !== undefined ? props.card.def : detail.isMonster ? detail.def : undefined,
+    level:
+      props.card.level !== undefined
+        ? props.card.level
+        : detail.isMonster
+          ? detail.level
+          : undefined,
     attribute: props.card.attribute || detail.attributeName,
     race: props.card.race || detail.raceName,
     description: props.card.description || detail.desc,
@@ -449,7 +472,7 @@ const typeBracketText = computed(() => {
 
   // Effect Lore Text
   .card-lore-box {
-    max-height: 90px;
+    max-height: 210px;
     overflow-y: auto;
     padding: 6px 8px;
     border-radius: 5px;

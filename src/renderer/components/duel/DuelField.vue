@@ -29,7 +29,7 @@
           type="banished"
           player="ai"
           :count="opponentState.banished.length"
-          :top-card="opponentState.banished[opponentState.banished.length - 1] || null"
+          :top-card="opponentState.banished[0] || null"
           label="BANISHED"
           :target-info="getSlotTarget(opponentPlayerId, 32, 0)"
           :is-prompt-active="isPromptActive"
@@ -110,7 +110,7 @@
           type="graveyard"
           player="ai"
           :count="opponentState.graveyard.length"
-          :top-card="opponentState.graveyard[opponentState.graveyard.length - 1] || null"
+          :top-card="opponentState.graveyard[0] || null"
           label="GRAVEYARD"
           :target-info="getSlotTarget(opponentPlayerId, 16, 0)"
           :is-prompt-active="isPromptActive"
@@ -157,7 +157,9 @@
     <div class="field-center-divider">
       <div class="emz-container">
         <!-- EMZ 1 (Above MMZ 2 / Col 2) -->
+        <!-- Hidden by default: reserved for future release -->
         <FieldZoneSlot
+          v-if="false"
           zone-type="extra-monster"
           :zone-index="0"
           zone-label="EMZ 1"
@@ -175,7 +177,9 @@
         </div>
 
         <!-- EMZ 2 (Above MMZ 4 / Col 4) -->
+        <!-- Hidden by default: reserved for future release -->
         <FieldZoneSlot
+          v-if="false"
           zone-type="extra-monster"
           :zone-index="1"
           zone-label="EMZ 2"
@@ -231,7 +235,7 @@
           type="graveyard"
           player="user"
           :count="userState.graveyard.length"
-          :top-card="userState.graveyard[userState.graveyard.length - 1] || null"
+          :top-card="userState.graveyard[0] || null"
           label="GRAVEYARD"
           :target-info="getSlotTarget(userPlayerId, 16, 0)"
           :is-prompt-active="isPromptActive"
@@ -312,7 +316,7 @@
           type="banished"
           player="user"
           :count="userState.banished.length"
-          :top-card="userState.banished[userState.banished.length - 1] || null"
+          :top-card="userState.banished[0] || null"
           label="BANISHED"
           :target-info="getSlotTarget(userPlayerId, 32, 0)"
           :is-prompt-active="isPromptActive"
@@ -348,7 +352,8 @@ const props = withDefaults(
     extraMonsterZones?: (FieldCard | null)[];
     userPlayerId?: number;
     opponentPlayerId?: number;
-    getTargetInfo?: ((controller: number, location: number, sequence: number) => TargetInfo | null) | null;
+    getTargetInfo?:
+      ((controller: number, location: number, sequence: number) => TargetInfo | null) | null;
     isPromptActive?: boolean;
   }>(),
   {
@@ -458,6 +463,7 @@ function onStackClick(stackType: string, controller: number): void {
         rgba(201, 162, 39, 0.25) 50%,
         transparent 100%
       );
+      transform: translateY(-2px);
     }
   }
 
@@ -493,6 +499,7 @@ function onStackClick(stackType: string, controller: number): void {
 
   // Pendulum Scale Jewels
   .pendulum-jewel {
+    display: none; // Hidden by default, reserved for future release
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -543,6 +550,7 @@ function onStackClick(stackType: string, controller: number): void {
     justify-content: center;
     padding: 2px 0;
     z-index: 2;
+    margin-top: 4px;
 
     .emz-container {
       display: flex;

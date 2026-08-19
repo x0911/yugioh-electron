@@ -483,6 +483,31 @@ export class MessageDecoder {
         return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
       }
 
+      case OcgMessageType.FLIPSUMMONING: {
+        type = 'FLIPSUMMONING';
+        const name = this.cardReader.getCardName(msg.code);
+        description = `Player ${msg.controller} is Flip Summoning ${name}.`;
+        return {
+          type,
+          rawType,
+          controller: msg.controller,
+          code: msg.code,
+          cardName: name,
+          location: msg.location,
+          sequence: msg.sequence,
+          position: msg.position,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.FLIPSUMMONED: {
+        type = 'FLIPSUMMONED';
+        description = `Flip Summon successful.`;
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
       case OcgMessageType.POS_CHANGE: {
         type = 'POS_CHANGE';
         const name = this.cardReader.getCardName(msg.code);

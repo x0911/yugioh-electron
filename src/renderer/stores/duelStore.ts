@@ -629,8 +629,15 @@ export const useDuelStore = defineStore('duel', {
           this.activeSelectTribute = event.promptData as SelectTributePayload;
         }
       } else if (!event.isPrompt) {
-        // Clear prompts when game state moves forward
-        if (event.type === 'NEW_TURN' || event.type === 'NEW_PHASE' || event.type === 'SUMMONED' || event.type === 'SPSUMMONED' || event.type === 'ATTACK') {
+        if (
+          event.type === 'NEW_TURN' ||
+          event.type === 'NEW_PHASE' ||
+          event.type === 'SUMMONED' ||
+          event.type === 'SPSUMMONED' ||
+          event.type === 'FLIPSUMMONED' ||
+          event.type === 'POS_CHANGE' ||
+          event.type === 'ATTACK'
+        ) {
           this.clearPrompts();
         }
       }
