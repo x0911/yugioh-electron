@@ -421,7 +421,11 @@
     - Mini image cards (`96x140px`) with quantity-in-deck badges (`x0`, `x1`, `x2`, `x3`), Extra Deck badges, and era pills. Click to add to deck up to 3-copy rule; right-click / hover to preview.
   - **Col-3 (Sticky Live Card Previewer — ~28%)**:
     - `CardPreviewer.vue`: High-resolution card inspector showing full card artwork (`resources/cards/full/<id>.jpg`), card frame, holographic foil sheen, title, Attribute emblem, Level/Rank stars, Type/Race badges, ATK/DEF scores in tabular Oxanium numerals, scrollable effect lore description in Barlow Semi Condensed typography, passcode ID, and in-deck copy status with "+ Add to Deck" and "- Remove" quick action buttons.
-    - Sticky previewer behavior: remembers and displays the last-hovered card even when the cursor leaves card boundaries.
+- Built premium interactive **Drag & Drop** mechanics:
+  - Drag from Col-2 (Card Pool) or Col-3 (Previewer) and drop directly into Main Deck (glowing gold dropzone) or Extra Deck (glowing purple dropzone).
+  - Drag from Col-1 (Deck) and drop into Col-2 (Card Pool) or the header Trash dropzone to remove copies.
+  - Fusion monsters auto-route to Extra Deck when dropped on Main Deck.
+  - Animated pulsing visual drop hints, drag indicators on hover, and grab/grabbing cursors.
 - Built persistent custom deck storage with `electron-store`:
   - Managed custom deck records (`id`, `name`, `main: number[]`, `extra: number[]`, `createdAt`, `updatedAt`) and active deck ID.
   - Seeded 3 default tournament-legal starter decks out-of-the-box:
