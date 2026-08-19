@@ -1,120 +1,8 @@
 <template>
   <div v-if="hasActivePrompt" class="prompt-modal-backdrop">
-    <div class="prompt-modal glass-panel" :class="{ 'prompt-modal--discard': isDiscardPrompt }">
-      <!-- 1. End Phase Hand-Size Cleanup Discard Prompt -->
-      <template v-if="isDiscardPrompt && selectCard">
-        <div class="prompt-header prompt-header--warning">
-          <span class="header-icon">⚠️</span>
-          <div class="header-titles">
-            <h3 class="header-title">Hand Size Limit Exceeded</h3>
-            <p class="header-subtitle">
-              You hold more than 6 cards at End Phase. Select {{ selectCard.min }} card(s) to discard. (Mandatory)
-            </p>
-          </div>
-        </div>
-
-        <div class="card-selection-grid">
-          <div
-            v-for="(card, idx) in selectCard.selects"
-            :key="`discard-${idx}-${card.code}`"
-            class="card-select-tile"
-            :class="{ 'card-select-tile--selected': isCardSelected(idx) }"
-            @click="toggleSelection(idx, selectCard.min)"
-          >
-            <div class="tile-art">
-              <img
-                :src="getCardImageUrl(card.code, 'mini')"
-                :alt="card.cardName || 'Card'"
-                class="tile-art-img"
-                @error="handleArtFallback($event)"
-              />
-              <div v-if="isCardSelected(idx)" class="tile-check-badge">
-                ✓
-              </div>
-            </div>
-            <span class="tile-name">{{ card.cardName || 'Card' }}</span>
-          </div>
-        </div>
-
-        <div class="prompt-footer">
-          <button
-            class="action-btn action-btn--discard"
-            :disabled="activeSelectedIndices.length !== selectCard.min"
-            @click="confirmCardSelection"
-          >
-            Discard ({{ activeSelectedIndices.length }}/{{ selectCard.min }})
-          </button>
-        </div>
-      </template>
-
-      <!-- 2. General Card Selection / Cost Discard / Target Selection Prompt -->
-      <template v-else-if="selectCard">
-        <div
-          class="prompt-header"
-          :class="{
-            'prompt-header--cost': isCostPrompt,
-            'prompt-header--target': !isCostPrompt,
-          }"
-        >
-          <span class="header-icon">{{ isCostPrompt ? '⚡' : '🎯' }}</span>
-          <div class="header-titles">
-            <h3 class="header-title">
-              {{ isCostPrompt ? 'Pay Activation Cost' : 'Select Target Card(s)' }}
-            </h3>
-            <p class="header-subtitle">
-              <template v-if="isCostPrompt">
-                Discard / send {{ selectCard.min }}{{ selectCard.max > selectCard.min ? ` to ${selectCard.max}` : '' }} card(s) from hand as a cost.
-              </template>
-              <template v-else>
-                Select {{ selectCard.min }}{{ selectCard.max > selectCard.min ? ` to ${selectCard.max}` : '' }} card(s) to proceed.
-              </template>
-            </p>
-          </div>
-        </div>
-
-        <div class="card-selection-grid">
-          <div
-            v-for="(card, idx) in selectCard.selects"
-            :key="`select-${idx}-${card.code}`"
-            class="card-select-tile"
-            :class="{ 'card-select-tile--selected': isCardSelected(idx) }"
-            @click="toggleSelection(idx, selectCard.max)"
-          >
-            <div class="tile-art">
-              <img
-                :src="getCardImageUrl(card.code, 'mini')"
-                :alt="card.cardName || 'Card'"
-                class="tile-art-img"
-                @error="handleArtFallback($event)"
-              />
-              <div v-if="isCardSelected(idx)" class="tile-check-badge">
-                ✓
-              </div>
-            </div>
-            <span class="tile-name">{{ card.cardName || 'Card' }}</span>
-          </div>
-        </div>
-
-        <div class="prompt-footer">
-          <button
-            v-if="selectCard.can_cancel"
-            class="action-btn action-btn--secondary"
-            @click="cancelCardSelection"
-          >
-            Cancel
-          </button>
-          <button
-            class="action-btn action-btn--primary"
-            :disabled="activeSelectedIndices.length < selectCard.min || activeSelectedIndices.length > selectCard.max"
-            @click="confirmCardSelection"
-          >
-            Confirm ({{ activeSelectedIndices.length }}/{{ selectCard.max }})
-          </button>
-        </div>
-      </template>
-
-      <!-- 3. Battle Position Prompt -->
-      <template v-else-if="selectPosition">
+    <div class="prompt-modal glass-panel">
+      <!-- 1. Battle Position Prompt -->
+      <template v-if="selectPosition">
         <div class="prompt-header">
           <span class="header-icon">⚔️</span>
           <div class="header-titles">
@@ -135,67 +23,86 @@
             <span class="pos-label">Attack Position</span>
           </button>
           <button
-            v-if="selectPosition.positions.includes(4)"
+            v-if="selectPosition.positions.includes(2)"
             class="position-btn position-btn--def"
-            @click="$emit('select-position', 4)"
+            @click="$emit('select-position', 2)"
           >
             <span class="pos-icon">🛡️</span>
-            <span class="pos-label">Face-up Defense</span>
+            <span class="pos-label">Defense Position</span>
           </button>
           <button
-            v-if="selectPosition.positions.includes(8)"
-            class="position-btn position-btn--def"
-            @click="$emit('select-position', 8)"
+            v-if="selectPosition.positions.includes(4)"
+            class="position-btn position-btn--set"
+            @click="$emit('select-position', 4)"
           >
-            <span class="pos-icon">🛡️</span>
-            <span class="pos-label">Set (Face-down Defense)</span>
+            <span class="pos-icon">🃏</span>
+            <span class="pos-label">Set (Face-Down DEF)</span>
           </button>
         </div>
       </template>
 
-      <!-- 4. Chain Prompt -->
+      <!-- 2. Chain Window Prompt -->
       <template v-else-if="selectChain">
-        <div class="prompt-header">
+        <div class="prompt-header" :class="{ 'prompt-header--warning': selectChain.forced }">
           <span class="header-icon">⛓️</span>
           <div class="header-titles">
-            <h3 class="header-title">Do You Want to Respond?</h3>
+            <h3 class="header-title">
+              {{ selectChain.forced ? 'Mandatory Chain Effect' : 'Chain Window Opportunity' }}
+            </h3>
             <p class="header-subtitle">
-              {{ selectChain.forced
-                ? 'A card effect must activate now!'
-                : 'Do you want to use one of your cards as a reaction? Or just let it happen?' }}
+              <template v-if="selectChain.forced">
+                A mandatory chain effect must be activated. Select an effect to trigger.
+              </template>
+              <template v-else>
+                Do you want to chain an effect to the previous action?
+              </template>
             </p>
           </div>
         </div>
 
-        <div v-if="selectChain.selects && selectChain.selects.length > 0" class="chain-options">
-          <button
-            v-for="(item, idx) in selectChain.selects"
-            :key="`chain-${idx}-${item.code}`"
-            class="chain-btn"
+        <!-- Available Chain Triggers -->
+        <div class="chain-options-list">
+          <div
+            v-for="(chain, idx) in selectChain.selects"
+            :key="`chain-${idx}-${chain.code}`"
+            class="chain-card-row"
             @click="$emit('select-chain', idx)"
           >
-            <span class="chain-icon">⚡</span>
-            <div class="chain-info">
-              <span class="chain-name">{{ item.cardName || 'Card Effect' }}</span>
-              <span v-if="item.description" class="chain-desc">{{ item.description }}</span>
-              <span v-else class="chain-desc">Activate this card in response!</span>
+            <div class="chain-card-art">
+              <img
+                :src="getCardImageUrl(chain.code, 'mini')"
+                :alt="chain.cardName || 'Card'"
+                class="chain-art-img"
+                @error="handleArtFallback($event)"
+              />
             </div>
-          </button>
+            <div class="chain-card-meta">
+              <span class="chain-card-name">{{ chain.cardName || 'Card' }}</span>
+              <span v-if="chain.description" class="chain-card-desc">{{ chain.description }}</span>
+            </div>
+            <button class="action-btn action-btn--chain">
+              Chain Effect
+            </button>
+          </div>
         </div>
 
-        <div v-if="!selectChain.forced" class="prompt-footer">
-          <button class="action-btn action-btn--secondary action-btn--pass" @click="$emit('select-chain', null)">
-            ✋ Skip — Let It Happen
+        <div class="prompt-footer">
+          <button
+            v-if="!selectChain.forced"
+            class="action-btn action-btn--secondary"
+            @click="$emit('select-chain', null)"
+          >
+            Pass (Don't Chain)
           </button>
         </div>
       </template>
 
-      <!-- 5. Effect Yes / No Prompt -->
+      <!-- 3. Optional Effect Yes/No Prompt -->
       <template v-else-if="selectEffectYn">
         <div class="prompt-header">
-          <span class="header-icon">❓</span>
+          <span class="header-icon">✨</span>
           <div class="header-titles">
-            <h3 class="header-title">Activate Card Effect?</h3>
+            <h3 class="header-title">Optional Card Effect</h3>
             <p class="header-subtitle">
               Do you wish to activate the effect of "{{ selectEffectYn.cardName || 'this card' }}"?
             </p>
@@ -212,7 +119,7 @@
         </div>
       </template>
 
-      <!-- 6. Options Selection Prompt -->
+      <!-- 4. Options Selection Prompt -->
       <template v-else-if="selectOption">
         <div class="prompt-header">
           <span class="header-icon">📋</span>
@@ -233,58 +140,12 @@
           </button>
         </div>
       </template>
-
-      <!-- 7. Tribute Selection Prompt -->
-      <template v-else-if="selectTribute">
-        <div class="prompt-header prompt-header--tribute">
-          <span class="header-icon">🔥</span>
-          <div class="header-titles">
-            <h3 class="header-title">Select Monsters to Tribute</h3>
-            <p class="header-subtitle">
-              Select {{ selectTribute.min }}{{ selectTribute.max > selectTribute.min ? ` to ${selectTribute.max}` : '' }} eligible monster(s) on your field for Tribute Summon.
-            </p>
-          </div>
-        </div>
-
-        <div class="card-selection-grid">
-          <div
-            v-for="(card, idx) in selectTribute.selects"
-            :key="`trib-${idx}-${card.code}`"
-            class="card-select-tile"
-            :class="{ 'card-select-tile--selected': isCardSelected(idx) }"
-            @click="toggleSelection(idx, selectTribute.max)"
-          >
-            <div class="tile-art">
-              <img
-                :src="getCardImageUrl(card.code, 'mini')"
-                :alt="card.cardName || 'Monster'"
-                class="tile-art-img"
-                @error="handleArtFallback($event)"
-              />
-              <div v-if="isCardSelected(idx)" class="tile-check-badge">
-                ✓
-              </div>
-            </div>
-            <span class="tile-name">{{ card.cardName || 'Monster' }}</span>
-          </div>
-        </div>
-
-        <div class="prompt-footer">
-          <button
-            class="action-btn action-btn--primary"
-            :disabled="activeSelectedIndices.length < selectTribute.min || activeSelectedIndices.length > selectTribute.max"
-            @click="confirmTributeSelection"
-          >
-            Confirm Tribute ({{ activeSelectedIndices.length }}/{{ selectTribute.max }})
-          </button>
-        </div>
-      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { computed } from 'vue';
 import type {
   SelectCardPayload,
   SelectChainPayload,
@@ -310,7 +171,7 @@ const props = withDefaults(
   },
 );
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'select-card', indices: number[]): void;
   (e: 'select-position', position: number): void;
   (e: 'select-chain', index: number | null): void;
@@ -320,78 +181,14 @@ const emit = defineEmits<{
   (e: 'toggle-target', index: number): void;
 }>();
 
-const localSelectedIndices = ref<number[]>([]);
-
-// Clear local selection whenever a new prompt appears
-watch(
-  () => [props.selectCard, props.selectTribute],
-  () => {
-    localSelectedIndices.value = [];
-  },
-  { immediate: true },
-);
-
-const activeSelectedIndices = computed<number[]>(() => {
-  if (props.syncedSelectedIndices && props.syncedSelectedIndices.length > 0) {
-    return props.syncedSelectedIndices;
-  }
-  return localSelectedIndices.value;
-});
-
-function isCardSelected(idx: number): boolean {
-  return activeSelectedIndices.value.includes(idx);
-}
-
-const isDiscardPrompt = computed(() => {
-  return !!props.selectCard?.isDiscardPrompt;
-});
-
-const isCostPrompt = computed(() => {
-  if (!props.selectCard || !props.selectCard.selects) return false;
-  return (
-    props.selectCard.selects.every((s) => s.location === 2) &&
-    !props.selectCard.isDiscardPrompt &&
-    props.selectCard.min > 0
-  );
-});
-
 const hasActivePrompt = computed(() => {
   return (
-    !!props.selectCard ||
     !!props.selectChain ||
     !!props.selectPosition ||
     !!props.selectEffectYn ||
-    !!props.selectOption ||
-    !!props.selectTribute
+    !!props.selectOption
   );
 });
-
-function toggleSelection(idx: number, maxAllowed: number): void {
-  emit('toggle-target', idx);
-
-  const existingPos = localSelectedIndices.value.indexOf(idx);
-  if (existingPos >= 0) {
-    localSelectedIndices.value.splice(existingPos, 1);
-  } else {
-    if (localSelectedIndices.value.length < maxAllowed) {
-      localSelectedIndices.value.push(idx);
-    } else if (maxAllowed === 1) {
-      localSelectedIndices.value = [idx];
-    }
-  }
-}
-
-function confirmCardSelection(): void {
-  emit('select-card', [...activeSelectedIndices.value]);
-}
-
-function cancelCardSelection(): void {
-  emit('select-card', []);
-}
-
-function confirmTributeSelection(): void {
-  emit('select-tribute', [...activeSelectedIndices.value]);
-}
 
 function handleArtFallback(event: Event): void {
   const target = event.target as HTMLImageElement;

@@ -39,8 +39,15 @@ export function getActionGuideInfo(
   },
   selectedCount = 0,
 ): ActionGuideInfo {
-  // 1. End Phase Hand-Size Cleanup Prompt (§3.4)
-  if (prompts.selectCard?.isDiscardPrompt) {
+  // 1. End Phase Hand-Size Cleanup Prompt (§3.4) - ONLY in End Phase ('EP')
+  const isEndPhaseCleanup =
+    boardState.currentPhase === 'EP' &&
+    prompts.selectCard &&
+    prompts.selectCard.selects.length > 0 &&
+    prompts.selectCard.selects.every((s) => s.location === 2) &&
+    !prompts.selectCard.can_cancel;
+
+  if (isEndPhaseCleanup && prompts.selectCard) {
     const min = prompts.selectCard.min;
     return {
       category: 'cleanup',
@@ -85,12 +92,9 @@ export function getActionGuideInfo(
     const max = prompts.selectCard.max;
     const canCancel = !!prompts.selectCard.can_cancel;
 
-    // Check if prompt is a Cost payment (e.g. discarding from hand for Magic Jammer, Tribute to The Doomed, Kuriboh)
-    const isCost =
+    const isHandOnly =
       prompts.selectCard.selects.length > 0 &&
-      prompts.selectCard.selects.every((s) => s.location === 2) && // All in Hand (Location 2)
-      !prompts.selectCard.isDiscardPrompt &&
-      min > 0;
+      prompts.selectCard.selects.every((s) => s.location === 2); // All in Hand (Location 2)
 
     // Check if target is on field (destroy/effect target)
     const isFieldTarget =
@@ -102,15 +106,52 @@ export function getActionGuideInfo(
       prompts.selectCard.selects.length > 0 &&
       prompts.selectCard.selects.every((s) => s.location === 16);
 
-    if (isCost) {
+    if (isHandOnly) {
+      // Optional or multi-card special summon / effect from hand (e.g. The Flute of Summoning Dragon, Polymerization)
+      if (min === 0) {
+        return {
+          category: 'target',
+          categoryLabel: 'Card Effect Selection',
+          categoryIcon: '🐉',
+          instruction: `Card Effect: Select up to ${max} card(s) from your hand to proceed.`,
+          subText: `You can select up to ${max} card(s), or press Confirm (0/${max}) to summon none / pass.`,
+          isMandatory: false,
+          canCancel: true,
+          selectionProgress: {
+            current: selectedCount,
+            requiredMin: 0,
+            requiredMax: max,
+          },
+        };
+      }
+
+      // If min > 0 and cancelable, likely an optional cost payment
+      if (canCancel) {
+        return {
+          category: 'cost',
+          categoryLabel: 'Cost Payment',
+          categoryIcon: '⚡',
+          instruction: `Cost Payment: Choose ${min}${max > min ? ` to ${max}` : ''} card(s) in your hand to discard as a cost.`,
+          subText: 'This is a cost — it happens immediately and cannot be refunded even if the effect is negated.',
+          isMandatory: false,
+          canCancel: true,
+          selectionProgress: {
+            current: selectedCount,
+            requiredMin: min,
+            requiredMax: max,
+          },
+        };
+      }
+
+      // General mandatory card effect selection from hand
       return {
-        category: 'cost',
-        categoryLabel: 'Cost Payment',
-        categoryIcon: '⚡',
-        instruction: `Cost Payment: Choose ${min}${max > min ? ` to ${max}` : ''} card(s) in your hand to discard as a cost.`,
-        subText: 'This is a cost — it happens immediately and cannot be refunded even if the effect is negated.',
-        isMandatory: !canCancel,
-        canCancel,
+        category: 'target',
+        categoryLabel: 'Card Effect Selection',
+        categoryIcon: '🎴',
+        instruction: `Card Effect: Select ${min}${max > min ? ` to ${max}` : ''} card(s) from your hand to proceed.`,
+        subText: 'Click the highlighted card(s) in your hand, then click Confirm.',
+        isMandatory: true,
+        canCancel: false,
         selectionProgress: {
           current: selectedCount,
           requiredMin: min,

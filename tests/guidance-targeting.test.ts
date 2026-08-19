@@ -280,4 +280,47 @@ console.log('=== Running Phase 11 Targeting & Guidance Tests ===\n');
   console.log('✓ End Phase hand cleanup enforced strictly as non-cancelable mandatory discard.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 6: The Flute of Summoning Dragon / Special Summon Hand Selection Effect
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 6: The Flute of Summoning Dragon Hand Selection Effect...');
+  const board = createDummyBoard();
+  board.currentPhase = 'M1'; // Main Phase 1, NOT End Phase
+
+  const flutePrompt: SelectCardPayload = {
+    player: 0,
+    can_cancel: false,
+    min: 0,
+    max: 2,
+    selects: [
+      { controller: 0, location: 2, sequence: 3, code: 89631139, cardName: 'Blue-Eyes White Dragon' },
+    ],
+  };
+
+  const fluteInfo = getActionGuideInfo(
+    board,
+    true,
+    {
+      selectCard: flutePrompt,
+      selectTribute: null,
+      selectChain: null,
+      selectPosition: null,
+      selectEffectYn: null,
+      selectOption: null,
+    },
+    0,
+  );
+
+  assert.equal(fluteInfo.category, 'target');
+  assert.equal(fluteInfo.categoryLabel, 'Card Effect Selection');
+  assert.equal(fluteInfo.categoryIcon, '🐉');
+  assert.ok(fluteInfo.instruction.includes('Select up to 2 card(s) from your hand'));
+  assert.ok(fluteInfo.subText?.includes('press Confirm (0/2) to summon none'));
+  assert.equal(fluteInfo.canCancel, true);
+  assert.equal(fluteInfo.isMandatory, false);
+  assert.deepEqual(fluteInfo.selectionProgress, { current: 0, requiredMin: 0, requiredMax: 2 });
+  console.log('✓ The Flute of Summoning Dragon translates to "Select up to 2 card(s) from your hand" with cancel/pass.');
+}
+
 console.log('\n🎉 ALL PHASE 11 TARGETING & GUIDANCE TESTS PASSED SUCCESSFULLY!');

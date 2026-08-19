@@ -12,7 +12,9 @@
           <span class="header-icon">{{ stackIcon }}</span>
           <div class="header-titles">
             <h3 class="header-title">{{ title }}</h3>
-            <span class="header-count-badge">{{ cards.length }} {{ cards.length === 1 ? 'Card' : 'Cards' }}</span>
+            <span class="header-count-badge"
+              >{{ cards.length }} {{ cards.length === 1 ? 'Card' : 'Cards' }}</span
+            >
           </div>
         </div>
         <div class="header-right">
@@ -39,19 +41,24 @@
           class="card-list-tile"
           :class="[
             `card-list-tile--${owner}`,
-            { 'card-list-tile--facedown': card.position === 'facedown_defense' || card.position === 'facedown_spell' }
+            {
+              'card-list-tile--facedown':
+                card.position === 'facedown_defense' || card.position === 'facedown_spell',
+            },
           ]"
           @mouseenter="onMouseEnter(card)"
           @mouseleave="onMouseLeave"
           @click="onCardClick(card)"
         >
           <!-- Order Badge (Top of Graveyard is Index 0 or 1) -->
-          <div v-if="type === 'graveyard'" class="tile-order-badge" :class="{ 'tile-order-badge--top': idx === 0 }">
+          <div
+            v-if="type === 'graveyard'"
+            class="tile-order-badge"
+            :class="{ 'tile-order-badge--top': idx === 0 }"
+          >
             {{ idx === 0 ? 'TOP' : `#${idx + 1}` }}
           </div>
-          <div v-else class="tile-order-badge">
-            #{{ idx + 1 }}
-          </div>
+          <div v-else class="tile-order-badge">#{{ idx + 1 }}</div>
 
           <!-- Card Miniature Artwork -->
           <div class="tile-art-wrapper">
@@ -74,13 +81,17 @@
             <div v-if="isMonsterCard(card)" class="tile-stats">
               <div class="tile-meta-header">
                 <span v-if="card.level" class="tile-level">⭐ {{ card.level }}</span>
-                <span v-if="card.attribute" class="tile-attr" :class="`tile-attr--${card.attribute.toLowerCase()}`">
+                <span
+                  v-if="card.attribute"
+                  class="tile-attr"
+                  :class="`tile-attr--${card.attribute.toLowerCase()}`"
+                >
                   {{ card.attribute }}
                 </span>
               </div>
               <div class="tile-combat-stats">
-                <span class="stat-atk">ATK/{{ card.atk ?? 0 }}</span>
-                <span class="stat-def">DEF/{{ card.def ?? 0 }}</span>
+                <span class="stat-atk">{{ card.atk ?? 0 }}</span>
+                <span class="stat-def">{{ card.def ?? 0 }}</span>
               </div>
             </div>
 
@@ -145,10 +156,13 @@ const enrichedCards = computed<FieldCard[]>(() => {
     if (!detail) return card;
     return {
       ...card,
-      name: card.name && card.name !== 'Card' && !card.name.startsWith('[Card #') ? card.name : detail.name,
-      atk: card.atk !== undefined ? card.atk : (detail.isMonster ? detail.atk : undefined),
-      def: card.def !== undefined ? card.def : (detail.isMonster ? detail.def : undefined),
-      level: card.level !== undefined ? card.level : (detail.isMonster ? detail.level : undefined),
+      name:
+        card.name && card.name !== 'Card' && !card.name.startsWith('[Card #')
+          ? card.name
+          : detail.name,
+      atk: card.atk !== undefined ? card.atk : detail.isMonster ? detail.atk : undefined,
+      def: card.def !== undefined ? card.def : detail.isMonster ? detail.def : undefined,
+      level: card.level !== undefined ? card.level : detail.isMonster ? detail.level : undefined,
       attribute: card.attribute || detail.attributeName,
       race: card.race || detail.raceName,
       description: card.description || detail.desc,
@@ -157,7 +171,8 @@ const enrichedCards = computed<FieldCard[]>(() => {
 });
 
 function isMonsterCard(card: FieldCard): boolean {
-  if (card.atk !== undefined || card.def !== undefined || (card.level && card.level > 0)) return true;
+  if (card.atk !== undefined || card.def !== undefined || (card.level && card.level > 0))
+    return true;
   const detail = duelStore.getCardDetail(card.code);
   return detail?.isMonster ?? false;
 }
@@ -334,7 +349,9 @@ function onCardClick(card: FieldCard): void {
     transform: translateY(-4px) scale(1.02);
     background: rgba(28, 34, 44, 0.95);
     border-color: $color-gold-300;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(201, 162, 39, 0.3);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.7),
+      0 0 16px rgba(201, 162, 39, 0.3);
 
     .tile-art-sheen {
       opacity: 1;
@@ -343,12 +360,16 @@ function onCardClick(card: FieldCard): void {
 
   &--user:hover {
     border-color: #63b3ed;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(66, 153, 225, 0.4);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.7),
+      0 0 16px rgba(66, 153, 225, 0.4);
   }
 
   &--ai:hover {
     border-color: #fc8181;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(245, 101, 101, 0.4);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.7),
+      0 0 16px rgba(245, 101, 101, 0.4);
   }
 }
 
@@ -443,13 +464,27 @@ function onCardClick(card: FieldCard): void {
   text-transform: uppercase;
   font-size: 0.65rem;
 
-  &--dark { color: #b794f4; }
-  &--light { color: #f6e05e; }
-  &--earth { color: #ed8936; }
-  &--water { color: #63b3ed; }
-  &--fire { color: #f56565; }
-  &--wind { color: #48bb78; }
-  &--divine { color: #ecc94b; }
+  &--dark {
+    color: #b794f4;
+  }
+  &--light {
+    color: #f6e05e;
+  }
+  &--earth {
+    color: #ed8936;
+  }
+  &--water {
+    color: #63b3ed;
+  }
+  &--fire {
+    color: #f56565;
+  }
+  &--wind {
+    color: #48bb78;
+  }
+  &--divine {
+    color: #ecc94b;
+  }
 }
 
 .tile-combat-stats {
@@ -459,11 +494,21 @@ function onCardClick(card: FieldCard): void {
   font-size: 0.7rem;
   font-weight: 600;
 
+  .stat-atk,
+  .stat-def {
+    border-radius: 4px;
+    padding: 0 4px;
+    font-size: 0.9rem;
+    line-height: 2;
+  }
+
   .stat-atk {
     color: #feb2b2;
+    background-color: rgb(254 178 178 / 10%);
   }
   .stat-def {
     color: #90cdf4;
+    background-color: rgb(144 205 244 / 10%);
   }
 }
 

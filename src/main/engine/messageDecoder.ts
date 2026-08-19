@@ -722,22 +722,17 @@ export class MessageDecoder {
         promptType = 'SELECT_CARD';
         promptPlayer = msg.player;
 
-        const isDiscardPrompt =
-          msg.selects.length > 0 &&
-          msg.selects.every((s) => s.location === OcgLocation.HAND) &&
-          msg.min > 0 &&
-          !msg.can_cancel;
-
-        description = isDiscardPrompt
-          ? `End Phase Cleanup: Hand size exceeds 6 cards. Choose ${msg.min} card(s) to discard.`
-          : `Select ${msg.min}${msg.max > msg.min ? ` to ${msg.max}` : ''} card(s).`;
+        const description =
+          msg.min === 0
+            ? `Select up to ${msg.max} card(s).`
+            : `Select ${msg.min}${msg.max > msg.min ? ` to ${msg.max}` : ''} card(s).`;
 
         promptData = {
           player: msg.player,
           can_cancel: msg.can_cancel,
           min: msg.min,
           max: msg.max,
-          isDiscardPrompt,
+          isDiscardPrompt: false,
           selects: msg.selects.map((s) => ({
             ...s,
             cardName: s.code > 0 ? this.cardReader.getCardName(s.code) : 'Card',
