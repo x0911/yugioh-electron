@@ -1059,11 +1059,42 @@
 - `src/renderer/assets/styles/pages/_settings.scss`: Integrated `settings-bg.jpg` with fixed glassmorphism backdrop.
 - `src/renderer/views/LoadingView.vue`: Integrated `loading-bg.jpg` with ambient glow.
 
+---
+
+## 2026-08-20 — Opponent Secret Card Masking & Duel Animation Overhaul
+
+**What was done:**
+- **Masked Opponent Secret Data from Board State (Issue 1)**:
+  - In `DuelEngineService.ts`, updated `getBoardState()` to sanitize the opponent's field before delivering the snapshot to the client.
+  - Any opponent card in `hand`, set in `facedown_defense` in monster zones, or set in `facedown_spell` in spell/trap zones is strictly masked: `code: 0`, `name: 'Card Back'` / `'Face-down Monster'` / `'Face-down Card'`, with all stats (`atk`, `def`, `level`, `attribute`, `race`, `description`) set to `undefined`.
+  - In `DuelView.vue` (`onFieldCardClick` & `onCardHover`), opponent face-down cards are completely ignored, ensuring players cannot peek at opponent set cards.
+- **Fixed Spell/Trap Set & Direct Attack Animations (Issue 2)**:
+  - **Set Card Flight vs Activation Flight (`eg-2`)**:
+    - Previously, setting a card emitted a `MOVE` event from Hand to SZONE with `position: 8` (FACEDOWN). `DuelView.vue` incorrectly treated all `MOVE` events with `toLocation === 8` as `spell-activate` (face-up), causing a face-up card flight to execute right before the `SET` face-down flight.
+    - Updated `MOVE` handling to only trigger `spell-activate` or `summon` when `(position & 1) !== 0` (FACEUP). Set cards now cleanly perform a single 3D flight into the field slot.
+  - **Opponent DOM Element ID Rect Resolution**:
+    - In `animationService.ts`, helper functions (`getZoneRect`, `getHandCardRect`, `getHandFanRect`, `getStackRect`, `getAvatarRect`) previously looked for `slot-opponent-...` instead of `slot-ai-...`.
+    - Added `toPlayerDomId()` to map `1`, `'opponent'`, and `'ai'` cleanly to `'ai'`, guaranteeing accurate bounding boxes for all opponent cards, zones, stacks, and LP meters.
+  - **Battle Attack Blade & Direct Attack Trajectory (`eg-3`)**:
+    - In `messageDecoder.ts`, included `sequence` and `controller` in `ATTACK` message decoders.
+    - In `CardAnimationOverlay.vue`, replaced the flying card-back image on `attack` with a glowing Battle Attack Blade (`⚔️` + energy slash beam + crimson impact flare clash).
+    - For Direct Attacks, `toRect` targets the center of the opponent's hand/avatar area, creating an authentic direct strike effect.
+
+**Files created/modified:**
+- `src/main/engine/DuelEngineService.ts`: Added opponent card data masking in `getBoardState()`.
+- `src/main/engine/messageDecoder.ts`: Included sequence in `ATTACK` decoder.
+- `src/renderer/utils/animationService.ts`: Fixed player DOM mapping (`user` vs `ai`).
+- `src/renderer/components/duel/CardAnimationOverlay.vue`: Added Battle Attack Blade slash and impact flare.
+- `src/renderer/views/DuelView.vue`: Filtered opponent face-down clicks/hovers, fixed `MOVE` face-up condition, and updated direct attack trajectory.
+- `tests/hand-and-pacing.test.ts`: Added Tests 6 & 7 for opponent secret sanitization and direct attack trajectories.
+
 **How to manually verify this phase:**
-1. Open the application and verify the loading screen displays the arena loading backdrop with the golden puzzle emblem.
-2. Enter the Main Menu — observe the `main-menu-bg.jpg` art behind the hero text and frosted glass card buttons.
-3. Open Deck Builder (`/deck-edit`) — observe the `deck-edit-bg.jpg` arena backdrop beneath the 3-column deck editor.
-4. Open Settings (`/settings`) — observe the `settings-bg.jpg` backdrop behind the Opponent Dossier and audio sliders.
+1. Run `npm test` — all 7 test suites pass.
+2. In a duel:
+   - When the opponent sets a card face-down: Hover over it and click on it — verify it does NOT open or reveal any information in the card previewer.
+   - When you set a spell/trap face-down from your hand: Verify the card performs a single smooth 3D flight from your hand into your spell/trap zone without flickering or appearing on the opponent's side.
+   - In Battle Phase, declare a direct attack on the opponent: Verify the battle attack sword slash surges from your monster across the field to the opponent's side with a crimson battle clash impact.
+
 
 
 
