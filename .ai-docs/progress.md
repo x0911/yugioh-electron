@@ -719,3 +719,58 @@
    - Verify the **"Hand Size Limit Exceeded"** modal appears, displaying all cards in hand and instructing you to select the exact excess cards.
    - Select the required number of cards and click **"Discard"** -> verify selected cards are sent to the Graveyard and turn passes cleanly.
 
+---
+
+## 2026-08-19 — Phase 11: Targeting UX & Guidance System
+
+**What was done:**
+- **Plain-Language Action Guidance Engine (`guidanceHelper.ts`)**:
+  - Implemented `getActionGuideInfo()` translating raw engine prompts and board states into plain-language instructions, category badges, icons, and progress counters per `development-plan.md` §3.6.
+  - Accurately differentiates **Cost Payment** (immediate hand discard/payment, cannot be refunded) vs **Effect Discard** vs **Field/GY Target Selection** vs **Tribute Summon** vs **Chain Opportunity** vs **End Phase Hand Cleanup**.
+  - Formats real-time selection progress (`current / requiredMax`) and identifies mandatory triggers vs optional decision points.
+- **IconIndicator Overlays Across All 6 Duel Locations**:
+  - Integrated `IconIndicator` vector glyphs across all 6 locations: **Hand**, **Field** (Monster, Spell/Trap, Field Zone), **Main Deck**, **Extra Deck**, **Graveyard**, and **Banished**.
+  - Applied player identity color tokens: **User-owned targets glow in Blue (`$color-user`)**; **AI-owned targets glow in Red (`$color-ai`)**.
+  - Added golden pulsing rings, golden checkmark badges (`✓`), and detailed hover tooltips (e.g. *"Selectable Cost: Player's Hand Card (Kuriboh)"*, *"Selectable Target: Opponent's Monster (Blue-Eyes White Dragon)"*, *"Selectable Tribute: Player's Monster (Celtic Guardian)"*).
+  - Ineligible cards and zones during an active selection prompt are dimmed (`opacity: 0.45`, `grayscale(0.25)`) and display an informative tooltip: *"This card cannot be selected as a target"*.
+- **Upgraded Action Guide Banner (`DuelHud.vue`)**:
+  - Integrated rich category badges (`🔥 Tribute Summon`, `⚡ Cost Payment`, `🎯 Effect Target`, `⛓️ Chain Opportunity`, `⚠️ Hand Limit`, `🛡️ Battle Position`), category-themed glow accents, and live selection progress chips.
+- **Confirmation Micro-Dialogs & Strict Cancellation Logic (`PromptModal.vue` & `DuelView.vue`)**:
+  - Added a floating on-field confirmation micro-dialog bar (`.target-confirmation-bar`) allowing players to click cards directly on the field or hand and confirm without blocking modal obstruction.
+  - Maintained two-way reactive synchronization between on-field selection and `PromptModal` tiles (`duelStore.selectedTargetIndices`).
+  - **Strict Cancellation Integrity**: Prompts with `can_cancel: false` (End Phase hand-size cleanup, mandatory tributes, mandatory chains) never display a misleading Cancel button. Only genuinely cancelable decision points (`can_cancel: true`) render Cancel affordances.
+- **Automated Unit Test Suite (`tests/guidance-targeting.test.ts`)**:
+  - Built comprehensive test suite covering all 5 guidance & targeting scenarios:
+    1. Plain target-selection effect (e.g. *Man-Eater Bug*, *Dark Hole*, *Tribute to The Doomed* field targeting).
+    2. Tribute Summon requirement (e.g. *Summoned Skull* 1-monster tribute restriction).
+    3. Chain window opportunities (Optional pass vs mandatory forced chain).
+    4. Cost-based effect (Hand discard cost payment).
+    5. End Phase hand-size cleanup (Mandatory discard rule).
+  - Wired `npm test` script in `package.json`.
+
+**Files created/modified:**
+- `src/renderer/utils/guidanceHelper.ts`: Created action guidance translation helper with cost vs effect detection and progress formatting.
+- `src/renderer/stores/duelStore.ts`: Added `selectedTargetIndices`, `getTargetInfo()`, target toggle/confirm/cancel actions, and updated `DEFAULT_USER_MAIN_DECK` with *Tribute to The Doomed* and *Magic Jammer*.
+- `src/renderer/components/duel/FieldZoneSlot.vue`: Integrated `IconIndicator` overlay, selection check badges, selectable pulsing rings, and ineligible dimming tooltips.
+- `src/renderer/components/duel/HandFan.vue`: Integrated `IconIndicator` overlay, selection check badges, and targeting styling on user and opponent hand fans.
+- `src/renderer/components/duel/DeckStack.vue`: Integrated `IconIndicator` overlay, selection check badges, and targeting styling across Deck, Extra Deck, GY, and Banished stacks.
+- `src/renderer/components/duel/DuelField.vue`: Wired targeting props and click events across all 14 zones and stacks.
+- `src/renderer/components/duel/DuelHud.vue`: Connected `ActionGuideInfo` to Action Guide Banner with category badges and progress chips.
+- `src/renderer/components/duel/PromptModal.vue`: Enhanced prompt headers with plain-language guidance, synchronized selections, and strict cancellation enforcement.
+- `src/renderer/views/DuelView.vue`: Master integration with floating confirmation micro-dialog, direct field target click handling, and live guidance.
+- `package.json`: Added `test` script.
+- `tests/guidance-targeting.test.ts`: Created automated test suite for guidance & targeting.
+
+**Decisions made / deviations from the plan:**
+- **On-Field Direct Selection with Floating Micro-Dialog**: Players can choose targets either by clicking tiles inside the modal or clicking the glowing highlighted cards directly on the field / in hand. A floating confirmation pill at the bottom of the arena keeps the duel field visible and responsive.
+- **Cost Discard Distinction**: Hand card selections for activation costs (like *Tribute to The Doomed* and *Magic Jammer*) are explicitly identified with cyan `⚡ Cost Payment` badges and clear warning subtexts explaining that costs are paid immediately and cannot be refunded.
+
+**Known issues / TODO carried to next phase:**
+- Phase 12 will build the Battle System & Damage Calculation (attack declaration targeting, damage step calculations, LP animation counters, and battle destruction animations).
+
+**How to manually verify this phase:**
+1. Run `npm test` to verify all 5 unit test scenarios pass.
+2. Run `npm run typecheck` and `npm run build` to verify clean builds.
+3. Run `npm run dev` to launch the duel simulator and play through the 4-scenario duel test guide.
+
+
