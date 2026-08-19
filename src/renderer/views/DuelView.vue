@@ -413,7 +413,7 @@ async function toggleAutoPlay(): Promise<void> {
   await window.duelAPI.setAutoPlay(isAutoPlaying.value);
 
   if (isAutoPlaying.value) {
-    appendLog('SYSTEM', 'Auto-Play ENABLED (50ms execution loop).');
+    appendLog('SYSTEM', 'Auto-Play ENABLED.');
     if (autoPlayTimer) clearInterval(autoPlayTimer);
     autoPlayTimer = setInterval(async () => {
       if (!duelState.isActive) {
@@ -422,7 +422,7 @@ async function toggleAutoPlay(): Promise<void> {
         return;
       }
       await stepDuel();
-    }, 50);
+    }, 150);
   } else {
     appendLog('SYSTEM', 'Auto-Play PAUSED.');
     if (autoPlayTimer) {
@@ -433,6 +433,7 @@ async function toggleAutoPlay(): Promise<void> {
 }
 
 function handleDuelEvent(event: DuelEventPayload): void {
+  if (event.type === 'RETRY' || event.type === 'HINT') return; // Ignore internal retry/hint signals
   appendLog(event.type, event.description);
 
   if (event.turn !== undefined) duelState.currentTurn = event.turn;

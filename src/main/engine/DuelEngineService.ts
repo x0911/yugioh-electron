@@ -5,6 +5,7 @@ import createCore, {
   OcgProcessResult,
   OcgLocation,
   OcgPosition,
+  type OcgMessage,
   type OcgResponse,
 } from 'ocgcore-wasm';
 import { CardReaderService } from './cardReader.js';
@@ -41,6 +42,7 @@ export class DuelEngineService {
   private scriptReader: ScriptReaderService;
   private messageDecoder: MessageDecoder;
   private viewFilter: ViewFilterService;
+  private lastPromptMessage: OcgMessage | null = null;
 
   private state: DuelState = {
     isActive: false,
@@ -96,6 +98,7 @@ export class DuelEngineService {
     }
 
     this.autoPlay = options.autoPlay ?? false;
+    this.lastPromptMessage = null;
     this.state = {
       isActive: true,
       isWaitingResponse: false,
@@ -184,71 +187,99 @@ export class DuelEngineService {
     }
 
     const handle = this.currentDuel;
-    const status = this.lib.duelProcess(handle);
-    const rawMessages = this.lib.duelGetMessage(handle);
-    const decodedEvents: DecodedDuelEvent[] = [];
+    const allDecodedEvents: DecodedDuelEvent[] = [];
 
-    for (const msg of rawMessages) {
-      const decoded = this.messageDecoder.decode(msg);
-      decodedEvents.push(decoded);
+    // If we are currently waiting for a response, check if we need to auto-respond
+    if (this.state.isWaitingResponse && this.lastPromptMessage) {
+      const response = getAutoResponse(this.lastPromptMessage);
+      if (response) {
+        this.lib.duelSetResponse(handle, response);
+        this.state.isWaitingResponse = false;
+        this.state.waitingPlayer = null;
+        this.lastPromptMessage = null;
+      } else {
+        // Cannot auto-respond, remain in waiting state
+        return [];
+      }
+    }
 
-      // Track internal state
-      if (decoded.type === 'NEW_TURN') {
-        this.state.currentTurn++;
-        decoded.turn = this.state.currentTurn;
-        decoded.description = `Turn ${this.state.currentTurn} begins. Active player: Player ${decoded.player}`;
+    // Process engine steps
+    let maxSubSteps = 100;
+    while (this.state.isActive && maxSubSteps > 0) {
+      maxSubSteps--;
+      const status = this.lib.duelProcess(handle);
+      const rawMessages = this.lib.duelGetMessage(handle);
+
+      for (const msg of rawMessages) {
+        const decoded = this.messageDecoder.decode(msg);
+        allDecodedEvents.push(decoded);
+
+        // Track internal state
+        if (decoded.type === 'NEW_TURN') {
+          this.state.currentTurn++;
+          decoded.turn = this.state.currentTurn;
+          decoded.description = `Turn ${this.state.currentTurn} begins. Active player: Player ${decoded.player}`;
+        }
+        if (decoded.phase !== undefined) this.state.currentPhase = decoded.phase;
+        if (decoded.type === 'LPUPDATE' && decoded.player !== undefined && decoded.lp !== undefined) {
+          if (decoded.player === 0) this.state.p0LP = decoded.lp;
+          if (decoded.player === 1) this.state.p1LP = decoded.lp;
+        }
+        if (
+          decoded.type === 'DAMAGE' &&
+          decoded.player !== undefined &&
+          decoded.amount !== undefined
+        ) {
+          if (decoded.player === 0) this.state.p0LP = Math.max(0, this.state.p0LP - decoded.amount);
+          if (decoded.player === 1) this.state.p1LP = Math.max(0, this.state.p1LP - decoded.amount);
+        }
+        if (decoded.type === 'WIN') {
+          this.state.winner = decoded.player ?? null;
+          this.state.winReason = decoded.reason ?? null;
+          this.state.isActive = false;
+        }
+
+        this.emitEvent(decoded);
       }
-      if (decoded.phase !== undefined) this.state.currentPhase = decoded.phase;
-      if (decoded.type === 'LPUPDATE' && decoded.player !== undefined && decoded.lp !== undefined) {
-        if (decoded.player === 0) this.state.p0LP = decoded.lp;
-        if (decoded.player === 1) this.state.p1LP = decoded.lp;
-      }
-      if (
-        decoded.type === 'DAMAGE' &&
-        decoded.player !== undefined &&
-        decoded.amount !== undefined
-      ) {
-        if (decoded.player === 0) this.state.p0LP = Math.max(0, this.state.p0LP - decoded.amount);
-        if (decoded.player === 1) this.state.p1LP = Math.max(0, this.state.p1LP - decoded.amount);
-      }
-      if (decoded.type === 'WIN') {
-        this.state.winner = decoded.player ?? null;
-        this.state.winReason = decoded.reason ?? null;
+
+      this.state.stepCount++;
+
+      if (this.state.winner !== null || status === OcgProcessResult.END) {
         this.state.isActive = false;
+        this.state.isWaitingResponse = false;
+        this.lastPromptMessage = null;
+        break;
       }
 
-      this.emitEvent(decoded);
-    }
+      if (status === OcgProcessResult.WAITING) {
+        const lastMsg = rawMessages[rawMessages.length - 1];
+        if (lastMsg) {
+          const promptPlayer = 'player' in lastMsg ? (lastMsg.player as number) : 0;
+          this.state.isWaitingResponse = true;
+          this.state.waitingPlayer = promptPlayer;
+          this.lastPromptMessage = lastMsg;
 
-    this.state.stepCount++;
-
-    if (this.state.winner !== null || status === OcgProcessResult.END) {
-      this.state.isActive = false;
-      this.state.isWaitingResponse = false;
-      return decodedEvents;
-    }
-
-    if (status === OcgProcessResult.WAITING) {
-      const lastMsg = rawMessages[rawMessages.length - 1];
-      if (lastMsg) {
-        const promptPlayer = 'player' in lastMsg ? (lastMsg.player as number) : 0;
-        this.state.isWaitingResponse = true;
-        this.state.waitingPlayer = promptPlayer;
-
-        // If opponent player (AI) or autoPlay is active: auto-respond
-        if (promptPlayer === 1 || this.autoPlay) {
-          const response = getAutoResponse(lastMsg);
-          if (response) {
-            this.sendResponse(response);
+          // If opponent player (AI) or autoPlay is active: auto-respond and continue
+          if (promptPlayer === 1 || this.autoPlay) {
+            const response = getAutoResponse(lastMsg);
+            if (response) {
+              this.lib.duelSetResponse(handle, response);
+              this.state.isWaitingResponse = false;
+              this.state.waitingPlayer = null;
+              this.lastPromptMessage = null;
+              // Continue the loop to process the response
+              continue;
+            }
           }
         }
+        // If it's a prompt for human (Player 0) and autoPlay is false: stop and wait
+        break;
       }
-    } else {
-      this.state.isWaitingResponse = false;
-      this.state.waitingPlayer = null;
+
+      // If status === CONTINUE, keep processing
     }
 
-    return decodedEvents;
+    return allDecodedEvents;
   }
 
   public sendResponse(response: OcgResponse): boolean {
@@ -260,6 +291,7 @@ export class DuelEngineService {
       this.lib.duelSetResponse(this.currentDuel, response);
       this.state.isWaitingResponse = false;
       this.state.waitingPlayer = null;
+      this.lastPromptMessage = null;
 
       // Process next messages after response
       this.processStep();
@@ -272,14 +304,10 @@ export class DuelEngineService {
 
   public setAutoPlay(autoPlay: boolean): void {
     this.autoPlay = autoPlay;
-    if (autoPlay && this.state.isWaitingResponse && this.currentDuel) {
-      const lastMessages = this.lib?.duelGetMessage(this.currentDuel);
-      const lastMsg = lastMessages ? lastMessages[lastMessages.length - 1] : null;
-      if (lastMsg) {
-        const response = getAutoResponse(lastMsg);
-        if (response) {
-          this.sendResponse(response);
-        }
+    if (autoPlay && this.state.isActive && this.state.isWaitingResponse && this.lastPromptMessage) {
+      const response = getAutoResponse(this.lastPromptMessage);
+      if (response) {
+        this.sendResponse(response);
       }
     }
   }
@@ -299,6 +327,7 @@ export class DuelEngineService {
     }
     this.state.isActive = false;
     this.state.isWaitingResponse = false;
+    this.lastPromptMessage = null;
   }
 
   public close(): void {
