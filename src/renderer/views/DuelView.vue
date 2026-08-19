@@ -71,6 +71,7 @@
           @hover-card="hoveredCard = $event"
           @click-card="onFieldCardClick"
           @click-target="onTargetClick"
+          @inspect-stack="onInspectStack"
         />
       </section>
 
@@ -200,6 +201,17 @@
       @surrender="onSurrender"
     />
 
+    <!-- Card List Inspection Modal (Graveyard, Extra Deck, Banished) -->
+    <CardListModal
+      v-if="activeInspectStack"
+      v-model="isInspectModalOpen"
+      :title="activeInspectStack.title"
+      :cards="activeInspectStack.cards"
+      :owner="activeInspectStack.owner"
+      :type="activeInspectStack.type"
+      @hover-card="hoveredCard = $event"
+    />
+
     <!-- Slide-Out Duel Log Drawer -->
     <DuelLogPanel
       :is-open="isDuelLogOpen"
@@ -287,6 +299,7 @@ import {
   CardActionMenu,
   PromptModal,
   CardAnimationOverlay,
+  CardListModal,
 } from '../components/duel/index.js';
 import {
   duelAnimationQueue,
@@ -304,6 +317,13 @@ interface LogItem {
   description: string;
 }
 
+interface InspectStackState {
+  title: string;
+  cards: FieldCard[];
+  owner: 'user' | 'ai';
+  type: 'graveyard' | 'extra' | 'banished' | 'deck';
+}
+
 const router = useRouter();
 const duelStore = useDuelStore();
 const settingsStore = useSettingsStore();
@@ -312,6 +332,42 @@ const settingsStore = useSettingsStore();
 const isMenuOpen = ref(false);
 const isDuelLogOpen = ref(false);
 const isMockMode = ref(false); // Default to live engine mode for Phase 10!
+const isInspectModalOpen = ref(false);
+const activeInspectStack = ref<InspectStackState | null>(null);
+
+function onInspectStack(stackType: string, controller: number): void {
+  const isUser = controller === duelStore.userPlayerId;
+  const pf = isUser ? currentBoardState.value.userField : currentBoardState.value.opponentField;
+  const ownerName = isUser ? 'Your' : `${pf.name || 'Opponent'}'s`;
+  const owner: 'user' | 'ai' = isUser ? 'user' : 'ai';
+
+  let cards: FieldCard[] = [];
+  let title = '';
+
+  if (stackType === 'graveyard') {
+    cards = pf.graveyard || [];
+    title = `${ownerName} Graveyard`;
+  } else if (stackType === 'extra') {
+    cards = pf.extraDeck || [];
+    title = `${ownerName} Extra Deck`;
+  } else if (stackType === 'banished') {
+    cards = pf.banished || [];
+    title = `${ownerName} Banished Zone`;
+  }
+
+  // Those dialogs open only if [graveyard | extra-deck] has cards inside
+  if (!cards || cards.length === 0) {
+    return;
+  }
+
+  activeInspectStack.value = {
+    title,
+    cards,
+    owner,
+    type: stackType as 'graveyard' | 'extra' | 'banished',
+  };
+  isInspectModalOpen.value = true;
+}
 
 // Hover-previewed card state
 const hoveredCard = ref<FieldCard | null>(null);

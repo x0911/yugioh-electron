@@ -364,6 +364,7 @@ const emit = defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
   (e: 'click-card', card: FieldCard | null, event?: MouseEvent): void;
   (e: 'click-target', targetInfo: TargetInfo): void;
+  (e: 'inspect-stack', stackType: string, controller: number): void;
 }>();
 
 function getSlotTarget(controller: number, location: number, sequence: number): TargetInfo | null {
@@ -382,7 +383,10 @@ function onStackClick(stackType: string, controller: number): void {
   const target = getSlotTarget(controller, location, 0);
   if (target && target.isSelectable) {
     emit('click-target', target);
+    return;
   }
+
+  emit('inspect-stack', stackType, controller);
 }
 </script>
 

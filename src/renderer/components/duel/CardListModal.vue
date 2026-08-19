@@ -1,0 +1,489 @@
+<template>
+  <YugiModal
+    :model-value="modelValue"
+    :width="'860px'"
+    :accent="owner === 'user' ? 'user' : 'ai'"
+    @update:model-value="$emit('update:modelValue', $event)"
+  >
+    <!-- Custom Modal Header -->
+    <template #header>
+      <div class="card-list-header">
+        <div class="header-left">
+          <span class="header-icon">{{ stackIcon }}</span>
+          <div class="header-titles">
+            <h3 class="header-title">{{ title }}</h3>
+            <span class="header-count-badge">{{ cards.length }} {{ cards.length === 1 ? 'Card' : 'Cards' }}</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <span class="owner-pill" :class="`owner-pill--${owner}`">
+            {{ owner === 'user' ? 'PLAYER' : 'OPPONENT' }}
+          </span>
+        </div>
+      </div>
+    </template>
+
+    <!-- Modal Content: Scrollable Grid of Cards -->
+    <div class="card-list-modal-body">
+      <!-- Empty State -->
+      <div v-if="cards.length === 0" class="card-list-empty">
+        <span class="empty-icon">📭</span>
+        <p class="empty-text">No cards currently in this location.</p>
+      </div>
+
+      <!-- Card Grid -->
+      <div v-else class="card-list-grid">
+        <div
+          v-for="(card, idx) in cards"
+          :key="card.id || `${card.code}-${idx}`"
+          class="card-list-tile"
+          :class="[
+            `card-list-tile--${owner}`,
+            { 'card-list-tile--facedown': card.position === 'facedown_defense' || card.position === 'facedown_spell' }
+          ]"
+          @mouseenter="onMouseEnter(card)"
+          @mouseleave="onMouseLeave"
+          @click="onCardClick(card)"
+        >
+          <!-- Order Badge (Top of Graveyard is Index 0 or 1) -->
+          <div v-if="type === 'graveyard'" class="tile-order-badge" :class="{ 'tile-order-badge--top': idx === 0 }">
+            {{ idx === 0 ? 'TOP' : `#${idx + 1}` }}
+          </div>
+          <div v-else class="tile-order-badge">
+            #{{ idx + 1 }}
+          </div>
+
+          <!-- Card Miniature Artwork -->
+          <div class="tile-art-wrapper">
+            <img
+              :src="getCardImage(card)"
+              :alt="card.name"
+              class="tile-art-img"
+              @error="handleImageError"
+            />
+            <div class="tile-art-sheen"></div>
+          </div>
+
+          <!-- Card Information Metadata -->
+          <div class="tile-info">
+            <div class="tile-name" :title="card.name">
+              {{ card.name }}
+            </div>
+
+            <!-- Monster Stats & Level -->
+            <div v-if="card.atk !== undefined || card.def !== undefined" class="tile-stats">
+              <span v-if="card.level" class="tile-level">⭐ {{ card.level }}</span>
+              <span v-if="card.attribute" class="tile-attr" :class="`tile-attr--${card.attribute.toLowerCase()}`">
+                {{ card.attribute }}
+              </span>
+              <div class="tile-combat-stats">
+                <span class="stat-atk">ATK/{{ card.atk ?? 0 }}</span>
+                <span class="stat-def">DEF/{{ card.def ?? 0 }}</span>
+              </div>
+            </div>
+
+            <!-- Spell / Trap Meta -->
+            <div v-else class="tile-spell-meta">
+              <span
+                class="tile-card-type-tag"
+                :class="card.attribute === 'TRAP' ? 'tag--trap' : 'tag--spell'"
+              >
+                {{ card.attribute || (card.race ? `${card.race} Spell` : 'SPELL / TRAP') }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <template #footer="{ close }">
+      <div class="card-list-footer">
+        <button type="button" class="btn-close-viewer" @click="close">
+          <span>Close</span>
+        </button>
+      </div>
+    </template>
+  </YugiModal>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { FieldCard } from '../../../shared/types/field.js';
+import YugiModal from '../common/YugiModal.vue';
+import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
+
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean;
+    title: string;
+    cards: FieldCard[];
+    owner?: 'user' | 'ai';
+    type?: 'graveyard' | 'extra' | 'banished' | 'deck';
+  }>(),
+  {
+    owner: 'user',
+    type: 'graveyard',
+  },
+);
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void;
+  (e: 'hover-card', card: FieldCard | null): void;
+  (e: 'select-card', card: FieldCard): void;
+}>();
+
+const stackIcon = computed(() => {
+  switch (props.type) {
+    case 'graveyard':
+      return '🪦';
+    case 'extra':
+      return '⚡';
+    case 'banished':
+      return '🌀';
+    case 'deck':
+      return '🎴';
+    default:
+      return '📜';
+  }
+});
+
+function getCardImage(card: FieldCard): string {
+  if (!card.code || card.code <= 0) {
+    return getCardBackUrl();
+  }
+  return getCardImageUrl(card.code, 'mini');
+}
+
+function onMouseEnter(card: FieldCard): void {
+  emit('hover-card', card);
+}
+
+function onMouseLeave(): void {
+  emit('hover-card', null);
+}
+
+function onCardClick(card: FieldCard): void {
+  emit('select-card', card);
+}
+</script>
+
+<style scoped lang="scss">
+@use '../../assets/styles/abstracts' as *;
+
+.card-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 1.5rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.header-titles {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.header-title {
+  font-family: $font-display;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: $color-gold-300;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  margin: 0;
+}
+
+.header-count-badge {
+  font-family: $font-mono;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $color-gold-500;
+  background: rgba(201, 162, 39, 0.15);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+}
+
+.owner-pill {
+  font-family: $font-mono;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+
+  &--user {
+    color: #90cdf4;
+    background: rgba(49, 130, 206, 0.25);
+    border: 1px solid rgba(49, 130, 206, 0.5);
+  }
+
+  &--ai {
+    color: #feb2b2;
+    background: rgba(229, 62, 62, 0.25);
+    border: 1px solid rgba(229, 62, 62, 0.5);
+  }
+}
+
+.card-list-modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 162, 39, 0.3) rgba(0, 0, 0, 0.4);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(201, 162, 39, 0.3);
+    border-radius: 3px;
+  }
+}
+
+.card-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: $color-text-muted;
+
+  .empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-text {
+    font-family: $font-body;
+    font-size: 1rem;
+    color: $color-text-muted;
+  }
+}
+
+.card-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.85rem;
+}
+
+.card-list-tile {
+  position: relative;
+  background: rgba(18, 22, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+
+  &:hover {
+    transform: translateY(-4px) scale(1.02);
+    background: rgba(28, 34, 44, 0.95);
+    border-color: $color-gold-300;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(201, 162, 39, 0.3);
+
+    .tile-art-sheen {
+      opacity: 1;
+    }
+  }
+
+  &--user:hover {
+    border-color: #63b3ed;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(66, 153, 225, 0.4);
+  }
+
+  &--ai:hover {
+    border-color: #fc8181;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(245, 101, 101, 0.4);
+  }
+}
+
+.tile-order-badge {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 0.05rem 0.35rem;
+  z-index: 2;
+
+  &--top {
+    color: #111;
+    background: $color-gold-300;
+    border-color: $color-gold-300;
+    font-weight: 800;
+  }
+}
+
+.tile-art-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1.35;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  background: #000;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.tile-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tile-art-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.tile-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tile-name {
+  font-family: $font-body;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $color-text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.tile-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+}
+
+.tile-level {
+  color: #ecc94b;
+  font-weight: 600;
+}
+
+.tile-attr {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+
+  &--dark { color: #b794f4; }
+  &--light { color: #f6e05e; }
+  &--earth { color: #ed8936; }
+  &--water { color: #63b3ed; }
+  &--fire { color: #f56565; }
+  &--wind { color: #48bb78; }
+  &--divine { color: #ecc94b; }
+}
+
+.tile-combat-stats {
+  display: flex;
+  justify-content: space-between;
+  color: $color-text-secondary;
+  font-size: 0.7rem;
+  font-weight: 600;
+
+  .stat-atk {
+    color: #feb2b2;
+  }
+  .stat-def {
+    color: #90cdf4;
+  }
+}
+
+.tile-spell-meta {
+  display: flex;
+  justify-content: center;
+}
+
+.tile-card-type-tag {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+
+  &.tag--spell {
+    color: #68d391;
+    background: rgba(56, 161, 105, 0.2);
+    border: 1px solid rgba(56, 161, 105, 0.4);
+  }
+
+  &.tag--trap {
+    color: #f687b3;
+    background: rgba(213, 63, 140, 0.2);
+    border: 1px solid rgba(213, 63, 140, 0.4);
+  }
+}
+
+.card-list-footer {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.btn-close-viewer {
+  font-family: $font-display;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: $color-gold-100;
+  background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
+  border: 1px solid $color-gold-500;
+  border-radius: 4px;
+  padding: 0.45rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: linear-gradient(180deg, #4a5568 0%, #2d3748 100%);
+    border-color: $color-gold-300;
+    box-shadow: 0 0 10px rgba(201, 162, 39, 0.4);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+</style>
