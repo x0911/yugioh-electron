@@ -204,3 +204,76 @@
 2. Verify files exist in `resources/cards/full/`, `resources/cards/art/`, and `resources/cards/mini/`.
 3. Run `npm run download:cards` to fetch and optimize the complete 2,826-card offline collection.
 
+## Phase 4 — Shared Design System Components — 2026-08-19
+
+**Status:** Complete
+
+**What was built:**
+- Refactored and implemented the full **SCSS 7-1 Architecture** in `src/renderer/assets/styles/`:
+  - `abstracts/`: Complete design tokens (`$color-bg-void`, `$color-bg-panel`, `$color-border-glass`, gold palette `$color-gold-100`..`$900`, player colors `$color-user` / `$color-ai` and glows, semantics, typography scale, 8px spacing units, motion tokens, z-index scale) and mixins (`glass-panel`, `glass-panel-elevated`, `gold-glow`, `user-glow`, `ai-glow`, `foil-sweep-overlay`, `focus-ring`).
+  - `base/`: CSS reset, self-hosted font typography rules (Cinzel display, Inter body, tabular numbers), keyframes (`foil-sweep`, `spin`, `spin-reverse`, `pulse-glow`, `pulse-target`, `pulse-target-ai`, `modal-enter`, `fade-in`, `slide-up`, `card-flip`), and `prefers-reduced-motion` accessibility support.
+  - `components/`: Modular BEM stylesheets for `_button.scss`, `_panel.scss`, `_modal.scss`, `_tooltip.scss`, `_icon.scss`, and `_spinner.scss`.
+  - `layout/`: `_grid.scss`, `_header.scss` (with highlighted dev nav support).
+  - `pages/`: `_menu.scss`, `_deck-edit.scss`, `_duel.scss`, `_kitchen-sink.scss`.
+  - `themes/`: `_dark.scss` root CSS variables.
+  - `vendor/`: Third-party overrides stub.
+  - `main.scss`: Clean `@forward` barrel structure for modern Sass.
+- Built reusable core Vue 3 components to spec in `src/renderer/components/common/`:
+  - `GlassPanel.vue`: Configurable glassmorphic container with 14px border radius, backdrop blur, inset highlight, elevated drop shadow support, and gold/user/ai top-accent bars.
+  - `YugiButton.vue`: Full interactive CTA button supporting primary, secondary, danger, ghost, and the **card-style variant** (`variant="card"` with card frame silhouette, header, emblem, footer, and holographic foil sheen). Supports all 5 states (idle, hover with foil light-sweep and 1.02 scale, active with 0.98 scale, disabled with 40% grayscale, and focus-visible with 2px cyan ring).
+  - `YugiModal.vue`: Center-screen glass dialog with backdrop blur, focus trap, Escape key handling, smooth entrance/exit transitions, and cancelable vs non-cancelable modes (for mandatory duel guidance prompts).
+  - `Tooltip.vue`: Dark glass chip (`rgba(10, 12, 16, 0.94)`) with gold hairline border, arrow caret, 150ms default delay to prevent hover flicker, and 4 orientation positions (`top`, `bottom`, `left`, `right`).
+  - `IconIndicator.vue`: Vector glyph badge rendering all 6 duel targeting locations (Hand, Field, Deck, Extra Deck, Graveyard, Banished) in player identity colors (User blue vs AI red) with optional pulsing target rings, plus all 7 card status indicators (Negated, Cannot Special Summon, Temp Banished, Fusion Material, Synchro Material, Destroyed by Battle, Cannot Attack) with integrated tooltip.
+  - `LoadingSpinner.vue`: Ancient Duel Arena celestial sun disk spinner with counter-rotating Egyptian rune rings, pulsing core, cyan holographic energy variant, and simple ring variant.
+  - `index.ts`: Common component barrel export.
+- Created `/dev/kitchen-sink` visual QA route:
+  - Added `src/renderer/views/KitchenSinkView.vue` showcasing every component in every documented state and variant.
+  - Configured conditional router registration in `src/renderer/router/index.ts` gated by `import.meta.env.DEV` (automatically excluded from production builds).
+  - Added one-click navigation link to the top Dev Navigation bar.
+
+**Files added/changed:**
+- `src/renderer/assets/styles/abstracts/_variables.scss`
+- `src/renderer/assets/styles/abstracts/_mixins.scss`
+- `src/renderer/assets/styles/base/_animations.scss`
+- `src/renderer/assets/styles/components/_button.scss`
+- `src/renderer/assets/styles/components/_panel.scss`
+- `src/renderer/assets/styles/components/_modal.scss`
+- `src/renderer/assets/styles/components/_tooltip.scss`
+- `src/renderer/assets/styles/components/_icon.scss`
+- `src/renderer/assets/styles/components/_spinner.scss`
+- `src/renderer/assets/styles/components/_index.scss`
+- `src/renderer/assets/styles/pages/_kitchen-sink.scss`
+- `src/renderer/assets/styles/pages/_index.scss`
+- `src/renderer/assets/styles/layout/_header.scss`
+- `src/renderer/components/common/GlassPanel.vue`
+- `src/renderer/components/common/YugiButton.vue`
+- `src/renderer/components/common/YugiModal.vue`
+- `src/renderer/components/common/Tooltip.vue`
+- `src/renderer/components/common/IconIndicator.vue`
+- `src/renderer/components/common/LoadingSpinner.vue`
+- `src/renderer/components/common/index.ts`
+- `src/renderer/views/KitchenSinkView.vue`
+- `src/renderer/router/index.ts`
+- `src/renderer/App.vue`
+
+**Decisions made / deviations from the plan:**
+- **Dynamic Dev Route Gating**: `import.meta.env.DEV` is used in `router/index.ts` to push `/dev/kitchen-sink` to the route table only during local development. During production builds (`npm run build`), the route and component are completely omitted from the generated client bundle.
+- **Crisp Inline SVG Glyphs**: Built bespoke inline SVG glyphs directly into `IconIndicator.vue` and `LoadingSpinner.vue` so badges scale cleanly without raster pixelation or external image network overhead.
+
+**Known issues / TODO carried to next phase:**
+- Phase 5 will implement the real Loading screen (driven by engine readiness) and Main Menu screen (using `YugiButton` card variant).
+- Temporary Dev Nav bar remains active for testing until Phase 14 packaging.
+
+**How to manually verify this phase:**
+1. Run `npm run dev` to launch the application.
+2. In the top Dev Navigation bar, click **"Kitchen Sink (P4)"** (or navigate to `/dev/kitchen-sink`).
+3. Inspect and interact with each section:
+   - Verify Color Palette swatches and Typography hierarchy.
+   - Verify GlassPanel variants and top-accent borders.
+   - Test YugiButton hover foil sweep, active press, disabled states, and card-style variant.
+   - Test Tooltip delays, positions (top/bottom/left/right), and rich slots.
+   - Test IconIndicator for all 12 targeting location states and 7 card status glyphs.
+   - Test YugiModal cancelable vs non-cancelable guidance modals.
+   - Test LoadingSpinner solar, cyan, and ring animations.
+
+
