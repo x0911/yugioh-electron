@@ -487,5 +487,97 @@
    - Close the app (or click **"Main Menu"** -> **"Exit Game"**).
    - Run `npm run dev`, navigate back to **Deck Edit**, and confirm *"My Tournament Deck"* is in the dropdown with all 40 cards intact.
 
+## Phase 8 — Coin Toss & Pre-Duel Video — 2026-08-19
+
+**Status:** Complete
+
+**What was built:**
+- Built the **Coin Toss Screen** (`CoinTossView.vue` & `_coin-toss.scss`):
+  - **Matchup Header**: Displays User (Player 1) vs Selected Rival Opponent (with series badge `DM` gold vs `GX` cyan, title, and "← Menu" navigation).
+  - **Heads vs Tails Decision**: Interactive gold cards featuring high-res coin graphics (`coin-heads.png` solar eye vs `coin-tails.png` crescent star), keyboard hotkeys (`1`/`H` for Heads, `2`/`T` for Tails), hover foil sheen, and active press states.
+  - **3D Animated Coin Flip**: Multi-axis 3D CSS rotation (`rotateY`, `perspective: 1200px`) and vertical loft arc with realistic deceleration physics over 2.2s.
+  - **Starting Player Determination**:
+    - Compares player call against random coin outcome.
+    - If user calls correctly: User wins toss and is assigned **Player 0 (First Turn)**.
+    - If user calls incorrectly: Opponent wins toss and is assigned **Player 0 (First Turn)**.
+  - **Result Announcement Banner**: Glowing victory callout (User Blue/Gold vs Opponent Red/Amber) with turn order statement, "Proceed to Intro (Space)" CTA button, and "🔄 Flip Again" button for immediate QA of both outcomes.
+- Built the **Pre-Duel Video Screen** (`PreDuelVideoView.vue` & `_pre-duel-video.scss`):
+  - Fullscreen video player with HTML5 `<video>` support and volume synchronization with `settingsStore` (BGM / SFX).
+  - **Cinematic Cutscene Fallback**:
+    - Rendered automatically when local character MP4 video file is not yet present on disk.
+    - Displays Ancient Duel Arena atmospheric backdrop, series pill (`Original Series` vs `Yu-Gi-Oh! GX`), opponent portrait / holographic silhouette, character name, title, tagline quote, chosen deck archetype, and signature cards.
+    - Prominent **"VIDEO PENDING"** watermark badge displaying the exact file path expected on disk (`resources/videos/characters/<id>.mp4`).
+  - **Skip-on-Click & Navigation**:
+    - Clicking anywhere on screen, clicking the skip overlay, or pressing `Space`, `Enter`, or `Escape` immediately skips to `/duel`.
+    - Automatically checks `settingsStore.skipPreDuelVideo` and bypasses the cutscene directly to `/duel` when enabled.
+    - Auto-advance progress countdown bar with smooth transition.
+- **Duel Engine & State Wiring**:
+  - Enhanced `DuelEngineService.ts` and `src/shared/types/duel.ts` with `humanPlayerId: 0 | 1`, ensuring `viewFilter` perspective-accurate private card redaction functions properly regardless of who won the coin toss.
+  - Implemented `setupMatch()`, `resolveCoinToss()`, and `startPreparedDuel()` in `duelStore.ts`, ordering `player0Deck` and `player1Deck` based on the coin toss winner.
+  - Updated `DuelView.vue` to recognize prepared matches from the entry flow, auto-initializing with the determined starting player and displaying dynamic Player 0 vs Player 1 scoreboard labels.
+  - Added asset helpers in `src/renderer/utils/media.ts` (`getCoinHeadsUrl()`, `getCoinTailsUrl()`, `getCoinEdgeUrl()`, `getCharacterVideoUrl()`, `getCharacterPortraitUrl()`, `getBackgroundUrl()`).
+
+**Files added/changed:**
+- `src/renderer/views/CoinTossView.vue`: Full Coin Toss view implementation.
+- `src/renderer/views/PreDuelVideoView.vue`: Full Pre-Duel Video and cutscene fallback implementation.
+- `src/renderer/views/DuelView.vue`: Scoreboard player tag adaptations and prepared duel starter.
+- `src/renderer/stores/duelStore.ts`: Match setup, coin toss resolution, and starting player duel initialization.
+- `src/renderer/utils/media.ts`: Coin, character video, and background asset URL helpers.
+- `src/shared/types/duel.ts`: Added `humanPlayerId` to `DuelInitOptions`, coin toss types, and `MatchSetupConfig`.
+- `src/main/engine/DuelEngineService.ts`: Added `humanPlayerId` support for view filtering and starting player assignments.
+- `src/renderer/assets/styles/pages/_coin-toss.scss`: 3D coin flip keyframes and choice card styles.
+- `src/renderer/assets/styles/pages/_pre-duel-video.scss`: Fullscreen video player and cutscene fallback styles.
+- `src/renderer/assets/styles/pages/_index.scss`: Forwarded coin-toss and pre-duel-video page styles.
+- `src/renderer/assets/styles/abstracts/_variables.scss`: Added font size alias tokens.
+- `resources/videos/characters/.gitkeep`: Created character video directory structure.
+
+**Decisions made / deviations from the plan:**
+- **Turn Order Engine Integration**: In `ygopro-core`, Player 0 is always the player who acts first on Turn 1 (Draw Phase). Therefore, whichever combatant wins the coin toss is passed as `player0Deck`, and the loser is passed as `player1Deck`. `DuelEngineService` and `viewFilter` track `humanPlayerId` (0 if user won toss, 1 if opponent won toss) to guarantee human anti-cheat information hiding remains structurally sound.
+- **Official Coin Artworks**: Leveraged high-resolution coin artwork assets in `resources/ui/` (`coin-heads.png`, `coin-tails.png`, `coin-edge.png`) embedded into a 3D CSS perspective container with realistic flip physics.
+
+**Known issues / TODO carried to next phase:**
+- **TODO (Character Video Drops)**: User can drop real MP4 video files into `resources/videos/characters/<character-id>.mp4`. The complete list of 20 target paths:
+  1. `resources/videos/characters/yugi-muto.mp4`
+  2. `resources/videos/characters/yami-yugi.mp4`
+  3. `resources/videos/characters/seto-kaiba.mp4`
+  4. `resources/videos/characters/joey-wheeler.mp4`
+  5. `resources/videos/characters/tea-gardner.mp4`
+  6. `resources/videos/characters/tristan-taylor.mp4`
+  7. `resources/videos/characters/mai-valentine.mp4`
+  8. `resources/videos/characters/bakura-ryou.mp4`
+  9. `resources/videos/characters/marik-ishtar.mp4`
+  10. `resources/videos/characters/maximillion-pegasus.mp4`
+  11. `resources/videos/characters/jaden-yuki.mp4`
+  12. `resources/videos/characters/zane-truesdale.mp4`
+  13. `resources/videos/characters/syrus-truesdale.mp4`
+  14. `resources/videos/characters/chazz-princeton.mp4`
+  15. `resources/videos/characters/alexis-rhodes.mp4`
+  16. `resources/videos/characters/bastion-misawa.mp4`
+  17. `resources/videos/characters/chumley-huffington.mp4`
+  18. `resources/videos/characters/aster-phoenix.mp4`
+  19. `resources/videos/characters/jesse-anderson.mp4`
+  20. `resources/videos/characters/vellian-crowler.mp4`
+- Phase 9 will build the static Duel Field layout matching reference proportions (all 14 zones, hand fans, LP meters, HUD controls).
+
+**How to manually verify this phase:**
+1. Run `npm run dev` to launch the application.
+2. (Optional) Go to **Settings** (`/settings`) and pick a character (e.g. *Seto Kaiba* or *Jaden Yuki*).
+3. Return to **Main Menu**, click the **"Start Duel"** card button -> automatically transitions to the **Coin Toss** screen (`/coin-toss`).
+4. On the **Coin Toss** screen:
+   - Verify the opponent header displays the chosen rival duelist with series badge and title.
+   - Choose **HEADS** (or press `1` / `H`).
+   - Watch the 3D coin spin in mid-air and settle on Heads or Tails over 2.2s.
+   - If Heads: observe green/blue banner: *"YOU WON THE TOSS! You will take the FIRST turn (Player 0)."*
+   - If Tails: observe red/amber banner: *"[Opponent] WON THE TOSS! [Opponent] will take the FIRST turn (Player 0)."*
+   - Click **"Flip Again"** (or press `R`) and select **TAILS** (or press `2` / `T`) a few times to test and verify both winning and losing outcomes.
+5. Click **"Proceed to Intro"** (or press `Space`) -> navigates to **Pre-Duel Video** (`/pre-duel-video`).
+6. On the **Pre-Duel Video** screen:
+   - Verify the cinematic cutscene presentation displays the rival duelist dossier and the prominent watermark *"Video Pending: resources/videos/characters/<id>.mp4"*.
+   - Click anywhere on screen (or press `Space`) -> confirms instant skip to the **Duel Screen** (`/duel`).
+7. On the **Duel Screen**:
+   - Verify the scoreboard shows Player 0 (1st Turn) and Player 1 (2nd Turn) correctly assigned according to the coin toss result.
+   - Click **"⚡ Auto-Play Duel"** or **"⏩ Next Step"** to confirm the duel executes smoothly with the chosen starting player.
+
+
 
 
