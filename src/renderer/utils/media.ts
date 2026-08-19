@@ -72,6 +72,27 @@ export function getBackgroundUrl(name: string): string {
 }
 
 /**
+ * Returns the URL for a HUD/UI icon asset.
+ */
+export function getUiIconUrl(name: string): string {
+  return `app-resource://ui/icons/${name}.png`;
+}
+
+/**
+ * Returns location indicator icon URL.
+ */
+export function getLocationIconUrl(location: string): string {
+  return `app-resource://ui/icons/location-${location}.png`;
+}
+
+/**
+ * Returns status indicator icon URL.
+ */
+export function getStatusIconUrl(status: string): string {
+  return `app-resource://ui/icons/status-${status}.png`;
+}
+
+/**
  * Handles image error events by swapping to placeholder.
  */
 export function handleImageError(event: Event): void {
