@@ -1,0 +1,462 @@
+// =============================================================================
+// Settings & Opponents Page Styles
+// =============================================================================
+
+@use '../abstracts' as *;
+
+.settings-view {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 32px 40px 60px 40px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 1440px;
+  margin: 0 auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba($color-gold-500, 0.35) rgba($color-bg-void, 0.5);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba($color-gold-500, 0.35);
+    border-radius: 3px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba($color-border-glass, 0.4);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  &__header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: $color-gold-300;
+    margin: 0;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 16px rgba($color-gold-500, 0.4);
+  }
+
+  &__subtitle {
+    font-family: $font-body;
+    font-size: 1rem;
+    color: $color-text-secondary;
+    margin: 0;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &__section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__section-title {
+    font-family: $font-display;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: $color-gold-100;
+    margin: 0;
+    letter-spacing: 0.03em;
+  }
+
+  &__section-tag {
+    font-family: $font-body;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $color-gold-500;
+    background: rgba($color-gold-500, 0.15);
+    border: 1px solid rgba($color-gold-500, 0.35);
+    border-radius: 12px;
+    padding: 2px 10px;
+  }
+
+  // Active Opponent Dossier
+  &__dossier {
+    padding: 28px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 32px;
+    position: relative;
+    overflow: hidden;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__dossier-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+
+  &__dossier-avatar-box {
+    position: relative;
+    width: 220px;
+    height: 270px;
+    border-radius: 14px;
+    background: radial-gradient(
+      circle at 50% 30%,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba($color-bg-void, 0.9) 100%
+    );
+    border: 1.5px solid var(--char-theme-color, $color-gold-500);
+    box-shadow: 0 0 24px rgba(var(--char-theme-color, $color-gold-500), 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  &__dossier-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__dossier-name {
+    font-family: $font-display;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: $color-gold-300;
+    margin: 0;
+  }
+
+  &__dossier-title {
+    font-family: $font-body;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $color-text-secondary;
+    margin: 0;
+  }
+
+  &__dossier-active-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: $font-display;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: $color-success;
+    background: rgba($color-success, 0.15);
+    border: 1px solid rgba($color-success, 0.5);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+
+  &__dossier-right {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &__dossier-bio-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__dossier-tagline {
+    font-family: $font-display;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $color-gold-100;
+    margin: 0;
+  }
+
+  &__dossier-bio {
+    font-family: $font-body;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: $color-text-secondary;
+    margin: 0;
+  }
+
+  &__decks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  &__decks-title {
+    font-family: $font-display;
+    font-size: 1rem;
+    font-weight: 700;
+    color: $color-gold-300;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__decks-random-note {
+    font-family: $font-body;
+    font-size: 0.8rem;
+    color: $color-info;
+    background: rgba($color-info, 0.15);
+    border: 1px solid rgba($color-info, 0.35);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  &__decks-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__deck-card {
+    background: rgba($color-bg-void, 0.6);
+    border: 1px solid rgba($color-border-glass, 0.35);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: rgba($color-gold-500, 0.7);
+      background: rgba($color-bg-void, 0.8);
+      transform: translateY(-2px);
+    }
+  }
+
+  &__deck-num {
+    font-family: $font-display;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: $color-gold-500;
+    letter-spacing: 0.05em;
+  }
+
+  &__deck-name {
+    font-family: $font-display;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $color-text-primary;
+    margin: 0;
+  }
+
+  &__deck-desc {
+    font-family: $font-body;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: $color-text-secondary;
+    margin: 0;
+  }
+
+  &__signature-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  &__signature-label {
+    font-family: $font-display;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: $color-gold-300;
+    text-transform: uppercase;
+  }
+
+  &__signature-chip {
+    font-family: $font-body;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $color-gold-100;
+    background: rgba($color-gold-500, 0.12);
+    border: 1px solid rgba($color-gold-500, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  // Audio & Settings Grid
+  &__settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__setting-group {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &__setting-group-title {
+    font-family: $font-display;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $color-gold-300;
+    margin: 0;
+    letter-spacing: 0.03em;
+  }
+
+  &__slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__slider-label {
+    font-family: $font-body;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  &__slider-val {
+    font-family: $font-display;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $color-gold-300;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__range-input {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+    cursor: pointer;
+    accent-color: $color-gold-500;
+  }
+
+  &__toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+  }
+
+  &__toggle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__toggle-label {
+    font-family: $font-body;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  &__toggle-desc {
+    font-family: $font-body;
+    font-size: 0.8rem;
+    color: $color-text-muted;
+  }
+
+  &__switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+
+    input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+  }
+
+  &__switch-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 26px;
+    transition: 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &::before {
+      position: absolute;
+      content: '';
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #b8b2a0;
+      border-radius: 50%;
+      transition: 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+
+  &__switch input:checked + &__switch-slider {
+    background: rgba($color-gold-500, 0.3);
+    border-color: $color-gold-500;
+
+    &::before {
+      transform: translateX(22px);
+      background: $color-gold-300;
+      box-shadow: 0 0 8px rgba($color-gold-500, 0.6);
+    }
+  }
+
+  &__switch input:focus-visible + &__switch-slider {
+    box-shadow: 0 0 0 2px $color-info;
+  }
+
+  &__footer-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid rgba($color-border-glass, 0.3);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+}

@@ -14,10 +14,17 @@
 
       <div class="controls-row">
         <button class="btn btn-primary" :disabled="duelState.isActive" @click="startYugiVsKaiba">
-          ▶ Start Duel (Yugi vs Kaiba — DM Era)
+          ▶ Yugi vs Kaiba (DM)
         </button>
         <button class="btn btn-primary" :disabled="duelState.isActive" @click="startJadenVsZane">
-          ▶ Start Duel (Jaden vs Zane — GX Era)
+          ▶ Jaden vs Zane (GX)
+        </button>
+        <button
+          class="btn btn-accent"
+          :disabled="duelState.isActive"
+          @click="startVsSelectedOpponent"
+        >
+          ⚔️ Duel vs {{ selectedOpponentName }} (Random Deck)
         </button>
         <button class="btn btn-secondary" :disabled="!duelState.isActive" @click="stepDuel">
           ⏩ Next Step
@@ -31,7 +38,11 @@
           {{ isAutoPlaying ? '⏹ Pause Auto-Play' : '⚡ Auto-Play Duel' }}
         </button>
         <button class="btn btn-outline" @click="clearLog">🗑 Clear Log</button>
-        <router-link to="/main-menu" class="btn btn-outline" style="text-decoration: none; margin-left: auto;">
+        <router-link
+          to="/main-menu"
+          class="btn btn-outline"
+          style="text-decoration: none; margin-left: auto"
+        >
           ← Main Menu
         </router-link>
       </div>
@@ -130,12 +141,19 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue';
 import type { DuelEventPayload, DuelStateSummary } from '../../shared/types/duel.js';
+import { useSettingsStore } from '../stores/settingsStore.js';
 
 interface LogEntry {
   time: string;
   type: string;
   description: string;
 }
+
+const settingsStore = useSettingsStore();
+
+const selectedOpponentName = computed(() => {
+  return settingsStore.selectedCharacter?.name || 'Opponent';
+});
 
 const logs = ref<LogEntry[]>([]);
 const logContainer = ref<HTMLElement | null>(null);
@@ -401,6 +419,26 @@ function startJadenVsZane(): void {
   startDuel(JADEN_DECK, ZANE_DECK, 'Jaden vs Zane Matchup (GX Era)');
 }
 
+async function startVsSelectedOpponent(): Promise<void> {
+  const result = settingsStore.getRandomDeckForOpponent();
+  if (!result) {
+    appendLog('ERROR', 'No opponent or decks available.');
+    return;
+  }
+
+  appendLog('OPPONENT', `Selected Opponent: ${result.character.name} [${result.character.series}]`);
+  appendLog(
+    'DECK_PICK',
+    `🎲 Randomly Selected Deck #${result.deckIndex + 1}: "${result.deck.name}" (${result.deck.archetype}) — 40 Cards Loaded`,
+  );
+
+  startDuel(
+    YUGI_DECK,
+    result.deck.mainCards,
+    `User vs ${result.character.name} (Deck #${result.deckIndex + 1}: ${result.deck.name})`,
+  );
+}
+
 async function stepDuel(): Promise<void> {
   if (!duelState.isActive) return;
   try {
@@ -461,7 +499,8 @@ function handleDuelEvent(event: DuelEventPayload): void {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await settingsStore.initializeSettings();
   if (window.duelAPI) {
     unsubscribeEvents = window.duelAPI.onEvent(handleDuelEvent);
     updateStateFromMain();
