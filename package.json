@@ -14,7 +14,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "vue-tsc --noEmit",
-    "test": "tsx tests/guidance-targeting.test.ts && tsx tests/hand-and-pacing.test.ts && tsx tests/stack-inspection.test.ts",
+    "test": "tsx tests/guidance-targeting.test.ts && tsx tests/hand-and-pacing.test.ts && tsx tests/stack-inspection.test.ts && tsx tests/random-draw-and-deck.test.ts",
     "build:cards": "tsx scripts/build-card-pool.ts",
     "download:cards": "tsx scripts/download-card-images.ts",
     "generate:videos": "tsx scripts/generate-character-videos.ts",

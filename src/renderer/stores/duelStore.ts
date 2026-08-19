@@ -107,6 +107,17 @@ export interface TargetInfo {
   isTribute: boolean;
 }
 
+function shuffleArray<T>(array: readonly T[]): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = result[i];
+    result[i] = result[j];
+    result[j] = temp;
+  }
+  return result;
+}
+
 function createEmptyPlayerField(playerId: 0 | 1, name: string): PlayerFieldState {
   return {
     playerId,
@@ -314,22 +325,30 @@ export const useDuelStore = defineStore('duel', {
     async startPreparedDuel(): Promise<boolean> {
       if (!this.selectedOpponent || !this.selectedOpponentDeck) {
         await this.setupMatch();
+      } else if (this.selectedOpponent && this.selectedOpponent.decks.length > 0) {
+        // AI-Opponent starts with a random deck of the 3 decks that character has
+        const idx = Math.floor(Math.random() * this.selectedOpponent.decks.length);
+        this.selectedOpponentDeck = this.selectedOpponent.decks[idx];
+        this.selectedOpponentDeckIndex = idx;
       }
 
-      const userMainCards =
+      // Drawing must be totally random for both players from turn 1
+      const userMainCards = shuffleArray(
         this.selectedUserDeck && this.selectedUserDeck.main.length >= 40
           ? this.selectedUserDeck.main
-          : DEFAULT_USER_MAIN_DECK;
+          : DEFAULT_USER_MAIN_DECK,
+      );
 
       const userExtraCards =
         this.selectedUserDeck && this.selectedUserDeck.extra && this.selectedUserDeck.extra.length > 0
           ? this.selectedUserDeck.extra
           : DEFAULT_USER_EXTRA_DECK;
 
-      const opponentMainCards =
+      const opponentMainCards = shuffleArray(
         this.selectedOpponentDeck && this.selectedOpponentDeck.mainCards.length >= 40
           ? this.selectedOpponentDeck.mainCards
-          : DEFAULT_USER_MAIN_DECK;
+          : DEFAULT_USER_MAIN_DECK,
+      );
 
       const opponentExtraCards =
         this.selectedOpponentDeck && this.selectedOpponentDeck.extraCards

@@ -255,8 +255,12 @@ export class DuelEngineService {
     if (constantSrc) this.lib.loadScript(handle, 'constant.lua', constantSrc);
     if (utilitySrc) this.lib.loadScript(handle, 'utility.lua', utilitySrc);
 
+    // Shuffle Player 0 and Player 1 decks randomly using Fisher-Yates
+    const p0DeckShuffled = this.shuffleArray(options.player0Deck);
+    const p1DeckShuffled = this.shuffleArray(options.player1Deck);
+
     // Place cards into Player 0 and Player 1 decks
-    for (const code of options.player0Deck) {
+    for (const code of p0DeckShuffled) {
       this.lib.duelNewCard(handle, {
         team: 0,
         duelist: 0,
@@ -268,7 +272,7 @@ export class DuelEngineService {
       });
     }
 
-    for (const code of options.player1Deck) {
+    for (const code of p1DeckShuffled) {
       this.lib.duelNewCard(handle, {
         team: 1,
         duelist: 0,
@@ -525,6 +529,17 @@ export class DuelEngineService {
         console.error('[DuelEngineService] AI Step Execution Error:', err);
       }
     }, this.AI_STEP_DELAY_MS);
+  }
+
+  private shuffleArray<T>(array: readonly T[]): T[] {
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = result[i];
+      result[i] = result[j];
+      result[j] = temp;
+    }
+    return result;
   }
 
   public processStep(): DecodedDuelEvent[] {
