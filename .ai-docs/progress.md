@@ -837,13 +837,27 @@
 - `tests/stack-inspection.test.ts`: Created automated test suite.
 - `package.json`: Updated `test` script.
 
+---
+
+## 2026-08-19 — Mock Duel Mode Removal (Live Engine Exclusivity)
+
+**What was done:**
+- **Complete Mock Duel Removal**:
+  - Deleted `src/renderer/utils/mockDuelState.ts`.
+  - Removed all mock duel state variables (`isMockMode`, `mockBoardState`) and toggle functions (`toggleMode`, `drawMockCard`, `resetMockHand`, `cycleMockPositions`) from `DuelView.vue`.
+  - Simplified `currentBoardState` to directly compute `duelStore.boardState` bound directly to the live WebAssembly `ocgcore` engine.
+  - Removed developer mock toolbar toggles from `DuelView.vue`, keeping only the production-ready duel log drawer toggle.
+
+**Files created/modified:**
+- `src/renderer/utils/mockDuelState.ts`: [DELETED]
+- `src/renderer/views/DuelView.vue`: Removed mock duel references, state, and UI controls.
+
 **How to manually verify this phase:**
-1. Run `npm test` to verify all test suites pass.
+1. Run `npm test` to verify all automated test suites pass.
 2. Run `npm run typecheck` and `npm run build` to verify clean compilation.
-3. In duel:
-   - Click an empty Graveyard -> nothing opens.
-   - Destroy/discard a card to the Graveyard -> click Graveyard -> modal opens showing the cards in the graveyard with `#TOP` indicator.
-   - Click User Extra Deck -> modal opens showing all 5 Fusion Monsters.
+3. Launch app with `npm run dev`:
+   - Verify duels run strictly via the real `ocgcore-wasm` engine with live rules, state updates, and animation queues.
+
 
 
 
