@@ -708,21 +708,29 @@ export const useDuelStore = defineStore('duel', {
         actions.push({ type: 'activate', index: actIdx, label: 'Activate', icon: '⚡' });
       }
 
-      // Fallback matching: if strict sequence matching yielded no actions but an action exists for this card code in hand
+      // Fallback matching: strictly require location 2 (hand)
       if (actions.length === 0) {
-        const anySummonIdx = this.activeIdleCmd.summons.findIndex((s) => s.code === card.code);
+        const anySummonIdx = this.activeIdleCmd.summons.findIndex(
+          (s) => s.code === card.code && (s.location === undefined || s.location === 2),
+        );
         if (anySummonIdx >= 0) {
           actions.push({ type: 'summon', index: anySummonIdx, label: 'Normal Summon', icon: '⚔️' });
         }
-        const anySpIdx = this.activeIdleCmd.special_summons.findIndex((s) => s.code === card.code);
+        const anySpIdx = this.activeIdleCmd.special_summons.findIndex(
+          (s) => s.code === card.code && (s.location === undefined || s.location === 2),
+        );
         if (anySpIdx >= 0) {
           actions.push({ type: 'sp_summon', index: anySpIdx, label: 'Special Summon', icon: '✨' });
         }
-        const anyMSetIdx = this.activeIdleCmd.monster_sets.findIndex((s) => s.code === card.code);
+        const anyMSetIdx = this.activeIdleCmd.monster_sets.findIndex(
+          (s) => s.code === card.code && (s.location === undefined || s.location === 2),
+        );
         if (anyMSetIdx >= 0) {
           actions.push({ type: 'monster_set', index: anyMSetIdx, label: 'Set Monster', icon: '🛡️' });
         }
-        const anySSetIdx = this.activeIdleCmd.spell_sets.findIndex((s) => s.code === card.code);
+        const anySSetIdx = this.activeIdleCmd.spell_sets.findIndex(
+          (s) => s.code === card.code && (s.location === undefined || s.location === 2),
+        );
         if (anySSetIdx >= 0) {
           actions.push({ type: 'spell_set', index: anySSetIdx, label: 'Set Card', icon: '📜' });
         }
@@ -744,20 +752,31 @@ export const useDuelStore = defineStore('duel', {
       const actions: CardActionOption[] = [];
       if (!this.boardState.userField.isTurn) return actions;
 
+      const isMonsterZone = card.location === 'monster' || card.location === 'extra-monster';
+      const isSpellTrapZone = card.location === 'spell-trap';
+      const isFieldZone = card.location === 'field';
+
       // In Main Phase (Idle Command)
       if (this.activeIdleCmd) {
-        // Change Position
-        const posIdx = this.activeIdleCmd.pos_changes.findIndex(
-          (p) => p.location === 4 && p.sequence === card.sequence,
-        );
-        if (posIdx >= 0) {
-          actions.push({ type: 'pos_change', index: posIdx, label: 'Change Position', icon: '🔄' });
+        // 1. Change Position: Strictly for Monsters only (location 4)
+        if (isMonsterZone) {
+          const posIdx = this.activeIdleCmd.pos_changes.findIndex(
+            (p) =>
+              (p.location === 4 || p.location === undefined) &&
+              (p.sequence === card.sequence || p.sequence === undefined),
+          );
+          if (posIdx >= 0) {
+            actions.push({ type: 'pos_change', index: posIdx, label: 'Change Position', icon: '🔄' });
+          }
         }
 
-        // Activate field effect
-        const actIdx = this.activeIdleCmd.activates.findIndex(
-          (a) => (a.location === 4 || a.location === 8 || a.location === 256) && a.sequence === card.sequence,
-        );
+        // 2. Activate Field Effect: Must match card's exact zone type
+        const actIdx = this.activeIdleCmd.activates.findIndex((a) => {
+          if (isMonsterZone && a.location !== 4) return false;
+          if (isSpellTrapZone && a.location !== 8 && a.location !== undefined) return false;
+          if (isFieldZone && a.location !== 256 && a.location !== 8) return false;
+          return a.sequence === card.sequence || a.sequence === undefined;
+        });
         if (actIdx >= 0) {
           actions.push({ type: 'activate', index: actIdx, label: 'Activate Effect', icon: '⚡' });
         }
@@ -765,18 +784,25 @@ export const useDuelStore = defineStore('duel', {
 
       // In Battle Phase (Battle Command)
       if (this.activeBattleCmd) {
-        // Attack
-        const atkIdx = this.activeBattleCmd.attacks.findIndex(
-          (a) => a.location === 4 && a.sequence === card.sequence,
-        );
-        if (atkIdx >= 0) {
-          actions.push({ type: 'attack', index: atkIdx, label: 'Declare Attack', icon: '⚔️' });
+        // 1. Declare Attack: Strictly for Monsters only (location 4)
+        if (isMonsterZone) {
+          const atkIdx = this.activeBattleCmd.attacks.findIndex(
+            (a) =>
+              (a.location === 4 || a.location === undefined) &&
+              (a.sequence === card.sequence || a.sequence === undefined),
+          );
+          if (atkIdx >= 0) {
+            actions.push({ type: 'attack', index: atkIdx, label: 'Declare Attack', icon: '⚔️' });
+          }
         }
 
-        // Chain in Battle
-        const chainIdx = this.activeBattleCmd.chains.findIndex(
-          (c) => (c.location === 4 || c.location === 8) && c.sequence === card.sequence,
-        );
+        // 2. Chain / Quick Effect in Battle: Must match card's exact zone type
+        const chainIdx = this.activeBattleCmd.chains.findIndex((c) => {
+          if (isMonsterZone && c.location !== 4) return false;
+          if (isSpellTrapZone && c.location !== 8 && c.location !== undefined) return false;
+          if (isFieldZone && c.location !== 256 && c.location !== 8) return false;
+          return c.sequence === card.sequence || c.sequence === undefined;
+        });
         if (chainIdx >= 0) {
           actions.push({ type: 'activate', index: chainIdx, label: 'Activate Effect', icon: '⚡' });
         }

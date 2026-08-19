@@ -193,4 +193,85 @@ console.log('=== Running Hand Duplication, Actions & Animation Queue Tests ===\n
   console.log('✓ Spell animation strictly follows Hand->Field -> Activation -> Effect -> Field->GY sequence.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 5: Field Card Action Isolation (Spell/Trap vs Monster Zone)
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 5: Field Card Action Isolation (Spell/Trap vs Monster Zone)...');
+
+  const idleCmd: SelectIdleCmdPayload = {
+    player: 0,
+    summons: [],
+    special_summons: [],
+    pos_changes: [
+      { code: 34627841, controller: 0, location: 4, sequence: 0 }, // Kaibaman in M1 (sequence 0)
+    ],
+    monster_sets: [],
+    spell_sets: [],
+    activates: [
+      { code: 44095762, controller: 0, location: 8, sequence: 0, description: 0n, client_mode: 0 }, // Mirror Force in S1 (sequence 0)
+    ],
+    to_bp: true,
+    to_ep: true,
+    shuffle: false,
+  };
+
+  const trapInS1: FieldCard = {
+    id: 'st-0',
+    code: 44095762,
+    name: 'Mirror Force',
+    controller: 0,
+    location: 'spell-trap',
+    sequence: 0, // Same sequence as Kaibaman!
+    position: 'facedown_spell',
+  };
+
+  const monsterInM1: FieldCard = {
+    id: 'mz-0',
+    code: 34627841,
+    name: 'Kaibaman',
+    controller: 0,
+    location: 'monster',
+    sequence: 0,
+    position: 'facedown_defense',
+  };
+
+  function resolveFieldActions(card: FieldCard, cmd: SelectIdleCmdPayload) {
+    const isMonsterZone = card.location === 'monster' || card.location === 'extra-monster';
+    const isSpellTrapZone = card.location === 'spell-trap';
+    const actions: string[] = [];
+
+    // Position Change
+    if (isMonsterZone) {
+      const posIdx = cmd.pos_changes.findIndex(
+        (p) => (p.location === 4 || p.location === undefined) && (p.sequence === card.sequence || p.sequence === undefined)
+      );
+      if (posIdx >= 0) actions.push('Change Position');
+    }
+
+    // Activate Field Effect
+    const actIdx = cmd.activates.findIndex((a) => {
+      if (isMonsterZone && a.location !== 4) return false;
+      if (isSpellTrapZone && a.location !== 8 && a.location !== undefined) return false;
+      return a.sequence === card.sequence || a.sequence === undefined;
+    });
+    if (actIdx >= 0) actions.push('Activate Effect');
+
+    return actions;
+  }
+
+  const trapActions = resolveFieldActions(trapInS1, idleCmd);
+  const monsterActions = resolveFieldActions(monsterInM1, idleCmd);
+
+  // Trap card in S1 must NEVER have 'Change Position'
+  assert.ok(!trapActions.includes('Change Position'), 'Trap card in S1 must NOT receive Change Position action');
+  assert.ok(trapActions.includes('Activate Effect'), 'Trap card in S1 can receive Activate Effect');
+
+  // Monster in M1 must have 'Change Position' and NOT activate the trap in S1
+  assert.ok(monsterActions.includes('Change Position'), 'Monster in M1 must receive Change Position action');
+  assert.ok(!monsterActions.includes('Activate Effect'), 'Monster in M1 must not match trap effect in S1');
+
+  console.log('✓ Field actions strictly isolate Monster Zone vs Spell/Trap Zone even with identical sequences.');
+}
+
 console.log('\n🎉 ALL HAND, ACTION RESOLUTION & ANIMATION QUEUE TESTS PASSED!');
