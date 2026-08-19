@@ -136,8 +136,8 @@ function onCardBeforeEnter(el: Element): void {
     const slotRect = slotEl.getBoundingClientRect();
 
     // Exact delta in screen viewport coordinates (resolution & letterbox agnostic)
-    const deltaX = (deckRect.left + deckRect.width / 2) - (slotRect.left + slotRect.width / 2);
-    const deltaY = (deckRect.top + deckRect.height / 2) - (slotRect.top + slotRect.height / 2);
+    const deltaX = deckRect.left + deckRect.width / 2 - (slotRect.left + slotRect.width / 2);
+    const deltaY = deckRect.top + deckRect.height / 2 - (slotRect.top + slotRect.height / 2);
 
     slotEl.style.opacity = '0';
     slotEl.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) scale(0.65) rotate(${props.player === 'user' ? -12 : 12}deg)`;
@@ -394,6 +394,7 @@ function onCardClick(card: FieldCard): void {
 
       .stat-atk {
         color: #f5f1e6;
+        font-size: 0.7rem;
       }
       .stat-slash {
         color: $color-gold-500;
@@ -402,6 +403,7 @@ function onCardClick(card: FieldCard): void {
       }
       .stat-def {
         color: #b8b2a0;
+        font-size: 0.7rem;
       }
     }
   }
