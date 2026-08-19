@@ -10,10 +10,12 @@ import type { DuelInitOptions, DuelEventPayload, DuelStateSummary } from '../sha
 
 const duelAPI: DuelAPI = {
   newDuel: (options: DuelInitOptions): Promise<boolean> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.DUEL_NEW, options);
+    const plainOptions = JSON.parse(JSON.stringify(options));
+    return ipcRenderer.invoke(IPC_CHANNELS.DUEL_NEW, plainOptions);
   },
   sendCommand: (response: unknown): Promise<boolean> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.DUEL_COMMAND, response);
+    const plainResponse = JSON.parse(JSON.stringify(response));
+    return ipcRenderer.invoke(IPC_CHANNELS.DUEL_COMMAND, plainResponse);
   },
   step: (): Promise<DuelEventPayload[]> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DUEL_STEP);

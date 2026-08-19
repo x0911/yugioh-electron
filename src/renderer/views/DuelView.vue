@@ -488,12 +488,8 @@ onMounted(async () => {
     unsubscribeEvents = window.duelAPI.onEvent(handleLiveDuelEvent);
   }
 
-  // Start live duel if not already active
-  if (!duelStore.isDuelActive) {
-    await duelStore.startPreparedDuel();
-  } else {
-    await duelStore.fetchBoardState();
-  }
+  // Start fresh prepared live duel
+  await duelStore.startPreparedDuel();
 });
 
 onUnmounted(() => {

@@ -36,6 +36,7 @@ function createWindow(): void {
     minWidth: APP_CONFIG.MIN_WIDTH,
     minHeight: APP_CONFIG.MIN_HEIGHT,
     backgroundColor: '#0a0c10',
+    fullscreen: true,
     show: false,
     webPreferences: {
       preload: preloadPath,

@@ -318,18 +318,22 @@ export const useDuelStore = defineStore('duel', {
 
       if (window.duelAPI) {
         try {
+          const p0Plain = Array.from(p0Deck).map((c) => Number(c));
+          const p1Plain = Array.from(p1Deck).map((c) => Number(c));
+
           const success = await window.duelAPI.newDuel({
-            player0Deck: p0Deck,
-            player1Deck: p1Deck,
+            player0Deck: p0Plain,
+            player1Deck: p1Plain,
             startingLP: 8000,
             startingDrawCount: 5,
             drawCountPerTurn: 1,
             autoPlay: false,
-            humanPlayerId,
+            humanPlayerId: Number(humanPlayerId),
           });
           this.isDuelActive = success;
           if (success) {
-            await this.fetchBoardState();
+            // Deal opening hand cards one-by-one with staggered animation
+            await this.dealOpeningHand();
           }
           return success;
         } catch (err) {
@@ -340,6 +344,50 @@ export const useDuelStore = defineStore('duel', {
 
       this.isDuelActive = true;
       return true;
+    },
+
+    /**
+     * Deals the opening hand one card at a time with a staggered animation delay.
+     * Fetches the full snapshot but reveals user hand cards incrementally so players
+     * can see each card being "dealt" from the deck, like in real card games.
+     */
+    async dealOpeningHand(): Promise<void> {
+      if (!window.duelAPI) return;
+      try {
+        const snapshot = await window.duelAPI.getBoardState();
+        if (!snapshot) return;
+
+        // Apply non-hand fields immediately (LP, phase, field zones, opponent)
+        this.boardState.turnNumber = snapshot.turnNumber;
+        this.boardState.currentPhase = snapshot.currentPhase;
+        this.boardState.winner = snapshot.winner;
+        this.boardState.winReason = snapshot.winReason;
+
+        // Apply opponent data (with character info)
+        this.boardState.opponentField = { ...snapshot.opponentField };
+        if (this.selectedOpponent) {
+          this.boardState.opponentField.name = this.selectedOpponent.name;
+          this.boardState.opponentField.title = this.selectedOpponent.title;
+          this.boardState.opponentField.series = this.selectedOpponent.series;
+          this.boardState.opponentField.characterId = this.selectedOpponent.id;
+        }
+
+        // Copy the user field but start with an empty hand
+        const fullUserField = { ...snapshot.userField };
+        const fullHand = [...(snapshot.userField.hand || [])];
+        this.boardState.userField = { ...fullUserField, hand: [] };
+
+        // Deal user hand cards one by one with 380ms stagger
+        const DEAL_DELAY_MS = 380;
+        for (const card of fullHand) {
+          await new Promise<void>((resolve) => setTimeout(resolve, DEAL_DELAY_MS));
+          this.boardState.userField.hand = [...this.boardState.userField.hand, card];
+        }
+      } catch (err) {
+        console.error('[DuelStore] Failed dealing opening hand:', err);
+        // Fallback: fetch everything at once
+        await this.fetchBoardState();
+      }
     },
 
     /**
@@ -413,7 +461,19 @@ export const useDuelStore = defineStore('duel', {
         } else if (event.promptType === 'SELECT_CARD') {
           this.activeSelectCard = event.promptData as SelectCardPayload;
         } else if (event.promptType === 'SELECT_CHAIN') {
-          this.activeSelectChain = event.promptData as SelectChainPayload;
+          const chainPayload = event.promptData as SelectChainPayload;
+          // Only show chain dialog if there are actual cards the player can chain with
+          // Empty chain windows (no selects, not forced) are auto-resolved by the engine
+          if (chainPayload.selects && chainPayload.selects.length > 0) {
+            this.activeSelectChain = chainPayload;
+          } else if (!chainPayload.forced) {
+            // Nothing to chain — auto-pass immediately without showing dialog
+            this.isPromptWaiting = false;
+            await this.executeSelectChain(null);
+            return;
+          } else {
+            this.activeSelectChain = chainPayload;
+          }
         } else if (event.promptType === 'SELECT_POSITION') {
           this.activeSelectPosition = event.promptData as SelectPositionPayload;
         } else if (event.promptType === 'SELECT_EFFECTYN' || event.promptType === 'SELECT_YESNO') {
@@ -685,7 +745,8 @@ export const useDuelStore = defineStore('duel', {
       this.clearPrompts();
       if (window.duelAPI) {
         try {
-          const res = await window.duelAPI.sendCommand(command);
+          const plainCommand = JSON.parse(JSON.stringify(command));
+          const res = await window.duelAPI.sendCommand(plainCommand);
           await this.fetchBoardState();
           return res;
         } catch (err) {

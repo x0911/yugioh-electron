@@ -143,33 +143,36 @@
       <!-- 4. Chain Prompt -->
       <template v-else-if="selectChain">
         <div class="prompt-header">
-          <span class="header-icon">⚡</span>
+          <span class="header-icon">⛓️</span>
           <div class="header-titles">
-            <h3 class="header-title">Chain Effect Opportunity</h3>
+            <h3 class="header-title">Do You Want to Respond?</h3>
             <p class="header-subtitle">
-              {{ selectChain.forced ? 'Mandatory trigger effect requires activation.' : 'Activate an effect in response, or pass.' }}
+              {{ selectChain.forced
+                ? 'A card effect must activate now!'
+                : 'Do you want to use one of your cards as a reaction? Or just let it happen?' }}
             </p>
           </div>
         </div>
 
-        <div class="chain-options">
+        <div v-if="selectChain.selects && selectChain.selects.length > 0" class="chain-options">
           <button
             v-for="(item, idx) in selectChain.selects"
             :key="`chain-${idx}-${item.code}`"
             class="chain-btn"
             @click="$emit('select-chain', idx)"
           >
-            <span class="chain-icon">✨</span>
+            <span class="chain-icon">⚡</span>
             <div class="chain-info">
               <span class="chain-name">{{ item.cardName || 'Card Effect' }}</span>
               <span v-if="item.description" class="chain-desc">{{ item.description }}</span>
+              <span v-else class="chain-desc">Activate this card in response!</span>
             </div>
           </button>
         </div>
 
         <div v-if="!selectChain.forced" class="prompt-footer">
-          <button class="action-btn action-btn--secondary" @click="$emit('select-chain', null)">
-            Pass (Do Not Chain)
+          <button class="action-btn action-btn--secondary action-btn--pass" @click="$emit('select-chain', null)">
+            ✋ Skip — Let It Happen
           </button>
         </div>
       </template>

@@ -6,6 +6,7 @@ import createCore, {
   OcgLocation,
   OcgPosition,
   OcgMessageType,
+  OcgResponseType,
   type OcgMessage,
   type OcgResponse,
 } from 'ocgcore-wasm';
@@ -494,7 +495,9 @@ export class DuelEngineService {
           this.state.isActive = false;
         }
 
-        this.emitEvent(decoded);
+        if (!decoded.isPrompt) {
+          this.emitEvent(decoded);
+        }
       }
 
       this.state.stepCount++;
@@ -529,6 +532,22 @@ export class DuelEngineService {
             }
           }
 
+          // Auto-pass empty non-forced chain opportunities
+          if (
+            lastMsg.type === OcgMessageType.SELECT_CHAIN &&
+            !lastMsg.forced &&
+            (!lastMsg.selects || lastMsg.selects.length === 0)
+          ) {
+            this.lib.duelSetResponse(handle, {
+              type: OcgResponseType.SELECT_CHAIN,
+              index: null,
+            });
+            this.state.isWaitingResponse = false;
+            this.state.waitingPlayer = null;
+            this.lastPromptMessage = null;
+            continue;
+          }
+
           const isOpponent = promptPlayer !== this.humanPlayerId;
           // If opponent player (AI) or autoPlay is active: auto-respond and continue
           if (isOpponent || this.autoPlay) {
@@ -542,7 +561,11 @@ export class DuelEngineService {
             }
           }
         }
-        // If it's a prompt for human and autoPlay is false: stop and wait
+        // If it's a prompt for human and autoPlay is false: emit the prompt event and wait
+        if (this.lastPromptMessage) {
+          const decodedPrompt = this.messageDecoder.decode(this.lastPromptMessage);
+          this.emitEvent(decodedPrompt);
+        }
         break;
       }
     }
