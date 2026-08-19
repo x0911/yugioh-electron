@@ -29,13 +29,26 @@
         v-for="(card, idx) in cards"
         :key="card.id || `${player}-${card.code}-${idx}`"
         class="hand-card-slot"
+        :class="{
+          'hand-card-slot--selectable': getCardTarget(card, idx)?.isSelectable,
+          'hand-card-slot--selected': getCardTarget(card, idx)?.isSelected,
+          'hand-card-slot--ineligible': isPromptActive && !getCardTarget(card, idx)?.isSelectable,
+        }"
         :style="getSlotStyle(idx, cards.length)"
         @mouseenter="onCardMouseEnter(card)"
         @mouseleave="onCardMouseLeave"
         @click="onCardClick(card, $event)"
       >
         <!-- User Hand Card (Full Art, Name, Level, Stats) -->
-        <div v-if="player === 'user'" class="hand-card hand-card--user">
+        <div
+          v-if="player === 'user'"
+          class="hand-card hand-card--user"
+          :class="{
+            'hand-card--selectable': getCardTarget(card, idx)?.isSelectable,
+            'hand-card--selected': getCardTarget(card, idx)?.isSelected,
+            'hand-card--ineligible': isPromptActive && !getCardTarget(card, idx)?.isSelectable,
+          }"
+        >
           <div class="hand-card__frame">
             <img
               :src="getCardImageUrl(card.code, 'mini')"
@@ -48,7 +61,7 @@
             <!-- Mini Header with Name & Level -->
             <div class="hand-card__header">
               <span class="hand-card__name" :title="card.name">{{ card.name }}</span>
-              <span v-if="card.level && card.level > 0" class="hand-card__level">
+              <span v-if="card.level && card.level > 0 && !getCardTarget(card, idx)?.isSelectable" class="hand-card__level">
                 ★{{ card.level }}
               </span>
             </div>
@@ -59,11 +72,33 @@
               <span class="stat-slash">/</span>
               <span class="stat-def">{{ card.def }}</span>
             </div>
+
+            <!-- Target Selection IconIndicator Overlay (Blue for User) -->
+            <div v-if="getCardTarget(card, idx)?.isSelectable" class="hand-card__target-overlay">
+              <IconIndicator
+                type="location"
+                location="hand"
+                :owner="getCardTarget(card, idx)!.owner"
+                :pulsing="true"
+                :show-tooltip="true"
+                :tooltip-text="getCardTarget(card, idx)!.tooltipText"
+                size="md"
+              />
+              <div v-if="getCardTarget(card, idx)!.isSelected" class="hand-card__target-check">✓</div>
+            </div>
           </div>
         </div>
 
         <!-- Opponent Hand Card (Card Backs) -->
-        <div v-else class="hand-card hand-card--ai">
+        <div
+          v-else
+          class="hand-card hand-card--ai"
+          :class="{
+            'hand-card--selectable': getCardTarget(card, idx)?.isSelectable,
+            'hand-card--selected': getCardTarget(card, idx)?.isSelected,
+            'hand-card--ineligible': isPromptActive && !getCardTarget(card, idx)?.isSelectable,
+          }"
+        >
           <div class="hand-card__frame hand-card__frame--back">
             <img
               :src="getCardBackUrl()"
@@ -72,6 +107,20 @@
               @error="handleImageError"
             />
             <div class="hand-card__foil"></div>
+
+            <!-- Target Selection IconIndicator Overlay (Red for AI) -->
+            <div v-if="getCardTarget(card, idx)?.isSelectable" class="hand-card__target-overlay">
+              <IconIndicator
+                type="location"
+                location="hand"
+                :owner="getCardTarget(card, idx)!.owner"
+                :pulsing="true"
+                :show-tooltip="true"
+                :tooltip-text="getCardTarget(card, idx)!.tooltipText"
+                size="md"
+              />
+              <div v-if="getCardTarget(card, idx)!.isSelected" class="hand-card__target-check">✓</div>
+            </div>
           </div>
         </div>
       </div>
@@ -82,18 +131,31 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue';
 import type { FieldCard } from '../../../shared/types/field.js';
+import type { TargetInfo } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
+import IconIndicator from '../common/IconIndicator.vue';
 
 const props = withDefaults(
   defineProps<{
     player: 'user' | 'ai';
     cards: FieldCard[];
     isInteractive?: boolean;
+    getTargetInfo?: ((card: FieldCard, idx: number) => TargetInfo | null) | null;
+    isPromptActive?: boolean;
   }>(),
   {
     isInteractive: true,
+    getTargetInfo: null,
+    isPromptActive: false,
   },
 );
+
+function getCardTarget(card: FieldCard, idx: number): TargetInfo | null {
+  if (props.getTargetInfo) {
+    return props.getTargetInfo(card, idx);
+  }
+  return null;
+}
 
 const emit = defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
@@ -405,6 +467,61 @@ function onCardClick(card: FieldCard, event: MouseEvent): void {
         color: #b8b2a0;
         font-size: 0.7rem;
       }
+    }
+
+    // Target Selection Overlay Badge
+    &__target-overlay {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &__target-check {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: $color-gold-500;
+      color: #1a1406;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-weight: 900;
+      font-size: 0.7rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+      z-index: 55;
+    }
+
+    // Selectable and Selected Card States
+    &--selectable {
+      border-color: $color-gold-300 !important;
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.95),
+        0 0 16px rgba(201, 162, 39, 0.7) !important;
+      animation: pulse-glow 1.4s infinite;
+    }
+
+    &--selected {
+      border-color: $color-gold-500 !important;
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.95),
+        0 0 22px rgba(201, 162, 39, 0.95) !important;
+      background: rgba(201, 162, 39, 0.2) !important;
+      transform: translateY(-10px);
+    }
+
+    // Ineligible Card State (dimmed)
+    &--ineligible {
+      opacity: 0.4;
+      filter: grayscale(0.3) brightness(0.7);
+      transition: opacity 0.25s ease, filter 0.25s ease;
     }
   }
 }

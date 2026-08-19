@@ -9,7 +9,9 @@
         'field-zone-slot--empty': !card,
         'field-zone-slot--inert': isInert,
         'field-zone-slot--targeted': isTargeted,
-        'field-zone-slot--selectable': isSelectable,
+        'field-zone-slot--selectable': targetInfo?.isSelectable || isSelectable,
+        'field-zone-slot--selected': targetInfo?.isSelected,
+        'field-zone-slot--ineligible': isPromptActive && (!targetInfo || !targetInfo.isSelectable) && !!card,
       },
     ]"
     @mouseenter="onMouseEnter"
@@ -66,6 +68,22 @@
         </div>
 
         <!-- =============================================================== -->
+        <!-- Target Selection IconIndicator Overlay (Blue for User, Red for AI) -->
+        <!-- =============================================================== -->
+        <div v-if="targetInfo && targetInfo.isSelectable" class="slot-target-overlay">
+          <IconIndicator
+            type="location"
+            :location="targetInfo.locationType"
+            :owner="targetInfo.owner"
+            :pulsing="true"
+            :show-tooltip="true"
+            :tooltip-text="targetInfo.tooltipText"
+            size="md"
+          />
+          <div v-if="targetInfo.isSelected" class="slot-target-check">✓</div>
+        </div>
+
+        <!-- =============================================================== -->
         <!-- UNROTATED Slot Overlays (Always 0° Straight at Center-Bottom)   -->
         <!-- =============================================================== -->
 
@@ -81,7 +99,7 @@
 
         <!-- 2. Level / Rank Stars Badge (Always 0° Straight at Top-Right) -->
         <div
-          v-if="card && isFaceUpMonster && card.level && card.level > 0"
+          v-if="card && isFaceUpMonster && card.level && card.level > 0 && (!targetInfo || !targetInfo.isSelectable)"
           class="slot-level-badge"
         >
           ★{{ card.level }}
@@ -94,8 +112,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { FieldCard, FieldZoneType } from '../../../shared/types/field.js';
+import type { TargetInfo } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
 import Tooltip from '../common/Tooltip.vue';
+import IconIndicator from '../common/IconIndicator.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -109,6 +129,8 @@ const props = withDefaults(
     inertTooltip?: string;
     isTargeted?: boolean;
     isSelectable?: boolean;
+    targetInfo?: TargetInfo | null;
+    isPromptActive?: boolean;
   }>(),
   {
     zoneIndex: 0,
@@ -118,6 +140,8 @@ const props = withDefaults(
     inertTooltip: '',
     isTargeted: false,
     isSelectable: false,
+    targetInfo: null,
+    isPromptActive: false,
   },
 );
 
@@ -166,6 +190,12 @@ const activeStatValue = computed<number | string>(() => {
 const tooltipText = computed(() => {
   if (props.isInert && props.inertTooltip) {
     return props.inertTooltip;
+  }
+  if (props.isPromptActive && props.card && (!props.targetInfo || !props.targetInfo.isSelectable)) {
+    return 'This card cannot be selected as a target';
+  }
+  if (props.targetInfo && props.targetInfo.isSelectable) {
+    return props.targetInfo.tooltipText;
   }
   if (props.card && isFaceDown.value) {
     return props.card.position === 'facedown_defense'
@@ -278,10 +308,55 @@ function onClick(event: MouseEvent): void {
   }
 
   // Targeted & Selectable
-  &--targeted .slot-frame {
+  &--targeted .slot-frame,
+  &--selectable .slot-frame {
     border-color: $color-gold-300;
-    box-shadow: 0 0 16px rgba(201, 162, 39, 0.6);
-    animation: pulse-glow 1.5s infinite;
+    box-shadow: 0 0 16px rgba(201, 162, 39, 0.7);
+    animation: pulse-glow 1.4s infinite;
+  }
+
+  &--selected .slot-frame {
+    border-color: $color-gold-500 !important;
+    box-shadow:
+      0 0 20px rgba(201, 162, 39, 0.9),
+      inset 0 0 14px rgba(201, 162, 39, 0.3) !important;
+    background: rgba(201, 162, 39, 0.15) !important;
+  }
+
+  // Ineligible during active selection prompt
+  &--ineligible {
+    opacity: 0.45;
+    filter: grayscale(0.25) brightness(0.75);
+    transition: opacity 0.25s ease, filter 0.25s ease;
+  }
+
+  .slot-target-overlay {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slot-target-check {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: $color-gold-500;
+    color: #1a1406;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oxanium', monospace, sans-serif;
+    font-weight: 900;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    z-index: 45;
   }
 
   // Empty Watermark

@@ -7,6 +7,9 @@
       {
         'deck-stack--empty': count === 0,
         'deck-stack--has-cards': count > 0,
+        'deck-stack--selectable': targetInfo?.isSelectable,
+        'deck-stack--selected': targetInfo?.isSelected,
+        'deck-stack--ineligible': isPromptActive && (!targetInfo || !targetInfo.isSelectable) && count > 0,
       },
     ]"
     @mouseenter="onMouseEnter"
@@ -70,6 +73,20 @@
           <div class="card-foil-sheen"></div>
         </div>
 
+        <!-- Target Selection IconIndicator Overlay for Deck Stacks -->
+        <div v-if="targetInfo && targetInfo.isSelectable" class="stack-target-overlay">
+          <IconIndicator
+            type="location"
+            :location="targetInfo.locationType"
+            :owner="targetInfo.owner"
+            :pulsing="true"
+            :show-tooltip="true"
+            :tooltip-text="targetInfo.tooltipText"
+            size="md"
+          />
+          <div v-if="targetInfo.isSelected" class="stack-target-check">✓</div>
+        </div>
+
         <!-- Stack Count Badge -->
         <div class="count-badge" :class="{ 'count-badge--zero': count === 0 }">
           <span class="count-num">{{ count }}</span>
@@ -87,8 +104,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { FieldCard } from '../../../shared/types/field.js';
+import type { TargetInfo } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
 import Tooltip from '../common/Tooltip.vue';
+import IconIndicator from '../common/IconIndicator.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -97,10 +116,14 @@ const props = withDefaults(
     count: number;
     topCard?: FieldCard | null;
     label?: string;
+    targetInfo?: TargetInfo | null;
+    isPromptActive?: boolean;
   }>(),
   {
     topCard: null,
     label: '',
+    targetInfo: null,
+    isPromptActive: false,
   },
 );
 
@@ -372,6 +395,63 @@ function onClick(): void {
         0 8px 20px rgba(0, 0, 0, 0.8),
         0 0 14px rgba(235, 87, 87, 0.4);
     }
+  }
+
+  // Selectable Target Stack (Pulsing ring)
+  &--selectable {
+    .stack-top-card {
+      border-color: $color-gold-300 !important;
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.9),
+        0 0 18px rgba(201, 162, 39, 0.8) !important;
+      animation: pulse-glow 1.4s infinite;
+    }
+  }
+
+  &--selected {
+    .stack-top-card {
+      border-color: $color-gold-500 !important;
+      box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.95),
+        0 0 24px rgba(201, 162, 39, 0.95) !important;
+      transform: translateY(-8px);
+    }
+  }
+
+  // Ineligible Target Stack (dimmed)
+  &--ineligible {
+    opacity: 0.45;
+    filter: grayscale(0.25) brightness(0.75);
+    transition: opacity 0.25s ease, filter 0.25s ease;
+  }
+
+  .stack-target-overlay {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stack-target-check {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: $color-gold-500;
+    color: #1a1406;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oxanium', monospace, sans-serif;
+    font-weight: 900;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    z-index: 45;
   }
 }
 </style>

@@ -31,7 +31,10 @@
           :count="opponentState.banished.length"
           :top-card="opponentState.banished[opponentState.banished.length - 1] || null"
           label="BANISHED"
+          :target-info="getSlotTarget(opponentPlayerId, 32, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
+          @click-stack="onStackClick('banished', opponentPlayerId)"
         />
 
         <!-- Opponent Main Deck Zone -->
@@ -41,7 +44,10 @@
           :count="opponentState.deckCount"
           label="DECK"
           class="deck-stack--ai-deck"
+          :target-info="getSlotTarget(opponentPlayerId, 1, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
+          @click-stack="onStackClick('deck', opponentPlayerId)"
         />
 
         <!-- Opponent 5 Spell & Trap Zones (Mirrored, with Pendulum Scales on 1 & 5) -->
@@ -66,6 +72,8 @@
             zone-sub-label="SPELL/TRAP"
             player="ai"
             :card="slot"
+            :target-info="getSlotTarget(opponentPlayerId, 8, idx)"
+            :is-prompt-active="isPromptActive"
             @hover-card="$emit('hover-card', $event)"
             @click-card="(card, ev) => $emit('click-card', card, ev)"
           />
@@ -88,7 +96,10 @@
           player="ai"
           :count="opponentState.extraDeckCount"
           label="EX DECK"
+          :target-info="getSlotTarget(opponentPlayerId, 64, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
+          @click-stack="onStackClick('extra', opponentPlayerId)"
         />
       </div>
 
@@ -101,7 +112,10 @@
           :count="opponentState.graveyard.length"
           :top-card="opponentState.graveyard[opponentState.graveyard.length - 1] || null"
           label="GRAVEYARD"
+          :target-info="getSlotTarget(opponentPlayerId, 16, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
+          @click-stack="onStackClick('graveyard', opponentPlayerId)"
         />
 
         <!-- Opponent 5 Main Monster Zones -->
@@ -115,6 +129,8 @@
             zone-sub-label="MONSTER"
             player="ai"
             :card="slot"
+            :target-info="getSlotTarget(opponentPlayerId, 4, idx)"
+            :is-prompt-active="isPromptActive"
             @hover-card="$emit('hover-card', $event)"
             @click-card="(card, ev) => $emit('click-card', card, ev)"
           />
@@ -127,6 +143,8 @@
           zone-sub-label="SPELL"
           player="ai"
           :card="opponentState.fieldZone"
+          :target-info="getSlotTarget(opponentPlayerId, 256, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
           @click-card="(card, ev) => $emit('click-card', card, ev)"
         />
@@ -184,6 +202,8 @@
           zone-sub-label="SPELL"
           player="user"
           :card="userState.fieldZone"
+          :target-info="getSlotTarget(userPlayerId, 256, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
           @click-card="(card, ev) => $emit('click-card', card, ev)"
         />
@@ -199,6 +219,8 @@
             zone-sub-label="MONSTER"
             player="user"
             :card="slot"
+            :target-info="getSlotTarget(userPlayerId, 4, idx)"
+            :is-prompt-active="isPromptActive"
             @hover-card="$emit('hover-card', $event)"
             @click-card="(card, ev) => $emit('click-card', card, ev)"
           />
@@ -211,7 +233,10 @@
           :count="userState.graveyard.length"
           :top-card="userState.graveyard[userState.graveyard.length - 1] || null"
           label="GRAVEYARD"
+          :target-info="getSlotTarget(userPlayerId, 16, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
+          @click-stack="onStackClick('graveyard', userPlayerId)"
         />
       </div>
 
@@ -223,7 +248,10 @@
           player="user"
           :count="userState.extraDeckCount"
           label="EX DECK"
+          :target-info="getSlotTarget(userPlayerId, 64, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
+          @click-stack="onStackClick('extra', userPlayerId)"
         />
 
         <!-- User 5 Spell & Trap Zones (with Pendulum Scales on 1 & 5) -->
@@ -248,6 +276,8 @@
             zone-sub-label="SPELL/TRAP"
             player="user"
             :card="slot"
+            :target-info="getSlotTarget(userPlayerId, 8, idx)"
+            :is-prompt-active="isPromptActive"
             @hover-card="$emit('hover-card', $event)"
             @click-card="(card, ev) => $emit('click-card', card, ev)"
           />
@@ -271,7 +301,10 @@
           :count="userState.deckCount"
           label="DECK"
           class="deck-stack--user-deck"
+          :target-info="getSlotTarget(userPlayerId, 1, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
+          @click-stack="onStackClick('deck', userPlayerId)"
         />
 
         <!-- User Banished Zone -->
@@ -281,7 +314,10 @@
           :count="userState.banished.length"
           :top-card="userState.banished[userState.banished.length - 1] || null"
           label="BANISHED"
+          :target-info="getSlotTarget(userPlayerId, 32, 0)"
+          :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
+          @click-stack="onStackClick('banished', userPlayerId)"
         />
       </div>
 
@@ -300,25 +336,54 @@
 
 <script setup lang="ts">
 import type { FieldCard, PlayerFieldState } from '../../../shared/types/field.js';
+import type { TargetInfo } from '../../stores/duelStore.js';
 import FieldZoneSlot from './FieldZoneSlot.vue';
 import DeckStack from './DeckStack.vue';
 import Tooltip from '../common/Tooltip.vue';
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     userState: PlayerFieldState;
     opponentState: PlayerFieldState;
-    extraMonsterZones: (FieldCard | null)[];
+    extraMonsterZones?: (FieldCard | null)[];
+    userPlayerId?: number;
+    opponentPlayerId?: number;
+    getTargetInfo?: ((controller: number, location: number, sequence: number) => TargetInfo | null) | null;
+    isPromptActive?: boolean;
   }>(),
   {
     extraMonsterZones: () => [null, null],
+    userPlayerId: 0,
+    opponentPlayerId: 1,
+    getTargetInfo: null,
+    isPromptActive: false,
   },
 );
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
   (e: 'click-card', card: FieldCard | null, event?: MouseEvent): void;
+  (e: 'click-target', targetInfo: TargetInfo): void;
 }>();
+
+function getSlotTarget(controller: number, location: number, sequence: number): TargetInfo | null {
+  if (props.getTargetInfo) {
+    return props.getTargetInfo(controller, location, sequence);
+  }
+  return null;
+}
+
+function onStackClick(stackType: string, controller: number): void {
+  let location = 1;
+  if (stackType === 'extra') location = 64;
+  else if (stackType === 'graveyard') location = 16;
+  else if (stackType === 'banished') location = 32;
+
+  const target = getSlotTarget(controller, location, 0);
+  if (target && target.isSelectable) {
+    emit('click-target', target);
+  }
+}
 </script>
 
 <style scoped lang="scss">
