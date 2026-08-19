@@ -1030,11 +1030,41 @@
 - `src/renderer/stores/duelStore.ts`: Added strict zone type validation in `getLegalActionsForFieldCard` and `getLegalActionsForHandCard`.
 - `tests/hand-and-pacing.test.ts`: Added Test 5 for field action isolation.
 
+---
+
+## 2026-08-20 — Background Images & Glassmorphism Overlay Integration
+
+**What was done:**
+- **Audited Background Assets in `resources/backgrounds/`**:
+  - Found 4 high-resolution arena backdrops: `main-menu-bg.jpg`, `deck-edit-bg.jpg`, `settings-bg.jpg`, and `loading-bg.jpg`.
+- **Integrated Backgrounds with Dark Glassmorphism Overlays Across All Screens**:
+  1. **Main Menu / Arena Hub (`MainMenuView.vue` / `_menu.scss`)**:
+     - Connected `app-resource://backgrounds/main-menu-bg.jpg`.
+     - Overlaid with radial Egyptian gold & Egyptian blue glow gradients + dark glass vignette.
+     - Added `backdrop-filter: blur(14px)` to the 4 main menu navigation card buttons.
+  2. **Deck Builder / Editor (`DeckEditView.vue`)**:
+     - Connected `app-resource://backgrounds/deck-edit-bg.jpg`.
+     - Overlaid with dual radial/linear dark glassmorphism gradients.
+     - Added frosted glass header and panel borders.
+  3. **Settings & Opponents Hub (`SettingsView.vue` / `_settings.scss`)**:
+     - Connected `app-resource://backgrounds/settings-bg.jpg` with fixed background attachment.
+     - Styled opponent dossier, carousel, sound controls, and rule toggles with semi-transparent frosted glass cards.
+  4. **Initial Loading & Pre-Duel Screens (`LoadingView.vue`, `CoinTossView.vue`, `DuelView.vue`)**:
+     - Connected `app-resource://backgrounds/loading-bg.jpg` and `settings-bg.jpg` with frosted glass overlays.
+
+**Files created/modified:**
+- `src/renderer/assets/styles/pages/_menu.scss`: Integrated `main-menu-bg.jpg` with glassmorphism overlay.
+- `src/renderer/assets/styles/components/_button.scss`: Enhanced `&--card` with `backdrop-filter: blur(14px)`.
+- `src/renderer/views/DeckEditView.vue`: Integrated `deck-edit-bg.jpg` and frosted glass header.
+- `src/renderer/assets/styles/pages/_settings.scss`: Integrated `settings-bg.jpg` with fixed glassmorphism backdrop.
+- `src/renderer/views/LoadingView.vue`: Integrated `loading-bg.jpg` with ambient glow.
+
 **How to manually verify this phase:**
-1. Run `npm test` — all test suites pass.
-2. In a duel with a monster in `M1` and a set trap/spell in `S1`:
-   - Click on the set trap card in `S1`: Observe that "Change Position" does NOT appear. Only "Activate Effect" appears if legally triggerable.
-   - Click on the monster in `M1`: Observe that "Change Position" appears only on the monster.
+1. Open the application and verify the loading screen displays the arena loading backdrop with the golden puzzle emblem.
+2. Enter the Main Menu — observe the `main-menu-bg.jpg` art behind the hero text and frosted glass card buttons.
+3. Open Deck Builder (`/deck-edit`) — observe the `deck-edit-bg.jpg` arena backdrop beneath the 3-column deck editor.
+4. Open Settings (`/settings`) — observe the `settings-bg.jpg` backdrop behind the Opponent Dossier and audio sliders.
+
 
 
 
