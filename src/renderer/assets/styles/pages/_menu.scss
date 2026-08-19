@@ -1,9 +1,310 @@
 @use '../abstracts' as *;
 
-.page-menu {
+.main-menu-view {
+  position: relative;
   width: 100%;
   height: 100%;
-  @include flex-center;
+  display: flex;
   flex-direction: column;
-  gap: $space-6;
+  justify-content: space-between;
+  padding: $space-5 $space-8;
+  overflow: hidden;
+  background-color: $color-bg-void;
+  user-select: none;
+
+  // Atmospheric background layers
+  &__bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 50% 25%, rgba(201, 162, 39, 0.12) 0%, transparent 60%),
+      radial-gradient(circle at 20% 75%, rgba(47, 128, 237, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 75%, rgba(235, 87, 87, 0.08) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(10, 12, 16, 0.5) 0%, rgba(10, 12, 16, 0.9) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  // Header Bar
+  &__header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: $space-2 0;
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  &__brand-emblem {
+    width: 36px;
+    height: 36px;
+    filter: drop-shadow(0 0 10px rgba(201, 162, 39, 0.5));
+  }
+
+  &__brand-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__brand-title {
+    font-family: $font-display;
+    font-size: $fs-lg;
+    font-weight: 800;
+    color: $color-gold-300;
+    letter-spacing: 0.1em;
+    line-height: 1;
+  }
+
+  &__brand-sub {
+    font-family: $font-display;
+    font-size: $fs-xs;
+    color: $color-gold-100;
+    letter-spacing: 0.18em;
+    opacity: 0.75;
+  }
+
+  &__header-status {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  &__status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    padding: 6px $space-3;
+    border-radius: 20px;
+    background: rgba(18, 22, 30, 0.7);
+    border: 1px solid rgba(201, 162, 39, 0.3);
+    font-size: $fs-xs;
+    color: $color-gold-100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  &__status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: $color-success;
+    box-shadow: 0 0 8px $color-success;
+  }
+
+  // Hero Section
+  &__hero {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: $space-1;
+    margin-top: $space-2;
+    animation: fade-in 0.7s $ease-snappy forwards;
+  }
+
+  &__hero-title {
+    margin: 0;
+    font-family: $font-display;
+    font-size: $fs-2xl;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    color: $color-gold-300;
+    text-shadow:
+      0 0 24px rgba(201, 162, 39, 0.6),
+      0 4px 12px rgba(0, 0, 0, 0.9);
+  }
+
+  &__hero-subtitle {
+    margin: 0;
+    font-family: $font-body;
+    font-size: $fs-base;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: $color-text-secondary;
+  }
+
+  // Card CTAs Container
+  &__cards-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: $space-6;
+    width: 100%;
+    margin: auto 0;
+    padding: $space-3 0;
+  }
+
+  &__card-btn {
+    width: 220px !important;
+    min-height: 290px !important;
+    padding: $space-3 !important;
+    text-decoration: none;
+    transition:
+      transform 0.3s $ease-snappy,
+      border-color 0.3s $ease-snappy,
+      box-shadow 0.3s $ease-snappy !important;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-8px) scale(1.03) !important;
+      box-shadow:
+        0 16px 36px rgba(0, 0, 0, 0.7),
+        0 0 24px rgba(201, 162, 39, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    }
+
+    &--danger {
+      border-color: rgba($color-danger, 0.45) !important;
+
+      &:hover:not(:disabled) {
+        border-color: $color-danger !important;
+        box-shadow:
+          0 16px 36px rgba(0, 0, 0, 0.7),
+          0 0 24px rgba(235, 87, 87, 0.55),
+          inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+      }
+    }
+  }
+
+  // Custom Content inside Card Buttons
+  &__card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    gap: $space-3;
+  }
+
+  &__card-header {
+    width: 100%;
+    padding: 4px $space-2;
+    background: rgba(10, 12, 16, 0.85);
+    border: 1px solid rgba(201, 162, 39, 0.35);
+    border-radius: 6px;
+    font-family: $font-display;
+    font-size: $fs-xs;
+    font-weight: 700;
+    color: $color-gold-300;
+    letter-spacing: 0.1em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  &__card-art {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(201, 162, 39, 0.25) 0%, transparent 70%),
+      rgba(10, 12, 16, 0.75);
+    border: 2px solid rgba(201, 162, 39, 0.5);
+    box-shadow:
+      inset 0 0 16px rgba(0, 0, 0, 0.85),
+      0 0 12px rgba(201, 162, 39, 0.25);
+    @include flex-center;
+    color: $color-gold-300;
+    transition: transform 0.3s $ease-snappy, border-color 0.3s ease;
+
+    svg {
+      width: 48px;
+      height: 48px;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+    }
+  }
+
+  &__card-btn:hover &__card-art {
+    transform: scale(1.08);
+    border-color: $color-gold-300;
+    color: #fff;
+  }
+
+  &__card-btn--danger &__card-art {
+    border-color: rgba($color-danger, 0.5);
+    color: #ff9999;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(235, 87, 87, 0.25) 0%, transparent 70%),
+      rgba(10, 12, 16, 0.75);
+  }
+
+  &__card-btn--danger:hover &__card-art {
+    border-color: $color-danger;
+    color: #ffffff;
+  }
+
+  &__card-label-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+  }
+
+  &__card-title {
+    font-family: $font-display;
+    font-size: $fs-md;
+    font-weight: 800;
+    color: $color-gold-100;
+    letter-spacing: 0.08em;
+    text-align: center;
+  }
+
+  &__card-desc {
+    font-family: $font-body;
+    font-size: $fs-xs;
+    color: $color-text-secondary;
+    letter-spacing: 0.02em;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  // Footer Bar
+  &__footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: $space-2 0;
+    font-family: $font-body;
+    font-size: $fs-xs;
+    color: $color-text-muted;
+    border-top: 1px solid rgba(201, 162, 39, 0.15);
+  }
+
+  &__footer-left,
+  &__footer-right {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  // Exit Modal Content
+  &__modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    color: $color-text-secondary;
+    font-size: $fs-base;
+    line-height: 1.5;
+  }
+
+  &__modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $space-3;
+    width: 100%;
+  }
 }
+
