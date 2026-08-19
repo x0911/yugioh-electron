@@ -295,14 +295,21 @@ export class DuelEngineService {
           sequence: 0,
           position: OcgPosition.FACEDOWN,
         });
+        const detail = this.cardReader.getCardDetail(code);
         this.player0Field.extraDeck.push({
           id: `extra-0-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           code,
-          name: this.cardReader.getCardName(code),
+          name: detail?.name ?? this.cardReader.getCardName(code),
           controller: 0,
           location: 'extra-deck',
           sequence: this.player0Field.extraDeck.length,
-          position: 'facedown_spell',
+          position: 'facedown_defense',
+          atk: detail?.isMonster ? detail.atk : undefined,
+          def: detail?.isMonster ? detail.def : undefined,
+          level: detail?.isMonster ? detail.level : undefined,
+          attribute: detail?.attributeName,
+          race: detail?.raceName,
+          description: detail?.desc,
         });
       }
       this.player0Field.extraDeckCount = this.player0Field.extraDeck.length;
@@ -319,14 +326,21 @@ export class DuelEngineService {
           sequence: 0,
           position: OcgPosition.FACEDOWN,
         });
+        const detail = this.cardReader.getCardDetail(code);
         this.player1Field.extraDeck.push({
           id: `extra-1-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           code,
-          name: this.cardReader.getCardName(code),
+          name: detail?.name ?? this.cardReader.getCardName(code),
           controller: 1,
           location: 'extra-deck',
           sequence: this.player1Field.extraDeck.length,
-          position: 'facedown_spell',
+          position: 'facedown_defense',
+          atk: detail?.isMonster ? detail.atk : undefined,
+          def: detail?.isMonster ? detail.def : undefined,
+          level: detail?.isMonster ? detail.level : undefined,
+          attribute: detail?.attributeName,
+          race: detail?.raceName,
+          description: detail?.desc,
         });
       }
       this.player1Field.extraDeckCount = this.player1Field.extraDeck.length;
@@ -353,14 +367,21 @@ export class DuelEngineService {
       for (const item of msg.drawn) {
         const isHuman = msg.player === this.humanPlayerId;
         const code = isHuman ? item.code : 0;
+        const detail = code > 0 ? this.cardReader.getCardDetail(code) : null;
         const card: FieldCard = {
           id: `hand-${msg.player}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           code,
-          name: code > 0 ? this.cardReader.getCardName(code) : 'Card Back',
+          name: detail?.name ?? (code > 0 ? this.cardReader.getCardName(code) : 'Card Back'),
           controller: msg.player as 0 | 1,
           location: 'hand',
           sequence: pf.hand.length,
           position: isHuman ? 'faceup_spell' : 'facedown_spell',
+          atk: detail?.isMonster ? detail.atk : undefined,
+          def: detail?.isMonster ? detail.def : undefined,
+          level: detail?.isMonster ? detail.level : undefined,
+          attribute: detail?.attributeName,
+          race: detail?.raceName,
+          description: detail?.desc,
         };
         pf.hand.push(card);
       }
@@ -430,7 +451,8 @@ export class DuelEngineService {
 
     // 2. Resolve final code and name
     const finalCode = code > 0 ? code : (movedCard?.code ?? 0);
-    const cardName = finalCode > 0 ? this.cardReader.getCardName(finalCode) : 'Card';
+    const detail = finalCode > 0 ? this.cardReader.getCardDetail(finalCode) : null;
+    const cardName = detail?.name ?? (finalCode > 0 ? this.cardReader.getCardName(finalCode) : 'Card');
 
     if (!movedCard) {
       movedCard = {
@@ -441,11 +463,27 @@ export class DuelEngineService {
         location: 'monster',
         sequence: to.sequence,
         position: 'faceup_attack',
+        atk: detail?.isMonster ? detail.atk : undefined,
+        def: detail?.isMonster ? detail.def : undefined,
+        level: detail?.isMonster ? detail.level : undefined,
+        attribute: detail?.attributeName,
+        race: detail?.raceName,
+        description: detail?.desc,
       };
     } else {
       movedCard.code = finalCode;
       movedCard.name = cardName;
       movedCard.controller = to.controller as 0 | 1;
+      if (detail) {
+        if (detail.isMonster) {
+          movedCard.atk = detail.atk;
+          movedCard.def = detail.def;
+          movedCard.level = detail.level;
+        }
+        movedCard.attribute = detail.attributeName;
+        movedCard.race = detail.raceName;
+        movedCard.description = detail.desc;
+      }
     }
 
     // 3. Add to destination

@@ -1,6 +1,6 @@
 <template>
   <Transition name="preview-fade">
-    <div v-if="card" class="card-preview-popup" :class="[`card-preview-popup--${position}`]">
+    <div v-if="effectiveCard" class="card-preview-popup" :class="[`card-preview-popup--${position}`]">
       <div class="preview-panel glass-panel glass-panel--accent-gold">
         <!-- Close / Dismiss button if pinned -->
         <button
@@ -15,9 +15,9 @@
         <!-- Full Artwork Image Container -->
         <div class="card-art-box">
           <img
-            v-if="card.code > 0"
-            :src="getCardImageUrl(card.code, 'full')"
-            :alt="card.name"
+            v-if="effectiveCard.code > 0"
+            :src="getCardImageUrl(effectiveCard.code, 'full')"
+            :alt="effectiveCard.name"
             class="full-card-image"
             @error="handleImageError"
           />
@@ -35,48 +35,31 @@
         <div class="card-info-block">
           <!-- Card Name & Attribute Row -->
           <div class="card-title-row">
-            <h3 class="card-name" :title="card.name">{{ card.name }}</h3>
+            <h3 class="card-name" :title="effectiveCard.name">{{ effectiveCard.name }}</h3>
             <span
-              v-if="card.code > 0 && card.attribute"
+              v-if="effectiveCard.code > 0 && effectiveCard.attribute"
               class="attribute-badge"
-              :class="`attribute-badge--${card.attribute.toLowerCase()}`"
+              :class="`attribute-badge--${effectiveCard.attribute.toLowerCase()}`"
             >
-              {{ card.attribute }}
+              {{ effectiveCard.attribute }}
             </span>
-            <span v-else-if="card.code === 0" class="attribute-badge attribute-badge--secret">
+            <span v-else-if="effectiveCard.code === 0" class="attribute-badge attribute-badge--secret">
               SECRET
             </span>
           </div>
 
           <!-- Level / Rank Stars Row (Dedicated Line - only for revealed monsters) -->
-          <div v-if="card.code > 0 && card.level && card.level > 0" class="card-level-row">
+          <div v-if="effectiveCard.code > 0 && effectiveCard.level && effectiveCard.level > 0" class="card-level-row">
             <div class="level-stars">
-              <span v-for="i in card.level" :key="i" class="star">★</span>
+              <span v-for="i in effectiveCard.level" :key="i" class="star">★</span>
             </div>
-            <span class="level-pill">LV {{ card.level }}</span>
+            <span class="level-pill">LV {{ effectiveCard.level }}</span>
           </div>
 
           <!-- Type & Race Bracket Row (Dedicated Line) -->
           <div class="card-type-row">
-            <span v-if="card.code > 0" class="type-bracket">
-              [{{
-                card.race ||
-                (card.attribute === 'SPELL'
-                  ? 'Spell'
-                  : card.attribute === 'TRAP'
-                    ? 'Trap'
-                    : 'Monster')
-              }}
-              /
-              {{
-                card.level && card.level > 0
-                  ? 'Monster'
-                  : card.attribute === 'SPELL'
-                    ? 'Spell Card'
-                    : card.attribute === 'TRAP'
-                      ? 'Trap Card'
-                      : 'Effect'
-              }}]
+            <span v-if="effectiveCard.code > 0" class="type-bracket">
+              [{{ typeBracketText }}]
             </span>
             <span v-else class="type-bracket type-bracket--secret">
               [Face-Down Card / Unknown]
@@ -85,17 +68,17 @@
 
           <!-- ATK / DEF Scores (Only for revealed Monsters) -->
           <div
-            v-if="card.code > 0 && (card.atk !== undefined || card.def !== undefined)"
+            v-if="effectiveCard.code > 0 && (effectiveCard.atk !== undefined || effectiveCard.def !== undefined)"
             class="combat-stats-box"
           >
             <div class="stat-col">
               <span class="stat-lbl">ATK</span>
-              <span class="stat-val stat-val--atk">{{ card.atk }}</span>
+              <span class="stat-val stat-val--atk">{{ effectiveCard.atk ?? 0 }}</span>
             </div>
             <div class="stat-divider">/</div>
             <div class="stat-col">
               <span class="stat-lbl">DEF</span>
-              <span class="stat-val stat-val--def">{{ card.def }}</span>
+              <span class="stat-val stat-val--def">{{ effectiveCard.def ?? 0 }}</span>
             </div>
           </div>
 
@@ -103,8 +86,8 @@
           <div class="card-lore-box">
             <p class="lore-text">
               {{
-                card.description ||
-                (card.code === 0
+                effectiveCard.description ||
+                (effectiveCard.code === 0
                   ? 'This card is currently face-down on the field. Its identity, stats, and effects remain hidden until activated or flipped face-up.'
                   : 'No description available for this card.')
               }}
@@ -115,9 +98,9 @@
           <div class="card-footer-row">
             <div class="passcode-group">
               <span class="passcode-lbl">PASSCODE</span>
-              <span class="passcode-val">{{ card.code > 0 ? card.code : '????????' }}</span>
+              <span class="passcode-val">{{ effectiveCard.code > 0 ? effectiveCard.code : '????????' }}</span>
             </div>
-            <span class="location-tag">{{ card.location.toUpperCase() }}</span>
+            <span class="location-tag">{{ (effectiveCard.location || 'DECK').toUpperCase() }}</span>
           </div>
         </div>
       </div>
@@ -126,10 +109,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { FieldCard } from '../../../shared/types/field.js';
+import { useDuelStore } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     card?: FieldCard | null;
     isPinned?: boolean;
@@ -145,6 +130,49 @@ withDefaults(
 defineEmits<{
   (e: 'close'): void;
 }>();
+
+const duelStore = useDuelStore();
+
+const effectiveCard = computed<FieldCard | null>(() => {
+  if (!props.card) return null;
+  if (props.card.code <= 0) return props.card;
+  const detail = duelStore.getCardDetail(props.card.code);
+  if (!detail) return props.card;
+  return {
+    ...props.card,
+    name: props.card.name && props.card.name !== 'Card' && !props.card.name.startsWith('[Card #') ? props.card.name : detail.name,
+    atk: props.card.atk !== undefined ? props.card.atk : (detail.isMonster ? detail.atk : undefined),
+    def: props.card.def !== undefined ? props.card.def : (detail.isMonster ? detail.def : undefined),
+    level: props.card.level !== undefined ? props.card.level : (detail.isMonster ? detail.level : undefined),
+    attribute: props.card.attribute || detail.attributeName,
+    race: props.card.race || detail.raceName,
+    description: props.card.description || detail.desc,
+  };
+});
+
+const typeBracketText = computed(() => {
+  if (!effectiveCard.value) return '';
+  const detail = duelStore.getCardDetail(effectiveCard.value.code);
+  if (detail?.typeLabels && detail.typeLabels.length > 0) {
+    return detail.typeLabels.join(' / ');
+  }
+  const race =
+    effectiveCard.value.race ||
+    (effectiveCard.value.attribute === 'SPELL'
+      ? 'Spell'
+      : effectiveCard.value.attribute === 'TRAP'
+        ? 'Trap'
+        : 'Monster');
+  const kind =
+    effectiveCard.value.level && effectiveCard.value.level > 0
+      ? 'Monster'
+      : effectiveCard.value.attribute === 'SPELL'
+        ? 'Spell Card'
+        : effectiveCard.value.attribute === 'TRAP'
+          ? 'Trap Card'
+          : 'Monster';
+  return `${race} / ${kind}`;
+});
 </script>
 
 <style scoped lang="scss">

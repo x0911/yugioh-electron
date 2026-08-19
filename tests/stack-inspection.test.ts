@@ -133,4 +133,75 @@ console.log('=== Running Graveyard & Extra Deck Inspection Tests ===\n');
   console.log('✓ Opponent Graveyard & Extra Deck inspect with red owner accents and card metadata.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 3: Extra Deck Monster Classification & Detail Enrichment
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 3: Extra Deck Monster Classification & Detail Enrichment...');
+
+  const mockCardMap = new Map([
+    [
+      23995346,
+      {
+        id: 23995346,
+        name: 'Blue-Eyes Ultimate Dragon',
+        desc: '"Blue-Eyes White Dragon" + "Blue-Eyes White Dragon" + "Blue-Eyes White Dragon"',
+        atk: 4500,
+        def: 3800,
+        level: 12,
+        attributeName: 'LIGHT',
+        raceName: 'Dragon',
+        isMonster: true,
+        isSpell: false,
+        isTrap: false,
+        isFusion: true,
+        typeLabels: ['Monster', 'Dragon', 'Fusion'],
+      },
+    ],
+  ]);
+
+  const rawExtraCard: FieldCard = {
+    id: 'ex-1',
+    code: 23995346,
+    name: 'Blue-Eyes Ultimate Dragon',
+    controller: 0,
+    location: 'extra-deck',
+    sequence: 0,
+    position: 'facedown_defense',
+  };
+
+  function enrichCard(card: FieldCard): FieldCard {
+    const detail = mockCardMap.get(card.code);
+    if (!detail) return card;
+    return {
+      ...card,
+      name: detail.name || card.name,
+      atk: card.atk !== undefined ? card.atk : (detail.isMonster ? detail.atk : undefined),
+      def: card.def !== undefined ? card.def : (detail.isMonster ? detail.def : undefined),
+      level: card.level !== undefined ? card.level : (detail.isMonster ? detail.level : undefined),
+      attribute: card.attribute || detail.attributeName,
+      race: card.race || detail.raceName,
+      description: card.description || detail.desc,
+    };
+  }
+
+  function isMonster(card: FieldCard): boolean {
+    if (card.atk !== undefined || card.def !== undefined || (card.level && card.level > 0)) return true;
+    const detail = mockCardMap.get(card.code);
+    return detail?.isMonster ?? false;
+  }
+
+  const enriched = enrichCard(rawExtraCard);
+
+  assert.equal(isMonster(enriched), true, 'Blue-Eyes Ultimate Dragon must be classified as a Monster');
+  assert.equal(enriched.atk, 4500, 'ATK must be 4500');
+  assert.equal(enriched.def, 3800, 'DEF must be 3800');
+  assert.equal(enriched.level, 12, 'Level must be 12');
+  assert.equal(enriched.attribute, 'LIGHT', 'Attribute must be LIGHT');
+  assert.equal(enriched.race, 'Dragon', 'Race must be Dragon');
+  assert.ok(enriched.description?.includes('Blue-Eyes White Dragon'), 'Lore description must be populated');
+
+  console.log('✓ Extra Deck cards correctly classify as monsters with full ATK/DEF/LV/Lore stats.');
+}
+
 console.log('\n🎉 ALL GRAVEYARD & EXTRA DECK INSPECTION TESTS PASSED!');

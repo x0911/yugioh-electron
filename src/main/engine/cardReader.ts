@@ -172,6 +172,106 @@ export class CardReaderService {
     return {};
   }
 
+  public mapRowToCardDetail(
+    row: CardRecord,
+    manifest?: Record<string, { id: number; name: string; era?: 'DM' | 'GX' }>,
+  ): CardDetail {
+    const isMonster = (row.type & CARD_TYPES.MONSTER) !== 0;
+    const isSpell = (row.type & CARD_TYPES.SPELL) !== 0;
+    const isTrap = (row.type & CARD_TYPES.TRAP) !== 0;
+    const isNormal = (row.type & CARD_TYPES.NORMAL) !== 0;
+    const isEffect = (row.type & CARD_TYPES.EFFECT) !== 0;
+    const isFusion = (row.type & CARD_TYPES.FUSION) !== 0;
+    const isRitual = (row.type & CARD_TYPES.RITUAL) !== 0;
+    const isFlip = (row.type & CARD_TYPES.FLIP) !== 0;
+    const isToon = (row.type & CARD_TYPES.TOON) !== 0;
+    const isSpirit = (row.type & CARD_TYPES.SPIRIT) !== 0;
+    const isUnion = (row.type & CARD_TYPES.UNION) !== 0;
+    const isGemini = (row.type & CARD_TYPES.GEMINI) !== 0;
+    const isQuickPlay = (row.type & CARD_TYPES.QUICKPLAY) !== 0;
+    const isContinuous = (row.type & CARD_TYPES.CONTINUOUS) !== 0;
+    const isEquip = (row.type & CARD_TYPES.EQUIP) !== 0;
+    const isField = (row.type & CARD_TYPES.FIELD) !== 0;
+    const isCounter = (row.type & CARD_TYPES.COUNTER) !== 0;
+    const isExtraDeck = isFusion;
+
+    const attributeName =
+      ATTRIBUTE_NAME_MAP[row.attribute] || (isSpell ? 'SPELL' : isTrap ? 'TRAP' : 'UNKNOWN');
+    const raceNum = Number(row.race);
+    const raceName = RACE_NAME_MAP[raceNum] || (isSpell ? 'Spell' : isTrap ? 'Trap' : 'Unknown');
+    const era = manifest ? (manifest[String(row.id)]?.era || 'DM') : 'DM';
+
+    const typeLabels: string[] = [];
+    if (isMonster) {
+      typeLabels.push('Monster');
+      if (raceName && raceName !== 'Unknown') typeLabels.push(raceName);
+      if (isNormal) typeLabels.push('Normal');
+      if (isEffect) typeLabels.push('Effect');
+      if (isFusion) typeLabels.push('Fusion');
+      if (isRitual) typeLabels.push('Ritual');
+      if (isFlip) typeLabels.push('Flip');
+      if (isToon) typeLabels.push('Toon');
+      if (isSpirit) typeLabels.push('Spirit');
+      if (isUnion) typeLabels.push('Union');
+      if (isGemini) typeLabels.push('Gemini');
+    } else if (isSpell) {
+      typeLabels.push('Spell');
+      if (isQuickPlay) typeLabels.push('Quick-Play');
+      else if (isContinuous) typeLabels.push('Continuous');
+      else if (isEquip) typeLabels.push('Equip');
+      else if (isField) typeLabels.push('Field');
+      else if (isRitual) typeLabels.push('Ritual');
+      else typeLabels.push('Normal');
+    } else if (isTrap) {
+      typeLabels.push('Trap');
+      if (isCounter) typeLabels.push('Counter');
+      else if (isContinuous) typeLabels.push('Continuous');
+      else typeLabels.push('Normal');
+    }
+
+    return {
+      id: row.id,
+      alias: row.alias,
+      name: row.name,
+      desc: row.desc,
+      type: row.type,
+      atk: row.atk,
+      def: row.def,
+      level: row.level & 0xff,
+      race: raceNum,
+      raceName,
+      attribute: row.attribute,
+      attributeName,
+      isMonster,
+      isSpell,
+      isTrap,
+      isFusion,
+      isRitual,
+      isEffect,
+      isNormal,
+      isFlip,
+      isToon,
+      isSpirit,
+      isUnion,
+      isGemini,
+      isQuickPlay,
+      isContinuous,
+      isEquip,
+      isField,
+      isCounter,
+      isExtraDeck,
+      era,
+      typeLabels,
+    };
+  }
+
+  public getCardDetail(code: number): CardDetail | null {
+    if (!code || code <= 0) return null;
+    const row = this.getCardRecord(code);
+    if (!row) return null;
+    return this.mapRowToCardDetail(row);
+  }
+
   public getAllCards(): CardDetail[] {
     if (!this.db) return [];
 
@@ -183,94 +283,7 @@ export class CardReaderService {
         )
         .all();
 
-      return rows.map((row) => {
-        const isMonster = (row.type & CARD_TYPES.MONSTER) !== 0;
-        const isSpell = (row.type & CARD_TYPES.SPELL) !== 0;
-        const isTrap = (row.type & CARD_TYPES.TRAP) !== 0;
-        const isNormal = (row.type & CARD_TYPES.NORMAL) !== 0;
-        const isEffect = (row.type & CARD_TYPES.EFFECT) !== 0;
-        const isFusion = (row.type & CARD_TYPES.FUSION) !== 0;
-        const isRitual = (row.type & CARD_TYPES.RITUAL) !== 0;
-        const isFlip = (row.type & CARD_TYPES.FLIP) !== 0;
-        const isToon = (row.type & CARD_TYPES.TOON) !== 0;
-        const isSpirit = (row.type & CARD_TYPES.SPIRIT) !== 0;
-        const isUnion = (row.type & CARD_TYPES.UNION) !== 0;
-        const isGemini = (row.type & CARD_TYPES.GEMINI) !== 0;
-        const isQuickPlay = (row.type & CARD_TYPES.QUICKPLAY) !== 0;
-        const isContinuous = (row.type & CARD_TYPES.CONTINUOUS) !== 0;
-        const isEquip = (row.type & CARD_TYPES.EQUIP) !== 0;
-        const isField = (row.type & CARD_TYPES.FIELD) !== 0;
-        const isCounter = (row.type & CARD_TYPES.COUNTER) !== 0;
-        const isExtraDeck = isFusion;
-
-        const attributeName = ATTRIBUTE_NAME_MAP[row.attribute] || (isSpell ? 'SPELL' : isTrap ? 'TRAP' : 'UNKNOWN');
-        const raceNum = Number(row.race);
-        const raceName = RACE_NAME_MAP[raceNum] || (isSpell ? 'Spell' : isTrap ? 'Trap' : 'Unknown');
-        const era = manifest[String(row.id)]?.era || 'DM';
-
-        const typeLabels: string[] = [];
-        if (isMonster) {
-          typeLabels.push('Monster');
-          if (raceName && raceName !== 'Unknown') typeLabels.push(raceName);
-          if (isNormal) typeLabels.push('Normal');
-          if (isEffect) typeLabels.push('Effect');
-          if (isFusion) typeLabels.push('Fusion');
-          if (isRitual) typeLabels.push('Ritual');
-          if (isFlip) typeLabels.push('Flip');
-          if (isToon) typeLabels.push('Toon');
-          if (isSpirit) typeLabels.push('Spirit');
-          if (isUnion) typeLabels.push('Union');
-          if (isGemini) typeLabels.push('Gemini');
-        } else if (isSpell) {
-          typeLabels.push('Spell');
-          if (isQuickPlay) typeLabels.push('Quick-Play');
-          else if (isContinuous) typeLabels.push('Continuous');
-          else if (isEquip) typeLabels.push('Equip');
-          else if (isField) typeLabels.push('Field');
-          else if (isRitual) typeLabels.push('Ritual');
-          else typeLabels.push('Normal');
-        } else if (isTrap) {
-          typeLabels.push('Trap');
-          if (isCounter) typeLabels.push('Counter');
-          else if (isContinuous) typeLabels.push('Continuous');
-          else typeLabels.push('Normal');
-        }
-
-        return {
-          id: row.id,
-          alias: row.alias,
-          name: row.name,
-          desc: row.desc,
-          type: row.type,
-          atk: row.atk,
-          def: row.def,
-          level: row.level & 0xff,
-          race: raceNum,
-          raceName,
-          attribute: row.attribute,
-          attributeName,
-          isMonster,
-          isSpell,
-          isTrap,
-          isFusion,
-          isRitual,
-          isEffect,
-          isNormal,
-          isFlip,
-          isToon,
-          isSpirit,
-          isUnion,
-          isGemini,
-          isQuickPlay,
-          isContinuous,
-          isEquip,
-          isField,
-          isCounter,
-          isExtraDeck,
-          era,
-          typeLabels,
-        };
-      });
+      return rows.map((row) => this.mapRowToCardDetail(row, manifest));
     } catch (err) {
       console.error('[CardReaderService] Error loading all cards:', err);
       return [];

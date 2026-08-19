@@ -34,7 +34,7 @@
       <!-- Card Grid -->
       <div v-else class="card-list-grid">
         <div
-          v-for="(card, idx) in cards"
+          v-for="(card, idx) in enrichedCards"
           :key="card.id || `${card.code}-${idx}`"
           class="card-list-tile"
           :class="[
@@ -71,11 +71,13 @@
             </div>
 
             <!-- Monster Stats & Level -->
-            <div v-if="card.atk !== undefined || card.def !== undefined" class="tile-stats">
-              <span v-if="card.level" class="tile-level">⭐ {{ card.level }}</span>
-              <span v-if="card.attribute" class="tile-attr" :class="`tile-attr--${card.attribute.toLowerCase()}`">
-                {{ card.attribute }}
-              </span>
+            <div v-if="isMonsterCard(card)" class="tile-stats">
+              <div class="tile-meta-header">
+                <span v-if="card.level" class="tile-level">⭐ {{ card.level }}</span>
+                <span v-if="card.attribute" class="tile-attr" :class="`tile-attr--${card.attribute.toLowerCase()}`">
+                  {{ card.attribute }}
+                </span>
+              </div>
               <div class="tile-combat-stats">
                 <span class="stat-atk">ATK/{{ card.atk ?? 0 }}</span>
                 <span class="stat-def">DEF/{{ card.def ?? 0 }}</span>
@@ -88,7 +90,7 @@
                 class="tile-card-type-tag"
                 :class="card.attribute === 'TRAP' ? 'tag--trap' : 'tag--spell'"
               >
-                {{ card.attribute || (card.race ? `${card.race} Spell` : 'SPELL / TRAP') }}
+                {{ card.attribute === 'TRAP' ? 'TRAP' : 'SPELL' }}
               </span>
             </div>
           </div>
@@ -110,6 +112,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { FieldCard } from '../../../shared/types/field.js';
+import { useDuelStore } from '../../stores/duelStore.js';
 import YugiModal from '../common/YugiModal.vue';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
 
@@ -133,6 +136,32 @@ const emit = defineEmits<{
   (e: 'select-card', card: FieldCard): void;
 }>();
 
+const duelStore = useDuelStore();
+
+const enrichedCards = computed<FieldCard[]>(() => {
+  return props.cards.map((card) => {
+    if (!card.code || card.code <= 0) return card;
+    const detail = duelStore.getCardDetail(card.code);
+    if (!detail) return card;
+    return {
+      ...card,
+      name: card.name && card.name !== 'Card' && !card.name.startsWith('[Card #') ? card.name : detail.name,
+      atk: card.atk !== undefined ? card.atk : (detail.isMonster ? detail.atk : undefined),
+      def: card.def !== undefined ? card.def : (detail.isMonster ? detail.def : undefined),
+      level: card.level !== undefined ? card.level : (detail.isMonster ? detail.level : undefined),
+      attribute: card.attribute || detail.attributeName,
+      race: card.race || detail.raceName,
+      description: card.description || detail.desc,
+    };
+  });
+});
+
+function isMonsterCard(card: FieldCard): boolean {
+  if (card.atk !== undefined || card.def !== undefined || (card.level && card.level > 0)) return true;
+  const detail = duelStore.getCardDetail(card.code);
+  return detail?.isMonster ?? false;
+}
+
 const stackIcon = computed(() => {
   switch (props.type) {
     case 'graveyard':
@@ -152,7 +181,7 @@ function getCardImage(card: FieldCard): string {
   if (!card.code || card.code <= 0) {
     return getCardBackUrl();
   }
-  return getCardImageUrl(card.code, 'mini');
+  return getCardImageUrl(card.code, 'full');
 }
 
 function onMouseEnter(card: FieldCard): void {
@@ -281,8 +310,9 @@ function onCardClick(card: FieldCard): void {
 
 .card-list-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 125px));
+  justify-content: center;
+  gap: 0.75rem;
 }
 
 .card-list-tile {
@@ -290,7 +320,8 @@ function onCardClick(card: FieldCard): void {
   background: rgba(18, 22, 28, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  padding: 0.5rem;
+  padding: 0.4rem;
+  max-width: 130px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -346,10 +377,10 @@ function onCardClick(card: FieldCard): void {
 .tile-art-wrapper {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1.35;
+  aspect-ratio: 1 / 1.45;
   border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
   background: #000;
   border: 1px solid rgba(201, 162, 39, 0.2);
 }
@@ -374,12 +405,12 @@ function onCardClick(card: FieldCard): void {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .tile-name {
   font-family: $font-body;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: $color-text-primary;
   white-space: nowrap;
@@ -391,9 +422,15 @@ function onCardClick(card: FieldCard): void {
 .tile-stats {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.12rem;
   font-family: $font-mono;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+}
+
+.tile-meta-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .tile-level {

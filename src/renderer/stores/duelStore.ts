@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { CharacterData, CharacterDeckData } from '../../shared/types/character.js';
 import type { CustomDeck } from '../../shared/types/deck.js';
+import type { CardDetail } from '../../shared/types/card.js';
 import type {
   CoinChoice,
   CoinWinner,
@@ -90,6 +91,10 @@ export interface DuelStoreState {
   activeSelectPlace: SelectPlacePayload | null;
   activeSelectTribute: SelectTributePayload | null;
 
+  // Card Database Cache
+  cardMap: Map<number, CardDetail>;
+  isCardsLoaded: boolean;
+
   // Active Target Selections
   selectedTargetIndices: number[];
 
@@ -173,6 +178,8 @@ export const useDuelStore = defineStore('duel', {
     activeSelectOption: null,
     activeSelectPlace: null,
     activeSelectTribute: null,
+    cardMap: new Map(),
+    isCardsLoaded: false,
     selectedTargetIndices: [],
 
     isPromptWaiting: false,
@@ -232,6 +239,58 @@ export const useDuelStore = defineStore('duel', {
   },
 
   actions: {
+    async initCardDatabase(): Promise<void> {
+      if (this.isCardsLoaded && this.cardMap.size > 0) return;
+      try {
+        if (window.deckAPI?.getAllCards) {
+          const cards = await window.deckAPI.getAllCards();
+          const map = new Map<number, CardDetail>();
+          for (const card of cards) {
+            map.set(card.id, card);
+          }
+          this.cardMap = map;
+          this.isCardsLoaded = true;
+        }
+      } catch (err) {
+        console.warn('[DuelStore] Failed to load card database:', err);
+      }
+    },
+
+    getCardDetail(code: number): CardDetail | null {
+      if (!code || code <= 0) return null;
+      return this.cardMap.get(code) ?? null;
+    },
+
+    hydrateFieldCard(card: FieldCard | null): FieldCard | null {
+      if (!card) return null;
+      if (card.code <= 0) return card;
+      const detail = this.getCardDetail(card.code);
+      if (!detail) return card;
+      return {
+        ...card,
+        name: card.name && card.name !== 'Card' && !card.name.startsWith('[Card #') ? card.name : detail.name,
+        atk: card.atk !== undefined ? card.atk : (detail.isMonster ? detail.atk : undefined),
+        def: card.def !== undefined ? card.def : (detail.isMonster ? detail.def : undefined),
+        level: card.level !== undefined ? card.level : (detail.isMonster ? detail.level : undefined),
+        attribute: card.attribute || detail.attributeName,
+        race: card.race || detail.raceName,
+        description: card.description || detail.desc,
+      };
+    },
+
+    hydratePlayerField(pf: PlayerFieldState): PlayerFieldState {
+      return {
+        ...pf,
+        hand: pf.hand.map((c) => this.hydrateFieldCard(c)!),
+        monsterZones: pf.monsterZones.map((c) => this.hydrateFieldCard(c)),
+        spellTrapZones: pf.spellTrapZones.map((c) => this.hydrateFieldCard(c)),
+        fieldZone: this.hydrateFieldCard(pf.fieldZone),
+        graveyard: pf.graveyard.map((c) => this.hydrateFieldCard(c)!),
+        banished: pf.banished.map((c) => this.hydrateFieldCard(c)!),
+        extraDeck: pf.extraDeck.map((c) => this.hydrateFieldCard(c)!),
+      };
+    },
+
     /**
      * Initializes match configuration from Settings and DeckEdit.
      */
@@ -240,6 +299,7 @@ export const useDuelStore = defineStore('duel', {
       customOpponentDeck?: CharacterDeckData,
       customUserDeck?: CustomDeck,
     ): Promise<void> {
+      await this.initCardDatabase();
       const settingsStore = useSettingsStore();
       const deckEditStore = useDeckEditStore();
 
@@ -436,9 +496,16 @@ export const useDuelStore = defineStore('duel', {
      */
     async dealOpeningHand(): Promise<void> {
       if (!window.duelAPI) return;
+      await this.initCardDatabase();
       try {
-        const snapshot = await window.duelAPI.getBoardState();
-        if (!snapshot) return;
+        const rawSnapshot = await window.duelAPI.getBoardState();
+        if (!rawSnapshot) return;
+
+        const snapshot = {
+          ...rawSnapshot,
+          userField: this.hydratePlayerField(rawSnapshot.userField),
+          opponentField: this.hydratePlayerField(rawSnapshot.opponentField),
+        };
 
         // Apply non-hand fields immediately (LP, phase, field zones, opponent)
         this.boardState.turnNumber = snapshot.turnNumber;
@@ -478,11 +545,12 @@ export const useDuelStore = defineStore('duel', {
      */
     async fetchBoardState(): Promise<void> {
       if (window.duelAPI) {
+        await this.initCardDatabase();
         try {
           const snapshot = await window.duelAPI.getBoardState();
           if (snapshot) {
-            this.boardState.userField = snapshot.userField;
-            this.boardState.opponentField = snapshot.opponentField;
+            this.boardState.userField = this.hydratePlayerField(snapshot.userField);
+            this.boardState.opponentField = this.hydratePlayerField(snapshot.opponentField);
             this.boardState.turnNumber = snapshot.turnNumber;
             this.boardState.currentPhase = snapshot.currentPhase;
             this.boardState.winner = snapshot.winner;
