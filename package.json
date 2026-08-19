@@ -16,9 +16,11 @@
     "typecheck": "vue-tsc --noEmit",
     "build:cards": "tsx scripts/build-card-pool.ts",
     "download:cards": "tsx scripts/download-card-images.ts",
+    "generate:videos": "tsx scripts/generate-character-videos.ts",
     "rebuild:native": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
+    "@google/genai": "^2.17.1",
     "better-sqlite3": "^13.0.3",
     "electron-store": "^11.0.2",
     "ocgcore-wasm": "^0.1.2",
