@@ -5,8 +5,8 @@
       <h2 class="placeholder-title">Pre-Duel Video</h2>
       <div class="placeholder-badge">Phase 8 will implement this</div>
       <p class="placeholder-description">
-        Will feature full-screen character intro cutscenes with skip-on-click, video buffering,
-        and audio mixing before entering the duel arena.
+        Will feature full-screen character intro cutscenes with skip-on-click, video buffering, and
+        audio mixing before entering the duel arena.
       </p>
     </div>
   </div>

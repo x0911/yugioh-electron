@@ -1,8 +1,4 @@
-import {
-  OcgCardData,
-  OcgAttribute,
-  OcgRace
-} from 'ocgcore-wasm';
+import { OcgCardData, OcgAttribute, OcgRace } from 'ocgcore-wasm';
 
 export interface CardDefinition extends OcgCardData {
   name: string;
@@ -33,7 +29,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 1200,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 70781052,
@@ -49,7 +45,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 1200,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 46986414,
@@ -65,7 +61,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 2100,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 89631139,
@@ -81,14 +77,14 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 2500,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
 
   // --- Effect Monsters ---
   {
     code: 40640057,
     name: 'Kuriboh',
-    desc: 'During damage calculation, if your opponent\'s monster attacks (Quick Effect): You can discard this card; you take no battle damage from that battle.',
+    desc: "During damage calculation, if your opponent's monster attacks (Quick Effect): You can discard this card; you take no battle damage from that battle.",
     alias: 0,
     setcodes: [0xa4], // Kuriboh
     type: TYPE_MONSTER | TYPE_EFFECT,
@@ -99,7 +95,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 200,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 54652250,
@@ -115,7 +111,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 600,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 26202165,
@@ -131,7 +127,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 600,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
 
   // --- Normal Spells ---
@@ -149,12 +145,12 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 0,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 46130346,
     name: 'Hinotama',
-    desc: 'Inflict 500 points of damage to your opponent\'s Life Points.',
+    desc: "Inflict 500 points of damage to your opponent's Life Points.",
     alias: 0,
     setcodes: [0],
     type: TYPE_SPELL,
@@ -165,7 +161,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 0,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 12580477,
@@ -181,7 +177,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 0,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 53129443,
@@ -197,7 +193,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 0,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 25833572,
@@ -213,7 +209,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 0,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 38480590,
@@ -229,7 +225,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 0,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
 
   // --- Normal Traps ---
@@ -247,7 +243,7 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 0,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
+    link_marker: 0,
   },
   {
     code: 24068492,
@@ -263,10 +259,10 @@ export const SAMPLE_CARDS: CardDefinition[] = [
     defense: 0,
     lscale: 0,
     rscale: 0,
-    link_marker: 0
-  }
+    link_marker: 0,
+  },
 ];
 
 export const CARD_DATABASE = new Map<number, CardDefinition>(
-  SAMPLE_CARDS.map((card) => [card.code, card])
+  SAMPLE_CARDS.map((card) => [card.code, card]),
 );

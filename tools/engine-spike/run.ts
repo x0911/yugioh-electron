@@ -6,12 +6,11 @@ import createCore, {
   OcgMessageType,
   ocgMessageTypeStrings,
   ocgPhaseString,
-  OcgPhase
 } from 'ocgcore-wasm';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { CARD_DATABASE, CardDefinition } from './cards.js';
+import { CARD_DATABASE } from './cards.js';
 import { getAutoResponse } from './autoResponder.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,25 +35,25 @@ function createDeck(cardList: { code: number; count: number }[]): number[] {
 // Deck 1 (Yugi-inspired Deck - 40 Cards)
 const DECK_PLAYER_0 = createDeck([
   { code: 91152256, count: 20 }, // Celtic Guardian (Lv4 Normal, 1400/1200)
-  { code: 70781052, count: 4 },  // Summoned Skull (Lv6 Normal, 2500/1200)
-  { code: 46986414, count: 2 },  // Dark Magician (Lv7 Normal, 2500/2100)
-  { code: 40640057, count: 3 },  // Kuriboh (Lv1 Effect)
-  { code: 26202165, count: 3 },  // Sangan (Lv3 Effect)
-  { code: 55144522, count: 3 },  // Pot of Greed (Spell)
-  { code: 46130346, count: 3 },  // Hinotama (Spell)
-  { code: 12580477, count: 2 },  // Raigeki (Spell)
+  { code: 70781052, count: 4 }, // Summoned Skull (Lv6 Normal, 2500/1200)
+  { code: 46986414, count: 2 }, // Dark Magician (Lv7 Normal, 2500/2100)
+  { code: 40640057, count: 3 }, // Kuriboh (Lv1 Effect)
+  { code: 26202165, count: 3 }, // Sangan (Lv3 Effect)
+  { code: 55144522, count: 3 }, // Pot of Greed (Spell)
+  { code: 46130346, count: 3 }, // Hinotama (Spell)
+  { code: 12580477, count: 2 }, // Raigeki (Spell)
 ]);
 
 // Deck 2 (Kaiba-inspired Deck - 40 Cards)
 const DECK_PLAYER_1 = createDeck([
   { code: 91152256, count: 20 }, // Celtic Guardian (Lv4 Normal, 1400/1200)
-  { code: 70781052, count: 4 },  // Summoned Skull (Lv6 Normal, 2500/1200)
-  { code: 89631139, count: 2 },  // Blue-Eyes White Dragon (Lv8 Normal, 3000/2500)
-  { code: 54652250, count: 3 },  // Man-Eater Bug (Lv2 Flip Effect)
-  { code: 55144522, count: 3 },  // Pot of Greed (Spell)
-  { code: 53129443, count: 2 },  // Dark Hole (Spell)
-  { code: 25833572, count: 3 },  // Ookazi (Spell)
-  { code: 38480590, count: 3 },  // Sparks (Spell)
+  { code: 70781052, count: 4 }, // Summoned Skull (Lv6 Normal, 2500/1200)
+  { code: 89631139, count: 2 }, // Blue-Eyes White Dragon (Lv8 Normal, 3000/2500)
+  { code: 54652250, count: 3 }, // Man-Eater Bug (Lv2 Flip Effect)
+  { code: 55144522, count: 3 }, // Pot of Greed (Spell)
+  { code: 53129443, count: 2 }, // Dark Hole (Spell)
+  { code: 25833572, count: 3 }, // Ookazi (Spell)
+  { code: 38480590, count: 3 }, // Sparks (Spell)
 ]);
 
 function scriptReader(name: string): string | null {
@@ -95,12 +94,12 @@ export async function runSpike(): Promise<void> {
     team1: {
       startingLP: 8000,
       startingDrawCount: 5,
-      drawCountPerTurn: 1
+      drawCountPerTurn: 1,
     },
     team2: {
       startingLP: 8000,
       startingDrawCount: 5,
-      drawCountPerTurn: 1
+      drawCountPerTurn: 1,
     },
     cardReader: (code) => {
       const card = CARD_DATABASE.get(code);
@@ -109,7 +108,7 @@ export async function runSpike(): Promise<void> {
     scriptReader,
     errorHandler: (type, text) => {
       console.warn(`      [Lua Error (${type})]: ${text}`);
-    }
+    },
   });
 
   if (!handle) {
@@ -134,7 +133,7 @@ export async function runSpike(): Promise<void> {
       controller: 0,
       location: OcgLocation.DECK,
       sequence: 0,
-      position: OcgPosition.FACEDOWN
+      position: OcgPosition.FACEDOWN,
     });
   }
 
@@ -147,7 +146,7 @@ export async function runSpike(): Promise<void> {
       controller: 1,
       location: OcgLocation.DECK,
       sequence: 0,
-      position: OcgPosition.FACEDOWN
+      position: OcgPosition.FACEDOWN,
     });
   }
   console.log('      ✓ All cards placed in respective decks.');
@@ -158,7 +157,6 @@ export async function runSpike(): Promise<void> {
 
   let step = 0;
   let currentTurn = 0;
-  let activePlayer = 0;
   let p0LP = 8000;
   let p1LP = 8000;
   let winner: number | null = null;
@@ -177,23 +175,30 @@ export async function runSpike(): Promise<void> {
 
     for (const msg of messages) {
       switch (msg.type) {
-        case OcgMessageType.NEW_TURN:
+        case OcgMessageType.NEW_TURN: {
           currentTurn++;
-          activePlayer = msg.player;
+          const activePlayer = msg.player;
           console.log(`\n┌──────────────────────────────────────────────────────────────────┐`);
-          console.log(`│ TURN ${String(currentTurn).padEnd(3)} | Active Player: Player ${activePlayer} (P0: ${String(p0LP).padStart(5)} LP | P1: ${String(p1LP).padStart(5)} LP) │`);
+          console.log(
+            `│ TURN ${String(currentTurn).padEnd(3)} | Active Player: Player ${activePlayer} (P0: ${String(p0LP).padStart(5)} LP | P1: ${String(p1LP).padStart(5)} LP) │`,
+          );
           console.log(`└──────────────────────────────────────────────────────────────────┘`);
           break;
+        }
 
         case OcgMessageType.NEW_PHASE: {
-          const phaseName = ocgPhaseString.get(msg.phase as any) ?? `PHASE_${msg.phase}`;
+          const phaseName =
+            ocgPhaseString.get(msg.phase as Parameters<typeof ocgPhaseString.get>[0]) ??
+            `PHASE_${msg.phase}`;
           console.log(`  ► Phase: ${phaseName.toUpperCase()}`);
           break;
         }
 
         case OcgMessageType.DRAW: {
           const cardNames = msg.drawn.map((d) => getCardName(d.code)).join(', ');
-          console.log(`  [DRAW] Player ${msg.player} drew ${msg.drawn.length} card(s): ${cardNames}`);
+          console.log(
+            `  [DRAW] Player ${msg.player} drew ${msg.drawn.length} card(s): ${cardNames}`,
+          );
           break;
         }
 
@@ -210,7 +215,9 @@ export async function runSpike(): Promise<void> {
 
         case OcgMessageType.SPSUMMONING: {
           totalSummons++;
-          console.log(`  [SPECIAL SUMMON] Player ${msg.controller} is special summoning ${getCardName(msg.code)}`);
+          console.log(
+            `  [SPECIAL SUMMON] Player ${msg.controller} is special summoning ${getCardName(msg.code)}`,
+          );
           break;
         }
 
@@ -221,7 +228,9 @@ export async function runSpike(): Promise<void> {
 
         case OcgMessageType.CHAINING: {
           totalSpells++;
-          console.log(`  [ACTIVATE] Player ${msg.triggering_controller} activated effect of ${getCardName(msg.code)}`);
+          console.log(
+            `  [ACTIVATE] Player ${msg.triggering_controller} activated effect of ${getCardName(msg.code)}`,
+          );
           break;
         }
 
@@ -233,19 +242,26 @@ export async function runSpike(): Promise<void> {
         case OcgMessageType.ATTACK: {
           totalAttacks++;
           if (msg.target) {
-            console.log(`  [ATTACK] Player ${msg.card.controller}'s monster declares an attack on opponent monster (zone ${msg.target.sequence})`);
+            console.log(
+              `  [ATTACK] Player ${msg.card.controller}'s monster declares an attack on opponent monster (zone ${msg.target.sequence})`,
+            );
           } else {
-            console.log(`  [ATTACK] Player ${msg.card.controller}'s monster declares a DIRECT ATTACK on Player ${1 - msg.card.controller}!`);
+            console.log(
+              `  [ATTACK] Player ${msg.card.controller}'s monster declares a DIRECT ATTACK on Player ${1 - msg.card.controller}!`,
+            );
           }
           break;
         }
 
         case OcgMessageType.BATTLE: {
-          console.log(`  [BATTLE] Attacker (ATK ${msg.card.attack}) vs Defender (ATK ${msg.target.attack})`);
+          const defenderAtk = msg.target ? msg.target.attack : 0;
+          console.log(
+            `  [BATTLE] Attacker (ATK ${msg.card.attack}) vs Defender (ATK ${defenderAtk})`,
+          );
           if (msg.card.destroyed) {
             console.log(`  [DESTROY] Attacking monster was destroyed!`);
           }
-          if (msg.target.destroyed) {
+          if (msg.target?.destroyed) {
             console.log(`  [DESTROY] Defending monster was destroyed!`);
           }
           break;
@@ -270,7 +286,9 @@ export async function runSpike(): Promise<void> {
           winReason = msg.reason;
           duelEnded = true;
           console.log(`\n${'★'.repeat(70)}`);
-          console.log(`  DUEL VICTORY: Player ${winner} is VICTORIOUS! (Reason code: ${winReason === 1 ? '1 - Opponent LP Reduced to 0' : winReason})`);
+          console.log(
+            `  DUEL VICTORY: Player ${winner} is VICTORIOUS! (Reason code: ${winReason === 1 ? '1 - Opponent LP Reduced to 0' : winReason})`,
+          );
           console.log(`${'★'.repeat(70)}`);
           break;
         }
@@ -302,7 +320,9 @@ export async function runSpike(): Promise<void> {
   console.log('\n' + '='.repeat(70));
   console.log('  DUEL SIMULATION SUMMARY & SPIKE VERIFICATION');
   console.log('='.repeat(70));
-  console.log(`  • Engine:               ocgcore-wasm (ProjectIgnis / edo9300 core v${majorVer}.${minorVer})`);
+  console.log(
+    `  • Engine:               ocgcore-wasm (ProjectIgnis / edo9300 core v${majorVer}.${minorVer})`,
+  );
   console.log(`  • Execution Context:    Node.js (v${process.versions.node}) headless sync wasm`);
   console.log(`  • Total Turns:          ${currentTurn}`);
   console.log(`  • Total Engine Steps:   ${step}`);
@@ -310,7 +330,9 @@ export async function runSpike(): Promise<void> {
   console.log(`  • Spells/Traps Played:  ${totalSpells}`);
   console.log(`  • Attacks Declared:     ${totalAttacks}`);
   console.log(`  • Final Life Points:    Player 0: ${p0LP} LP | Player 1: ${p1LP} LP`);
-  console.log(`  • Result:               ${winner !== null ? `Player ${winner} Won (${winReason === 1 ? 'Opponent LP Reduced to 0' : `Reason ${winReason}`})` : 'Incomplete'}`);
+  console.log(
+    `  • Result:               ${winner !== null ? `Player ${winner} Won (${winReason === 1 ? 'Opponent LP Reduced to 0' : `Reason ${winReason}`})` : 'Incomplete'}`,
+  );
   console.log(`  • Execution Time:       ${elapsedMs}ms`);
   console.log('='.repeat(70));
   console.log('  [PASS] Phase 0 Spike successfully validated ygopro-core execution in Node.js!\n');

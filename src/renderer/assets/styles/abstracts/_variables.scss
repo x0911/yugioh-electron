@@ -35,18 +35,25 @@ $color-text-on-gold: #1a1406;
 
 // Typography Font Families
 $font-display: 'Cinzel', 'Marcellus', 'Times New Roman', serif;
-$font-body: 'Inter', 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-body:
+  'Inter',
+  'Rubik',
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  sans-serif;
 $font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 
 // Typography Scale (rem, base 16px)
-$fs-xs: 0.75rem;     // 12px
-$fs-sm: 0.875rem;    // 14px
-$fs-base: 1rem;      // 16px
-$fs-md: 1.125rem;    // 18px
-$fs-lg: 1.375rem;    // 22px
-$fs-xl: 1.75rem;     // 28px
-$fs-2xl: 2.25rem;    // 36px
-$fs-display: 3rem;   // 48px
+$fs-xs: 0.75rem; // 12px
+$fs-sm: 0.875rem; // 14px
+$fs-base: 1rem; // 16px
+$fs-md: 1.125rem; // 18px
+$fs-lg: 1.375rem; // 22px
+$fs-xl: 1.75rem; // 28px
+$fs-2xl: 2.25rem; // 36px
+$fs-display: 3rem; // 48px
 
 // Spacing scale (8px base)
 $space-1: 4px;

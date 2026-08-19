@@ -8,27 +8,13 @@
       </div>
 
       <nav class="dev-nav-bar__links">
-        <router-link to="/" class="dev-nav-bar__link">
-          Loading (P5)
-        </router-link>
-        <router-link to="/main-menu" class="dev-nav-bar__link">
-          Main Menu (P5)
-        </router-link>
-        <router-link to="/settings" class="dev-nav-bar__link">
-          Settings (P6)
-        </router-link>
-        <router-link to="/deck-edit" class="dev-nav-bar__link">
-          Deck Edit (P7)
-        </router-link>
-        <router-link to="/coin-toss" class="dev-nav-bar__link">
-          Coin Toss (P8)
-        </router-link>
-        <router-link to="/pre-duel-video" class="dev-nav-bar__link">
-          Pre-Duel (P8)
-        </router-link>
-        <router-link to="/duel" class="dev-nav-bar__link">
-          Duel (P9)
-        </router-link>
+        <router-link to="/" class="dev-nav-bar__link"> Loading (P5) </router-link>
+        <router-link to="/main-menu" class="dev-nav-bar__link"> Main Menu (P5) </router-link>
+        <router-link to="/settings" class="dev-nav-bar__link"> Settings (P6) </router-link>
+        <router-link to="/deck-edit" class="dev-nav-bar__link"> Deck Edit (P7) </router-link>
+        <router-link to="/coin-toss" class="dev-nav-bar__link"> Coin Toss (P8) </router-link>
+        <router-link to="/pre-duel-video" class="dev-nav-bar__link"> Pre-Duel (P8) </router-link>
+        <router-link to="/duel" class="dev-nav-bar__link"> Duel (P9) </router-link>
       </nav>
     </header>
 
@@ -73,7 +59,9 @@
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .fade-enter-from {

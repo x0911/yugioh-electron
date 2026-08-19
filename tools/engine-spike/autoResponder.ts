@@ -10,7 +10,7 @@ import {
   OcgResponse,
   ocgPositionParse,
   OcgRace,
-  OcgAttribute
+  OcgAttribute,
 } from 'ocgcore-wasm';
 
 /**
@@ -25,7 +25,11 @@ import {
  *
  * In the mask, a 0 bit means the slot is available, and a 1 bit means unavailable.
  */
-export function parseFieldMask(player: number, fieldMask: number, count: number): SelectFieldPlace[] {
+export function parseFieldMask(
+  player: number,
+  fieldMask: number,
+  count: number,
+): SelectFieldPlace[] {
   const places: SelectFieldPlace[] = [];
   const mask = ~fieldMask >>> 0;
 
@@ -87,7 +91,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
         return {
           type: OcgResponseType.SELECT_IDLECMD,
           action: SelectIdleCMDAction.SELECT_ACTIVATE,
-          index: 0
+          index: 0,
         };
       }
       // 2. Normal Summon available monsters
@@ -95,7 +99,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
         return {
           type: OcgResponseType.SELECT_IDLECMD,
           action: SelectIdleCMDAction.SELECT_SUMMON,
-          index: 0
+          index: 0,
         };
       }
       // 3. Special Summon if available
@@ -103,7 +107,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
         return {
           type: OcgResponseType.SELECT_IDLECMD,
           action: SelectIdleCMDAction.SELECT_SPECIAL_SUMMON,
-          index: 0
+          index: 0,
         };
       }
       // 4. Set spells/traps if available
@@ -111,7 +115,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
         return {
           type: OcgResponseType.SELECT_IDLECMD,
           action: SelectIdleCMDAction.SELECT_SPELL_SET,
-          index: 0
+          index: 0,
         };
       }
       // 5. Enter Battle Phase if permitted
@@ -119,7 +123,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
         return {
           type: OcgResponseType.SELECT_IDLECMD,
           action: SelectIdleCMDAction.TO_BP,
-          index: null
+          index: null,
         };
       }
       // 6. Otherwise proceed to End Phase
@@ -127,7 +131,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
         return {
           type: OcgResponseType.SELECT_IDLECMD,
           action: SelectIdleCMDAction.TO_EP,
-          index: null
+          index: null,
         };
       }
       return null;
@@ -139,7 +143,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
         return {
           type: OcgResponseType.SELECT_BATTLECMD,
           action: SelectBattleCMDAction.SELECT_BATTLE,
-          index: 0
+          index: 0,
         };
       }
       // 2. Chain/activate during battle step if available
@@ -147,7 +151,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
         return {
           type: OcgResponseType.SELECT_BATTLECMD,
           action: SelectBattleCMDAction.SELECT_CHAIN,
-          index: 0
+          index: 0,
         };
       }
       // 3. Move to Main Phase 2 or End Phase
@@ -155,14 +159,14 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
         return {
           type: OcgResponseType.SELECT_BATTLECMD,
           action: SelectBattleCMDAction.TO_M2,
-          index: null
+          index: null,
         };
       }
       if (msg.to_ep) {
         return {
           type: OcgResponseType.SELECT_BATTLECMD,
           action: SelectBattleCMDAction.TO_EP,
-          index: null
+          index: null,
         };
       }
       return null;
@@ -172,28 +176,28 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       // Pass on optional chains to keep turns moving; select 0 if forced
       return {
         type: OcgResponseType.SELECT_CHAIN,
-        index: msg.forced && msg.selects.length > 0 ? 0 : null
+        index: msg.forced && msg.selects.length > 0 ? 0 : null,
       };
     }
 
     case OcgMessageType.SELECT_EFFECTYN: {
       return {
         type: OcgResponseType.SELECT_EFFECTYN,
-        yes: true
+        yes: true,
       };
     }
 
     case OcgMessageType.SELECT_YESNO: {
       return {
         type: OcgResponseType.SELECT_YESNO,
-        yes: true
+        yes: true,
       };
     }
 
     case OcgMessageType.SELECT_OPTION: {
       return {
         type: OcgResponseType.SELECT_OPTION,
-        index: 0
+        index: 0,
       };
     }
 
@@ -203,7 +207,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       const indicies = Array.from({ length: count }, (_, i) => i);
       return {
         type: OcgResponseType.SELECT_CARD,
-        indicies
+        indicies,
       };
     }
 
@@ -211,7 +215,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       const positions = ocgPositionParse(msg.positions);
       return {
         type: OcgResponseType.SELECT_POSITION,
-        position: positions[0] ?? OcgPosition.FACEUP_ATTACK
+        position: positions[0] ?? OcgPosition.FACEUP_ATTACK,
       };
     }
 
@@ -221,7 +225,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       const indicies = Array.from({ length: count }, (_, i) => i);
       return {
         type: OcgResponseType.SELECT_TRIBUTE,
-        indicies
+        indicies,
       };
     }
 
@@ -230,7 +234,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       const places = parseFieldMask(msg.player, msg.field_mask, msg.count);
       return {
         type: OcgResponseType.SELECT_PLACE,
-        places
+        places,
       };
     }
 
@@ -240,7 +244,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       const indicies = Array.from({ length: count }, (_, i) => i);
       return {
         type: OcgResponseType.SELECT_SUM,
-        indicies
+        indicies,
       };
     }
 
@@ -248,40 +252,33 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       if (msg.select_cards && msg.select_cards.length > 0) {
         return {
           type: OcgResponseType.SELECT_UNSELECT_CARD,
-          index: 0
+          index: 0,
         };
       }
       return {
         type: OcgResponseType.SELECT_UNSELECT_CARD,
-        index: null
-      };
-    }
-
-    case OcgMessageType.SELECT_CARD_CODES: {
-      return {
-        type: OcgResponseType.SELECT_CARD_CODES,
-        codes: msg.codes && msg.codes.length > 0 ? [msg.codes[0]] : null
+        index: null,
       };
     }
 
     case OcgMessageType.ANNOUNCE_RACE: {
       return {
         type: OcgResponseType.ANNOUNCE_RACE,
-        races: [OcgRace.WARRIOR]
+        races: [OcgRace.WARRIOR],
       };
     }
 
     case OcgMessageType.ANNOUNCE_ATTRIB: {
       return {
         type: OcgResponseType.ANNOUNCE_ATTRIB,
-        attributes: [OcgAttribute.DARK]
+        attributes: [OcgAttribute.DARK],
       };
     }
 
     case OcgMessageType.ANNOUNCE_CARD: {
       return {
         type: OcgResponseType.ANNOUNCE_CARD,
-        card: 91152256
+        card: 91152256,
       };
     }
 
@@ -289,14 +286,14 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       const val = msg.options && msg.options.length > 0 ? Number(msg.options[0]) : 1;
       return {
         type: OcgResponseType.ANNOUNCE_NUMBER,
-        value: val
+        value: val,
       };
     }
 
     case OcgMessageType.ROCK_PAPER_SCISSORS: {
       return {
         type: OcgResponseType.ROCK_PAPER_SCISSORS,
-        value: 2 // Rock
+        value: 2, // Rock
       };
     }
 
@@ -304,7 +301,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       const order = msg.cards ? Array.from({ length: msg.cards.length }, (_, i) => i) : null;
       return {
         type: OcgResponseType.SORT_CARD,
-        order
+        order,
       };
     }
 
