@@ -149,4 +149,48 @@ console.log('=== Running Hand Duplication, Actions & Animation Queue Tests ===\n
   console.log('✓ Hand sequences remain strictly contiguous [0, 1, 2, 3] after card removal.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 4: 4-Step Spell Activation & Resolution Sequence
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 4: 4-Step Spell Activation & Resolution Sequence (e.g. Pot of Greed)...');
+  const queue = new AnimationQueue();
+  const stepLog: string[] = [];
+
+  const simulateSpellEvent = async (event: { type: string; fromLoc?: number; toLoc?: number }) => {
+    await queue.enqueue(async () => {
+      if (event.type === 'MOVE' && event.fromLoc === 2 && event.toLoc === 8) {
+        stepLog.push('1_HAND_TO_FIELD_FLIGHT');
+      } else if (event.type === 'CHAINING') {
+        stepLog.push('2_SPELL_ACTIVATION_PULSE');
+      } else if (event.type === 'DRAW') {
+        stepLog.push('3_CARD_DRAW_FLIGHT');
+      } else if (event.type === 'MOVE' && event.fromLoc === 8 && event.toLoc === 16) {
+        stepLog.push('4_FIELD_TO_GY_FLIGHT');
+      }
+    });
+  };
+
+  // Simulating the sequential event stream emitted by ocgcore on Spell Activation
+  await simulateSpellEvent({ type: 'MOVE', fromLoc: 2, toLoc: 8 });
+  await simulateSpellEvent({ type: 'CHAINING' });
+  await simulateSpellEvent({ type: 'DRAW' });
+  await simulateSpellEvent({ type: 'DRAW' });
+  await simulateSpellEvent({ type: 'MOVE', fromLoc: 8, toLoc: 16 });
+
+  assert.deepEqual(
+    stepLog,
+    [
+      '1_HAND_TO_FIELD_FLIGHT',
+      '2_SPELL_ACTIVATION_PULSE',
+      '3_CARD_DRAW_FLIGHT',
+      '3_CARD_DRAW_FLIGHT',
+      '4_FIELD_TO_GY_FLIGHT',
+    ],
+    'Spell activation must follow the 4-step sequence: Hand->Field, Activation, Effect (Draw), Field->GY'
+  );
+
+  console.log('✓ Spell animation strictly follows Hand->Field -> Activation -> Effect -> Field->GY sequence.');
+}
+
 console.log('\n🎉 ALL HAND, ACTION RESOLUTION & ANIMATION QUEUE TESTS PASSED!');

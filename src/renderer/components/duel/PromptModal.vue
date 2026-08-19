@@ -147,38 +147,25 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type {
-  SelectCardPayload,
   SelectChainPayload,
   SelectPositionPayload,
   SelectEffectYnPayload,
   SelectOptionPayload,
-  SelectTributePayload,
 } from '../../../shared/types/duel.js';
 import { getCardImageUrl } from '../../utils/media.js';
 
-const props = withDefaults(
-  defineProps<{
-    selectCard: SelectCardPayload | null;
-    selectChain: SelectChainPayload | null;
-    selectPosition: SelectPositionPayload | null;
-    selectEffectYn: SelectEffectYnPayload | null;
-    selectOption: SelectOptionPayload | null;
-    selectTribute: SelectTributePayload | null;
-    syncedSelectedIndices?: number[];
-  }>(),
-  {
-    syncedSelectedIndices: () => [],
-  },
-);
+const props = defineProps<{
+  selectChain?: SelectChainPayload | null;
+  selectPosition?: SelectPositionPayload | null;
+  selectEffectYn?: SelectEffectYnPayload | null;
+  selectOption?: SelectOptionPayload | null;
+}>();
 
 defineEmits<{
-  (e: 'select-card', indices: number[]): void;
   (e: 'select-position', position: number): void;
   (e: 'select-chain', index: number | null): void;
   (e: 'select-effect-yn', yes: boolean): void;
   (e: 'select-option', index: number): void;
-  (e: 'select-tribute', indices: number[]): void;
-  (e: 'toggle-target', index: number): void;
 }>();
 
 const hasActivePrompt = computed(() => {

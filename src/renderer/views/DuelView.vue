@@ -115,22 +115,16 @@
       @close="closeCardActionMenu"
     />
 
-    <!-- Interactive Prompt Modal (End Phase Hand-Size Cleanup, Position, Chain, Effect Yes/No) -->
+    <!-- Interactive Prompt Modal (Position, Chain, Effect Yes/No, Options) -->
     <PromptModal
-      :select-card="duelStore.activeSelectCard"
       :select-chain="duelStore.activeSelectChain"
       :select-position="duelStore.activeSelectPosition"
       :select-effect-yn="duelStore.activeSelectEffectYn"
       :select-option="duelStore.activeSelectOption"
-      :select-tribute="duelStore.activeSelectTribute"
-      :synced-selected-indices="duelStore.selectedTargetIndices"
-      @select-card="duelStore.executeSelectCard"
       @select-position="duelStore.executeSelectPosition"
       @select-chain="duelStore.executeSelectChain"
       @select-effect-yn="duelStore.executeSelectEffectYn"
       @select-option="duelStore.executeSelectOption"
-      @select-tribute="duelStore.executeSelectTribute"
-      @toggle-target="duelStore.toggleTargetByIndex"
     />
 
     <!-- Floating Target Selection Confirmation Bar (On-Field micro-dialog) -->
@@ -481,11 +475,11 @@ function onSurrender(): void {
   isMenuOpen.value = false;
   closeCardActionMenu();
   appendLog('SURRENDER', 'Player surrendered the match.');
-  router.push('/characters');
+  router.push('/main-menu');
 }
 
 function returnToCharacters(): void {
-  router.push('/characters');
+  router.push('/main-menu');
 }
 
 let unsubscribeEvents: (() => void) | null = null;
@@ -545,13 +539,14 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
         durationMs: 480,
       });
     }
-    // 4. Card Move (Destroy to GY, Discard, Banish)
+    // 4. Card Move (Spell Activation Hand -> Field, Destroy to GY, Discard, Banish)
     else if (event.type === 'MOVE') {
       const moveEvt = event as any;
       const p = moveEvt.controller as 0 | 1;
       const fromLoc = moveEvt.fromLocation;
       const fromSeq = moveEvt.fromSequence ?? 0;
       const toLoc = moveEvt.toLocation;
+      const toSeq = moveEvt.toSequence ?? 0;
 
       if (toLoc === 16) {
         // Graveyard
@@ -567,6 +562,34 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
           toRect,
           type: fromLoc === 2 ? 'discard' : 'destroy-gy',
           durationMs: 440,
+        });
+      } else if (toLoc === 8 && fromLoc === 2) {
+        // Spell / Trap activation from Hand -> Spell/Trap Zone
+        const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
+        const toRect = getZoneRect(p, 'spell-trap', toSeq);
+        await playCardFlight({
+          code: moveEvt.code || 0,
+          cardName: moveEvt.cardName || 'Spell Card',
+          fromRect,
+          toRect,
+          type: 'spell-activate',
+          isFacedown: false,
+          isDefense: false,
+          durationMs: 480,
+        });
+      } else if (toLoc === 4 && fromLoc === 2) {
+        // Monster from Hand -> Monster Zone
+        const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
+        const toRect = getZoneRect(p, 'monster', toSeq);
+        await playCardFlight({
+          code: moveEvt.code || 0,
+          cardName: moveEvt.cardName || 'Monster',
+          fromRect,
+          toRect,
+          type: 'summon',
+          isFacedown: false,
+          isDefense: false,
+          durationMs: 480,
         });
       } else if (toLoc === 32) {
         // Banished
@@ -584,6 +607,11 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
           durationMs: 440,
         });
       }
+    }
+    // 5. Chaining / Spell Activation
+    else if (event.type === 'CHAINING') {
+      // Visual pacing so players see the spell activating on field before its effect resolves
+      await new Promise((resolve) => setTimeout(resolve, 400));
     }
     // 5. Attack Declaration & Surge
     else if (event.type === 'ATTACK') {

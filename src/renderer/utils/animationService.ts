@@ -13,6 +13,7 @@ export type AnimationType =
   | 'set-monster'
   | 'set-spell'
   | 'activate'
+  | 'spell-activate'
   | 'destroy-gy'
   | 'discard'
   | 'tribute'

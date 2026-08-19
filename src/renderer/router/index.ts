@@ -43,6 +43,10 @@ const routes: RouteRecordRaw[] = [
     name: 'duel',
     component: DuelView,
   },
+  {
+    path: '/characters',
+    redirect: '/main-menu',
+  },
 ];
 
 // Dev-only Kitchen Sink QA route (excluded from production builds)
