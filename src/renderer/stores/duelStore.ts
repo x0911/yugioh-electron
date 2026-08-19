@@ -26,22 +26,23 @@ import { useDeckEditStore } from './deckEditStore.js';
 
 // Default tournament-legal 40-card Starter Deck if no user custom deck is selected
 const DEFAULT_USER_MAIN_DECK = [
-  46986414, 46986414, 46986414, // Dark Magician x3
+  46986414, 46986414, // Dark Magician x2
   70781052, 70781052, 70781052, // Summoned Skull x3
   91152256, 91152256, 91152256, // Celtic Guardian x3
   6368038, 6368038, 6368038, // Mystical Elf x3
   25280974, 25280974, 25280974, // Giant Soldier of Stone x3
   72892473, 72892473, 72892473, // Kuriboh x3
   54652250, 54652250, 54652250, // Man-Eater Bug x3
-  40640057, 40640057, 40640057, // Kuriboh / Sangan x3
+  40640057, 40640057, // Sangan x2
   33782437, 33782437, // Gemini Elf x2
-  55144522, 55144522, // Pot of Greed x2
+  79759861, 79759861, 79759861, // Tribute to The Doomed x3 (Cost discard + target destroy on field)
+  77414702, 77414702, // Magic Jammer x2 (Cost discard + trap chain)
+  55144522, 55144522, 55144522, // Pot of Greed x3
   53129443, 53129443, // Dark Hole x2
   12580477, // Raigeki x1
-  25833572, 25833572, 25833572, // Ookazi x3
   4206964, 4206964, 4206964, // Trap Hole x3
   44095762, 44095762, // Mirror Force x2
-  24068492, // Just Desserts x1
+  24068492, 24068492, // Just Desserts x2
 ];
 
 export interface CardActionOption {
@@ -80,7 +81,21 @@ export interface DuelStoreState {
   activeSelectPlace: SelectPlacePayload | null;
   activeSelectTribute: SelectTributePayload | null;
 
+  // Active Target Selections
+  selectedTargetIndices: number[];
+
   isPromptWaiting: boolean;
+}
+
+export interface TargetInfo {
+  isSelectable: boolean;
+  selectIndex: number;
+  isSelected: boolean;
+  owner: 'user' | 'ai';
+  locationType: 'hand' | 'field' | 'deck' | 'extra-deck' | 'graveyard' | 'banished';
+  tooltipText: string;
+  isCost: boolean;
+  isTribute: boolean;
 }
 
 function createEmptyPlayerField(playerId: 0 | 1, name: string): PlayerFieldState {
@@ -137,6 +152,7 @@ export const useDuelStore = defineStore('duel', {
     activeSelectOption: null,
     activeSelectPlace: null,
     activeSelectTribute: null,
+    selectedTargetIndices: [],
 
     isPromptWaiting: false,
   }),
@@ -173,6 +189,24 @@ export const useDuelStore = defineStore('duel', {
       if (!state.boardState.userField.isTurn) return false;
       if (state.boardState.currentPhase === 'BP') return !!state.activeBattleCmd?.to_ep;
       return !!state.activeIdleCmd?.to_ep;
+    },
+
+    hasActiveSelectionPrompt(state): boolean {
+      return !!state.activeSelectCard || !!state.activeSelectTribute;
+    },
+
+    activeSelectionMin(state): number {
+      return state.activeSelectTribute?.min ?? state.activeSelectCard?.min ?? 1;
+    },
+
+    activeSelectionMax(state): number {
+      return state.activeSelectTribute?.max ?? state.activeSelectCard?.max ?? 1;
+    },
+
+    canConfirmActiveSelection(state): boolean {
+      const min = state.activeSelectTribute?.min ?? state.activeSelectCard?.min ?? 1;
+      const max = state.activeSelectTribute?.max ?? state.activeSelectCard?.max ?? 1;
+      return state.selectedTargetIndices.length >= min && state.selectedTargetIndices.length <= max;
     },
   },
 
@@ -428,6 +462,7 @@ export const useDuelStore = defineStore('duel', {
       this.activeSelectOption = null;
       this.activeSelectPlace = null;
       this.activeSelectTribute = null;
+      this.selectedTargetIndices = [];
       this.isPromptWaiting = false;
     },
 
@@ -592,6 +627,128 @@ export const useDuelStore = defineStore('duel', {
       }
 
       return actions;
+    },
+
+    /**
+     * Resolves target metadata for a card or stack in any of the 6 locations.
+     */
+    getTargetInfo(controller: number, location: number, sequence: number): TargetInfo | null {
+      // 1. Check active Tribute prompt
+      if (this.activeSelectTribute && this.activeSelectTribute.selects) {
+        const selectIndex = this.activeSelectTribute.selects.findIndex(
+          (s) => s.controller === controller && (s.location === location || (s.location & location) !== 0) && s.sequence === sequence,
+        );
+        if (selectIndex >= 0) {
+          const item = this.activeSelectTribute.selects[selectIndex];
+          const isSelected = this.selectedTargetIndices.includes(selectIndex);
+          const owner = controller === this.userPlayerId ? 'user' : 'ai';
+          const cardName = item.cardName || 'Monster';
+          return {
+            isSelectable: true,
+            selectIndex,
+            isSelected,
+            owner,
+            locationType: 'field',
+            tooltipText: owner === 'user' ? `Selectable Tribute: Player's Monster (${cardName})` : `Selectable Tribute: Opponent's Monster (${cardName})`,
+            isCost: true,
+            isTribute: true,
+          };
+        }
+      }
+
+      // 2. Check active Card Selection prompt
+      if (this.activeSelectCard && this.activeSelectCard.selects) {
+        const selectIndex = this.activeSelectCard.selects.findIndex(
+          (s) => s.controller === controller && (s.location === location || (s.location & location) !== 0) && s.sequence === sequence,
+        );
+        if (selectIndex >= 0) {
+          const item = this.activeSelectCard.selects[selectIndex];
+          const isSelected = this.selectedTargetIndices.includes(selectIndex);
+          const owner = controller === this.userPlayerId ? 'user' : 'ai';
+          const cardName = item.cardName || 'Card';
+
+          let locType: TargetInfo['locationType'] = 'field';
+          if (location === 2) locType = 'hand';
+          else if (location === 1) locType = 'deck';
+          else if (location === 64) locType = 'extra-deck';
+          else if (location === 16) locType = 'graveyard';
+          else if (location === 32) locType = 'banished';
+
+          const isCost =
+            this.activeSelectCard.selects.every((s) => s.location === 2) &&
+            !this.activeSelectCard.isDiscardPrompt &&
+            this.activeSelectCard.min > 0;
+
+          let tooltipText = '';
+          if (this.activeSelectCard.isDiscardPrompt) {
+            tooltipText = `Selectable Discard: Player's Hand Card (${cardName})`;
+          } else if (isCost) {
+            tooltipText = `Selectable Cost: Player's Hand Card (${cardName})`;
+          } else if (locType === 'field') {
+            tooltipText = owner === 'user' ? `Selectable Target: Player's Card (${cardName})` : `Selectable Target: Opponent's Card (${cardName})`;
+          } else if (locType === 'graveyard') {
+            tooltipText = owner === 'user' ? `Selectable Target: Player's Graveyard (${cardName})` : `Selectable Target: Opponent's Graveyard (${cardName})`;
+          } else if (locType === 'banished') {
+            tooltipText = owner === 'user' ? `Selectable Target: Player's Banished Card (${cardName})` : `Selectable Target: Opponent's Banished Card (${cardName})`;
+          } else if (locType === 'deck') {
+            tooltipText = `Selectable Target: Player's Deck (${cardName})`;
+          } else if (locType === 'extra-deck') {
+            tooltipText = `Selectable Target: Player's Extra Deck (${cardName})`;
+          } else {
+            tooltipText = `Selectable Target: ${cardName}`;
+          }
+
+          return {
+            isSelectable: true,
+            selectIndex,
+            isSelected,
+            owner,
+            locationType: locType,
+            tooltipText,
+            isCost,
+            isTribute: false,
+          };
+        }
+      }
+
+      return null;
+    },
+
+    toggleTargetByIndex(selectIndex: number): void {
+      const maxAllowed = this.activeSelectTribute?.max ?? this.activeSelectCard?.max ?? 1;
+      const existingPos = this.selectedTargetIndices.indexOf(selectIndex);
+      if (existingPos >= 0) {
+        this.selectedTargetIndices.splice(existingPos, 1);
+      } else {
+        if (this.selectedTargetIndices.length < maxAllowed) {
+          this.selectedTargetIndices.push(selectIndex);
+        } else if (maxAllowed === 1) {
+          this.selectedTargetIndices = [selectIndex];
+        }
+      }
+    },
+
+    setTargetIndices(indices: number[]): void {
+      this.selectedTargetIndices = [...indices];
+    },
+
+    async confirmActiveSelection(): Promise<boolean> {
+      if (this.activeSelectTribute) {
+        const indices = [...this.selectedTargetIndices];
+        return this.executeSelectTribute(indices);
+      }
+      if (this.activeSelectCard) {
+        const indices = [...this.selectedTargetIndices];
+        return this.executeSelectCard(indices);
+      }
+      return false;
+    },
+
+    async cancelActiveSelection(): Promise<boolean> {
+      if (this.activeSelectCard && this.activeSelectCard.can_cancel) {
+        return this.executeSelectCard([]);
+      }
+      return false;
     },
 
     // =========================================================================
