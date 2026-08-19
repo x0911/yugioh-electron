@@ -1,5 +1,6 @@
-# AI documentation & session memory (local)
-.ai-docs
+# AI documentation & session memory (local, except progress.md)
+.ai-docs/*
+!.ai-docs/progress.md
 
 # Dependencies
 node_modules/
