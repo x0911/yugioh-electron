@@ -367,6 +367,16 @@ export const useDeckEditStore = defineStore('deckEdit', {
     },
 
     async saveCurrentDeck(): Promise<boolean> {
+      const validity = this.deckValidity;
+      if (!validity.isValid || this.activeDeck.main.length < 40) {
+        const errorMsg =
+          this.activeDeck.main.length < 40
+            ? `Main Deck contains only ${this.activeDeck.main.length}/40 cards. A tournament-legal deck requires at least 40 cards.`
+            : (validity.errors[0] || 'Deck contains illegal card configurations.');
+        this.showToast(`Cannot save: ${errorMsg}`, 'danger');
+        return false;
+      }
+
       try {
         const deckToSave: CustomDeck = {
           ...this.activeDeck,
@@ -390,12 +400,7 @@ export const useDeckEditStore = defineStore('deckEdit', {
         }
 
         this.isDirty = false;
-        const validity = this.deckValidity;
-        if (validity.isValid) {
-          this.showToast(`Saved "${deckToSave.name}" (Legal 40-60 Deck)`, 'success');
-        } else {
-          this.showToast(`Saved draft "${deckToSave.name}" (⚠️ Note: Deck is currently illegal)`, 'warning');
-        }
+        this.showToast(`Saved "${deckToSave.name}" (Legal 40-60 Deck)`, 'success');
         return true;
       } catch (err) {
         console.error('[DeckEditStore] Error saving deck:', err);

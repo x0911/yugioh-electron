@@ -31,7 +31,16 @@
           variant="primary"
           size="sm"
           icon="💾"
-          :disabled="!store.isDirty && store.deckValidity.isValid"
+          :disabled="!store.isDirty || !store.deckValidity.isValid || store.mainDeckCount < 40"
+          :title="
+            store.mainDeckCount < 40
+              ? `Cannot save: Main deck has ${store.mainDeckCount}/40 cards minimum`
+              : !store.deckValidity.isValid
+                ? 'Cannot save: Deck contains illegal cards'
+                : !store.isDirty
+                  ? 'Deck already saved'
+                  : 'Save deck changes'
+          "
           @click="store.saveCurrentDeck"
         >
           Save Deck

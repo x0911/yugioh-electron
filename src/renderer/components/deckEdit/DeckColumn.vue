@@ -39,7 +39,16 @@
           <button
             type="button"
             class="tool-btn tool-btn--save"
-            title="Save deck changes"
+            :disabled="!store.isDirty || !validity.isValid || store.mainDeckCount < 40"
+            :title="
+              store.mainDeckCount < 40
+                ? `Cannot save: Main deck has ${store.mainDeckCount}/40 cards minimum`
+                : !validity.isValid
+                  ? 'Cannot save: Deck contains illegal cards'
+                  : !store.isDirty
+                    ? 'Deck already saved'
+                    : 'Save deck changes'
+            "
             @click="store.saveCurrentDeck"
           >
             <span class="tool-icon">💾</span> Save
@@ -140,6 +149,14 @@
           >
             {{ store.mainDeckCount }} / 60
           </span>
+          <button
+            type="button"
+            class="view-toggle-pill"
+            :title="isGroupedView ? 'Currently showing grouped stacks. Click to view all 40+ individual cards.' : 'Currently showing individual cards. Click to group duplicate cards into stacks.'"
+            @click="isGroupedView = !isGroupedView"
+          >
+            {{ isGroupedView ? `🗂️ Stacks (${store.mainDeckGrouped.length})` : `🃏 All (${store.mainDeckCount})` }}
+          </button>
         </div>
         <div class="stats-pills">
           <span class="stat-pill stat-pill--monsters" title="Monsters">
@@ -159,7 +176,7 @@
         <div v-if="mainDeckCards.length > 0" class="deck-cards-grid">
           <div
             v-for="item in mainDeckCards"
-            :key="item.id"
+            :key="item.uniqueKey || item.id"
             class="deck-card-tile"
             :class="{
               [`deck-card-tile--${getCardKindClass(item.card)}`]: true,
@@ -438,32 +455,48 @@ interface EnrichedDeckCard {
   id: number;
   count: number;
   isExtra: boolean;
+  uniqueKey?: string;
   card: CardDetail | null;
+}
+
+const isGroupedView = ref(true);
+
+function sortEnrichedCards(a: EnrichedDeckCard, b: EnrichedDeckCard): number {
+  const cardA = a.card;
+  const cardB = b.card;
+  if (!cardA || !cardB) return 0;
+
+  const getCat = (c: CardDetail) => (c.isMonster ? 1 : c.isSpell ? 2 : 3);
+  const catA = getCat(cardA);
+  const catB = getCat(cardB);
+  if (catA !== catB) return catA - catB;
+
+  if (cardA.isMonster && cardB.isMonster) {
+    if (cardA.level !== cardB.level) return cardB.level - cardA.level;
+    if (cardA.atk !== cardB.atk) return cardB.atk - cardA.atk;
+  }
+  return cardA.name.localeCompare(cardB.name);
 }
 
 // Cleanly sort deck: Monsters first (Level desc, ATK desc, Name asc), then Spells, then Traps
 const mainDeckCards = computed<EnrichedDeckCard[]>(() => {
-  const list = store.mainDeckGrouped.map((item) => ({
-    ...item,
-    card: store.cardMap.get(item.id) ?? null,
-  }));
-
-  return list.sort((a, b) => {
-    const cardA = a.card;
-    const cardB = b.card;
-    if (!cardA || !cardB) return 0;
-
-    const getCat = (c: CardDetail) => (c.isMonster ? 1 : c.isSpell ? 2 : 3);
-    const catA = getCat(cardA);
-    const catB = getCat(cardB);
-    if (catA !== catB) return catA - catB;
-
-    if (cardA.isMonster && cardB.isMonster) {
-      if (cardA.level !== cardB.level) return cardB.level - cardA.level;
-      if (cardA.atk !== cardB.atk) return cardB.atk - cardA.atk;
-    }
-    return cardA.name.localeCompare(cardB.name);
-  });
+  if (isGroupedView.value) {
+    const list = store.mainDeckGrouped.map((item) => ({
+      ...item,
+      uniqueKey: `grouped-${item.id}`,
+      card: store.cardMap.get(item.id) ?? null,
+    }));
+    return list.sort(sortEnrichedCards);
+  } else {
+    const list = store.activeDeck.main.map((id, index) => ({
+      id,
+      count: 1,
+      isExtra: false,
+      uniqueKey: `single-${id}-${index}`,
+      card: store.cardMap.get(id) ?? null,
+    }));
+    return list.sort(sortEnrichedCards);
+  }
 });
 
 const extraDeckCards = computed<EnrichedDeckCard[]>(() => {
@@ -943,6 +976,27 @@ function onTrashDrop(e: DragEvent): void {
     background: rgba(235, 87, 87, 0.2);
     border: 1px solid #e74c3c;
     color: #f5b7b1;
+  }
+}
+
+.view-toggle-pill {
+  font-family: $font-family-display;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(201, 162, 39, 0.15);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  color: $color-gold-300;
+  cursor: pointer;
+  transition: all 140ms ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(201, 162, 39, 0.35);
+    border-color: $color-gold-500;
+    color: #fff;
+    box-shadow: 0 0 6px rgba(201, 162, 39, 0.3);
   }
 }
 
