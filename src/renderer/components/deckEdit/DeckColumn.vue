@@ -98,7 +98,7 @@
       </div>
     </div>
 
-    <!-- Main Deck Section (40 - 60 Cards) -->
+    <!-- Main Deck Section (40 - 60 Cards in Columns Grid) -->
     <div class="deck-section deck-section--main">
       <div class="section-title-bar">
         <div class="title-left">
@@ -126,52 +126,65 @@
         </div>
       </div>
 
-      <!-- Main Deck Cards List -->
+      <!-- Main Deck Grid (Cards arranged in columns) -->
       <div class="deck-cards-scrollable">
-        <div v-if="mainDeckCards.length > 0" class="deck-cards-list">
+        <div v-if="mainDeckCards.length > 0" class="deck-cards-grid">
           <div
             v-for="item in mainDeckCards"
             :key="item.id"
-            class="deck-card-row"
-            :class="`deck-card-row--${getCardKindClass(item.card)}`"
+            class="deck-card-tile"
+            :class="`deck-card-tile--${getCardKindClass(item.card)}`"
             title="Click to remove 1 copy"
             @mouseenter="onCardHover(item.card)"
             @click="onRemoveCard(item.id, false)"
+            @contextmenu.prevent="onCardHover(item.card)"
           >
-            <img
-              :src="getCardImageUrl(item.id, 'mini')"
-              :alt="item.card?.name || 'Card'"
-              class="row-thumb"
-              loading="lazy"
-              @error="handleImageError"
-            />
-            <div class="row-info">
-              <span class="row-name">{{ item.card?.name || `Card #${item.id}` }}</span>
-              <div class="row-meta">
-                <span v-if="item.card?.isMonster" class="row-atk">
-                  ATK {{ item.card.atk < 0 ? '?' : item.card.atk }}
-                </span>
-                <span v-else class="row-type">
-                  {{ item.card?.isSpell ? 'Spell' : 'Trap' }}
-                </span>
-                <span v-if="item.card?.isMonster && item.card.level > 0" class="row-lvl">
-                  ★{{ item.card.level }}
-                </span>
+            <!-- Card Thumbnail -->
+            <div class="tile-thumb-wrap">
+              <img
+                :src="getCardImageUrl(item.id, 'mini')"
+                :alt="item.card?.name || 'Card'"
+                class="tile-thumb-img"
+                loading="lazy"
+                @error="handleImageError"
+              />
+
+              <!-- Quantity Pill Badge (x1, x2, x3) -->
+              <div class="tile-count-badge" :class="`tile-count-badge--${item.count}`">
+                x{{ item.count }}
+              </div>
+
+              <!-- Remove Overlay on Hover -->
+              <div class="tile-remove-overlay">
+                <span class="remove-icon">✕</span>
               </div>
             </div>
-            <div class="row-count-badge" :class="`row-count-badge--${item.count}`">
-              x{{ item.count }}
+
+            <!-- Compact Title & Stats Strip -->
+            <div class="tile-info-strip">
+              <span class="tile-name" :title="item.card?.name">{{ item.card?.name || `Card #${item.id}` }}</span>
+              <div class="tile-stats">
+                <span v-if="item.card?.isMonster" class="tile-atk">
+                  ⚔{{ (item.card?.atk ?? 0) < 0 ? '?' : (item.card?.atk ?? 0) }}
+                </span>
+                <span v-else class="tile-type">
+                  {{ item.card?.isSpell ? 'SPELL' : 'TRAP' }}
+                </span>
+                <span v-if="item.card?.isMonster && (item.card?.level ?? 0) > 0" class="tile-lvl">
+                  ★{{ item.card?.level }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
         <div v-else class="section-empty">
-          <span class="empty-hint">Main Deck is empty. Click cards in the grid to add them.</span>
+          <span class="empty-hint">Main Deck is empty. Click cards in the card pool to add them.</span>
         </div>
       </div>
     </div>
 
-    <!-- Extra Deck Section (0 - 15 Cards) -->
+    <!-- Extra Deck Section (0 - 15 Cards in Columns Grid) -->
     <div class="deck-section deck-section--extra">
       <div class="section-title-bar">
         <div class="title-left">
@@ -191,33 +204,50 @@
         </span>
       </div>
 
-      <!-- Extra Deck Cards List -->
+      <!-- Extra Deck Grid (Cards arranged in columns) -->
       <div class="deck-cards-scrollable deck-cards-scrollable--extra">
-        <div v-if="extraDeckCards.length > 0" class="deck-cards-list">
+        <div v-if="extraDeckCards.length > 0" class="deck-cards-grid">
           <div
             v-for="item in extraDeckCards"
             :key="item.id"
-            class="deck-card-row deck-card-row--fusion"
+            class="deck-card-tile deck-card-tile--fusion"
             title="Click to remove 1 copy"
             @mouseenter="onCardHover(item.card)"
             @click="onRemoveCard(item.id, true)"
+            @contextmenu.prevent="onCardHover(item.card)"
           >
-            <img
-              :src="getCardImageUrl(item.id, 'mini')"
-              :alt="item.card?.name || 'Card'"
-              class="row-thumb"
-              loading="lazy"
-              @error="handleImageError"
-            />
-            <div class="row-info">
-              <span class="row-name">{{ item.card?.name || `Card #${item.id}` }}</span>
-              <div class="row-meta">
-                <span class="row-atk">ATK {{ (item.card?.atk ?? 0) < 0 ? '?' : (item.card?.atk ?? 0) }}</span>
-                <span class="row-lvl">★{{ item.card?.level ?? 0 }}</span>
+            <!-- Card Thumbnail -->
+            <div class="tile-thumb-wrap">
+              <img
+                :src="getCardImageUrl(item.id, 'mini')"
+                :alt="item.card?.name || 'Card'"
+                class="tile-thumb-img"
+                loading="lazy"
+                @error="handleImageError"
+              />
+
+              <!-- Quantity Pill Badge (x1, x2, x3) -->
+              <div class="tile-count-badge" :class="`tile-count-badge--${item.count}`">
+                x{{ item.count }}
+              </div>
+
+              <!-- Remove Overlay on Hover -->
+              <div class="tile-remove-overlay">
+                <span class="remove-icon">✕</span>
               </div>
             </div>
-            <div class="row-count-badge" :class="`row-count-badge--${item.count}`">
-              x{{ item.count }}
+
+            <!-- Compact Title & Stats Strip -->
+            <div class="tile-info-strip">
+              <span class="tile-name" :title="item.card?.name">{{ item.card?.name || `Card #${item.id}` }}</span>
+              <div class="tile-stats">
+                <span class="tile-atk">
+                  ⚔{{ (item.card?.atk ?? 0) < 0 ? '?' : (item.card?.atk ?? 0) }}
+                </span>
+                <span v-if="(item.card?.level ?? 0) > 0" class="tile-lvl">
+                  ★{{ item.card?.level }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -305,18 +335,45 @@ interface EnrichedDeckCard {
   card: CardDetail | null;
 }
 
+// Cleanly sort deck: Monsters first (Level desc, ATK desc, Name asc), then Spells, then Traps
 const mainDeckCards = computed<EnrichedDeckCard[]>(() => {
-  return store.mainDeckGrouped.map((item) => ({
+  const list = store.mainDeckGrouped.map((item) => ({
     ...item,
     card: store.cardMap.get(item.id) ?? null,
   }));
+
+  return list.sort((a, b) => {
+    const cardA = a.card;
+    const cardB = b.card;
+    if (!cardA || !cardB) return 0;
+
+    const getCat = (c: CardDetail) => (c.isMonster ? 1 : c.isSpell ? 2 : 3);
+    const catA = getCat(cardA);
+    const catB = getCat(cardB);
+    if (catA !== catB) return catA - catB;
+
+    if (cardA.isMonster && cardB.isMonster) {
+      if (cardA.level !== cardB.level) return cardB.level - cardA.level;
+      if (cardA.atk !== cardB.atk) return cardB.atk - cardA.atk;
+    }
+    return cardA.name.localeCompare(cardB.name);
+  });
 });
 
 const extraDeckCards = computed<EnrichedDeckCard[]>(() => {
-  return store.extraDeckGrouped.map((item) => ({
+  const list = store.extraDeckGrouped.map((item) => ({
     ...item,
     card: store.cardMap.get(item.id) ?? null,
   }));
+
+  return list.sort((a, b) => {
+    const cardA = a.card;
+    const cardB = b.card;
+    if (!cardA || !cardB) return 0;
+    if (cardA.level !== cardB.level) return cardB.level - cardA.level;
+    if (cardA.atk !== cardB.atk) return cardB.atk - cardA.atk;
+    return cardA.name.localeCompare(cardB.name);
+  });
 });
 
 function onSelectDeckChange(e: Event): void {
@@ -580,7 +637,7 @@ function getCardKindClass(card: CardDetail | null): string {
   }
 
   &--extra {
-    flex: 1.5;
+    flex: 1.3;
   }
 }
 
@@ -657,14 +714,15 @@ function getCardKindClass(card: CardDetail | null): string {
 .deck-cards-scrollable {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   background: rgba(5, 7, 10, 0.5);
   border: 1px solid rgba(201, 162, 39, 0.15);
   border-top: none;
   border-radius: 0 0 6px 6px;
-  padding: 4px;
+  padding: 6px;
 
   &::-webkit-scrollbar {
-    width: 5px;
+    width: 6px;
   }
   &::-webkit-scrollbar-thumb {
     background: rgba(201, 162, 39, 0.3);
@@ -672,65 +730,129 @@ function getCardKindClass(card: CardDetail | null): string {
   }
 }
 
-.deck-cards-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+// Columns Grid Layout for Cards in Deck
+.deck-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
 }
 
-.deck-card-row {
+.deck-card-tile {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 6px;
-  background: rgba(18, 22, 30, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  flex-direction: column;
+  height: 154px;
+  background: rgba(18, 22, 30, 0.9);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
   cursor: pointer;
-  transition: all 140ms ease;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease, border-color 160ms ease;
   user-select: none;
+  box-sizing: border-box;
 
   &:hover {
-    background: rgba(201, 162, 39, 0.18);
-    border-color: $color-gold-500;
-    transform: translateX(2px);
+    transform: translateY(-3px) scale(1.02);
+    border-color: $color-gold-300;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6), 0 0 10px rgba(227, 197, 103, 0.35);
+    z-index: 2;
+
+    .tile-remove-overlay {
+      opacity: 1;
+    }
   }
 
   &--normal {
-    border-left: 3px solid #d4ac0d;
+    border-top: 2px solid #d4ac0d;
   }
   &--effect {
-    border-left: 3px solid #e67e22;
+    border-top: 2px solid #e67e22;
   }
   &--spell {
-    border-left: 3px solid #1abc9c;
+    border-top: 2px solid #1abc9c;
   }
   &--trap {
-    border-left: 3px solid #e91e63;
+    border-top: 2px solid #e91e63;
   }
   &--fusion {
-    border-left: 3px solid #9b59b6;
+    border-top: 2px solid #9b59b6;
   }
 }
 
-.row-thumb {
-  width: 24px;
-  height: 35px;
-  object-fit: cover;
-  border-radius: 2px;
+.tile-thumb-wrap {
+  position: relative;
+  width: 100%;
+  height: 112px;
   background: #000;
-  flex-shrink: 0;
+  overflow: hidden;
 }
 
-.row-info {
-  flex: 1;
+.tile-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tile-count-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-family: $font-family-display;
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &--1 {
+    background: rgba(255, 255, 255, 0.15);
+    color: #f3f4f6;
+  }
+  &--2 {
+    background: rgba(47, 128, 237, 0.85);
+    border-color: #8dc5fe;
+    box-shadow: 0 0 6px rgba(47, 128, 237, 0.6);
+  }
+  &--3 {
+    background: rgba(46, 204, 113, 0.85);
+    border-color: #a3e4d7;
+    box-shadow: 0 0 6px rgba(46, 204, 113, 0.6);
+  }
+}
+
+.tile-remove-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(235, 87, 87, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 140ms ease;
+  pointer-events: none;
+}
+
+.remove-icon {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+}
+
+.tile-info-strip {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  justify-content: space-between;
+  height: 42px;
+  padding: 3px 5px;
+  background: rgba(10, 13, 18, 0.95);
+  box-sizing: border-box;
 }
 
-.row-name {
-  font-size: 0.78rem;
+.tile-name {
+  font-size: 0.7rem;
   font-weight: 600;
   color: $color-text-primary;
   white-space: nowrap;
@@ -738,48 +860,30 @@ function getCardKindClass(card: CardDetail | null): string {
   text-overflow: ellipsis;
 }
 
-.row-meta {
+.tile-stats {
   display: flex;
-  gap: 6px;
-  font-size: 0.68rem;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.65rem;
   color: $color-text-secondary;
 }
 
-.row-atk {
+.tile-atk {
   font-family: $font-family-numeric;
   color: #f1948a;
+  font-weight: 700;
 }
 
-.row-type {
-  color: #a3e4d7;
-}
-
-.row-lvl {
-  color: #f4d03f;
-}
-
-.row-count-badge {
+.tile-type {
   font-family: $font-family-display;
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: $color-text-secondary;
+  font-weight: 700;
+  color: #a3e4d7;
+  font-size: 0.62rem;
+}
 
-  &--1 {
-    color: #e5e7eb;
-  }
-  &--2 {
-    background: rgba(47, 128, 237, 0.25);
-    border: 1px solid $color-user;
-    color: #8dc5fe;
-  }
-  &--3 {
-    background: rgba(46, 204, 113, 0.25);
-    border: 1px solid #2ecc71;
-    color: #a3e4d7;
-  }
+.tile-lvl {
+  color: #f4d03f;
+  font-weight: 700;
 }
 
 .section-empty {
@@ -792,7 +896,7 @@ function getCardKindClass(card: CardDetail | null): string {
 }
 
 .empty-hint {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: $color-text-muted;
   line-height: 1.4;
 }

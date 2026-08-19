@@ -213,7 +213,7 @@ onMounted(async () => {
 .deck-workspace {
   flex: 1;
   display: grid;
-  grid-template-columns: 24% 48% 28%;
+  grid-template-columns: 37% 39% 24%;
   gap: $space-2;
   min-height: 0;
   overflow: hidden;
