@@ -193,13 +193,21 @@ export class DuelEngineService {
       decodedEvents.push(decoded);
 
       // Track internal state
-      if (decoded.turn !== undefined) this.state.currentTurn = decoded.turn;
+      if (decoded.type === 'NEW_TURN') {
+        this.state.currentTurn++;
+        decoded.turn = this.state.currentTurn;
+        decoded.description = `Turn ${this.state.currentTurn} begins. Active player: Player ${decoded.player}`;
+      }
       if (decoded.phase !== undefined) this.state.currentPhase = decoded.phase;
       if (decoded.type === 'LPUPDATE' && decoded.player !== undefined && decoded.lp !== undefined) {
         if (decoded.player === 0) this.state.p0LP = decoded.lp;
         if (decoded.player === 1) this.state.p1LP = decoded.lp;
       }
-      if (decoded.type === 'DAMAGE' && decoded.player !== undefined && decoded.amount !== undefined) {
+      if (
+        decoded.type === 'DAMAGE' &&
+        decoded.player !== undefined &&
+        decoded.amount !== undefined
+      ) {
         if (decoded.player === 0) this.state.p0LP = Math.max(0, this.state.p0LP - decoded.amount);
         if (decoded.player === 1) this.state.p1LP = Math.max(0, this.state.p1LP - decoded.amount);
       }

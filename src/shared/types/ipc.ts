@@ -2,15 +2,21 @@
 // IPC Channel Names and Interface Definitions
 // =============================================================================
 
+import type { DuelInitOptions, DuelEventPayload, DuelStateSummary } from './duel.js';
+
 export const IPC_CHANNELS = {
   // App
   APP_GET_VERSION: 'app:get-version',
   APP_EXIT: 'app:exit',
 
-  // Duel (to be fully expanded in Phase 2 & 10)
+  // Duel
   DUEL_NEW: 'duel:new',
   DUEL_COMMAND: 'duel:command',
   DUEL_EVENT: 'duel:event',
+  DUEL_GET_STATE: 'duel:get-state',
+  DUEL_STEP: 'duel:step',
+  DUEL_SET_AUTOPLAY: 'duel:set-autoplay',
+  DUEL_GET_CARD_NAME: 'duel:get-card-name',
   DUEL_PLAY_VIDEO: 'duel:play-video',
   DUEL_VIDEO_FINISHED: 'duel:video-finished',
 
@@ -28,8 +34,13 @@ export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
 
 // Window API surfaces exposed via contextBridge in preload.ts
 export interface DuelAPI {
-  sendCommand: (command: unknown) => Promise<void>;
-  onEvent: (callback: (event: unknown) => void) => () => void;
+  newDuel: (options: DuelInitOptions) => Promise<boolean>;
+  sendCommand: (response: unknown) => Promise<boolean>;
+  step: () => Promise<DuelEventPayload[]>;
+  setAutoPlay: (autoPlay: boolean) => Promise<void>;
+  getState: () => Promise<DuelStateSummary>;
+  getCardName: (code: number) => Promise<string>;
+  onEvent: (callback: (event: DuelEventPayload) => void) => () => void;
   playVideo: (callback: (video: unknown) => void) => () => void;
   notifyVideoFinished: () => Promise<void>;
 }

@@ -42,3 +42,45 @@ export interface DuelFieldState {
   phase: string;
   isUserTurn: boolean;
 }
+
+export interface DuelInitOptions {
+  player0Deck: number[];
+  player1Deck: number[];
+  startingLP?: number;
+  startingDrawCount?: number;
+  drawCountPerTurn?: number;
+  autoPlay?: boolean;
+}
+
+export interface DuelEventPayload {
+  type: string;
+  rawType: number;
+  player?: number;
+  controller?: number;
+  code?: number;
+  cardName?: string;
+  phase?: string;
+  turn?: number;
+  amount?: number;
+  lp?: number;
+  reason?: number;
+  target?: unknown;
+  drawnCards?: { code: number; cardName: string }[];
+  isPrompt: boolean;
+  promptPlayer?: number;
+  description: string;
+  raw: unknown;
+}
+
+export interface DuelStateSummary {
+  isActive: boolean;
+  isWaitingResponse: boolean;
+  waitingPlayer: number | null;
+  currentTurn: number;
+  currentPhase: string;
+  p0LP: number;
+  p1LP: number;
+  winner: number | null;
+  winReason: number | null;
+  stepCount: number;
+}

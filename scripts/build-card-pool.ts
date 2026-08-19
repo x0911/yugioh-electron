@@ -162,13 +162,13 @@ export async function buildCardPool(): Promise<void> {
 
   // 1. Read Set Code Whitelist
   console.log('\n[1/6] Reading Set Code Whitelist...');
-  const whitelistData: SetWhitelist = JSON.parse(
-    fs.readFileSync(WHITELIST_SETS_PATH, 'utf-8'),
-  );
+  const whitelistData: SetWhitelist = JSON.parse(fs.readFileSync(WHITELIST_SETS_PATH, 'utf-8'));
 
   const dmSetCodes = new Set(whitelistData.DM.map((s) => s.code.toUpperCase()));
   const gxSetCodes = new Set(whitelistData.GX.map((s) => s.code.toUpperCase()));
-  console.log(`      ✓ Loaded ${dmSetCodes.size} DM set codes and ${gxSetCodes.size} GX set codes.`);
+  console.log(
+    `      ✓ Loaded ${dmSetCodes.size} DM set codes and ${gxSetCodes.size} GX set codes.`,
+  );
 
   // 2. Fetch full BabelCDB cards.cdb
   console.log('\n[2/6] Downloading ProjectIgnis/BabelCDB master cards.cdb...');
@@ -177,7 +177,9 @@ export async function buildCardPool(): Promise<void> {
   );
   const tempCdbPath = path.join(rootDir, 'temp_raw_cards.cdb');
   fs.writeFileSync(tempCdbPath, cdbBuffer);
-  console.log(`      ✓ Downloaded master cards.cdb (${(cdbBuffer.length / 1024 / 1024).toFixed(2)} MB).`);
+  console.log(
+    `      ✓ Downloaded master cards.cdb (${(cdbBuffer.length / 1024 / 1024).toFixed(2)} MB).`,
+  );
 
   const rawDb = new Database(tempCdbPath, { readonly: true });
 
@@ -303,9 +305,7 @@ export async function buildCardPool(): Promise<void> {
     }
   }
 
-  console.log(
-    `      ✓ Filter matched ${matchingCardIds.size} cards (DM + GX era compliant).`,
-  );
+  console.log(`      ✓ Filter matched ${matchingCardIds.size} cards (DM + GX era compliant).`);
 
   // 5. Generate filtered resources/cards.cdb
   console.log('\n[5/6] Building filtered resources/cards.cdb...');
@@ -408,14 +408,12 @@ export async function buildCardPool(): Promise<void> {
     fs.unlinkSync(tempCdbPath);
   }
 
-  console.log(`      ✓ Saved filtered cards.cdb (${(fs.statSync(OUTPUT_CDB_PATH).size / 1024).toFixed(1)} KB).`);
+  console.log(
+    `      ✓ Saved filtered cards.cdb (${(fs.statSync(OUTPUT_CDB_PATH).size / 1024).toFixed(1)} KB).`,
+  );
 
   // Write card pool whitelist JSON
-  fs.writeFileSync(
-    OUTPUT_WHITELIST_PATH,
-    JSON.stringify(filteredWhitelist, null, 2),
-    'utf-8',
-  );
+  fs.writeFileSync(OUTPUT_WHITELIST_PATH, JSON.stringify(filteredWhitelist, null, 2), 'utf-8');
   console.log(`      ✓ Saved ${OUTPUT_WHITELIST_PATH}.`);
 
   // 6. Copy Base Scripts & Download Official Card Scripts
@@ -441,7 +439,9 @@ export async function buildCardPool(): Promise<void> {
     }
   }
 
-  console.log(`      • Fetching missing card scripts for ${matchingCardIds.size} filtered cards...`);
+  console.log(
+    `      • Fetching missing card scripts for ${matchingCardIds.size} filtered cards...`,
+  );
   const cardIdArray = Array.from(matchingCardIds);
   const result = await downloadBatchScripts(cardIdArray);
   console.log(
@@ -454,7 +454,9 @@ export async function buildCardPool(): Promise<void> {
   console.log(`  • Total Cards in Whitelist: ${matchingCardIds.size}`);
   console.log(`  • Database File:            ${OUTPUT_CDB_PATH}`);
   console.log(`  • Whitelist Manifest:       ${OUTPUT_WHITELIST_PATH}`);
-  console.log(`  • Official Scripts Count:   ${fs.readdirSync(RESOURCES_OFFICIAL_SCRIPTS_DIR).length}`);
+  console.log(
+    `  • Official Scripts Count:   ${fs.readdirSync(RESOURCES_OFFICIAL_SCRIPTS_DIR).length}`,
+  );
   console.log('='.repeat(70) + '\n');
 }
 

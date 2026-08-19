@@ -1,20 +1,59 @@
-import { ipcMain, app } from 'electron';
-import { IPC_CHANNELS } from '../../shared/types/ipc';
+import { ipcMain, app, BrowserWindow } from 'electron';
+import { IPC_CHANNELS } from '../../shared/types/ipc.js';
+import type { DuelInitOptions } from '../../shared/types/duel.js';
+import { duelEngineService } from '../engine/DuelEngineService.js';
+import type { OcgResponse } from 'ocgcore-wasm';
+
+let isServiceInitialized = false;
 
 export function registerIpcHandlers(): void {
+  // Forward duel events to renderer process
+  duelEngineService.onEvent((event) => {
+    const wins = BrowserWindow.getAllWindows();
+    for (const win of wins) {
+      if (!win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.DUEL_EVENT, event);
+      }
+    }
+  });
+
   // App
   ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => app.getVersion());
   ipcMain.handle(IPC_CHANNELS.APP_EXIT, () => {
     app.quit();
   });
 
-  // Duel stubs (will be wired to DuelEngineService in Phase 2)
-  ipcMain.handle(IPC_CHANNELS.DUEL_COMMAND, async (_event, command) => {
-    console.log('[Main IPC] Duel command received (stub):', command);
+  // Duel Handlers
+  ipcMain.handle(IPC_CHANNELS.DUEL_NEW, async (_event, options: DuelInitOptions) => {
+    if (!isServiceInitialized) {
+      await duelEngineService.init();
+      isServiceInitialized = true;
+    }
+    return duelEngineService.startNewDuel(options);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DUEL_COMMAND, async (_event, response: OcgResponse) => {
+    return duelEngineService.sendResponse(response);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DUEL_STEP, async () => {
+    return duelEngineService.processStep();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DUEL_SET_AUTOPLAY, async (_event, autoPlay: boolean) => {
+    duelEngineService.setAutoPlay(autoPlay);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DUEL_GET_STATE, async () => {
+    return duelEngineService.getState();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DUEL_GET_CARD_NAME, async (_event, code: number) => {
+    return duelEngineService.getCardName(code);
   });
 
   ipcMain.handle(IPC_CHANNELS.DUEL_VIDEO_FINISHED, async () => {
-    console.log('[Main IPC] Duel video finished notification received (stub)');
+    console.log('[Main IPC] Duel video finished notification received');
   });
 
   // Deck stubs (will be wired in Phase 7)

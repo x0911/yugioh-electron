@@ -36,10 +36,7 @@ export class ViewFilterService {
    * Filters decoded duel events before they are transmitted over IPC to the renderer (human view)
    * or passed to AIController (AI view).
    */
-  public filterEventForViewer(
-    event: DecodedDuelEvent,
-    viewerPlayerId: number,
-  ): DecodedDuelEvent {
+  public filterEventForViewer(event: DecodedDuelEvent, viewerPlayerId: number): DecodedDuelEvent {
     // If event is DRAW:
     if (event.type === 'DRAW' && event.drawnCards && event.player !== undefined) {
       if (event.player !== viewerPlayerId) {
