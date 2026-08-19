@@ -15,11 +15,15 @@
       </span>
     </div>
 
-    <!-- Horizontal Cards Container -->
-    <div class="hand-cards-container">
+    <!-- Horizontal Cards Container with Fluid Draw & Shift Animations -->
+    <TransitionGroup
+      name="hand-card-anim"
+      tag="div"
+      class="hand-cards-container"
+    >
       <div
         v-for="(card, idx) in cards"
-        :key="card.id || idx"
+        :key="card.id || `${player}-${card.code}-${idx}`"
         class="hand-card-slot"
         :style="getSlotStyle(idx, cards.length)"
         @mouseenter="onCardMouseEnter(card)"
@@ -67,7 +71,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </TransitionGroup>
   </div>
 </template>
 
@@ -168,13 +172,16 @@ function onCardClick(card: FieldCard): void {
     padding: 4px 12px;
     box-sizing: border-box;
     max-width: 100%;
+    min-height: 130px;
   }
 
   .hand-card-slot {
     position: relative;
     cursor: pointer;
+    flex-shrink: 0;
     transition:
-      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+      margin 0.4s cubic-bezier(0.22, 1, 0.36, 1),
       z-index 0s;
 
     &:hover {
@@ -201,6 +208,17 @@ function onCardClick(card: FieldCard): void {
         }
       }
     }
+
+    // User Draw & Shift Animations
+    .hand-card-anim-enter-from {
+      opacity: 0;
+      transform: translate(60px, 80px) scale(0.5) rotate(12deg);
+    }
+
+    .hand-card-anim-leave-to {
+      opacity: 0;
+      transform: translateY(-50px) scale(0.6);
+    }
   }
 
   // =========================================================================
@@ -222,6 +240,40 @@ function onCardClick(card: FieldCard): void {
         }
       }
     }
+
+    // AI Draw & Shift Animations
+    .hand-card-anim-enter-from {
+      opacity: 0;
+      transform: translate(-50px, -60px) scale(0.5) rotate(-10deg);
+    }
+
+    .hand-card-anim-leave-to {
+      opacity: 0;
+      transform: translateY(50px) scale(0.6);
+    }
+  }
+
+  // =========================================================================
+  // TransitionGroup FLIP Motion Rules
+  // =========================================================================
+  .hand-card-anim-move {
+    transition:
+      transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+      margin 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .hand-card-anim-enter-active {
+    transition:
+      opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      margin 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .hand-card-anim-leave-active {
+    transition:
+      opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute;
   }
 
   // Card Content & Visuals
@@ -316,7 +368,6 @@ function onCardClick(card: FieldCard): void {
 
       .stat-atk {
         color: #f5f1e6;
-        font-size: 0.7rem;
       }
       .stat-slash {
         color: $color-gold-500;
@@ -325,7 +376,6 @@ function onCardClick(card: FieldCard): void {
       }
       .stat-def {
         color: #b8b2a0;
-        font-size: 0.7rem;
       }
     }
   }
