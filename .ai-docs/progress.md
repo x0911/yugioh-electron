@@ -852,11 +852,32 @@
 - `src/renderer/utils/mockDuelState.ts`: [DELETED]
 - `src/renderer/views/DuelView.vue`: Removed mock duel references, state, and UI controls.
 
+---
+
+## 2026-08-19 — Deck Shuffling & AI 3-Deck Random Selection
+
+**What was done:**
+- **Fisher-Yates Deck Randomization**:
+  - Implemented `shuffleArray<T>()` in `DuelEngineService.ts` and `duelStore.ts`.
+  - Prior to loading cards into `ocgcore-wasm` via `duelNewCard()`, Player 0 and Player 1 decks are shuffled with Fisher-Yates, ensuring opening 5-card hands and subsequent draw phase / effect draws are fully randomized.
+- **AI-Opponent 3-Deck Random Selection**:
+  - In `setupMatch()` and `startPreparedDuel()`, AI opponents randomly select one of their 3 archetypal decks (`0..opponent.decks.length - 1`).
+- **Unit Test Suite**:
+  - Created `tests/random-draw-and-deck.test.ts` validating card multiset preservation, opening hand entropy, and uniform distribution across all 3 AI character decks.
+
+**Files created/modified:**
+- `src/main/engine/DuelEngineService.ts`: Added deck shuffling in `startNewDuel`.
+- `src/renderer/stores/duelStore.ts`: Added `shuffleArray` and random AI deck selection in `startPreparedDuel`.
+- `tests/random-draw-and-deck.test.ts`: Created unit tests.
+- `package.json`: Updated `test` script.
+
 **How to manually verify this phase:**
-1. Run `npm test` to verify all automated test suites pass.
+1. Run `npm test` to verify all test suites pass.
 2. Run `npm run typecheck` and `npm run build` to verify clean compilation.
-3. Launch app with `npm run dev`:
-   - Verify duels run strictly via the real `ocgcore-wasm` engine with live rules, state updates, and animation queues.
+3. Start multiple duels:
+   - Observe that opening hands are different each match and non-deterministic.
+   - Observe that the AI opponent plays different archetype decks across matches.
+
 
 
 
