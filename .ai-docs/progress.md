@@ -259,6 +259,8 @@
 **Decisions made / deviations from the plan:**
 - **Dynamic Dev Route Gating**: `import.meta.env.DEV` is used in `router/index.ts` to push `/dev/kitchen-sink` to the route table only during local development. During production builds (`npm run build`), the route and component are completely omitted from the generated client bundle.
 - **Crisp Inline SVG Glyphs**: Built bespoke inline SVG glyphs directly into `IconIndicator.vue` and `LoadingSpinner.vue` so badges scale cleanly without raster pixelation or external image network overhead.
+- **Typography Upgrade (Master Duel Palette)**: Upgraded from generic Cinzel/Inter placeholders to authentic gaming typography: **Oxanium** (Bold 700/800) for angular holographic duel headers, CTAs, and tabular LP scoreboards, paired with **Barlow Semi Condensed** (400/500/600/700) for crisp card effect readability.
+
 
 **Known issues / TODO carried to next phase:**
 - Phase 5 will implement the real Loading screen (driven by engine readiness) and Main Menu screen (using `YugiButton` card variant).

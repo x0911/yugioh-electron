@@ -61,11 +61,11 @@
         </div>
 
         <GlassPanel padding="16px" accent="gold" style="margin-top: 12px;">
-          <h3 style="margin-bottom: 8px;">Typography Hierarchy</h3>
-          <p style="font-family: 'Cinzel', serif; font-size: 1.75rem; color: #e3c567;">Cinzel Display — Ancient Pharaoh Ceremony (28px)</p>
-          <p style="font-family: 'Inter', sans-serif; font-size: 1rem; color: #f5f1e6;">Inter Body — Clean, crisp card rules text and UI labels at 16px.</p>
-          <p style="font-family: 'Inter', sans-serif; font-size: 0.875rem; color: #b8b2a0;">Inter Secondary / Muted — Sublabels, timestamps, and card lore details (14px).</p>
-          <p style="font-family: 'Inter', sans-serif; font-variant-numeric: tabular-nums; font-size: 1.125rem; color: #e3c567;">Tabular Numerals: LP 8000 → 4000 | ATK 2500 / DEF 2100 | Turn 07</p>
+          <h3 style="margin-bottom: 8px;">Master Duel Typography Hierarchy</h3>
+          <p style="font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 1.75rem; color: #e3c567;">Oxanium Display — Holographic Duel King (28px Bold)</p>
+          <p style="font-family: 'Barlow Semi Condensed', sans-serif; font-size: 1.05rem; color: #f5f1e6;">Barlow Semi Condensed Body — "When this card is Normal Summoned: You can target 1 Spell Card in your GY; add it to your hand." (16px)</p>
+          <p style="font-family: 'Barlow Semi Condensed', sans-serif; font-size: 0.9rem; color: #b8b2a0;">Barlow Secondary / Muted — Spellcaster / Normal / Level 7 / Dark (14px)</p>
+          <p style="font-family: 'Oxanium', sans-serif; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 1.25rem; color: #e3c567;">Oxanium Tabular Numerals: LP 8000 → 4000 | ATK 2500 / DEF 2100 | Turn 07</p>
         </GlassPanel>
       </section>
 

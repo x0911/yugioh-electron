@@ -1,23 +1,91 @@
 @use '../abstracts' as *;
 
 // =============================================================================
-// Self-hosted Font Faces (Cinzel & Inter — SIL Open Font License 1.1)
+// Self-hosted Font Faces (Master Duel Palette: Oxanium & Barlow Semi Condensed)
+// SIL Open Font License 1.1 (OFL)
 // =============================================================================
 
+// --- Oxanium (Display / Headers / Action Buttons / Numeric Counters) ---
+@font-face {
+  font-family: 'Oxanium';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@/assets/fonts/Oxanium-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Oxanium';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('@/assets/fonts/Oxanium-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Oxanium';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('@/assets/fonts/Oxanium-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Oxanium';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('@/assets/fonts/Oxanium-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Oxanium';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('@/assets/fonts/Oxanium-ExtraBold.woff2') format('woff2');
+}
+
+// --- Barlow Semi Condensed (Card Rules / Body / UI) ---
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@/assets/fonts/BarlowSemiCondensed-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('@/assets/fonts/BarlowSemiCondensed-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('@/assets/fonts/BarlowSemiCondensed-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('@/assets/fonts/BarlowSemiCondensed-Bold.woff2') format('woff2');
+}
+
+// --- Cinzel & Inter Fallbacks ---
 @font-face {
   font-family: 'Cinzel';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
   src: url('@/assets/fonts/Cinzel-Regular.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Cinzel';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('@/assets/fonts/Cinzel-SemiBold.woff2') format('woff2');
 }
 
 @font-face {
@@ -36,29 +104,6 @@
   src: url('@/assets/fonts/Inter-Regular.woff2') format('woff2');
 }
 
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('@/assets/fonts/Inter-Medium.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('@/assets/fonts/Inter-SemiBold.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('@/assets/fonts/Inter-Bold.woff2') format('woff2');
-}
 
 h1,
 h2,
