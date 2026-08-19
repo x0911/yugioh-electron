@@ -16,75 +16,78 @@
     @mouseleave="onMouseLeave"
     @click="onClick"
   >
-    <!-- Tooltip for inert zones (EMZ, Pendulum, etc.) or slot info -->
-    <Tooltip v-if="tooltipText" :content="tooltipText" position="top">
+    <Tooltip
+      :text="tooltipText"
+      :disabled="!tooltipText"
+      position="top"
+      class="slot-tooltip-wrapper"
+    >
       <div class="slot-frame">
-        <slot-content />
+        <!-- Empty Slot Watermark Label -->
+        <div v-if="!card" class="slot-empty-content">
+          <div class="slot-label">{{ zoneLabel }}</div>
+          <div v-if="zoneSubLabel" class="slot-sublabel">{{ zoneSubLabel }}</div>
+          <div class="slot-octagon-border"></div>
+        </div>
+
+        <!-- Card Display when Occupied (Artwork / Card Back) -->
+        <div
+          v-else
+          class="field-card"
+          :class="[
+            `field-card--${card.position}`,
+            {
+              'field-card--is-defense': isDefensePosition,
+              'field-card--is-facedown': isFaceDown,
+            },
+          ]"
+        >
+          <!-- Face-down Card (Set Monster in DEF or Set Spell/Trap) -->
+          <div v-if="isFaceDown" class="card-face card-face--back">
+            <img
+              :src="getCardBackUrl()"
+              alt="Card Back"
+              class="card-image card-image--back"
+              @error="handleImageError"
+            />
+            <div class="card-foil-sheen"></div>
+          </div>
+
+          <!-- Face-up Card (Attack Monster, Face-up Defense Monster, or Face-up Spell/Trap) -->
+          <div v-else class="card-face card-face--front">
+            <img
+              :src="getCardImageUrl(card.code, 'mini')"
+              :alt="card.name"
+              class="card-image"
+              @error="handleImageError"
+            />
+            <div class="card-foil-sheen"></div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- UNROTATED Slot Overlays (Always 0° Straight at Center-Bottom)   -->
+        <!-- =============================================================== -->
+
+        <!-- 1. Combat Stat Badge (ATK only if Attack; DEF only if Defense) -->
+        <div
+          v-if="card && showCombatStatBadge"
+          class="slot-stat-badge"
+          :class="`slot-stat-badge--${activeStatMode}`"
+        >
+          <span class="stat-prefix">{{ activeStatMode === 'atk' ? 'ATK' : 'DEF' }}</span>
+          <span class="stat-value">{{ activeStatValue }}</span>
+        </div>
+
+        <!-- 2. Level / Rank Stars Badge (Always 0° Straight at Top-Right) -->
+        <div
+          v-if="card && isFaceUpMonster && card.level && card.level > 0"
+          class="slot-level-badge"
+        >
+          ★{{ card.level }}
+        </div>
       </div>
     </Tooltip>
-
-    <div v-else class="slot-frame">
-      <!-- Empty Slot Watermark Label -->
-      <div v-if="!card" class="slot-empty-content">
-        <div class="slot-label">{{ zoneLabel }}</div>
-        <div v-if="zoneSubLabel" class="slot-sublabel">{{ zoneSubLabel }}</div>
-        <div class="slot-octagon-border"></div>
-      </div>
-
-      <!-- Card Display when Occupied (Artwork/Frame only) -->
-      <div
-        v-else
-        class="field-card"
-        :class="[
-          `field-card--${card.position}`,
-          {
-            'field-card--is-defense': isDefensePosition,
-            'field-card--is-facedown': isFaceDown,
-          },
-        ]"
-      >
-        <!-- Face-down Card (Set Monster in DEF or Set Spell/Trap) -->
-        <div v-if="isFaceDown" class="card-face card-face--back">
-          <img
-            :src="getCardBackUrl()"
-            alt="Card Back"
-            class="card-image card-image--back"
-            @error="handleImageError"
-          />
-          <div class="card-foil-sheen"></div>
-        </div>
-
-        <!-- Face-up Card (Attack Monster, Face-up Defense Monster, or Face-up Spell/Trap) -->
-        <div v-else class="card-face card-face--front">
-          <img
-            :src="getCardImageUrl(card.code, 'mini')"
-            :alt="card.name"
-            class="card-image"
-            @error="handleImageError"
-          />
-          <div class="card-foil-sheen"></div>
-        </div>
-      </div>
-
-      <!-- =============================================================== -->
-      <!-- UNROTATED Slot Overlays (Always 0° Straight at Center-Bottom)   -->
-      <!-- =============================================================== -->
-
-      <!-- 1. Combat Stat Badge (ATK only if Attack; DEF only if Defense) -->
-      <div
-        v-if="card && showCombatStatBadge"
-        class="slot-stat-badge"
-        :class="`slot-stat-badge--${activeStatMode}`"
-      >
-        <span class="stat-prefix">{{ activeStatMode === 'atk' ? 'ATK' : 'DEF' }}</span>
-        <span class="stat-value">{{ activeStatValue }}</span>
-      </div>
-
-      <!-- 2. Level / Rank Stars Badge (Always 0° Straight at Top-Right) -->
-      <div v-if="card && isFaceUpMonster && card.level && card.level > 0" class="slot-level-badge">
-        ★{{ card.level }}
-      </div>
-    </div>
   </div>
 </template>
 
@@ -124,15 +127,24 @@ const emit = defineEmits<{
 }>();
 
 const isDefensePosition = computed(() => {
-  return props.card?.position === 'faceup_defense' || props.card?.position === 'facedown_defense';
+  return (
+    props.card?.position === 'faceup_defense' ||
+    props.card?.position === 'facedown_defense'
+  );
 });
 
 const isFaceDown = computed(() => {
-  return props.card?.position === 'facedown_defense' || props.card?.position === 'facedown_spell';
+  return (
+    props.card?.position === 'facedown_defense' ||
+    props.card?.position === 'facedown_spell'
+  );
 });
 
 const isFaceUpMonster = computed(() => {
-  return props.card?.position === 'faceup_attack' || props.card?.position === 'faceup_defense';
+  return (
+    props.card?.position === 'faceup_attack' ||
+    props.card?.position === 'faceup_defense'
+  );
 });
 
 /**
@@ -157,7 +169,9 @@ const activeStatMode = computed<'atk' | 'def'>(() => {
 
 const activeStatValue = computed<number | string>(() => {
   if (!props.card) return '';
-  return props.card.position === 'faceup_defense' ? (props.card.def ?? 0) : (props.card.atk ?? 0);
+  return props.card.position === 'faceup_defense'
+    ? (props.card.def ?? 0)
+    : (props.card.atk ?? 0);
 });
 
 const tooltipText = computed(() => {
@@ -201,6 +215,14 @@ function onClick(): void {
   user-select: none;
   cursor: default;
   transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+
+  .slot-tooltip-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
   .slot-frame {
     position: relative;
@@ -388,13 +410,13 @@ function onClick(): void {
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
     .stat-prefix {
-      font-size: 0.5rem;
+      font-size: 0.50rem;
       font-weight: 700;
       letter-spacing: 0.04em;
     }
 
     .stat-value {
-      font-size: 0.7rem;
+      font-size: 0.58rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;
