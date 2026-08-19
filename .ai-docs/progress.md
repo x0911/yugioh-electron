@@ -165,8 +165,8 @@
 - Integrated Sharp image processing pipeline:
   - Re-encodes `mini` card variant from CDN small images to a fixed $96 \times 140\text{ px}$ progressive JPEG with Lanczos-3 resampling for smooth 60fps rendering in Deck Edit virtualized grids.
   - Populates `resources/cards/full` ($813 \times 1185\text{ px}$), `resources/cards/art` ($624 \times 624\text{ px}$), and `resources/cards/mini` ($96 \times 140\text{ px}$).
-- Generated stylized "Ancient Duel Arena" fallback assets:
-  - `resources/cards/card-back.jpg` & `resources/ui/card-back.png`: Egyptian obsidian/gold swirl card back with Millennium Eye motif.
+- Sourced and optimized official card-back & placeholder assets:
+  - `resources/cards/card-back.jpg` & `resources/ui/card-back.png`: Official high-resolution Yu-Gi-Oh! card back asset (swirl vortex & logo) sourced directly from official server/CDN.
   - `resources/cards/placeholder.jpg` & `0.jpg` in `full/`, `art/`, and `mini/`: High-resolution "Card Image Unavailable" fallback assets ensuring no broken image icons ever appear in the UI.
 - Scaffolded self-hosted web fonts in `resources/fonts/` and `src/renderer/assets/fonts/`:
   - **Cinzel** (Regular 400, SemiBold 600, Bold 700) for Display / Headers.
