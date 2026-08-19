@@ -39,7 +39,7 @@
             :cards="currentBoardState.opponentField.hand"
             :get-target-info="(card, idx) => duelStore.getTargetInfo(duelStore.opponentPlayerId, 2, card.sequence ?? idx)"
             :is-prompt-active="duelStore.hasActiveSelectionPrompt"
-            @hover-card="hoveredCard = $event"
+            @hover-card="onCardHover"
           />
         </div>
 
@@ -68,7 +68,7 @@
           :opponent-player-id="duelStore.opponentPlayerId"
           :get-target-info="duelStore.getTargetInfo"
           :is-prompt-active="duelStore.hasActiveSelectionPrompt"
-          @hover-card="hoveredCard = $event"
+          @hover-card="onCardHover"
           @click-card="onFieldCardClick"
           @click-target="onTargetClick"
           @inspect-stack="onInspectStack"
@@ -98,7 +98,7 @@
             :cards="currentBoardState.userField.hand"
             :get-target-info="(card, idx) => duelStore.getTargetInfo(duelStore.userPlayerId, 2, card.sequence ?? idx)"
             :is-prompt-active="duelStore.hasActiveSelectionPrompt"
-            @hover-card="hoveredCard = $event"
+            @hover-card="onCardHover"
             @click-card="onHandCardClick"
           />
         </div>
@@ -180,11 +180,10 @@
       </div>
     </div>
 
-    <!-- Side Card Previewer Popup (Hover-driven) -->
+    <!-- Side Card Previewer Popup (Persistent Hover-driven) -->
     <CardPreviewPopup
       :card="activePreviewCard"
       position="left"
-      @close="hoveredCard = null"
     />
 
     <!-- In-Duel Pause Menu Modal -->
@@ -203,7 +202,7 @@
       :cards="activeInspectStack.cards"
       :owner="activeInspectStack.owner"
       :type="activeInspectStack.type"
-      @hover-card="hoveredCard = $event"
+      @hover-card="onCardHover"
     />
 
     <!-- Slide-Out Duel Log Drawer -->
@@ -316,8 +315,14 @@ function onInspectStack(stackType: string, controller: number): void {
   isInspectModalOpen.value = true;
 }
 
-// Hover-previewed card state
-const hoveredCard = ref<FieldCard | null>(null);
+// Hover-previewed card state (persists last hovered card even when mouse leaves)
+const lastHoveredCard = ref<FieldCard | null>(null);
+
+function onCardHover(card: FieldCard | null): void {
+  if (card && card.code > 0) {
+    lastHoveredCard.value = card;
+  }
+}
 
 // Card Action Menu State
 const activeMenuCard = ref<FieldCard | null>(null);
@@ -352,10 +357,16 @@ const actionGuideInfo = computed(() => {
 const duelLogs = ref<LogItem[]>([]);
 
 const activePreviewCard = computed<FieldCard | null>(() => {
-  if (hoveredCard.value && hoveredCard.value.code > 0) {
-    return hoveredCard.value;
+  if (lastHoveredCard.value && lastHoveredCard.value.code > 0) {
+    return lastHoveredCard.value;
   }
-  return currentBoardState.value.userField.monsterZones[0] || null;
+  // Default fallback when duel starts: first revealed card in hand or on field
+  return (
+    currentBoardState.value.userField.hand.find((c) => c && c.code > 0) ||
+    currentBoardState.value.userField.monsterZones.find((m) => m !== null && m.code > 0) ||
+    currentBoardState.value.userField.spellTrapZones.find((s) => s !== null && s.code > 0) ||
+    null
+  );
 });
 
 function formatTime(): string {
@@ -372,7 +383,7 @@ function appendLog(type: string, description: string): void {
 }
 
 function onHandCardClick(card: FieldCard, event: MouseEvent): void {
-  hoveredCard.value = card;
+  onCardHover(card);
 
   // If there is an active selection prompt (e.g. Cost discard or hand cleanup)
   if (duelStore.hasActiveSelectionPrompt) {
@@ -398,7 +409,7 @@ function onFieldCardClick(card: FieldCard | null, event?: MouseEvent): void {
     closeCardActionMenu();
     return;
   }
-  hoveredCard.value = card;
+  onCardHover(card);
 
   // If there is an active selection prompt (e.g. Target selection or Tribute)
   if (duelStore.hasActiveSelectionPrompt) {
