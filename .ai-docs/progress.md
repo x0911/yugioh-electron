@@ -278,4 +278,63 @@
    - Test YugiModal cancelable vs non-cancelable guidance modals.
    - Test LoadingSpinner solar, cyan, and ring animations.
 
+## Phase 5 — Loading & Main Menu Screens — 2026-08-19
+
+**Status:** Complete
+
+**What was built:**
+- Built the real **Loading Screen** (`LoadingView.vue`):
+  - Driven entirely by **real readiness signals** from `DuelEngineService`, SQLite `CardReaderService` (2,826 legal DM & GX cards), and `ScriptReaderService` (2,414 Lua scripts) over IPC, replacing fake timers.
+  - Multi-stage visual progression: engine core boot, card database validation, base Lua script verification, and final readiness signal.
+  - Integrated `LoadingSpinner` (celestial Egyptian runes) with glowing progress meter, live database stats (`Engine v11.0 • 2,826 Cards Indexed`), error boundary with retry CTA button, and smooth automatic transition to `/main-menu`.
+- Built the real **Main Menu Screen** (`MainMenuView.vue`):
+  - Implemented the Ancient Duel Arena visual identity with obsidian void backdrop, gold brand emblems, and live engine status badge.
+  - 4 interactive card-styled CTA buttons using `YugiButton` (`variant="card"`) with authentic card frame silhouettes, custom SVG medallions, holographic foil sweep hover animations, active press states, and keyboard focus states:
+    1. **Start Duel** (`to="/coin-toss"`): Initiates the duel entry flow.
+    2. **Deck Edit** (`to="/deck-edit"`): Navigates to the Deck Construction screen.
+    3. **Settings** (`to="/settings"`): Navigates to the Settings & Opponents screen.
+    4. **Exit Game**: Triggers the `YugiModal` exit confirmation dialog and quits the Electron app via `window.appAPI.exitApp()`.
+  - Integrated `YugiModal` exit confirmation dialog with "Cancel" and "Quit Game" (`variant="danger"`) actions.
+- Replaced the primary Dev Nav Bar in `App.vue`:
+  - Dev Nav is now hidden by default in production and development to provide a fullscreen 100vh authentic game presentation.
+  - Gated behind a discrete floating toggle badge (`⚡ DEV`) and keyboard shortcut (`Ctrl+Shift+D` / `Cmd+Shift+D`) in dev mode (`import.meta.env.DEV`).
+  - Added "← Return to Main Menu" navigation buttons across all placeholder screens (`SettingsView`, `DeckEditView`, `CoinTossView`, `PreDuelVideoView`, `DuelView`, `KitchenSinkView`) for clean round-trip navigation.
+- Extended IPC plumbing:
+  - Added `APP_INIT_ENGINE` and `APP_GET_INIT_STATUS` IPC channels in `src/main/ipc/index.ts` and `src/preload/index.ts`.
+  - Added `getCardCount()` to `CardReaderService` and `EngineInitStatus` to `DuelEngineService`.
+
+**Files added/changed:**
+- `src/main/engine/cardReader.ts`: Added `getCardCount()` method.
+- `src/main/engine/DuelEngineService.ts`: Added `init()` status return and `getStatus()`.
+- `src/shared/types/ipc.ts`: Added `APP_INIT_ENGINE`, `APP_GET_INIT_STATUS`, `EngineInitStatus`, and updated `AppAPI`.
+- `src/preload/index.ts`: Exposed `initEngine` and `getInitStatus` on `window.appAPI`.
+- `src/main/ipc/index.ts`: Added handlers for `APP_INIT_ENGINE` and `APP_GET_INIT_STATUS`.
+- `src/renderer/stores/uiStore.ts`: Added `engineStatus` state and action.
+- `src/renderer/stores/devToolsStore.ts`: Added `showDevNav` state and `toggleDevNav()` action.
+- `src/renderer/views/LoadingView.vue`: Full implementation of readiness-driven Loading screen.
+- `src/renderer/views/MainMenuView.vue`: Full implementation of Ancient Duel Arena Main Menu.
+- `src/renderer/assets/styles/pages/_menu.scss`: BEM SCSS styling for Main Menu and card CTAs.
+- `src/renderer/App.vue`: Gated dev nav, 100vh game viewport, floating toggle.
+- `src/renderer/views/SettingsView.vue`, `DeckEditView.vue`, `CoinTossView.vue`, `PreDuelVideoView.vue`, `DuelView.vue`, `KitchenSinkView.vue`: Added return-to-menu navigation buttons.
+
+**Decisions made / deviations from the plan:**
+- **Real Readiness Engine Polling & Handshake**: The Loading screen queries `window.appAPI.initEngine()` to verify the exact status of `ocgcore-wasm` version, SQLite card count in `cards.cdb` (2,826 records), and Lua script directory validity. If in an external browser test environment, a dev fallback cleanly resolves so UI testing works everywhere.
+- **Exit Modal Safety**: "Exit Game" invokes a non-destructive glass confirmation modal before triggering Electron `app.quit()`, preventing accidental window closes during navigation.
+
+**Known issues / TODO carried to next phase:**
+- Phase 6 will implement the Settings screen, load `data/characters.json` with 20 characters (10 DM + 10 GX), build the `OpponentCarousel`, and persist configuration to `electron-store`.
+- Character portraits and pre-duel videos will use styled placeholders until user files are provided.
+
+**How to manually verify this phase:**
+1. Run `npm run dev` to launch the application.
+2. Observe the **Loading Screen**: verify the celestial Egyptian spinner rotates, progress progresses through real stages (Engine Core -> Card Database -> Arena Ready), displays "2,826 Cards Indexed", and automatically navigates to the **Main Menu**.
+3. On the **Main Menu**, test the 4 Card CTAs:
+   - Hover over each card to verify the foil light-sweep gleam, scale lift, and gold glows.
+   - Click **"Start Duel"** -> verifies navigation to `/coin-toss`. Click **"Return to Main Menu"**.
+   - Click **"Deck Edit"** -> verifies navigation to `/deck-edit`. Click **"Return to Main Menu"**.
+   - Click **"Settings"** -> verifies navigation to `/settings`. Click **"Return to Main Menu"**.
+   - Click **"Exit Game"** -> verifies the Exit Confirmation modal opens. Click "Cancel" to dismiss. Click "Exit Game" -> confirms the Electron app closes cleanly.
+4. Verify Dev Nav is hidden by default. Click the `⚡ DEV` floating pill in the top-right corner (or press `Ctrl+Shift+D`) to toggle the Dev Nav bar.
+
+
 
