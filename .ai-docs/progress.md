@@ -1088,12 +1088,69 @@
 - `src/renderer/views/DuelView.vue`: Filtered opponent face-down clicks/hovers, fixed `MOVE` face-up condition, and updated direct attack trajectory.
 - `tests/hand-and-pacing.test.ts`: Added Tests 6 & 7 for opponent secret sanitization and direct attack trajectories.
 
+---
+
+## Phase 12 — Status Icons, Live Previewer, Battle & Position Animations, and Video-Pause Engine — 2026-08-20
+
+**Status:** Complete
+
+**What was built:**
+- **7 Status Icons & Engine State Flags Wiring**:
+  - Implemented the 7 status indicators (`negated`, `no-special-summon`, `temp-banished`, `fusion-material`, `synchro-material`, `destroyed-battle`, `no-attack`) across shared types (`FieldCard.statuses?: CardStatusType[]`), engine computation (`DuelEngineService.computeCardStatuses`), and `viewFilter.ts`.
+  - Added the `.status-icon-row` in `CardPreviewPopup.vue` using `IconIndicator.vue` (size `sm`) to display active card statuses with tooltips on hover.
+- **CardPreviewPopup Live Duel Wiring & Anti-Leak Visibility Rules**:
+  - Wired `CardPreviewPopup` to live duel card data including ATK/DEF, Level, Type bracket labels, Lore description, and active status icons.
+  - Strictly enforced anti-leak visibility rules: unrevealed opponent cards (hand cards and face-down field cards) have `code: 0`, stats `undefined`, and `statuses: []`, ensuring zero secret data leakage.
+- **Position-Change Flip Animation (§3.1)**:
+  - Added keyframe animations in `_animations.scss` and `CardAnimationOverlay.vue`:
+    - `card-flip-summon`: 3D flip + 90° landscape rotation returning to 0° portrait face-up.
+    - `card-rotate-defense`: 0° portrait $\to$ 90° landscape.
+    - `card-rotate-attack`: 90° landscape $\to$ 0° portrait.
+- **Battle Animations & Tweened LP Countdown (§3.3)**:
+  - In `LifePointsMeter.vue`, implemented smooth numerical tweening for LP changes using `requestAnimationFrame` with cubic easing, plus a crimson damage flash (`.lp-meter--damage-flash`) with shake vibration on damage taken.
+  - In `CardAnimationOverlay.vue`, enhanced Battle Attack Blade clash surges (`⚔️` + impact hit flare) for monster-vs-monster attacks and direct LP attacks targeting the opponent's area.
+- **`data/card-videos.json` & In-Duel Video-Pause Engine Mechanism (`architecture.md` §4 step 4)**:
+  - Created `data/card-videos.json` mapping iconic cards (Dark Magician `46986414`, Blue-Eyes White Dragon `89631139`, Summoned Skull `70781052`, Red-Eyes Black Dragon `74677422`, Elemental HERO Neos `21844576`, Cyber Dragon `70095154`, Flame Swordsman `45231177`, Obelisk `10000000`, Ra `10000010`, Slifer `10000020`) to summon and attack video paths. Note: Video entries are flagged with `isPlaceholder: true` until the user supplies custom `.mp4` video files.
+  - Implemented the video-pause engine loop: when `SUMMONING`, `SPSUMMONING`, or `ATTACK` occurs for a mapped card, `DuelEngineService` emits `DUEL_PLAY_VIDEO`, enters `isVideoPlaying = true`, clears AI timers, and pauses processing.
+  - Built `VideoOverlay.vue`: Fullscreen in-duel cutscene / video player with card art, glowing particles, countdown bar, and click-to-skip. While active, all duel arena interaction is disabled. On finish or skip, sends `DUEL_VIDEO_FINISHED` IPC to unpause the engine loop.
+- **Automated Tests**:
+  - Added `tests/status-animation-video.test.ts` verifying viewFilter status sanitization, engine status computations, `card-videos.json` structure, and video pause synchronization. All 5 test suites passed.
+
+**Files created/modified:**
+- `data/card-videos.json`: Mapped iconic DM & GX cards to summon and attack videos.
+- `src/shared/types/field.ts`: Added `CardStatusType` and `statuses?: CardStatusType[]` to `FieldCard`.
+- `src/shared/types/duel.ts`: Added `CardVideoEntry` and `CardVideoPayload`.
+- `src/shared/types/ipc.ts`: Added `playVideo` and `notifyVideoFinished` types.
+- `src/preload/index.ts`: Typed `playVideo` context bridge method.
+- `src/main/engine/viewFilter.ts`: Added `filterFieldCardForViewer` and status sanitization.
+- `src/main/engine/DuelEngineService.ts`: Added card status tracking, video trigger check, and video-pause engine loop.
+- `src/main/ipc/index.ts`: Wired `DUEL_PLAY_VIDEO` forwarding and `DUEL_VIDEO_FINISHED` handler.
+- `src/renderer/components/duel/CardPreviewPopup.vue`: Added `.status-icon-row` with `IconIndicator` for active statuses.
+- `src/renderer/components/duel/LifePointsMeter.vue`: Added tweened LP countdown and damage flash.
+- `src/renderer/components/duel/VideoOverlay.vue`: Built fullscreen in-duel video player & cutscene overlay.
+- `src/renderer/components/duel/CardAnimationOverlay.vue`: Added flip summon and position-change animation classes.
+- `src/renderer/components/duel/index.ts`: Exported `VideoOverlay`.
+- `src/renderer/assets/styles/base/_animations.scss`: Added `card-flip-summon`, `card-rotate-defense`, and `attack-clash-impact` keyframes.
+- `src/renderer/stores/duelStore.ts`: Added `isVideoPlaying`, `activeVideoPayload`, `handlePlayVideo`, and `finishVideo`.
+- `src/renderer/views/DuelView.vue`: Mounted `VideoOverlay`, wired video IPC listener, and guarded user interaction during playback.
+- `tests/status-animation-video.test.ts`: Created Phase 12 automated unit test suite.
+- `package.json`: Added test script entry.
+
+**Decisions made / deviations from the plan:**
+- **Placeholder Video Fallback**: If physical `.mp4` card video assets have not yet been placed in `resources/videos/cards/`, `VideoOverlay.vue` gracefully renders a cinematic holographic card cutscene with card art, auto-timer (3.0s), and click-to-skip, ensuring smooth gameplay without missing asset errors while strictly pausing and unpausing the engine.
+
+**Known issues / TODO carried to next phase:**
+- Phase 13 will focus on game settings, sound effects, BGM playback, and deck management polish.
+
 **How to manually verify this phase:**
-1. Run `npm test` — all 7 test suites pass.
-2. In a duel:
-   - When the opponent sets a card face-down: Hover over it and click on it — verify it does NOT open or reveal any information in the card previewer.
-   - When you set a spell/trap face-down from your hand: Verify the card performs a single smooth 3D flight from your hand into your spell/trap zone without flickering or appearing on the opponent's side.
-   - In Battle Phase, declare a direct attack on the opponent: Verify the battle attack sword slash surges from your monster across the field to the opponent's side with a crimson battle clash impact.
+1. Run `npm test` — all 5 test suites pass cleanly.
+2. Run `npm run dev` to launch the application:
+   - Start a duel against Yugi Muto.
+   - **Position Change**: Summon a monster (e.g. *Dark Magician* or *Summoned Skull*) in Attack position. Click it, select "Change Position" $\to$ observe smooth 90° landscape rotation to Defense position. Click it in the next turn $\to$ select "Change Position" to rotate back to 0° portrait.
+   - **Flip Summon**: Set a monster in Face-down Defense position. In your next turn, click it and select "Flip Summon" $\to$ observe 3D card-back flip combined with 90° rotation to portrait face-up Attack position with ATK/DEF revealed.
+   - **Status Icons**: Hover/click a monster in Defense position $\to$ verify the `no-attack` status icon appears in `CardPreviewPopup`'s status row.
+   - **Battle Clash & LP Countdown**: Enter Battle Phase and declare an attack on an opponent monster and direct attack on the opponent $\to$ observe the Battle Attack Blade clash surge and the Life Points meter smoothly counting down with a red damage pulse flash.
+   - **In-Duel Video Overlay & Engine Pause**: When a mapped monster (*Dark Magician*, *Blue-Eyes White Dragon*, *Summoned Skull*, *Flame Swordsman*, *Elemental HERO Neos*) is Summoned or declares an Attack $\to$ observe the fullscreen in-duel video overlay appear. During video playback, try clicking duel zones/cards $\to$ confirm interaction is blocked and the engine is paused. Click anywhere or wait 3s $\to$ verify the duel unpauses and resumes immediately.
 
 
 
