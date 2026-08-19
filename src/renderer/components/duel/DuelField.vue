@@ -46,7 +46,10 @@
         <!-- Opponent 5 Spell & Trap Zones (Mirrored, with Pendulum Scales on 1 & 5) -->
         <div class="zone-group zone-group--stz">
           <div class="pendulum-jewel pendulum-jewel--left">
-            <Tooltip content="Opponent Left Pendulum Scale (Reserved for future release)" position="top">
+            <Tooltip
+              content="Opponent Left Pendulum Scale (Reserved for future release)"
+              position="top"
+            >
               <div class="scale-orb scale-orb--blue">
                 <span class="scale-num">1</span>
               </div>
@@ -67,7 +70,10 @@
           />
 
           <div class="pendulum-jewel pendulum-jewel--right">
-            <Tooltip content="Opponent Right Pendulum Scale (Reserved for future release)" position="top">
+            <Tooltip
+              content="Opponent Right Pendulum Scale (Reserved for future release)"
+              position="top"
+            >
               <div class="scale-orb scale-orb--red">
                 <span class="scale-num">8</span>
               </div>
@@ -222,7 +228,10 @@
         <!-- User 5 Spell & Trap Zones (with Pendulum Scales on 1 & 5) -->
         <div class="zone-group zone-group--stz">
           <div class="pendulum-jewel pendulum-jewel--left">
-            <Tooltip content="Your Left Pendulum Scale (Reserved for future release)" position="top">
+            <Tooltip
+              content="Your Left Pendulum Scale (Reserved for future release)"
+              position="top"
+            >
               <div class="scale-orb scale-orb--blue">
                 <span class="scale-num">1</span>
               </div>
@@ -243,7 +252,10 @@
           />
 
           <div class="pendulum-jewel pendulum-jewel--right">
-            <Tooltip content="Your Right Pendulum Scale (Reserved for future release)" position="top">
+            <Tooltip
+              content="Your Right Pendulum Scale (Reserved for future release)"
+              position="top"
+            >
               <div class="scale-orb scale-orb--red">
                 <span class="scale-num">8</span>
               </div>
@@ -321,7 +333,7 @@ defineEmits<{
   justify-content: center;
   gap: 10px;
   user-select: none;
-  padding: 8px 24px;
+  padding: 8px 24px 16px 24px; // Do not revert this change, we need this extra bottom padding.
   box-sizing: border-box;
 
   // Obsidian Arena Floor
