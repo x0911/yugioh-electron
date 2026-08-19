@@ -1,0 +1,7 @@
+node_modules
+dist
+out
+release
+.ai-docs
+resources/cards
+resources/scripts
