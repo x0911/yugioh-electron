@@ -213,6 +213,13 @@
       @clear="duelLogs = []"
     />
 
+    <!-- In-Duel Video Overlay (Special Summon / Attack Cutscenes) -->
+    <VideoOverlay
+      :video="duelStore.activeVideoPayload"
+      :visible="duelStore.isVideoPlaying"
+      @finish="duelStore.finishVideo"
+    />
+
     <!-- Floating Duel Tools -->
     <aside class="dev-floating-controls">
       <button
@@ -247,6 +254,7 @@ import {
   PromptModal,
   CardAnimationOverlay,
   CardListModal,
+  VideoOverlay,
 } from '../components/duel/index.js';
 import {
   duelAnimationQueue,
@@ -390,6 +398,7 @@ function appendLog(type: string, description: string): void {
 }
 
 function onHandCardClick(card: FieldCard, event: MouseEvent): void {
+  if (duelStore.isVideoPlaying) return;
   onCardHover(card);
 
   // If there is an active selection prompt (e.g. Cost discard or hand cleanup)
@@ -412,6 +421,7 @@ function onHandCardClick(card: FieldCard, event: MouseEvent): void {
 }
 
 function onFieldCardClick(card: FieldCard | null, event?: MouseEvent): void {
+  if (duelStore.isVideoPlaying) return;
   if (!card || card.code === 0) {
     closeCardActionMenu();
     return;
@@ -451,12 +461,14 @@ function onFieldCardClick(card: FieldCard | null, event?: MouseEvent): void {
 }
 
 function onTargetClick(targetInfo: TargetInfo): void {
+  if (duelStore.isVideoPlaying) return;
   if (targetInfo.isSelectable) {
     duelStore.toggleTargetByIndex(targetInfo.selectIndex);
   }
 }
 
 async function onSelectCardAction(action: CardActionOption): Promise<void> {
+  if (duelStore.isVideoPlaying) return;
   closeCardActionMenu();
   switch (action.type) {
     case 'summon':
@@ -508,108 +520,40 @@ function returnToCharacters(): void {
 }
 
 let unsubscribeEvents: (() => void) | null = null;
+let unsubscribeVideo: (() => void) | null = null;
 
-async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
-  appendLog(event.type, event.description);
+async function setupEngineEventListener(): Promise<void> {
+  if (!window.duelAPI) return;
 
-  await duelAnimationQueue.enqueue(async () => {
-    // 1. Draw from Deck -> Hand
-    if (event.type === 'DRAW' && event.player !== undefined) {
-      const isHuman = event.player === duelStore.userPlayerId;
-      const fromRect = getStackRect(event.player as 0 | 1, 'deck');
-      const toRect = getHandFanRect(event.player as 0 | 1);
-      const drawnCode = (event as any).drawn?.[0]?.code || event.code || 0;
-      await playCardFlight({
-        code: isHuman ? drawnCode : 0,
-        cardName: event.cardName || 'Card Drawn',
-        fromRect,
-        toRect,
-        type: 'draw',
-        isFacedown: !isHuman,
-        durationMs: 420,
-      });
-    }
-    // 2. Normal or Special Summon
-    else if ((event.type === 'SUMMONING' || event.type === 'SPSUMMONING') && event.controller !== undefined) {
-      const p = event.controller as 0 | 1;
-      const seq = event.sequence ?? 0;
-      const fromRect = getHandCardRect(p, seq) || getHandFanRect(p);
-      const toRect = getZoneRect(p, 'monster', seq);
-      await playCardFlight({
-        code: event.code || 0,
-        cardName: event.cardName,
-        fromRect,
-        toRect,
-        type: 'summon',
-        isFacedown: false,
-        isDefense: false,
-        durationMs: 480,
-      });
-    }
-    // 3. Set Card (Facedown)
-    else if (event.type === 'SET' && event.controller !== undefined) {
-      const p = event.controller as 0 | 1;
-      const seq = event.sequence ?? 0;
-      const isSpell = event.location === 8;
-      const fromRect = getHandCardRect(p, seq) || getHandFanRect(p);
-      const toRect = getZoneRect(p, isSpell ? 'spell-trap' : 'monster', seq);
-      await playCardFlight({
-        code: p === duelStore.userPlayerId ? (event.code || 0) : 0,
-        cardName: event.cardName,
-        fromRect,
-        toRect,
-        type: isSpell ? 'set-spell' : 'set-monster',
-        isFacedown: true,
-        isDefense: !isSpell,
-        durationMs: 480,
-      });
-    }
-    // 4. Card Move (Spell Activation Hand -> Field, Destroy to GY, Discard, Banish)
-    else if (event.type === 'MOVE') {
-      const moveEvt = event as any;
-      const p = moveEvt.controller as 0 | 1;
-      const fromLoc = moveEvt.fromLocation;
-      const fromSeq = moveEvt.fromSequence ?? 0;
-      const toLoc = moveEvt.toLocation;
-      const toSeq = moveEvt.toSequence ?? 0;
-      const isFaceup = (moveEvt.position & 1) !== 0;
+  unsubscribeEvents = window.duelAPI.onEvent(async (event: DuelEventPayload) => {
+    appendLog(event.type, event.description);
 
-      if (toLoc === 16) {
-        // Graveyard
-        const fromRect =
-          fromLoc === 2
-            ? getHandCardRect(p, fromSeq) || getHandFanRect(p)
-            : getZoneRect(p, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
-        const toRect = getStackRect(p, 'graveyard');
+    await duelAnimationQueue.enqueue(async () => {
+      // 1. Draw from Deck -> Hand
+      if (event.type === 'DRAW' && event.player !== undefined) {
+        const isHuman = event.player === duelStore.userPlayerId;
+        const fromRect = getStackRect(event.player as 0 | 1, 'deck');
+        const toRect = getHandFanRect(event.player as 0 | 1);
+        const drawnCode = (event as any).drawn?.[0]?.code || event.code || 0;
         await playCardFlight({
-          code: moveEvt.code || 0,
-          cardName: moveEvt.cardName,
+          code: isHuman ? drawnCode : 0,
+          cardName: event.cardName || 'Card Drawn',
           fromRect,
           toRect,
-          type: fromLoc === 2 ? 'discard' : 'destroy-gy',
-          durationMs: 440,
+          type: 'draw',
+          isFacedown: !isHuman,
+          durationMs: 420,
         });
-      } else if (toLoc === 8 && fromLoc === 2 && isFaceup) {
-        // Spell / Trap activation from Hand -> Spell/Trap Zone (Only when Face-up)
-        const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
-        const toRect = getZoneRect(p, 'spell-trap', toSeq);
+      }
+      // 2. Normal or Special Summon
+      else if ((event.type === 'SUMMONING' || event.type === 'SPSUMMONING') && event.controller !== undefined) {
+        const p = event.controller as 0 | 1;
+        const seq = event.sequence ?? 0;
+        const fromRect = getHandCardRect(p, seq) || getHandFanRect(p);
+        const toRect = getZoneRect(p, 'monster', seq);
         await playCardFlight({
-          code: moveEvt.code || 0,
-          cardName: moveEvt.cardName || 'Spell Card',
-          fromRect,
-          toRect,
-          type: 'spell-activate',
-          isFacedown: false,
-          isDefense: false,
-          durationMs: 480,
-        });
-      } else if (toLoc === 4 && fromLoc === 2 && isFaceup) {
-        // Monster from Hand -> Monster Zone (Only when Face-up)
-        const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
-        const toRect = getZoneRect(p, 'monster', toSeq);
-        await playCardFlight({
-          code: moveEvt.code || 0,
-          cardName: moveEvt.cardName || 'Monster',
+          code: event.code || 0,
+          cardName: event.cardName,
           fromRect,
           toRect,
           type: 'summon',
@@ -617,66 +561,139 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
           isDefense: false,
           durationMs: 480,
         });
-      } else if (toLoc === 32) {
-        // Banished
-        const fromRect =
-          fromLoc === 2
-            ? getHandCardRect(p, fromSeq) || getHandFanRect(p)
-            : getZoneRect(p, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
-        const toRect = getStackRect(p, 'banished');
+      }
+      // 3. Set Card (Facedown)
+      else if (event.type === 'SET' && event.controller !== undefined) {
+        const p = event.controller as 0 | 1;
+        const seq = event.sequence ?? 0;
+        const isSpell = event.location === 8;
+        const fromRect = getHandCardRect(p, seq) || getHandFanRect(p);
+        const toRect = getZoneRect(p, isSpell ? 'spell-trap' : 'monster', seq);
         await playCardFlight({
-          code: moveEvt.code || 0,
-          cardName: moveEvt.cardName,
+          code: p === duelStore.userPlayerId ? (event.code || 0) : 0,
+          cardName: event.cardName,
           fromRect,
           toRect,
-          type: 'banish',
+          type: isSpell ? 'set-spell' : 'set-monster',
+          isFacedown: true,
+          isDefense: !isSpell,
+          durationMs: 480,
+        });
+      }
+      // 4. Card Move (Spell Activation Hand -> Field, Destroy to GY, Discard, Banish)
+      else if (event.type === 'MOVE') {
+        const moveEvt = event as any;
+        const p = moveEvt.controller as 0 | 1;
+        const fromLoc = moveEvt.fromLocation;
+        const fromSeq = moveEvt.fromSequence ?? 0;
+        const toLoc = moveEvt.toLocation;
+        const toSeq = moveEvt.toSequence ?? 0;
+        const isFaceup = (moveEvt.position & 1) !== 0;
+
+        if (toLoc === 16) {
+          // Graveyard
+          const fromRect =
+            fromLoc === 2
+              ? getHandCardRect(p, fromSeq) || getHandFanRect(p)
+              : getZoneRect(p, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
+          const toRect = getStackRect(p, 'graveyard');
+          await playCardFlight({
+            code: moveEvt.code || 0,
+            cardName: moveEvt.cardName,
+            fromRect,
+            toRect,
+            type: fromLoc === 2 ? 'discard' : 'destroy-gy',
+            durationMs: 440,
+          });
+        } else if (toLoc === 8 && fromLoc === 2 && isFaceup) {
+          // Spell / Trap activation from Hand -> Spell/Trap Zone (Only when Face-up)
+          const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
+          const toRect = getZoneRect(p, 'spell-trap', toSeq);
+          await playCardFlight({
+            code: moveEvt.code || 0,
+            cardName: moveEvt.cardName || 'Spell Card',
+            fromRect,
+            toRect,
+            type: 'spell-activate',
+            isFacedown: false,
+            isDefense: false,
+            durationMs: 480,
+          });
+        } else if (toLoc === 4 && fromLoc === 2 && isFaceup) {
+          // Monster from Hand -> Monster Zone (Only when Face-up)
+          const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
+          const toRect = getZoneRect(p, 'monster', toSeq);
+          await playCardFlight({
+            code: moveEvt.code || 0,
+            cardName: moveEvt.cardName || 'Monster',
+            fromRect,
+            toRect,
+            type: 'summon',
+            isFacedown: false,
+            isDefense: false,
+            durationMs: 480,
+          });
+        } else if (toLoc === 32) {
+          // Banished
+          const fromRect =
+            fromLoc === 2
+              ? getHandCardRect(p, fromSeq) || getHandFanRect(p)
+              : getZoneRect(p, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
+          const toRect = getStackRect(p, 'banished');
+          await playCardFlight({
+            code: moveEvt.code || 0,
+            cardName: moveEvt.cardName,
+            fromRect,
+            toRect,
+            type: 'banish',
+            durationMs: 440,
+          });
+        }
+      }
+      // 5. Chaining / Spell Activation
+      else if (event.type === 'CHAINING') {
+        // Visual pacing so players see the spell activating on field before its effect resolves
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+      // 6. Attack Declaration & Surge
+      else if (event.type === 'ATTACK') {
+        const atkEvt = event as any;
+        const p = (atkEvt.controller ?? (duelStore.boardState.userField.isTurn ? duelStore.userPlayerId : duelStore.opponentPlayerId)) as 0 | 1;
+        const opp = (p === duelStore.userPlayerId ? duelStore.opponentPlayerId : duelStore.userPlayerId) as 0 | 1;
+        const seq = atkEvt.sequence ?? (atkEvt.card?.sequence ?? 0);
+        const fromRect = getZoneRect(p, 'monster', seq);
+        const toRect = atkEvt.target
+          ? getZoneRect(atkEvt.target.controller, 'monster', atkEvt.target.sequence)
+          : (getHandFanRect(opp) || getAvatarRect(opp));
+        await playCardFlight({
+          code: 0,
+          cardName: 'Battle Attack',
+          fromRect,
+          toRect,
+          type: 'attack',
           durationMs: 440,
         });
       }
-    }
-    // 5. Chaining / Spell Activation
-    else if (event.type === 'CHAINING') {
-      // Visual pacing so players see the spell activating on field before its effect resolves
-      await new Promise((resolve) => setTimeout(resolve, 400));
-    }
-    // 6. Attack Declaration & Surge
-    else if (event.type === 'ATTACK') {
-      const atkEvt = event as any;
-      const p = (atkEvt.controller ?? (duelStore.boardState.userField.isTurn ? duelStore.userPlayerId : duelStore.opponentPlayerId)) as 0 | 1;
-      const opp = (p === duelStore.userPlayerId ? duelStore.opponentPlayerId : duelStore.userPlayerId) as 0 | 1;
-      const seq = atkEvt.sequence ?? (atkEvt.card?.sequence ?? 0);
-      const fromRect = getZoneRect(p, 'monster', seq);
-      const toRect = atkEvt.target
-        ? getZoneRect(atkEvt.target.controller, 'monster', atkEvt.target.sequence)
-        : (getHandFanRect(opp) || getAvatarRect(opp));
-      await playCardFlight({
-        code: 0,
-        cardName: 'Battle Attack',
-        fromRect,
-        toRect,
-        type: 'attack',
-        durationMs: 440,
-      });
-    }
-    // 7. Monster Position Change / Flip Summon
-    else if (event.type === 'POS_CHANGE' || event.type === 'FLIPSUMMONING') {
-      const p = (event.controller ?? duelStore.userPlayerId) as 0 | 1;
-      const seq = event.sequence ?? 0;
-      const fromRect = getZoneRect(p, 'monster', seq);
-      await playCardFlight({
-        code: event.code || 0,
-        cardName: event.cardName || 'Position Change',
-        fromRect,
-        toRect: fromRect,
-        type: event.type === 'FLIPSUMMONING' ? 'flip' : 'pos-change',
-        isFacedown: event.position === 8,
-        isDefense: event.position === 4 || event.position === 8,
-        durationMs: 360,
-      });
-    }
+      // 7. Monster Position Change / Flip Summon
+      else if (event.type === 'POS_CHANGE' || event.type === 'FLIPSUMMONING') {
+        const p = (event.controller ?? duelStore.userPlayerId) as 0 | 1;
+        const seq = event.sequence ?? 0;
+        const fromRect = getZoneRect(p, 'monster', seq);
+        await playCardFlight({
+          code: event.code || 0,
+          cardName: event.cardName || 'Position Change',
+          fromRect,
+          toRect: fromRect,
+          type: event.type === 'FLIPSUMMONING' ? 'flip' : 'pos-change',
+          isFacedown: event.position === 8,
+          isDefense: event.position === 4 || event.position === 8,
+          durationMs: 360,
+        });
+      }
 
-    // Update store
-    await duelStore.handleEngineEvent(event);
+      // Update store
+      await duelStore.handleEngineEvent(event);
+    });
   });
 }
 
@@ -684,7 +701,12 @@ onMounted(async () => {
   await settingsStore.initializeSettings();
 
   if (window.duelAPI) {
-    unsubscribeEvents = window.duelAPI.onEvent(handleLiveDuelEvent);
+    await setupEngineEventListener();
+    if (window.duelAPI.playVideo) {
+      unsubscribeVideo = window.duelAPI.playVideo((video) => {
+        duelStore.handlePlayVideo(video);
+      });
+    }
   }
 
   // Start fresh prepared live duel
@@ -694,6 +716,9 @@ onMounted(async () => {
 onUnmounted(() => {
   if (unsubscribeEvents) {
     unsubscribeEvents();
+  }
+  if (unsubscribeVideo) {
+    unsubscribeVideo();
   }
 });
 </script>

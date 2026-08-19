@@ -192,6 +192,21 @@ function getWrapperStyle(anim: FlyingCard): CSSProperties {
     animation: card-3d-flip-down var(--duration) cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
   }
 
+  // Flip Summon (3D flip from 90° landscape back to 0° portrait face-up)
+  &--flip .flying-card__flipper {
+    animation: card-flip-summon var(--duration) cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+  }
+
+  // Position Change
+  &--pos-change {
+    &.flying-card--defense {
+      animation: card-rotate-defense var(--duration) cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+    }
+    &:not(.flying-card--defense) {
+      animation: card-rotate-attack var(--duration) cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+    }
+  }
+
   // Defense Rotation (90deg horizontal)
   &--defense {
     animation: rotate-defense var(--duration) cubic-bezier(0.2, 0.85, 0.25, 1) forwards;

@@ -99,6 +99,10 @@ export interface DuelStoreState {
   selectedTargetIndices: number[];
 
   isPromptWaiting: boolean;
+
+  // In-Duel Video Playback
+  isVideoPlaying: boolean;
+  activeVideoPayload: import('../../shared/types/duel.js').CardVideoPayload | null;
 }
 
 export interface TargetInfo {
@@ -183,6 +187,9 @@ export const useDuelStore = defineStore('duel', {
     selectedTargetIndices: [],
 
     isPromptWaiting: false,
+
+    isVideoPlaying: false,
+    activeVideoPayload: null,
   }),
 
   getters: {
@@ -1094,6 +1101,23 @@ export const useDuelStore = defineStore('duel', {
         }
       }
       return false;
+    },
+
+    handlePlayVideo(payload: import('../../shared/types/duel.js').CardVideoPayload): void {
+      this.isVideoPlaying = true;
+      this.activeVideoPayload = payload;
+    },
+
+    async finishVideo(): Promise<void> {
+      this.isVideoPlaying = false;
+      this.activeVideoPayload = null;
+      if (window.duelAPI?.notifyVideoFinished) {
+        try {
+          await window.duelAPI.notifyVideoFinished();
+        } catch (err) {
+          console.warn('[DuelStore] Error calling notifyVideoFinished:', err);
+        }
+      }
     },
 
     resetDuel(): void {
