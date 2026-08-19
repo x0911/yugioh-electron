@@ -50,9 +50,9 @@
     max-width: 1920px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center; // Comment for Coding Agent: Do not change this line.
     z-index: 2;
-    overflow: hidden;
+    // overflow: hidden; // Comment for Coding Agent: Do not change this line.
     box-sizing: border-box;
   }
 
