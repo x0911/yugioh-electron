@@ -32,6 +32,16 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  // Forward special summon/attack video trigger events to renderer process
+  duelEngineService.onPlayVideo((payload) => {
+    const wins = BrowserWindow.getAllWindows();
+    for (const win of wins) {
+      if (!win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.DUEL_PLAY_VIDEO, payload);
+      }
+    }
+  });
+
   // App
   ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => app.getVersion());
   ipcMain.handle(IPC_CHANNELS.APP_INIT_ENGINE, async () => {
@@ -92,7 +102,7 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.DUEL_VIDEO_FINISHED, async () => {
-    console.log('[Main IPC] Duel video finished notification received');
+    duelEngineService.onVideoFinished();
   });
 
   // Deck & Card Pool Handlers (Phase 7)
