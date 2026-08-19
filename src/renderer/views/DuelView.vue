@@ -315,11 +315,13 @@ const sampleCardsPool: Omit<FieldCard, 'id' | 'sequence'>[] = [
 ];
 
 /**
- * Sticky previewer: shows hovered card, or falls back to user's first monster.
+ * Sticky previewer: shows hovered card (if not hidden), or falls back to user's first monster.
  */
 const activePreviewCard = computed<FieldCard | null>(() => {
-  if (hoveredCard.value) return hoveredCard.value;
-  // Fallback to active monster on field for immediate inspection
+  if (hoveredCard.value && hoveredCard.value.code > 0) {
+    return hoveredCard.value;
+  }
+  // Fallback to active monster on user field for immediate inspection
   return boardState.userField.monsterZones[0] || null;
 });
 
@@ -407,7 +409,7 @@ async function stepLiveDuel(): Promise<void> {
 }
 
 function onFieldCardClick(card: FieldCard | null): void {
-  if (!card) return;
+  if (!card || card.code === 0) return;
   hoveredCard.value = card;
   appendLog('SELECT', `Selected field card: ${card.name} (${card.position})`);
 }

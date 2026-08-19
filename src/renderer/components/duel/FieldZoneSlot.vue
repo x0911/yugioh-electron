@@ -180,25 +180,17 @@ function onMouseEnter(): void {
     emit('hover-card', null);
     return;
   }
-  // Anti-cheat: Opponent's face-down cards or redacted cards (code 0) must never leak secrets
+  // Opponent's face-down / hidden cards are completely ignored from preview
   if (props.player === 'ai' && (isFaceDown.value || props.card.code === 0)) {
-    emit('hover-card', {
-      id: props.card.id,
-      code: 0,
-      name: 'Face-Down Card',
-      controller: 1,
-      location: props.card.location,
-      sequence: props.card.sequence,
-      position: props.card.position,
-      description:
-        'This card is currently face-down on your opponent’s field. Its identity, stats, and effects remain hidden.',
-    });
     return;
   }
   emit('hover-card', props.card);
 }
 
 function onMouseLeave(): void {
+  if (props.player === 'ai' && (isFaceDown.value || props.card?.code === 0)) {
+    return;
+  }
   emit('hover-card', null);
 }
 
