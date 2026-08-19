@@ -578,6 +578,79 @@
    - Verify the scoreboard shows Player 0 (1st Turn) and Player 1 (2nd Turn) correctly assigned according to the coin toss result.
    - Click **"⚡ Auto-Play Duel"** or **"⏩ Next Step"** to confirm the duel executes smoothly with the chosen starting player.
 
+## Phase 9 — Duel Field: Static Layer — 2026-08-19
 
+**Status:** Complete
 
+**What was built:**
+- Built the full static **Duel Field Layout** (`DuelField.vue`, `DuelView.vue`, `_duel.scss`):
+  - Fixed **16:9 aspect-ratio letterboxed arena canvas** (`aspect-ratio: 16 / 9`, up to 1920×1080) with "Ancient Duel Arena" obsidian stone floor geometry, radial background vignette, and player identity glows (User Blue vs AI Red).
+  - Implemented all **14 numbered zones per player** matching reference proportions and the brief (`prompt-00.md` §3.7):
+    1. **5 Main Monster Zones** (`FieldZoneSlot.vue`): Supporting Face-up Attack (portrait, stats badge), Face-up Defense (**rotated 90° landscape**, DEF highlighted), Face-down Defense "Set" (**rotated 90° landscape with authentic swirl card back**), and empty watermark labels (`M1`–`M5`).
+    2. **2 Extra Monster Zones** in center divide (`EMZ 1` above MMZ 2, `EMZ 2` above MMZ 4 — visually present but inert with *"Extra Monster Zone (Reserved for future release)"* tooltip).
+    3. **5 Spell & Trap Zones** (`FieldZoneSlot.vue`): Supporting Face-up Spells/Traps, Face-down Set Spells/Traps (portrait card back), and empty watermark labels (`S1`–`S5`).
+    4. **Pendulum Scale Jewels** on STZ 1 & STZ 5 (Scale 1 Blue jewel & Scale 8 Red jewel — visually present but inert with tooltips).
+    5. **Field Zone** per player: Active Field Spell (Yami / Mountain) with glowing stone border.
+    6. **Graveyard Zone** (`DeckStack.vue`): 3D stack showing top card thumbnail (Summoned Skull / La Jinn), card count badge, and detailed tooltip.
+    7. **Extra Deck Zone** (`DeckStack.vue`): 3D layered card backs with count badge (e.g. 3 cards).
+    8. **Main Deck Zone** (`DeckStack.vue`): 3D layered card backs with count badge (e.g. 34 cards).
+    9. **Banished Zone** (`DeckStack.vue`): Banished stack with count badge and tooltip.
+    10. **User Hand** (`HandFan.vue`): Fanned card layout with parabolic arc geometry, full card artwork, name, Level, ATK/DEF, and hover lift (`translateY(-28px)`, `scale(1.18)`, z-index 100, gold foil sweep gleam).
+    11. **Opponent Hand** (`HandFan.vue`): Inverted fanned card backs facing downward from top center with correct count pill.
+    12. **Life Points Meters** (`LifePointsMeter.vue`): Scoreboards for both User and Opponent featuring character avatar / holographic silhouette fallback, series badge (`DM` gold vs `GX` cyan), player name, title, huge tabular **Oxanium** LP numerals (`8000`), animated gradient LP health bar, and glowing "TURN" active disk aura.
+    13. **Top HUD Bar** (`DuelHud.vue`): Phase tracker pills (`DP`, `SP`, `M1`, `BP`, `M2`, `EP`), Action Guide banner, Menu button (`hud-menu.png`), Duel Log toggle (`hud-duel-log.png`), Field Status button (`hud-field-status.png`, "Coming soon" tooltip), and Activation Confirmation button (`hud-activation-confirm.png`, "Coming soon" tooltip).
+    14. **In-Duel Pause Menu** (`DuelMenuModal.vue`): Glass modal with "Resume Duel", "Surrender & Return to Main Menu" (with confirmation dialog), "Restart Match", and real-time BGM / SFX volume sliders synced to `settingsStore`.
+    15. **Slide-Out Duel Log Drawer** (`DuelLogPanel.vue`): Slide-out glass drawer with event category filters (All, Summons, Spells, Combat, Prompts), event stream list, and clear log action.
+    16. **Mate Slots**: Pedestals for User (bottom-right) and Opponent (top-left) with *"Mate Slot (Reserved for future release)"* tooltip.
+- Built hover-driven **Card Preview Popup** (`CardPreviewPopup.vue`):
+  - Floating card inspector updating dynamically on hover over any card on the field, hand, or graveyard.
+  - Displays full-resolution artwork (`resources/cards/full/<id>.jpg`), Attribute emblem, Level stars, Type/Race bracket, ATK/DEF scores in tabular Oxanium font, and scrollable effect lore in Barlow Semi Condensed typography.
+- Built **Mock Duel State Generator** (`mockDuelState.ts`):
+  - Curated complete field state with classic DM cards (Dark Magician, Celtic Guardian, Man-Eater Bug, Mirror Force, Swords of Revealing Light, Yami, Blue-Eyes White Dragon, Vorse Raider, Battle Ox, Ring of Destruction, Dark Hole, Mountain).
+- Added **Floating Dev QA Toolbar**:
+  - Bottom-right toolbar allowing instant toggling between Static Mock Field (`🧪 MOCK FIELD`) and Live Engine Simulation (`⚙️ LIVE ENGINE`), plus a `"🔄 Cycle Positions"` button to test monster position transitions in real-time.
 
+**Files added/changed:**
+- `src/shared/types/field.ts`: TypeScript interfaces for `FieldCard`, `CardPositionState`, `PlayerFieldState`, `DuelBoardState`.
+- `src/shared/types/index.ts`: Exported `field.ts`.
+- `src/renderer/utils/media.ts`: Added `getUiIconUrl()`, `getLocationIconUrl()`, `getStatusIconUrl()`.
+- `src/renderer/utils/mockDuelState.ts`: Mock duel state generator.
+- `src/renderer/components/duel/FieldZoneSlot.vue`: Card slot component with 5 position states.
+- `src/renderer/components/duel/DeckStack.vue`: 3D layered stack component for Deck, Extra Deck, Graveyard, Banished.
+- `src/renderer/components/duel/HandFan.vue`: Fanned hand component for User and Opponent.
+- `src/renderer/components/duel/LifePointsMeter.vue`: LP scoreboard with tabular numerals and health bars.
+- `src/renderer/components/duel/CardPreviewPopup.vue`: Detailed hover card inspector popup.
+- `src/renderer/components/duel/DuelHud.vue`: Top HUD bar with phase indicator and action prompts.
+- `src/renderer/components/duel/DuelMenuModal.vue`: In-duel menu glass modal.
+- `src/renderer/components/duel/DuelLogPanel.vue`: Slide-out event log drawer.
+- `src/renderer/components/duel/DuelField.vue`: Master 16:9 arena field layout.
+- `src/renderer/components/duel/index.ts`: Barrel export.
+- `src/renderer/assets/styles/pages/_duel.scss`: SCSS styles for letterboxing and arena layout.
+- `src/renderer/views/DuelView.vue`: Master Duel View integration.
+
+**Decisions made / deviations from the plan:**
+- **Authentic Monster Defense Positioning**: In strict compliance with Yu-Gi-Oh! visual rules (`development-plan.md` §3.1), Defense position monsters are rotated 90° into landscape orientation. Face-down Set monsters display the official swirl card-back texture while in landscape orientation.
+- **Letterboxed 16:9 Arena Canvas**: The duel arena renders in a strict 16:9 container (`aspect-ratio: 16 / 9; max-width: 1920px; max-height: 1080px`) with radial vignette letterboxing, preventing field distortion or overlapping on non-16:9 displays.
+- **Dev QA Controls Toolbar**: Added a discrete floating toolbar allowing one-click cycling of battle positions and instant switching between the Phase 9 static mock layout and Phase 2/10 live engine dueling.
+
+**Known issues / TODO carried to next phase:**
+- Phase 10 will connect the static Duel Field layout to live `duelStore` and `DuelEngineService` events, implementing player idle-phase command menus (Normal Summon, Set, Activate, Attack, Change Position, End Phase), phase progression, and End Phase hand-size cleanup rules (>6 cards).
+
+**How to manually verify this phase:**
+1. Run `npm run dev` to launch the application.
+2. From the **Main Menu**, click **"Start Duel"** -> select Heads/Tails -> skip intro -> arrives at the **Duel Screen** (`/duel`).
+3. Inspect the **16:9 Duel Arena Field**:
+   - **User MMZ**: Verify *Dark Magician* (Face-up Attack), *Celtic Guardian* (Face-up Defense, rotated 90°), and *Man-Eater Bug* (Face-down Set Defense, rotated 90° with card back).
+   - **User STZ**: Verify *Mirror Force* (Face-down Set Trap) and *Swords of Revealing Light* (Face-up Spell).
+   - **User Field Zone**: Verify active Field Spell *Yami*.
+   - **User Graveyard**: Verify stack with *Summoned Skull* top card thumbnail and count badge `3`.
+   - **User Deck & Extra Deck**: Verify 3D layered stacks with count badges `34` and `3`.
+   - **User Banished**: Verify stack with count badge `1`.
+   - **Opponent Field**: Verify mirrored layout with *Blue-Eyes White Dragon* (Attack), *Vorse Raider* (Attack), *Battle Ox* (Set Defense 90°), *Ring of Destruction* (Set), *Dark Hole* (Face-up), *Mountain* (Field Zone), and Graveyard stack with *La Jinn* (`2`).
+   - **Hands**: Verify User Hand has 5 fanned cards with hover elevation and foil gleam; verify Opponent Hand has 5 fanned card backs.
+   - **LP Meters**: Verify User LP (`8000`) at bottom-left and Opponent LP (`8000`) at top-right with health bars and avatars.
+   - **Card Preview Popup**: Hover over any card on field, hand, or GY to verify the left inspector displays full artwork, attribute, level stars, ATK/DEF, and lore.
+   - **Menu Button**: Click `Menu` in top-right HUD -> confirms in-duel pause modal opens with Resume, Surrender, Restart, and Audio sliders.
+   - **Duel Log Button**: Click `Log` in top-right HUD -> confirms slide-out drawer displays duel event history.
+   - **Tooltips**: Hover over `EMZ 1`, `EMZ 2`, `Pendulum Jewels`, `MATE`, `Field Status`, and `Activation Confirmation` buttons to confirm informative tooltips appear.
+   - **Dev Toolbar**: Click `"🔄 Cycle Positions"` in bottom-right to verify Dark Magician flips dynamically between Attack, Face-up Defense, and Face-down Set.
