@@ -50,7 +50,33 @@ export interface DuelInitOptions {
   startingDrawCount?: number;
   drawCountPerTurn?: number;
   autoPlay?: boolean;
+  humanPlayerId?: number; // 0 if user is Player 0, 1 if user is Player 1
 }
+
+export type CoinChoice = 'heads' | 'tails';
+export type CoinWinner = 'user' | 'opponent';
+export type StartingPlayer = 'user' | 'opponent';
+
+export interface MatchSetupConfig {
+  opponentId: string;
+  opponentName: string;
+  opponentSeries: 'DM' | 'GX';
+  opponentAvatar: string;
+  opponentVideo: string;
+  opponentDeckName: string;
+  opponentDeckArchetype: string;
+  opponentDeckIndex: number;
+  opponentDeckCards: number[];
+  userDeckName: string;
+  userDeckCards: number[];
+  userChoice: CoinChoice | null;
+  coinResult: CoinChoice | null;
+  coinWinner: CoinWinner | null;
+  startingPlayer: StartingPlayer;
+  userPlayerId: 0 | 1;
+  opponentPlayerId: 0 | 1;
+}
+
 
 export interface DuelEventPayload {
   type: string;

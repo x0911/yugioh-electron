@@ -30,6 +30,48 @@ export function getCardPlaceholderUrl(): string {
 }
 
 /**
+ * Returns the coin heads face image URL.
+ */
+export function getCoinHeadsUrl(): string {
+  return 'app-resource://ui/coin-heads.png';
+}
+
+/**
+ * Returns the coin tails face image URL.
+ */
+export function getCoinTailsUrl(): string {
+  return 'app-resource://ui/coin-tails.png';
+}
+
+/**
+ * Returns the coin edge sliver image URL.
+ */
+export function getCoinEdgeUrl(): string {
+  return 'app-resource://ui/coin-edge.png';
+}
+
+/**
+ * Returns the character intro video URL.
+ */
+export function getCharacterVideoUrl(characterId: string): string {
+  return `app-resource://videos/characters/${characterId}.mp4`;
+}
+
+/**
+ * Returns the character portrait image URL.
+ */
+export function getCharacterPortraitUrl(characterId: string): string {
+  return `app-resource://characters/portraits/${characterId}.png`;
+}
+
+/**
+ * Returns background image URL by name.
+ */
+export function getBackgroundUrl(name: string): string {
+  return `app-resource://backgrounds/${name}.jpg`;
+}
+
+/**
  * Handles image error events by swapping to placeholder.
  */
 export function handleImageError(event: Event): void {
@@ -38,3 +80,4 @@ export function handleImageError(event: Event): void {
     target.src = getCardPlaceholderUrl();
   }
 }
+

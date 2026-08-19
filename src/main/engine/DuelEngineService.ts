@@ -31,6 +31,7 @@ export interface DuelOptions {
   startingDrawCount?: number;
   drawCountPerTurn?: number;
   autoPlay?: boolean;
+  humanPlayerId?: number; // 0 or 1, default 0
 }
 
 export interface DuelState {
@@ -44,6 +45,7 @@ export interface DuelState {
   winner: number | null;
   winReason: number | null;
   stepCount: number;
+  humanPlayerId: number;
 }
 
 export class DuelEngineService {
@@ -54,6 +56,7 @@ export class DuelEngineService {
   private messageDecoder: MessageDecoder;
   private viewFilter: ViewFilterService;
   private lastPromptMessage: OcgMessage | null = null;
+  private humanPlayerId = 0;
 
   private state: DuelState = {
     isActive: false,
@@ -66,6 +69,7 @@ export class DuelEngineService {
     winner: null,
     winReason: null,
     stepCount: 0,
+    humanPlayerId: 0,
   };
 
   private autoPlay = false;
@@ -127,7 +131,7 @@ export class DuelEngineService {
   }
 
   private emitEvent(event: DecodedDuelEvent): void {
-    const filteredEvent = this.viewFilter.filterEventForViewer(event, 0); // 0 = human player
+    const filteredEvent = this.viewFilter.filterEventForViewer(event, this.humanPlayerId);
     for (const listener of this.eventListeners) {
       listener(filteredEvent);
     }
@@ -143,6 +147,7 @@ export class DuelEngineService {
     }
 
     this.autoPlay = options.autoPlay ?? false;
+    this.humanPlayerId = options.humanPlayerId ?? 0;
     this.lastPromptMessage = null;
     this.state = {
       isActive: true,
@@ -155,6 +160,7 @@ export class DuelEngineService {
       winner: null,
       winReason: null,
       stepCount: 0,
+      humanPlayerId: this.humanPlayerId,
     };
 
     const handle = this.lib.createDuel({
