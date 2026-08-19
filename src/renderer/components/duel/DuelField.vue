@@ -313,7 +313,7 @@ defineEmits<{
 .duel-field {
   position: relative;
   width: 100%;
-  max-width: 1300px;
+  max-width: 1380px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -321,7 +321,7 @@ defineEmits<{
   justify-content: center;
   gap: 10px;
   user-select: none;
-  padding: 8px 20px;
+  padding: 8px 24px;
   box-sizing: border-box;
 
   // Obsidian Arena Floor
@@ -350,8 +350,8 @@ defineEmits<{
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 500px;
-    height: 500px;
+    width: 520px;
+    height: 520px;
     border-radius: 50%;
     border: 1px solid rgba(201, 162, 39, 0.08);
     display: flex;
@@ -359,15 +359,15 @@ defineEmits<{
     justify-content: center;
 
     .center-rune-ring {
-      width: 400px;
-      height: 400px;
+      width: 420px;
+      height: 420px;
       border-radius: 50%;
       border: 1px dashed rgba(201, 162, 39, 0.06);
     }
 
     .center-divider-line {
       position: absolute;
-      width: 1080px;
+      width: 1180px;
       height: 1px;
       background: linear-gradient(
         90deg,
@@ -397,14 +397,14 @@ defineEmits<{
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 26px;
     width: 100%;
   }
 
   .zone-group {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 20px;
     position: relative;
   }
 
@@ -416,10 +416,10 @@ defineEmits<{
     z-index: 20;
 
     &--left {
-      left: -22px;
+      left: -28px;
     }
     &--right {
-      right: -22px;
+      right: -28px;
     }
 
     .scale-orb {
@@ -465,7 +465,7 @@ defineEmits<{
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 124px;
+      gap: 136px;
     }
 
     .center-hologram-emblem {
