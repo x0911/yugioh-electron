@@ -19,9 +19,17 @@
         <!-- Full Artwork Image Container -->
         <div class="card-art-box">
           <img
+            v-if="card.code > 0"
             :src="getCardImageUrl(card.code, 'full')"
             :alt="card.name"
             class="full-card-image"
+            @error="handleImageError"
+          />
+          <img
+            v-else
+            :src="getCardBackUrl()"
+            alt="Face-Down Card"
+            class="full-card-image full-card-image--back"
             @error="handleImageError"
           />
           <div class="foil-reflection"></div>
@@ -33,16 +41,25 @@
           <div class="card-title-row">
             <h3 class="card-name" :title="card.name">{{ card.name }}</h3>
             <span
-              v-if="card.attribute"
+              v-if="card.code > 0 && card.attribute"
               class="attribute-badge"
               :class="`attribute-badge--${card.attribute.toLowerCase()}`"
             >
               {{ card.attribute }}
             </span>
+            <span
+              v-else-if="card.code === 0"
+              class="attribute-badge attribute-badge--secret"
+            >
+              SECRET
+            </span>
           </div>
 
-          <!-- Level / Rank Stars Row (Dedicated Line) -->
-          <div v-if="card.level && card.level > 0" class="card-level-row">
+          <!-- Level / Rank Stars Row (Dedicated Line - only for revealed monsters) -->
+          <div
+            v-if="card.code > 0 && card.level && card.level > 0"
+            class="card-level-row"
+          >
             <div class="level-stars">
               <span v-for="i in card.level" :key="i" class="star">★</span>
             </div>
@@ -51,16 +68,19 @@
 
           <!-- Type & Race Bracket Row (Dedicated Line) -->
           <div class="card-type-row">
-            <span class="type-bracket">
+            <span v-if="card.code > 0" class="type-bracket">
               [{{ card.race || (card.attribute === 'SPELL' ? 'Spell' : card.attribute === 'TRAP' ? 'Trap' : 'Monster') }}
               /
               {{ card.level && card.level > 0 ? 'Monster' : card.attribute === 'SPELL' ? 'Spell Card' : card.attribute === 'TRAP' ? 'Trap Card' : 'Effect' }}]
             </span>
+            <span v-else class="type-bracket type-bracket--secret">
+              [Face-Down Card / Unknown]
+            </span>
           </div>
 
-          <!-- ATK / DEF Scores (Monsters) -->
+          <!-- ATK / DEF Scores (Only for revealed Monsters) -->
           <div
-            v-if="card.atk !== undefined || card.def !== undefined"
+            v-if="card.code > 0 && (card.atk !== undefined || card.def !== undefined)"
             class="combat-stats-box"
           >
             <div class="stat-col">
@@ -77,7 +97,12 @@
           <!-- Scrollable Card Effect Text / Lore -->
           <div class="card-lore-box">
             <p class="lore-text">
-              {{ card.description || 'No description available for this card.' }}
+              {{
+                card.description ||
+                (card.code === 0
+                  ? 'This card is currently face-down on the field. Its identity, stats, and effects remain hidden until activated or flipped face-up.'
+                  : 'No description available for this card.')
+              }}
             </p>
           </div>
 
@@ -85,7 +110,7 @@
           <div class="card-footer-row">
             <div class="passcode-group">
               <span class="passcode-lbl">PASSCODE</span>
-              <span class="passcode-val">{{ card.code }}</span>
+              <span class="passcode-val">{{ card.code > 0 ? card.code : '????????' }}</span>
             </div>
             <span class="location-tag">{{ card.location.toUpperCase() }}</span>
           </div>
@@ -97,7 +122,7 @@
 
 <script setup lang="ts">
 import type { FieldCard } from '../../../shared/types/field.js';
-import { getCardImageUrl, handleImageError } from '../../utils/media.js';
+import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
 
 withDefaults(
   defineProps<{
@@ -199,6 +224,10 @@ defineEmits<{
       height: 100%;
       object-fit: contain;
       display: block;
+
+      &--back {
+        object-fit: cover;
+      }
     }
 
     .foil-reflection {
@@ -255,6 +284,11 @@ defineEmits<{
       color: #1a1406;
       flex-shrink: 0;
 
+      &--secret {
+        background: #4f5d75;
+        color: #fff;
+        letter-spacing: 0.05em;
+      }
       &--spell {
         background: #3ddc97;
         color: #0a0c10;
@@ -329,6 +363,11 @@ defineEmits<{
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+
+      &--secret {
+        color: #8c9ba5;
+        font-style: italic;
+      }
     }
   }
 

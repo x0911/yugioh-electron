@@ -127,24 +127,15 @@ const emit = defineEmits<{
 }>();
 
 const isDefensePosition = computed(() => {
-  return (
-    props.card?.position === 'faceup_defense' ||
-    props.card?.position === 'facedown_defense'
-  );
+  return props.card?.position === 'faceup_defense' || props.card?.position === 'facedown_defense';
 });
 
 const isFaceDown = computed(() => {
-  return (
-    props.card?.position === 'facedown_defense' ||
-    props.card?.position === 'facedown_spell'
-  );
+  return props.card?.position === 'facedown_defense' || props.card?.position === 'facedown_spell';
 });
 
 const isFaceUpMonster = computed(() => {
-  return (
-    props.card?.position === 'faceup_attack' ||
-    props.card?.position === 'faceup_defense'
-  );
+  return props.card?.position === 'faceup_attack' || props.card?.position === 'faceup_defense';
 });
 
 /**
@@ -169,9 +160,7 @@ const activeStatMode = computed<'atk' | 'def'>(() => {
 
 const activeStatValue = computed<number | string>(() => {
   if (!props.card) return '';
-  return props.card.position === 'faceup_defense'
-    ? (props.card.def ?? 0)
-    : (props.card.atk ?? 0);
+  return props.card.position === 'faceup_defense' ? (props.card.def ?? 0) : (props.card.atk ?? 0);
 });
 
 const tooltipText = computed(() => {
@@ -187,6 +176,25 @@ const tooltipText = computed(() => {
 });
 
 function onMouseEnter(): void {
+  if (!props.card) {
+    emit('hover-card', null);
+    return;
+  }
+  // Anti-cheat: Opponent's face-down cards or redacted cards (code 0) must never leak secrets
+  if (props.player === 'ai' && (isFaceDown.value || props.card.code === 0)) {
+    emit('hover-card', {
+      id: props.card.id,
+      code: 0,
+      name: 'Face-Down Card',
+      controller: 1,
+      location: props.card.location,
+      sequence: props.card.sequence,
+      position: props.card.position,
+      description:
+        'This card is currently face-down on your opponent’s field. Its identity, stats, and effects remain hidden.',
+    });
+    return;
+  }
   emit('hover-card', props.card);
 }
 
@@ -410,13 +418,13 @@ function onClick(): void {
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
     .stat-prefix {
-      font-size: 0.50rem;
+      font-size: 0.5rem;
       font-weight: 700;
       letter-spacing: 0.04em;
     }
 
     .stat-value {
-      font-size: 0.58rem;
+      font-size: 0.7rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;

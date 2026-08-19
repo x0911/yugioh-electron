@@ -425,23 +425,17 @@ export function createMockDuelState(): DuelBoardState {
           race: 'Beast-Warrior',
           description: 'This wicked Beast-Warrior does every horrid thing imaginable and simply loves it. His axe bears the scars of countless victims.',
         },
-        // Zone 2: Battle Ox (Face-down Defense "Set")
+        // Zone 2: Face-down Defense "Set" Monster (Redacted for Viewer)
         {
           id: 'mz-ai-2',
-          code: 5053103,
-          name: 'Battle Ox',
+          code: 0,
+          name: 'Face-Down Card',
           controller: 1,
           location: 'monster',
           sequence: 2,
           position: 'facedown_defense',
-          atk: 1700,
-          def: 1000,
-          baseAtk: 1700,
-          baseDef: 1000,
-          level: 4,
-          attribute: 'EARTH',
-          race: 'Beast-Warrior',
-          description: 'A monster with tremendous power, it destroys enemies with a swing of its axe.',
+          description:
+            'This card is currently face-down in Defense Position on your opponent’s field. Its identity and effects remain hidden.',
         },
         null,
         null,
@@ -449,20 +443,17 @@ export function createMockDuelState(): DuelBoardState {
 
       // 5 Opponent Spell/Trap Zones
       spellTrapZones: [
-        // STZ 0: Ring of Destruction (Face-down Set)
+        // STZ 0: Face-down Set Spell/Trap (Redacted for Viewer)
         {
           id: 'st-ai-0',
-          code: 83555666,
-          name: 'Ring of Destruction',
+          code: 0,
+          name: 'Face-Down Card',
           controller: 1,
           location: 'spell-trap',
           sequence: 0,
           position: 'facedown_spell',
-          level: 0,
-          attribute: 'TRAP',
-          race: 'Normal',
           description:
-            'During your opponent\'s turn: Target 1 face-up monster your opponent controls whose ATK is less than or equal to their LP; destroy that face-up monster, and if you do, take damage equal to its original ATK, then inflict damage to your opponent, equal to the damage you took.',
+            'This card is currently face-down on your opponent’s field. Its identity and effects remain hidden.',
         },
         // STZ 1: Dark Hole (Face-up Continuous or Pending)
         {
