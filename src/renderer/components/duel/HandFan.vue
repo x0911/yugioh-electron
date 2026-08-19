@@ -34,7 +34,7 @@
         @mouseleave="onCardMouseLeave"
         @click="onCardClick(card)"
       >
-        <!-- User Hand Card (Full Authentic Yu-Gi-Oh Card Display) -->
+        <!-- User Hand Card (Full Art, Name, Level, Stats) -->
         <div v-if="player === 'user'" class="hand-card hand-card--user">
           <div class="hand-card__frame">
             <img
@@ -44,6 +44,21 @@
               @error="handleImageError"
             />
             <div class="hand-card__foil"></div>
+
+            <!-- Mini Header with Name & Level -->
+            <div class="hand-card__header">
+              <span class="hand-card__name" :title="card.name">{{ card.name }}</span>
+              <span v-if="card.level && card.level > 0" class="hand-card__level">
+                ★{{ card.level }}
+              </span>
+            </div>
+
+            <!-- Bottom ATK/DEF Footer for Monsters -->
+            <div v-if="card.atk !== undefined && card.def !== undefined" class="hand-card__stats">
+              <span class="stat-atk">{{ card.atk }}</span>
+              <span class="stat-slash">/</span>
+              <span class="stat-def">{{ card.def }}</span>
+            </div>
           </div>
         </div>
 
@@ -53,7 +68,7 @@
             <img
               :src="getCardBackUrl()"
               alt="Card Back"
-              class="hand-card__image hand-card__image--back"
+              class="hand-card__image"
               @error="handleImageError"
             />
             <div class="hand-card__foil"></div>
@@ -90,12 +105,12 @@ const emit = defineEmits<{
  * When hand size exceeds 5 cards, cards smoothly overlap horizontally so they never overflow.
  */
 function getSlotStyle(index: number, total: number): CSSProperties {
-  let marginHorizontal = 6; // Standard spacing between cards (px)
+  let marginHorizontal = 4; // Standard spacing between cards (px)
 
   if (total > 5) {
     // Dynamic overlap when hand size is large (6, 7, 8, 9, 10+ cards)
     const excess = total - 5;
-    const overlapAmount = Math.min(54, excess * (props.player === 'user' ? 10 : 7));
+    const overlapAmount = Math.min(46, excess * (props.player === 'user' ? 8 : 6));
     marginHorizontal = -overlapAmount / 2;
   }
 
@@ -228,7 +243,7 @@ function onCardClick(card: FieldCard): void {
     padding: 4px 12px;
     box-sizing: border-box;
     max-width: 100%;
-    min-height: 145px;
+    min-height: 130px;
   }
 
   .hand-card-slot {
@@ -246,21 +261,21 @@ function onCardClick(card: FieldCard): void {
   }
 
   // =========================================================================
-  // User Hand (Full 1:1.4375 Card Aspect Ratio, Upward Lift on Hover)
+  // User Hand (Flat, Horizontal Side-by-Side, Upward Lift on Hover)
   // =========================================================================
   &--user {
     .hand-card-slot {
-      width: 96px;
-      height: 138px;
+      width: 86px;
+      height: 124px;
 
       &:hover {
-        transform: translateY(-28px) scale(1.15);
+        transform: translateY(-26px) scale(1.12);
 
         .hand-card {
           border-color: $color-gold-300;
           box-shadow:
-            0 16px 36px rgba(0, 0, 0, 0.95),
-            0 0 18px rgba(47, 128, 237, 0.75);
+            0 14px 32px rgba(0, 0, 0, 0.95),
+            0 0 16px rgba(47, 128, 237, 0.7);
         }
       }
     }
@@ -271,11 +286,11 @@ function onCardClick(card: FieldCard): void {
   // =========================================================================
   &--ai {
     .hand-card-slot {
-      width: 72px;
-      height: 104px;
+      width: 68px;
+      height: 98px;
 
       &:hover {
-        transform: translateY(14px) scale(1.1);
+        transform: translateY(12px) scale(1.08);
 
         .hand-card {
           border-color: $color-gold-500;
@@ -305,17 +320,13 @@ function onCardClick(card: FieldCard): void {
       position: relative;
       width: 100%;
       height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     &__image {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       display: block;
-      border-radius: 4px;
     }
 
     &__foil {
@@ -326,12 +337,72 @@ function onCardClick(card: FieldCard): void {
       bottom: 0;
       background: linear-gradient(
         135deg,
-        rgba(255, 255, 255, 0.12) 0%,
+        rgba(255, 255, 255, 0.15) 0%,
         transparent 50%,
-        rgba(201, 162, 39, 0.12) 100%
+        rgba(201, 162, 39, 0.15) 100%
       );
       pointer-events: none;
-      border-radius: 5px;
+    }
+
+    &__header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 2px 4px;
+      background: rgba(10, 12, 16, 0.88);
+      border-bottom: 1px solid rgba(201, 162, 39, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    &__name {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: #f5f1e6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &__level {
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.55rem;
+      font-weight: 800;
+      color: $color-gold-300;
+      margin-left: 2px;
+    }
+
+    &__stats {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 1px 3px;
+      background: rgba(10, 12, 16, 0.94);
+      border-top: 1px solid rgba(201, 162, 39, 0.3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 3px;
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.53rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+
+      .stat-atk {
+        color: #f5f1e6;
+      }
+      .stat-slash {
+        color: $color-gold-500;
+        font-size: 0.48rem;
+        opacity: 0.75;
+      }
+      .stat-def {
+        color: #b8b2a0;
+      }
     }
   }
 }
