@@ -214,7 +214,9 @@
       0 0 12px rgba(201, 162, 39, 0.25);
     @include flex-center;
     color: $color-gold-300;
-    transition: transform 0.3s $ease-snappy, border-color 0.3s ease;
+    transition:
+      transform 0.3s $ease-snappy,
+      border-color 0.3s ease;
 
     svg {
       width: 48px;
@@ -307,4 +309,3 @@
     width: 100%;
   }
 }
-

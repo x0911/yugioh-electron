@@ -54,23 +54,50 @@
       <!-- Celestial Spinner & Progress Visual -->
       <div class="loading-view__status-container">
         <template v-if="!hasError">
-          <LoadingSpinner
-            v-if="!isReady"
-            :size="72"
-            variant="gold"
-            class="loading-view__spinner"
-          />
+          <LoadingSpinner v-if="!isReady" :size="72" variant="gold" class="loading-view__spinner" />
           <div v-else class="loading-view__ready-icon">
-            <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="#3ddc97" stroke-width="2.5">
-              <circle cx="12" cy="12" r="10" stroke="#3ddc97" stroke-opacity="0.3" fill="rgba(61, 220, 151, 0.15)" />
-              <polyline points="7 12 10.5 15.5 17 9" stroke-linecap="round" stroke-linejoin="round" />
+            <svg
+              viewBox="0 0 24 24"
+              width="56"
+              height="56"
+              fill="none"
+              stroke="#3ddc97"
+              stroke-width="2.5"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="#3ddc97"
+                stroke-opacity="0.3"
+                fill="rgba(61, 220, 151, 0.15)"
+              />
+              <polyline
+                points="7 12 10.5 15.5 17 9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </div>
         </template>
         <template v-else>
           <div class="loading-view__error-icon">
-            <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="#eb5757" stroke-width="2.5">
-              <circle cx="12" cy="12" r="10" stroke="#eb5757" stroke-opacity="0.3" fill="rgba(235, 87, 87, 0.15)" />
+            <svg
+              viewBox="0 0 24 24"
+              width="56"
+              height="56"
+              fill="none"
+              stroke="#eb5757"
+              stroke-width="2.5"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="#eb5757"
+                stroke-opacity="0.3"
+                fill="rgba(235, 87, 87, 0.15)"
+              />
               <line x1="12" y1="8" x2="12" y2="13" stroke-linecap="round" />
               <circle cx="12" cy="16.5" r="1" fill="#eb5757" />
             </svg>
@@ -83,17 +110,21 @@
         <div class="loading-view__meter-bar">
           <div
             class="loading-view__meter-fill"
-            :class="{ 'loading-view__meter-fill--error': hasError, 'loading-view__meter-fill--ready': isReady }"
+            :class="{
+              'loading-view__meter-fill--error': hasError,
+              'loading-view__meter-fill--ready': isReady,
+            }"
             :style="{ width: `${progressPercent}%` }"
           />
         </div>
         <div class="loading-view__meter-info">
-          <span class="loading-view__status-text" :class="{ 'loading-view__status-text--error': hasError }">
+          <span
+            class="loading-view__status-text"
+            :class="{ 'loading-view__status-text--error': hasError }"
+          >
             {{ statusMessage }}
           </span>
-          <span class="loading-view__percent-text">
-            {{ progressPercent }}%
-          </span>
+          <span class="loading-view__percent-text"> {{ progressPercent }}% </span>
         </div>
       </div>
 
@@ -393,4 +424,3 @@ onMounted(() => {
   }
 }
 </style>
-

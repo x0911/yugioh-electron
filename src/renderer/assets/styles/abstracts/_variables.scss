@@ -34,11 +34,23 @@ $color-text-muted: #756f60;
 $color-text-on-gold: #1a1406;
 
 // Typography Font Families (Master Duel / Holographic Dueling Palette)
-$font-display: 'Oxanium', 'Cinzel', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-$font-body: 'Barlow Semi Condensed', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-display:
+  'Oxanium',
+  'Cinzel',
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  sans-serif;
+$font-body:
+  'Barlow Semi Condensed',
+  'Inter',
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  sans-serif;
 $font-numeric: 'Oxanium', 'JetBrains Mono', monospace;
 $font-mono: 'Oxanium', 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-
 
 // Typography Scale (rem, base 16px)
 $fs-xs: 0.75rem; // 12px
@@ -68,7 +80,6 @@ $duration-component: 260ms;
 $duration-screen: 450ms;
 $duration-card-move: 400ms;
 $duration-card-flip: 240ms;
-
 
 // Z-index hierarchy
 $z-bg: 0;

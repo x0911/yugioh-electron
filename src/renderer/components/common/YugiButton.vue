@@ -9,11 +9,7 @@
     :aria-label="ariaLabel"
     :tabindex="disabled ? -1 : 0"
     class="yugi-btn"
-    :class="[
-      `yugi-btn--${variant}`,
-      `yugi-btn--${size}`,
-      disabled && 'yugi-btn--disabled',
-    ]"
+    :class="[`yugi-btn--${variant}`, `yugi-btn--${size}`, disabled && 'yugi-btn--disabled']"
     @click="handleClick"
   >
     <!-- Card Variant Structure (design-system.md §5.1) -->
@@ -30,7 +26,14 @@
             <span v-if="icon" class="yugi-btn__card-icon">{{ icon }}</span>
             <slot name="icon">
               <!-- Default Egyptian Duel Eye / Symbol if no icon supplied -->
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <svg
+                width="36"
+                height="36"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
                 <circle cx="12" cy="12" r="9" stroke-opacity="0.6" />
                 <path d="M12 7v10M7 12h10" stroke-linecap="round" />
                 <polygon points="12,9 14,12 12,15 10,12" fill="currentColor" fill-opacity="0.4" />

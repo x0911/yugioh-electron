@@ -68,7 +68,8 @@ function findCardsByCriteria(criteria: {
 }): WhitelistCard[] {
   return Object.values(pool).filter((card) => {
     if (criteria.race && card.race !== criteria.race) return false;
-    if (criteria.type && !card.type.toLowerCase().includes(criteria.type.toLowerCase())) return false;
+    if (criteria.type && !card.type.toLowerCase().includes(criteria.type.toLowerCase()))
+      return false;
     if (criteria.attribute && card.attribute !== criteria.attribute) return false;
     if (
       criteria.nameContains &&
@@ -92,7 +93,7 @@ function buildDeck(
     nameContains?: string;
     era?: string;
   },
-  extraCardNamesOrIds: (string | number)[] = []
+  extraCardNamesOrIds: (string | number)[] = [],
 ): { main: number[]; extra: number[]; signature: number[] } {
   const main: number[] = [];
   const signature: number[] = [];
@@ -242,7 +243,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'yugi_deck_1',
         name: 'Magnet & Gadget Arsenal',
         archetype: 'Magnet Warriors / Gadgets',
-        description: 'Combines the magnetic force of Alpha, Beta, and Gamma with mechanical Gadget draw engines.',
+        description:
+          'Combines the magnetic force of Alpha, Beta, and Gamma with mechanical Gadget draw engines.',
         keyCards: [
           'Valkyrion the Magna Warrior',
           'Alpha The Magnet Warrior',
@@ -261,7 +263,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'yugi_deck_2',
         name: 'Silent Swordsman Level-Up',
         archetype: 'Silent LV Series / Spellcasters',
-        description: 'Patience and defensive fortresses power up the Silent Swordsman and Skilled Magicians.',
+        description:
+          'Patience and defensive fortresses power up the Silent Swordsman and Skilled Magicians.',
         keyCards: [
           'Silent Swordsman LV3',
           'Silent Swordsman LV5',
@@ -279,7 +282,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'yugi_deck_3',
         name: 'Exodia the Forbidden One',
         archetype: 'Exodia OTK / Stall',
-        description: 'Gather all five pieces of the Forbidden One while using impenetrable defenses and search spells.',
+        description:
+          'Gather all five pieces of the Forbidden One while using impenetrable defenses and search spells.',
         keyCards: [
           'Exodia the Forbidden One',
           'Right Arm of the Forbidden One',
@@ -310,7 +314,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'yami_deck_1',
         name: "Pharaoh's Dark Magic",
         archetype: 'Dark Magician Spellcasters',
-        description: 'The ultimate wizard in terms of attack and defense, supported by Dark Magician Girl and Thousand Knives.',
+        description:
+          'The ultimate wizard in terms of attack and defense, supported by Dark Magician Girl and Thousand Knives.',
         keyCards: [
           'Dark Magician',
           'Dark Magician Girl',
@@ -328,7 +333,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'yami_deck_2',
         name: 'Slifer the Sky Dragon',
         archetype: 'Egyptian God / Hand Power',
-        description: 'Summon the heavenly dragon Slifer whose ATK surges with every card held in hand.',
+        description:
+          'Summon the heavenly dragon Slifer whose ATK surges with every card held in hand.',
         keyCards: [
           'Slifer the Sky Dragon',
           'Summoned Skull',
@@ -346,7 +352,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'yami_deck_3',
         name: 'Black Luster Soldier Chaos',
         archetype: 'Ritual Chaos Warriors',
-        description: 'Harness the supreme power of Black Luster Soldier and Gaia The Fierce Knight to shatter the opposition.',
+        description:
+          'Harness the supreme power of Black Luster Soldier and Gaia The Fierce Knight to shatter the opposition.',
         keyCards: [
           'Black Luster Soldier',
           'Black Luster Ritual',
@@ -375,7 +382,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'kaiba_deck_1',
         name: 'Blue-Eyes Dragon Fury',
         archetype: 'Blue-Eyes White Dragon',
-        description: 'Unleashes three legendary Blue-Eyes White Dragons and fuses them into Blue-Eyes Ultimate Dragon.',
+        description:
+          'Unleashes three legendary Blue-Eyes White Dragons and fuses them into Blue-Eyes Ultimate Dragon.',
         keyCards: [
           'Blue-Eyes White Dragon',
           'The Flute of Summoning Dragon',
@@ -393,7 +401,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'kaiba_deck_2',
         name: 'Obelisk the Tormentor',
         archetype: 'Egyptian God Beatdown',
-        description: 'Sacrifice two monsters to trigger the devastating Soul Energy Max effect of Obelisk the Tormentor.',
+        description:
+          'Sacrifice two monsters to trigger the devastating Soul Energy Max effect of Obelisk the Tormentor.',
         keyCards: [
           'Obelisk the Tormentor',
           'Vorse Raider',
@@ -410,7 +419,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'kaiba_deck_3',
         name: 'XYZ-Dragon Cannon Mech',
         archetype: 'Union Machine Fusion',
-        description: 'Assemble X-Head Cannon, Y-Dragon Head, and Z-Metal Tank into impenetrable mobile assault fortresses.',
+        description:
+          'Assemble X-Head Cannon, Y-Dragon Head, and Z-Metal Tank into impenetrable mobile assault fortresses.',
         keyCards: [
           'X-Head Cannon',
           'Y-Dragon Head',
@@ -439,7 +449,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'joey_deck_1',
         name: 'Red-Eyes Darkness Ferocity',
         archetype: 'Red-Eyes Black Dragon',
-        description: 'Channel the potential of Red-Eyes Black Dragon and evolve into Red-Eyes Darkness Dragon.',
+        description:
+          'Channel the potential of Red-Eyes Black Dragon and evolve into Red-Eyes Darkness Dragon.',
         keyCards: [
           'Red-Eyes Black Dragon',
           'Red-Eyes Darkness Dragon',
@@ -472,7 +483,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'joey_deck_3',
         name: 'Jinzo Trap Annihilation',
         archetype: 'Jinzo / Beast-Warrior Beatdown',
-        description: 'Shut down all opponent traps completely with Jinzo while swarming with warriors.',
+        description:
+          'Shut down all opponent traps completely with Jinzo while swarming with warriors.',
         keyCards: [
           'Jinzo',
           'Little-Winguard',
@@ -499,7 +511,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'tea_deck_1',
         name: 'Shining Fairy Friendship',
         archetype: 'Fairy Beatdown & Heal',
-        description: 'Strengthen gentle fairy creatures with healing blessings and defensive warding.',
+        description:
+          'Strengthen gentle fairy creatures with healing blessings and defensive warding.',
         keyCards: [
           'Shining Friendship',
           'Dunames Dark Witch',
@@ -516,7 +529,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'tea_deck_2',
         name: 'Maha Vailo Equip Power',
         archetype: 'Equip Spells / Light Spellcaster',
-        description: 'Equip Mage Power and United We Stand to turn Maha Vailo into an untouchable juggernaut.',
+        description:
+          'Equip Mage Power and United We Stand to turn Maha Vailo into an untouchable juggernaut.',
         keyCards: [
           'Maha Vailo',
           'United We Stand',
@@ -532,7 +546,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'tea_deck_3',
         name: 'Fire Princess Burn & Sanctuary',
         archetype: 'Burn & Healing',
-        description: 'Deal direct effect damage to the opponent every time your Life Points are restored.',
+        description:
+          'Deal direct effect damage to the opponent every time your Life Points are restored.',
         keyCards: [
           'Fire Princess',
           'Darklord Marie',
@@ -559,9 +574,10 @@ const CHARACTERS: RawCharacterDef[] = [
     decks: [
       {
         id: 'tristan_deck_1',
-        name: "Command Infantry Strike",
+        name: 'Command Infantry Strike',
         archetype: 'Machine / Combat Infantry',
-        description: 'Commanding mechanical infantry with Battle Footballer and high-defense Cyber units.',
+        description:
+          'Commanding mechanical infantry with Battle Footballer and high-defense Cyber units.',
         keyCards: [
           'Field-Commander Rahz',
           'Battle Footballer',
@@ -578,7 +594,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'tristan_deck_2',
         name: 'Battleguard Brothers War',
         archetype: 'Warrior / Battleguard',
-        description: 'Lava Battleguard and Swamp Battleguard fight side-by-side to amplify each other’s strength.',
+        description:
+          'Lava Battleguard and Swamp Battleguard fight side-by-side to amplify each other’s strength.',
         keyCards: [
           'Lava Battleguard',
           'Swamp Battleguard',
@@ -594,7 +611,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'tristan_deck_3',
         name: 'Robotic Heavy Siege',
         archetype: 'Machine Beatdown',
-        description: 'Crush enemy lines with Cyber-Tech Alligator and Machine King boosted by Limiter Removal.',
+        description:
+          'Crush enemy lines with Cyber-Tech Alligator and Machine King boosted by Limiter Removal.',
         keyCards: [
           'Machine King',
           'Cyber-Tech Alligator',
@@ -621,7 +639,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'mai_deck_1',
         name: 'Harpie Lady Sky Flurry',
         archetype: 'Harpie Ladies / Wind',
-        description: 'Swarm the skies with Harpie Lady 1, 2, 3 and summon the fearsome Harpie’s Pet Dragon.',
+        description:
+          'Swarm the skies with Harpie Lady 1, 2, 3 and summon the fearsome Harpie’s Pet Dragon.',
         keyCards: [
           'Harpie Lady 1',
           'Harpie Lady 2',
@@ -639,7 +658,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'mai_deck_2',
         name: 'Amazoness Tribal Onslaught',
         archetype: 'Amazoness Warriors',
-        description: 'Amazoness Swords Woman and Amazoness Paladin turn opponent strength into self-destruction.',
+        description:
+          'Amazoness Swords Woman and Amazoness Paladin turn opponent strength into self-destruction.',
         keyCards: [
           'Amazoness Swords Woman',
           'Amazoness Paladin',
@@ -654,7 +674,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'mai_deck_3',
         name: 'Winged-Beast Tempest',
         archetype: 'Wind Aerial Control',
-        description: 'Harness the gusting winds with Birdface and Sonic Shooter to strike directly over defenses.',
+        description:
+          'Harness the gusting winds with Birdface and Sonic Shooter to strike directly over defenses.',
         keyCards: [
           'Birdface',
           'Sonic Shooter',
@@ -700,7 +721,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'bakura_deck_2',
         name: 'Undead Necromancy',
         archetype: 'Zombies / Vampire Lord',
-        description: 'Command Vampire Lord and Ryu Kokki to continuously resurrect from the Graveyard.',
+        description:
+          'Command Vampire Lord and Ryu Kokki to continuously resurrect from the Graveyard.',
         keyCards: [
           'Vampire Lord',
           'Ryu Kokki',
@@ -716,7 +738,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'bakura_deck_3',
         name: 'Fiendish Deck Destruction',
         archetype: 'Mill / Morphing Jar',
-        description: 'Force the opponent to discard and mill their entire deck with Morphing Jar and Needle Worm.',
+        description:
+          'Force the opponent to discard and mill their entire deck with Morphing Jar and Needle Worm.',
         keyCards: [
           'Morphing Jar',
           'Morphing Jar #2',
@@ -744,7 +767,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'marik_deck_1',
         name: 'The Winged Dragon of Ra',
         archetype: 'Egyptian God / Lava Golem',
-        description: 'Incinerate everything with The Winged Dragon of Ra while tributing opponent monsters for Lava Golem.',
+        description:
+          'Incinerate everything with The Winged Dragon of Ra while tributing opponent monsters for Lava Golem.',
         keyCards: [
           'The Winged Dragon of Ra',
           'Lava Golem',
@@ -761,7 +785,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'marik_deck_2',
         name: "Gravekeeper's Necrovalley",
         archetype: "Gravekeeper's",
-        description: 'Seal both Graveyards with Necrovalley while Gravekeeper monsters gain overwhelming attack.',
+        description:
+          'Seal both Graveyards with Necrovalley while Gravekeeper monsters gain overwhelming attack.',
         keyCards: [
           "Gravekeeper's Spy",
           "Gravekeeper's Commandant",
@@ -778,7 +803,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'marik_deck_3',
         name: 'Torture Chamber Burn',
         archetype: 'Burn / Continuous Damage',
-        description: 'Inflict inescapable damage turn after turn with Bowganian and Wave-Motion Cannon.',
+        description:
+          'Inflict inescapable damage turn after turn with Bowganian and Wave-Motion Cannon.',
         keyCards: [
           'Bowganian',
           'Stealth Bird',
@@ -806,7 +832,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'pegasus_deck_1',
         name: 'Toon World Kingdom',
         archetype: 'Toon Monsters',
-        description: 'Enter Toon World to attack directly with Toon Dark Magician Girl, Toon Summoned Skull, and Toon Blue-Eyes.',
+        description:
+          'Enter Toon World to attack directly with Toon Dark Magician Girl, Toon Summoned Skull, and Toon Blue-Eyes.',
         keyCards: [
           'Toon World',
           'Toon Table of Contents',
@@ -824,7 +851,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'pegasus_deck_2',
         name: 'Relinquished Illusion Eyes',
         archetype: 'Relinquished Ritual',
-        description: 'Absorb enemy monsters and turn their attack power against them with Relinquished and Thousand-Eyes Restrict.',
+        description:
+          'Absorb enemy monsters and turn their attack power against them with Relinquished and Thousand-Eyes Restrict.',
         keyCards: [
           'Relinquished',
           'Black Illusion Ritual',
@@ -841,7 +869,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'pegasus_deck_3',
         name: 'Illusionist Mind Scan',
         archetype: 'Illusion / Control',
-        description: 'Confuse the opponent with Jigen Bakudan, Magical Hats, and mysterious spellcaster tricks.',
+        description:
+          'Confuse the opponent with Jigen Bakudan, Magical Hats, and mysterious spellcaster tricks.',
         keyCards: [
           'Illusionist Faceless Mage',
           'Jigen Bakudan',
@@ -872,7 +901,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'jaden_deck_1',
         name: 'Elemental HERO Fusion Force',
         archetype: 'Elemental HERO Fusion',
-        description: 'Fuse Avian, Burstinatrix, Clayman, and Sparkman into Flame Wingman and Thunder Giant.',
+        description:
+          'Fuse Avian, Burstinatrix, Clayman, and Sparkman into Flame Wingman and Thunder Giant.',
         keyCards: [
           'Elemental HERO Avian',
           'Elemental HERO Burstinatrix',
@@ -897,7 +927,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'jaden_deck_2',
         name: 'Neos Space Contact',
         archetype: 'Elemental HERO Neos / Neo-Spacian',
-        description: 'Send Elemental HERO Neos into orbit to Contact Fuse with Neo-Spacians without Polymerization.',
+        description:
+          'Send Elemental HERO Neos into orbit to Contact Fuse with Neo-Spacians without Polymerization.',
         keyCards: [
           'Elemental HERO Neos',
           'Neo-Spacian Grand Mole',
@@ -910,13 +941,18 @@ const CHARACTERS: RawCharacterDef[] = [
           'Hero Signal',
         ],
         fillCriteria: { nameContains: 'Neos' },
-        extraCards: ['Elemental HERO Flare Neos', 'Elemental HERO Aqua Neos', 'Elemental HERO Grand Neos'],
+        extraCards: [
+          'Elemental HERO Flare Neos',
+          'Elemental HERO Aqua Neos',
+          'Elemental HERO Grand Neos',
+        ],
       },
       {
         id: 'jaden_deck_3',
         name: 'Wildedge Bladedge Beatdown',
         archetype: 'Elemental HERO Beatdown',
-        description: 'Pierce defenses and attack all monsters with Elemental HERO Bladedge and Wildedge.',
+        description:
+          'Pierce defenses and attack all monsters with Elemental HERO Bladedge and Wildedge.',
         keyCards: [
           'Elemental HERO Bladedge',
           'Elemental HERO Wildheart',
@@ -945,7 +981,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'zane_deck_1',
         name: 'Cyber Dragon Evolution',
         archetype: 'Cyber Dragon Fusion',
-        description: 'Summon the twin-headed Cyber Twin Dragon and triple-headed Cyber End Dragon with Power Bond.',
+        description:
+          'Summon the twin-headed Cyber Twin Dragon and triple-headed Cyber End Dragon with Power Bond.',
         keyCards: [
           'Cyber Dragon',
           'Proto-Cyber Dragon',
@@ -962,7 +999,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'zane_deck_2',
         name: 'Cyberdark Dragon Underworld',
         archetype: 'Cyberdark / Machine-Dragon',
-        description: 'Equip dragons from the Graveyard to Cyberdark Horn, Edge, and Keel to create the ultimate Cyberdark Dragon.',
+        description:
+          'Equip dragons from the Graveyard to Cyberdark Horn, Edge, and Keel to create the ultimate Cyberdark Dragon.',
         keyCards: [
           'Cyberdark Horn',
           'Cyberdark Edge',
@@ -980,7 +1018,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'zane_deck_3',
         name: 'Cybernetic OTK Overload',
         archetype: 'Machine OTK',
-        description: 'Double attack power with Limiter Removal and Megamorph for an unstoppable single-turn victory.',
+        description:
+          'Double attack power with Limiter Removal and Megamorph for an unstoppable single-turn victory.',
         keyCards: [
           'Cyber Dragon',
           'Heavy Mech Support Platform',
@@ -1069,7 +1108,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'chazz_deck_1',
         name: 'Armed Dragon Level Evolution',
         archetype: 'Armed Dragon / Level Monsters',
-        description: 'Level up Armed Dragon from LV3 to LV5, LV7, and LV10 to wipe out all enemy monsters.',
+        description:
+          'Level up Armed Dragon from LV3 to LV5, LV7, and LV10 to wipe out all enemy monsters.',
         keyCards: [
           'Armed Dragon LV3',
           'Armed Dragon LV5',
@@ -1085,7 +1125,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'chazz_deck_2',
         name: 'Ojama Yellow Delta Hurricane',
         archetype: 'Ojama Trio / Field Lock',
-        description: 'Unite the goofy Ojama Yellow, Green, and Black to unleash Ojama Delta Hurricane and Ojama King.',
+        description:
+          'Unite the goofy Ojama Yellow, Green, and Black to unleash Ojama Delta Hurricane and Ojama King.',
         keyCards: [
           'Ojama Yellow',
           'Ojama Green',
@@ -1103,7 +1144,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'chazz_deck_3',
         name: 'VWXYZ-Dragon Catapult Mech',
         archetype: 'VWXYZ Union Fusion',
-        description: 'Combine V-Tiger Jet, W-Wing Catapult, and the XYZ mechs into the ultimate VWXYZ-Dragon Catapult Cannon.',
+        description:
+          'Combine V-Tiger Jet, W-Wing Catapult, and the XYZ mechs into the ultimate VWXYZ-Dragon Catapult Cannon.',
         keyCards: [
           'V-Tiger Jet',
           'W-Wing Catapult',
@@ -1132,7 +1174,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'alexis_deck_1',
         name: 'Cyber Blader Tutu Ballet',
         archetype: 'Warrior / Fusion Blader',
-        description: 'Fuse Blade Skater and Etoile Cyber to summon Cyber Blader whose abilities scale with opponent monster count.',
+        description:
+          'Fuse Blade Skater and Etoile Cyber to summon Cyber Blader whose abilities scale with opponent monster count.',
         keyCards: [
           'Blade Skater',
           'Etoile Cyber',
@@ -1150,7 +1193,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'alexis_deck_2',
         name: 'Cyber Shadow Martial Defense',
         archetype: 'Cyber Warrior / Counter',
-        description: 'Counter enemy attacks with Cyber Shadow Gardna, Cyber Raider, and The Fiend Megacyber.',
+        description:
+          'Counter enemy attacks with Cyber Shadow Gardna, Cyber Raider, and The Fiend Megacyber.',
         keyCards: [
           'Cyber Shadow Gardna',
           'Cyber Raider',
@@ -1192,7 +1236,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'bastion_deck_1',
         name: 'Water Dragon Chemical Bonding',
         archetype: 'Chemistry / Water Dragon',
-        description: 'Combine Hydrogeddon and Oxygeddon through Bonding H2O to materialize Water Dragon.',
+        description:
+          'Combine Hydrogeddon and Oxygeddon through Bonding H2O to materialize Water Dragon.',
         keyCards: [
           'Water Dragon',
           'Hydrogeddon',
@@ -1207,7 +1252,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'bastion_deck_2',
         name: 'Vorse Earth Formula',
         archetype: 'Earth Beatdown',
-        description: 'A scientifically optimized high-ATK Earth beatdown deck with Vorse Raider and Gemini Elf.',
+        description:
+          'A scientifically optimized high-ATK Earth beatdown deck with Vorse Raider and Gemini Elf.',
         keyCards: [
           'Vorse Raider',
           'Gemini Elf',
@@ -1250,7 +1296,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'chumley_deck_1',
         name: 'Master of Oz Giant Koalas',
         archetype: 'Koala Beasts / Master of Oz',
-        description: 'Fuse Big Koala and Des Kangaroo to summon the colossal 4200 ATK Master of Oz.',
+        description:
+          'Fuse Big Koala and Des Kangaroo to summon the colossal 4200 ATK Master of Oz.',
         keyCards: [
           'Big Koala',
           'Des Kangaroo',
@@ -1266,7 +1313,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'chumley_deck_2',
         name: 'Kangaroo Boxing Beatdown',
         archetype: 'Beast Trample',
-        description: 'Overrun the opponent with Berserk Gorilla and Enraged Battle Ox dealing piercing damage.',
+        description:
+          'Overrun the opponent with Berserk Gorilla and Enraged Battle Ox dealing piercing damage.',
         keyCards: [
           'Berserk Gorilla',
           'Enraged Battle Ox',
@@ -1280,7 +1328,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'chumley_deck_3',
         name: 'Outback Wilderness Survival',
         archetype: 'Beast-Warrior / Forest',
-        description: 'Survive enemy assaults with Giant Rat and counterattack with furious beast surges.',
+        description:
+          'Survive enemy assaults with Giant Rat and counterattack with furious beast surges.',
         keyCards: [
           'Giant Rat',
           'Bazoo the Soul-Eater',
@@ -1306,7 +1355,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'aster_deck_1',
         name: 'Destiny Clock Tower Prison',
         archetype: 'Destiny HERO / Clock Tower',
-        description: 'Advance the clock counters on Clock Tower Prison to summon Destiny HERO - Dreadmaster and Plasma.',
+        description:
+          'Advance the clock counters on Clock Tower Prison to summon Destiny HERO - Dreadmaster and Plasma.',
         keyCards: [
           'Destiny HERO - Plasma',
           'Destiny HERO - Dogma',
@@ -1322,7 +1372,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'aster_deck_2',
         name: 'Diamond Dude Spell-Turbo',
         archetype: 'Destiny HERO Turbo',
-        description: 'Activate powerful normal spells directly from the top of the deck with Destiny HERO - Diamond Dude.',
+        description:
+          'Activate powerful normal spells directly from the top of the deck with Destiny HERO - Diamond Dude.',
         keyCards: [
           'Destiny HERO - Diamond Dude',
           'Destiny HERO - Malicious',
@@ -1339,7 +1390,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'aster_deck_3',
         name: 'Destiny End Dragoon Assault',
         archetype: 'Destiny Fusion',
-        description: 'Fuse Plasma and Dogma into Destiny End Dragoon to burn opponent Life Points every turn.',
+        description:
+          'Fuse Plasma and Dogma into Destiny End Dragoon to burn opponent Life Points every turn.',
         keyCards: [
           'Destiny HERO - Double Dude',
           'Destiny HERO - Defender',
@@ -1367,7 +1419,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'jesse_deck_1',
         name: 'Rainbow Dragon Overdrive',
         archetype: 'Crystal Beast / Rainbow Dragon',
-        description: 'Gather all seven Crystal Beasts in the Spell & Trap Zones to summon the almighty 4000 ATK Rainbow Dragon.',
+        description:
+          'Gather all seven Crystal Beasts in the Spell & Trap Zones to summon the almighty 4000 ATK Rainbow Dragon.',
         keyCards: [
           'Rainbow Dragon',
           'Crystal Beast Sapphire Pegasus',
@@ -1386,7 +1439,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'jesse_deck_2',
         name: 'Crystal Pegasus Swarm',
         archetype: 'Crystal Beast Swarm',
-        description: 'Continuously search and swarm the field with Sapphire Pegasus and Ruby Carbuncle.',
+        description:
+          'Continuously search and swarm the field with Sapphire Pegasus and Ruby Carbuncle.',
         keyCards: [
           'Crystal Beast Sapphire Pegasus',
           'Crystal Beast Ruby Carbuncle',
@@ -1402,7 +1456,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'jesse_deck_3',
         name: 'Ancient City Rainbow Ruins',
         archetype: 'Crystal Beast Fortress',
-        description: 'Fortify your defenses with Ancient City - Rainbow Ruins unlocking up to 5 tiers of continuous effects.',
+        description:
+          'Fortify your defenses with Ancient City - Rainbow Ruins unlocking up to 5 tiers of continuous effects.',
         keyCards: [
           'Ancient City - Rainbow Ruins',
           'Crystal Beast Sapphire Pegasus',
@@ -1429,7 +1484,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'crowler_deck_1',
         name: 'Ancient Gear Golem Siege',
         archetype: 'Ancient Gear Golem',
-        description: 'Summon the legendary 3000 ATK Ancient Gear Golem that prevents all Spell and Trap activations during battle.',
+        description:
+          'Summon the legendary 3000 ATK Ancient Gear Golem that prevents all Spell and Trap activations during battle.',
         keyCards: [
           'Ancient Gear Golem',
           'Ancient Gear Beast',
@@ -1446,7 +1502,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'crowler_deck_2',
         name: 'Ultimate Ancient Gear Fusion',
         archetype: 'Ancient Gear Fusion',
-        description: 'Fuse three Ancient Gear titans into the devastating 4400 ATK Ultimate Ancient Gear Golem.',
+        description:
+          'Fuse three Ancient Gear titans into the devastating 4400 ATK Ultimate Ancient Gear Golem.',
         keyCards: [
           'Ancient Gear Golem',
           'Ancient Gear Engineer',
@@ -1463,7 +1520,8 @@ const CHARACTERS: RawCharacterDef[] = [
         id: 'crowler_deck_3',
         name: 'Ancient Gear Cannon Lockdown',
         archetype: 'Machine Duplication / Cannon',
-        description: 'Duplicate Ancient Gear Cannon with Machine Duplication to lock down and burn opponent lines.',
+        description:
+          'Duplicate Ancient Gear Cannon with Machine Duplication to lock down and burn opponent lines.',
         keyCards: [
           'Ancient Gear Cannon',
           'Ancient Gear',
@@ -1499,11 +1557,13 @@ for (const charDef of CHARACTERS) {
     const { main, extra, signature } = buildDeck(
       deckDef.keyCards,
       deckDef.fillCriteria,
-      deckDef.extraCards ?? []
+      deckDef.extraCards ?? [],
     );
 
     if (main.length !== 40) {
-      throw new Error(`Deck ${deckDef.name} for ${charDef.name} does not have 40 cards! Has: ${main.length}`);
+      throw new Error(
+        `Deck ${deckDef.name} for ${charDef.name} does not have 40 cards! Has: ${main.length}`,
+      );
     }
 
     for (const cardId of main) {
@@ -1566,6 +1626,8 @@ fs.writeFileSync(OUTPUT_CHARACTERS_PATH, JSON.stringify(finalCharacters, null, 2
 db.close();
 
 console.log(`\n[SUCCESS] Generated ${finalCharacters.length} characters (10 DM, 10 GX).`);
-console.log(`[SUCCESS] Generated ${totalDecksGenerated} .ydk decks in resources/decks/ (40 cards each).`);
+console.log(
+  `[SUCCESS] Generated ${totalDecksGenerated} .ydk decks in resources/decks/ (40 cards each).`,
+);
 console.log(`[SUCCESS] Validated ${totalCardsValidated} card entries against resources/cards.cdb.`);
 console.log(`[SUCCESS] Output written to data/characters.json.`);

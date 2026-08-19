@@ -74,7 +74,7 @@ export interface RandomOpponentDeckPayload {
 export interface SettingsAPI {
   getSettings: () => Promise<import('./character.js').SettingsConfig>;
   saveSettings: (
-    settings: Partial<import('./character.js').SettingsConfig>
+    settings: Partial<import('./character.js').SettingsConfig>,
   ) => Promise<import('./character.js').SettingsConfig>;
   getCharacters: () => Promise<import('./character.js').CharacterData[]>;
   getRandomOpponentDeck: (characterId: string) => Promise<RandomOpponentDeckPayload | null>;

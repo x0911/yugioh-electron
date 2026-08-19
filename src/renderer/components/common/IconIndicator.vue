@@ -1,9 +1,5 @@
 <template>
-  <Tooltip
-    v-if="showTooltip"
-    :text="computedTooltipText"
-    position="top"
-  >
+  <Tooltip v-if="showTooltip" :text="computedTooltipText" position="top">
     <div
       class="icon-indicator"
       :class="[
@@ -30,35 +26,76 @@
           <template v-if="type === 'location'">
             <!-- Hand: Stylized hand holding card -->
             <template v-if="location === 'hand'">
-              <rect x="7" y="2" width="10" height="14" rx="2" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+              <rect
+                x="7"
+                y="2"
+                width="10"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.15"
+              />
               <path d="M4 17a4 4 0 0 0 4 4h7a4 4 0 0 0 4-4v-2H4v2z" />
               <path d="M10 13v-3" stroke-width="1.5" />
             </template>
 
             <!-- Field: Hexagon/Octagon arena tile motif -->
             <template v-else-if="location === 'field'">
-              <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+              <polygon
+                points="12,2 21,7 21,17 12,22 3,17 3,7"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.15"
+              />
               <circle cx="12" cy="12" r="3" fill="currentColor" />
             </template>
 
             <!-- Deck: Stacked card deck -->
             <template v-else-if="location === 'deck'">
-              <rect x="4" y="8" width="12" height="14" rx="2" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+              <rect
+                x="4"
+                y="8"
+                width="12"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.15"
+              />
               <path d="M7 5h11a2 2 0 0 1 2 2v11" />
               <path d="M10 2h10a2 2 0 0 1 2 2v11" stroke-dasharray="2 2" />
             </template>
 
             <!-- Extra Deck: Stacked deck with star sparkle -->
             <template v-else-if="location === 'extra-deck'">
-              <rect x="3" y="8" width="11" height="14" rx="2" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+              <rect
+                x="3"
+                y="8"
+                width="11"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.15"
+              />
               <path d="M6 5h10a2 2 0 0 1 2 2v10" />
               <!-- Star accent -->
-              <polygon points="18,3 19,6 22,7 19,8 18,11 17,8 14,7 17,6" fill="currentColor" stroke="none" />
+              <polygon
+                points="18,3 19,6 22,7 19,8 18,11 17,8 14,7 17,6"
+                fill="currentColor"
+                stroke="none"
+              />
             </template>
 
             <!-- Graveyard: Stylized tombstone arch silhouette -->
             <template v-else-if="location === 'graveyard'">
-              <path d="M6 21V10a6 6 0 0 1 12 0v11" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+              <path
+                d="M6 21V10a6 6 0 0 1 12 0v11"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.15"
+              />
               <line x1="3" y1="21" x2="21" y2="21" stroke-width="2.5" />
               <line x1="12" y1="7" x2="12" y2="15" stroke-width="1.5" />
               <line x1="9" y1="10" x2="15" y2="10" stroke-width="1.5" />
@@ -67,7 +104,9 @@
             <!-- Banished: Swirling void / portal vortex -->
             <template v-else-if="location === 'banished'">
               <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-dasharray="8 4" />
-              <path d="M12 7a5 5 0 0 1 5 5c0 2.76-2.24 5-5 5s-5-2.24-5-5a3 3 0 0 1 3-3c1.66 0 3 1.34 3 3a1 1 0 0 1-1 1" />
+              <path
+                d="M12 7a5 5 0 0 1 5 5c0 2.76-2.24 5-5 5s-5-2.24-5-5a3 3 0 0 1 3-3c1.66 0 3 1.34 3 3a1 1 0 0 1-1 1"
+              />
             </template>
           </template>
 
@@ -75,13 +114,23 @@
           <template v-else-if="type === 'status'">
             <!-- Effect Negated: Shield with diagonal slash -->
             <template v-if="status === 'negated'">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+              <path
+                d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.15"
+              />
               <line x1="4" y1="4" x2="20" y2="20" stroke-width="2.5" stroke="currentColor" />
             </template>
 
             <!-- Cannot Special Summon: Rising star with slash -->
             <template v-else-if="status === 'no-special-summon'">
-              <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+              <polygon
+                points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.15"
+              />
               <line x1="3" y1="3" x2="21" y2="21" stroke-width="2.5" stroke="currentColor" />
             </template>
 
@@ -93,14 +142,41 @@
 
             <!-- Fusion Material: 2 overlapping cards merging into swirl -->
             <template v-else-if="status === 'fusion-material'">
-              <rect x="4" y="5" width="8" height="11" rx="1.5" stroke="currentColor" fill="currentColor" fill-opacity="0.2" />
-              <rect x="11" y="8" width="8" height="11" rx="1.5" stroke="currentColor" fill="currentColor" fill-opacity="0.2" />
+              <rect
+                x="4"
+                y="5"
+                width="8"
+                height="11"
+                rx="1.5"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.2"
+              />
+              <rect
+                x="11"
+                y="8"
+                width="8"
+                height="11"
+                rx="1.5"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.2"
+              />
               <path d="M9 10a3 3 0 0 1 4 2" stroke-width="1.8" />
             </template>
 
             <!-- Synchro Material: Card with rising sparkles -->
             <template v-else-if="status === 'synchro-material'">
-              <rect x="6" y="7" width="12" height="14" rx="2" stroke="currentColor" fill="currentColor" fill-opacity="0.2" />
+              <rect
+                x="6"
+                y="7"
+                width="12"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                fill="currentColor"
+                fill-opacity="0.2"
+              />
               <circle cx="9" cy="4" r="1.5" fill="currentColor" stroke="none" />
               <circle cx="15" cy="3" r="1.5" fill="currentColor" stroke="none" />
               <circle cx="12" cy="12" r="3" stroke-dasharray="2 2" />
@@ -150,42 +226,95 @@
       >
         <template v-if="type === 'location'">
           <template v-if="location === 'hand'">
-            <rect x="7" y="2" width="10" height="14" rx="2" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+            <rect
+              x="7"
+              y="2"
+              width="10"
+              height="14"
+              rx="2"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.15"
+            />
             <path d="M4 17a4 4 0 0 0 4 4h7a4 4 0 0 0 4-4v-2H4v2z" />
             <path d="M10 13v-3" stroke-width="1.5" />
           </template>
           <template v-else-if="location === 'field'">
-            <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+            <polygon
+              points="12,2 21,7 21,17 12,22 3,17 3,7"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.15"
+            />
             <circle cx="12" cy="12" r="3" fill="currentColor" />
           </template>
           <template v-else-if="location === 'deck'">
-            <rect x="4" y="8" width="12" height="14" rx="2" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+            <rect
+              x="4"
+              y="8"
+              width="12"
+              height="14"
+              rx="2"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.15"
+            />
             <path d="M7 5h11a2 2 0 0 1 2 2v11" />
             <path d="M10 2h10a2 2 0 0 1 2 2v11" stroke-dasharray="2 2" />
           </template>
           <template v-else-if="location === 'extra-deck'">
-            <rect x="3" y="8" width="11" height="14" rx="2" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+            <rect
+              x="3"
+              y="8"
+              width="11"
+              height="14"
+              rx="2"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.15"
+            />
             <path d="M6 5h10a2 2 0 0 1 2 2v10" />
-            <polygon points="18,3 19,6 22,7 19,8 18,11 17,8 14,7 17,6" fill="currentColor" stroke="none" />
+            <polygon
+              points="18,3 19,6 22,7 19,8 18,11 17,8 14,7 17,6"
+              fill="currentColor"
+              stroke="none"
+            />
           </template>
           <template v-else-if="location === 'graveyard'">
-            <path d="M6 21V10a6 6 0 0 1 12 0v11" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+            <path
+              d="M6 21V10a6 6 0 0 1 12 0v11"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.15"
+            />
             <line x1="3" y1="21" x2="21" y2="21" stroke-width="2.5" />
             <line x1="12" y1="7" x2="12" y2="15" stroke-width="1.5" />
             <line x1="9" y1="10" x2="15" y2="10" stroke-width="1.5" />
           </template>
           <template v-else-if="location === 'banished'">
             <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-dasharray="8 4" />
-            <path d="M12 7a5 5 0 0 1 5 5c0 2.76-2.24 5-5 5s-5-2.24-5-5a3 3 0 0 1 3-3c1.66 0 3 1.34 3 3a1 1 0 0 1-1 1" />
+            <path
+              d="M12 7a5 5 0 0 1 5 5c0 2.76-2.24 5-5 5s-5-2.24-5-5a3 3 0 0 1 3-3c1.66 0 3 1.34 3 3a1 1 0 0 1-1 1"
+            />
           </template>
         </template>
         <template v-else-if="type === 'status'">
           <template v-if="status === 'negated'">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+            <path
+              d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.15"
+            />
             <line x1="4" y1="4" x2="20" y2="20" stroke-width="2.5" stroke="currentColor" />
           </template>
           <template v-else-if="status === 'no-special-summon'">
-            <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" stroke="currentColor" fill="currentColor" fill-opacity="0.15" />
+            <polygon
+              points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.15"
+            />
             <line x1="3" y1="3" x2="21" y2="21" stroke-width="2.5" stroke="currentColor" />
           </template>
           <template v-else-if="status === 'temp-banished'">
@@ -193,12 +322,39 @@
             <path d="M9 7h6l-3 4-3-4zM9 17h6l-3-4-3 4z" fill="currentColor" />
           </template>
           <template v-else-if="status === 'fusion-material'">
-            <rect x="4" y="5" width="8" height="11" rx="1.5" stroke="currentColor" fill="currentColor" fill-opacity="0.2" />
-            <rect x="11" y="8" width="8" height="11" rx="1.5" stroke="currentColor" fill="currentColor" fill-opacity="0.2" />
+            <rect
+              x="4"
+              y="5"
+              width="8"
+              height="11"
+              rx="1.5"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.2"
+            />
+            <rect
+              x="11"
+              y="8"
+              width="8"
+              height="11"
+              rx="1.5"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.2"
+            />
             <path d="M9 10a3 3 0 0 1 4 2" stroke-width="1.8" />
           </template>
           <template v-else-if="status === 'synchro-material'">
-            <rect x="6" y="7" width="12" height="14" rx="2" stroke="currentColor" fill="currentColor" fill-opacity="0.2" />
+            <rect
+              x="6"
+              y="7"
+              width="12"
+              height="14"
+              rx="2"
+              stroke="currentColor"
+              fill="currentColor"
+              fill-opacity="0.2"
+            />
             <circle cx="9" cy="4" r="1.5" fill="currentColor" stroke="none" />
             <circle cx="15" cy="3" r="1.5" fill="currentColor" stroke="none" />
             <circle cx="12" cy="12" r="3" stroke-dasharray="2 2" />

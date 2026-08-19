@@ -15,7 +15,9 @@
         <router-link to="/coin-toss" class="dev-nav-bar__link"> Coin Toss (P8) </router-link>
         <router-link to="/pre-duel-video" class="dev-nav-bar__link"> Pre-Duel (P8) </router-link>
         <router-link to="/duel" class="dev-nav-bar__link"> Duel (P9) </router-link>
-        <router-link to="/dev/kitchen-sink" class="dev-nav-bar__link dev-nav-bar__link--highlight"> Kitchen Sink (P4) </router-link>
+        <router-link to="/dev/kitchen-sink" class="dev-nav-bar__link dev-nav-bar__link--highlight">
+          Kitchen Sink (P4)
+        </router-link>
         <button
           type="button"
           class="dev-nav-bar__close-btn"
@@ -61,7 +63,12 @@ const devToolsStore = useDevToolsStore();
 
 function handleKeyDown(event: KeyboardEvent): void {
   // Shortcut: Ctrl+Shift+D or Cmd+Shift+D to toggle Dev Nav in dev mode
-  if (isDev && (event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'd') {
+  if (
+    isDev &&
+    (event.ctrlKey || event.metaKey) &&
+    event.shiftKey &&
+    event.key.toLowerCase() === 'd'
+  ) {
     event.preventDefault();
     devToolsStore.toggleDevNav();
   }
@@ -98,7 +105,9 @@ onBeforeUnmount(() => {
   margin-top: 0;
   position: relative;
   overflow: hidden;
-  transition: height 0.2s ease, margin-top 0.2s ease;
+  transition:
+    height 0.2s ease,
+    margin-top 0.2s ease;
 
   &--with-dev-nav {
     height: calc(100vh - 40px);

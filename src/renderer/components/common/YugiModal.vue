@@ -1,11 +1,7 @@
 <template>
   <Teleport to="body">
     <transition name="modal-fade">
-      <div
-        v-if="modelValue"
-        class="yugi-modal-backdrop"
-        @click="handleBackdropClick"
-      >
+      <div v-if="modelValue" class="yugi-modal-backdrop" @click="handleBackdropClick">
         <div
           ref="modalRef"
           class="yugi-modal"

@@ -63,11 +63,7 @@
 
   // --- Variants ---
   &--primary {
-    background: linear-gradient(
-      180deg,
-      rgba(35, 42, 56, 0.85) 0%,
-      rgba(18, 22, 30, 0.9) 100%
-    );
+    background: linear-gradient(180deg, rgba(35, 42, 56, 0.85) 0%, rgba(18, 22, 30, 0.9) 100%);
     border-color: rgba($color-gold-500, 0.45);
   }
 
@@ -78,11 +74,7 @@
   }
 
   &--danger {
-    background: linear-gradient(
-      180deg,
-      rgba(70, 20, 20, 0.8) 0%,
-      rgba(30, 10, 10, 0.9) 100%
-    );
+    background: linear-gradient(180deg, rgba(70, 20, 20, 0.8) 0%, rgba(30, 10, 10, 0.9) 100%);
     border-color: rgba($color-danger, 0.45);
     color: #ffc4c4;
 
@@ -223,4 +215,3 @@
     font-weight: normal;
   }
 }
-

@@ -35,4 +35,3 @@ This directory contains self-hosted web font assets (WOFF2) for the offline desk
 ## License Compliance
 
 All bundled fonts are licensed under the SIL Open Font License (OFL) v1.1. They may be freely bundled, embedded, and distributed with commercial and non-commercial software applications.
-

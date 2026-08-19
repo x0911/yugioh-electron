@@ -110,7 +110,7 @@ export interface RandomCharacterDeckResult {
 }
 
 export function getRandomDeckForCharacter(
-  characterId: string
+  characterId: string,
 ): RandomCharacterDeckResult | undefined {
   const character = getCharacterById(characterId);
   if (!character || character.decks.length === 0) {
