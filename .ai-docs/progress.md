@@ -888,12 +888,37 @@
 - `src/renderer/views/DeckEditView.vue`: Enforced disabled state on header Save Deck button when invalid or under 40 cards.
 - `src/renderer/stores/deckEditStore.ts`: Enforced strict 40-card minimum validation in `saveCurrentDeck()`.
 
+---
+
+## 2026-08-19 — Extra Deck & Card Previewer Metadata & Sizing Fixes
+
+**What was done:**
+- **Compact & High-DPI Extra Deck Card Images**:
+  - Updated `CardListModal.vue` grid to compact 110px-125px centered tiles (`minmax(110px, 125px); justify-content: center;`) with `aspect-ratio: 1 / 1.45`.
+  - Switched from stretched `mini` thumbnails to high-resolution card images (`getCardImageUrl(card.code, 'full')`), ensuring crystal-sharp rendering.
+- **Extra Deck Monster Classification & Tags**:
+  - In `cardReader.ts` and `DuelEngineService.ts`, fully populated `FieldCard` properties (`atk`, `def`, `level`, `attribute`, `race`, `description`) for Extra Deck and drawn/moved cards.
+  - In `CardListModal.vue`, added `isMonsterCard()` guard and enriched cards using `duelStore.getCardDetail(card.code)`. Monsters now display level stars (`⭐ 12`), attribute badges (`LIGHT`), and combat stats (`ATK/4500 DEF/3800`), eliminating erroneous `SPELL / TRAP` tags.
+- **Live Card Previewer Metadata Hydration**:
+  - In `duelStore.ts`, added `initCardDatabase()`, `getCardDetail()`, and `hydratePlayerField()` to load the full card database on duel initialization and hydrate all board fields.
+  - In `CardPreviewPopup.vue`, resolved `effectiveCard` from `duelStore.getCardDetail()`. Hovering over any card now displays complete data: card title, attribute badge, level stars (`LV 12`), type labels (`[Dragon / Fusion / Monster]`), combat stats (`ATK 4500 / DEF 3800`), lore text, and passcode.
+
+**Files created/modified:**
+- `src/main/engine/cardReader.ts`: Added `getCardDetail()` and `mapRowToCardDetail()`.
+- `src/main/engine/DuelEngineService.ts`: Populated complete `CardDetail` fields in `extraDeck`, `drawn`, and `handleCardMove`.
+- `src/renderer/stores/duelStore.ts`: Added `initCardDatabase()`, `getCardDetail()`, and automatic `hydratePlayerField()`.
+- `src/renderer/components/duel/CardListModal.vue`: Compact centered grid, full-res images, and monster stats display.
+- `src/renderer/components/duel/CardPreviewPopup.vue`: Hydrated `effectiveCard` with rich combat stats, level stars, type labels, and lore text.
+- `tests/stack-inspection.test.ts`: Added automated test for Extra Deck monster classification and detail enrichment.
+
 **How to manually verify this phase:**
-1. Open Deck Construction:
-   - Notice the `🗂️ Stacks (17)` button in the Main Deck title bar. Clicking it toggles to `🃏 All (42)`, expanding all 42 individual cards on screen.
-   - Remove cards until the Main Deck has fewer than 40 cards (e.g. 39/60).
-   - Observe that the Save button is disabled and `⚠️ ILLEGAL DECK` is displayed.
-   - Adding back up to 40+ cards enables saving again.
+1. Run `npm test` to verify all automated test suites pass.
+2. Run `npm run typecheck` and `npm run build` to verify clean compilation.
+3. In a duel, click on Extra Deck:
+   - Verify card tiles are compact, centered, and razor sharp.
+   - Verify monster cards like Blue-Eyes Ultimate Dragon show level stars, ATK/DEF, and LIGHT attribute.
+   - Hover over the card and verify the sticky left previewer displays full stats, type bracket, and lore text.
+
 
 
 
