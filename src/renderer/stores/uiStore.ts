@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import type { EngineInitStatus } from '../../shared/types/ipc.js';
 
 export interface UIState {
   isLoading: boolean;
@@ -7,6 +8,7 @@ export interface UIState {
   activeModal: string | null;
   selectedCardCode: number | null;
   hoveredCardCode: number | null;
+  engineStatus: EngineInitStatus | null;
 }
 
 export const useUIStore = defineStore('ui', {
@@ -17,8 +19,12 @@ export const useUIStore = defineStore('ui', {
     activeModal: null,
     selectedCardCode: null,
     hoveredCardCode: null,
+    engineStatus: null,
   }),
   actions: {
+    setEngineStatus(status: EngineInitStatus): void {
+      this.engineStatus = status;
+    },
     setLoading(loading: boolean, message = 'Loading...'): void {
       this.isLoading = loading;
       this.loadingMessage = message;
