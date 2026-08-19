@@ -35,7 +35,7 @@
         <div class="slot-octagon-border"></div>
       </div>
 
-      <!-- Card Display when Occupied -->
+      <!-- Card Display when Occupied (Artwork/Frame only) -->
       <div
         v-else
         class="field-card"
@@ -56,9 +56,6 @@
             @error="handleImageError"
           />
           <div class="card-foil-sheen"></div>
-          <div v-if="card.position === 'facedown_defense'" class="set-defense-pill">
-            DEF SET
-          </div>
         </div>
 
         <!-- Face-up Card (Attack Monster, Face-up Defense Monster, or Face-up Spell/Trap) -->
@@ -70,30 +67,29 @@
             @error="handleImageError"
           />
           <div class="card-foil-sheen"></div>
-
-          <!-- Monster Combat Stats Overlay -->
-          <div v-if="card.atk !== undefined || card.def !== undefined" class="stats-badge">
-            <span
-              v-if="card.atk !== undefined"
-              class="stat-item stat-item--atk"
-              :class="{ 'stat-item--active': card.position === 'faceup_attack' }"
-            >
-              <span class="stat-prefix">ATK</span> {{ card.atk }}
-            </span>
-            <span
-              v-if="card.def !== undefined"
-              class="stat-item stat-item--def"
-              :class="{ 'stat-item--active': card.position === 'faceup_defense' }"
-            >
-              <span class="stat-prefix">DEF</span> {{ card.def }}
-            </span>
-          </div>
-
-          <!-- Level Stars Overlay (Monsters) -->
-          <div v-if="card.level && card.level > 0" class="level-badge">
-            ★{{ card.level }}
-          </div>
         </div>
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- UNROTATED Slot Overlays (Always 0° Straight at Center-Bottom)   -->
+      <!-- =============================================================== -->
+
+      <!-- 1. Combat Stat Badge (ATK only if Attack; DEF only if Defense) -->
+      <div
+        v-if="card && showCombatStatBadge"
+        class="slot-stat-badge"
+        :class="`slot-stat-badge--${activeStatMode}`"
+      >
+        <span class="stat-prefix">{{ activeStatMode === 'atk' ? 'ATK' : 'DEF' }}</span>
+        <span class="stat-value">{{ activeStatValue }}</span>
+      </div>
+
+      <!-- 2. Level / Rank Stars Badge (Always 0° Straight at Top-Right) -->
+      <div
+        v-if="card && isFaceUpMonster && card.level && card.level > 0"
+        class="slot-level-badge"
+      >
+        ★{{ card.level }}
       </div>
     </div>
   </div>
@@ -146,6 +142,40 @@ const isFaceDown = computed(() => {
     props.card?.position === 'facedown_defense' ||
     props.card?.position === 'facedown_spell'
   );
+});
+
+const isFaceUpMonster = computed(() => {
+  return (
+    props.card?.position === 'faceup_attack' ||
+    props.card?.position === 'faceup_defense'
+  );
+});
+
+/**
+ * Display combat stat only if monster is face-up:
+ * - Attack Position => ATK only
+ * - Face-up Defense Position => DEF only
+ */
+const showCombatStatBadge = computed(() => {
+  if (!props.card) return false;
+  if (props.card.position === 'faceup_attack') {
+    return props.card.atk !== undefined;
+  }
+  if (props.card.position === 'faceup_defense') {
+    return props.card.def !== undefined;
+  }
+  return false;
+});
+
+const activeStatMode = computed<'atk' | 'def'>(() => {
+  return props.card?.position === 'faceup_defense' ? 'def' : 'atk';
+});
+
+const activeStatValue = computed<number | string>(() => {
+  if (!props.card) return '';
+  return props.card.position === 'faceup_defense'
+    ? (props.card.def ?? 0)
+    : (props.card.atk ?? 0);
 });
 
 const tooltipText = computed(() => {
@@ -276,7 +306,7 @@ function onClick(): void {
     text-transform: uppercase;
   }
 
-  // Card Presentation
+  // Card Presentation (Rotates cleanly without rotating child text)
   .field-card {
     position: relative;
     width: 88px;
@@ -352,78 +382,78 @@ function onClick(): void {
     pointer-events: none;
   }
 
-  .set-defense-pill {
-    position: absolute;
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(10, 12, 16, 0.85);
-    border: 1px solid rgba(201, 162, 39, 0.5);
-    color: $color-gold-300;
-    font-family: 'Oxanium', monospace, sans-serif;
-    font-size: 0.55rem;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 4px;
-    white-space: nowrap;
-    letter-spacing: 0.05em;
-  }
-
-  // ATK / DEF Stats Badge
-  .stats-badge {
+  // =========================================================================
+  // Unrotated Overlays: Sits at Bottom-Center of the Slot Frame (Always 0°)
+  // =========================================================================
+  .slot-stat-badge {
     position: absolute;
     bottom: 2px;
-    left: 2px;
-    right: 2px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    background: rgba(10, 12, 16, 0.88);
+    gap: 4px;
+    padding: 1px 7px;
+    border-radius: 8px;
+    background: rgba(10, 12, 16, 0.94);
     backdrop-filter: blur(4px);
-    padding: 2px 4px;
-    border-radius: 3px;
     font-family: 'Oxanium', monospace, sans-serif;
-    font-size: 0.55rem;
-    font-weight: 700;
-    border: 1px solid rgba(201, 162, 39, 0.3);
+    font-size: 0.62rem;
+    font-weight: 800;
+    pointer-events: none;
+    z-index: 25;
+    white-space: nowrap;
+    box-shadow:
+      0 4px 10px rgba(0, 0, 0, 0.85),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      color: #b8b2a0;
+    .stat-prefix {
+      font-size: 0.52rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
 
+    .stat-value {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+    }
+
+    &--atk {
+      border: 1px solid rgba(201, 162, 39, 0.6);
       .stat-prefix {
-        font-size: 0.5rem;
         color: $color-gold-500;
       }
-
-      &--atk.stat-item--active {
-        color: #fff;
-        font-weight: 800;
-        text-shadow: 0 0 4px rgba(235, 87, 87, 0.8);
+      .stat-value {
+        color: #ffffff;
       }
+    }
 
-      &--def.stat-item--active {
-        color: #fff;
-        font-weight: 800;
-        text-shadow: 0 0 4px rgba(47, 128, 237, 0.8);
+    &--def {
+      border: 1px solid rgba(86, 204, 242, 0.6);
+      .stat-prefix {
+        color: #56ccf2;
+      }
+      .stat-value {
+        color: #e0f2fe;
       }
     }
   }
 
-  .level-badge {
+  .slot-level-badge {
     position: absolute;
-    top: 2px;
-    right: 2px;
-    background: rgba(10, 12, 16, 0.85);
-    border: 1px solid rgba(201, 162, 39, 0.5);
-    color: $color-gold-300;
+    top: 3px;
+    right: 3px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(10, 12, 16, 0.88);
+    border: 1px solid rgba(242, 201, 76, 0.5);
+    color: #f2c94c;
     font-family: 'Oxanium', monospace, sans-serif;
     font-size: 0.55rem;
     font-weight: 800;
-    padding: 1px 4px;
-    border-radius: 3px;
+    pointer-events: none;
+    z-index: 25;
+    text-shadow: 0 0 4px rgba(242, 201, 76, 0.6);
   }
 }
 </style>
