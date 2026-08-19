@@ -16,6 +16,7 @@ export const IPC_CHANNELS = {
   DUEL_COMMAND: 'duel:command',
   DUEL_EVENT: 'duel:event',
   DUEL_GET_STATE: 'duel:get-state',
+  DUEL_GET_BOARD: 'duel:get-board',
   DUEL_STEP: 'duel:step',
   DUEL_SET_AUTOPLAY: 'duel:set-autoplay',
   DUEL_GET_CARD_NAME: 'duel:get-card-name',
@@ -59,6 +60,7 @@ export interface DuelAPI {
   step: () => Promise<DuelEventPayload[]>;
   setAutoPlay: (autoPlay: boolean) => Promise<void>;
   getState: () => Promise<DuelStateSummary>;
+  getBoardState: () => Promise<import('./field.js').DuelBoardState>;
   getCardName: (code: number) => Promise<string>;
   onEvent: (callback: (event: DuelEventPayload) => void) => () => void;
   playVideo: (callback: (video: unknown) => void) => () => void;

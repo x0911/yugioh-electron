@@ -24,6 +24,9 @@ const duelAPI: DuelAPI = {
   getState: (): Promise<DuelStateSummary> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DUEL_GET_STATE);
   },
+  getBoardState: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DUEL_GET_BOARD);
+  },
   getCardName: (code: number): Promise<string> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DUEL_GET_CARD_NAME, code);
   },

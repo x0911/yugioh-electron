@@ -15,6 +15,13 @@ import { ScriptReaderService } from './scriptReader.js';
 import { MessageDecoder, getAutoResponse, type DecodedDuelEvent } from './messageDecoder.js';
 import { ViewFilterService } from './viewFilter.js';
 
+import type {
+  CardPositionState,
+  FieldCard,
+  PlayerFieldState,
+  DuelBoardState,
+} from '../../shared/types/field.js';
+
 export interface EngineInitStatus {
   initialized: boolean;
   engineVersion: string;
@@ -39,10 +46,10 @@ export interface DuelState {
   isWaitingResponse: boolean;
   waitingPlayer: number | null;
   currentTurn: number;
-  currentPhase: string;
+  currentPhase: 'DP' | 'SP' | 'M1' | 'BP' | 'M2' | 'EP';
   p0LP: number;
   p1LP: number;
-  winner: number | null;
+  winner: 0 | 1 | 'draw' | null;
   winReason: number | null;
   stepCount: number;
   humanPlayerId: number;
@@ -58,12 +65,16 @@ export class DuelEngineService {
   private lastPromptMessage: OcgMessage | null = null;
   private humanPlayerId = 0;
 
+  // Tracked Board States for Player 0 and Player 1
+  private player0Field: PlayerFieldState = this.createEmptyPlayerState(0, 'Player 0');
+  private player1Field: PlayerFieldState = this.createEmptyPlayerState(1, 'Player 1');
+
   private state: DuelState = {
     isActive: false,
     isWaitingResponse: false,
     waitingPlayer: null,
     currentTurn: 0,
-    currentPhase: 'DRAW',
+    currentPhase: 'DP',
     p0LP: 8000,
     p1LP: 8000,
     winner: null,
@@ -80,6 +91,28 @@ export class DuelEngineService {
     this.scriptReader = new ScriptReaderService();
     this.messageDecoder = new MessageDecoder(this.cardReader);
     this.viewFilter = new ViewFilterService();
+  }
+
+  private createEmptyPlayerState(playerId: 0 | 1, name: string): PlayerFieldState {
+    return {
+      playerId,
+      name,
+      currentLp: 8000,
+      maxLp: 8000,
+      isTurn: playerId === 0,
+      monsterZones: [null, null, null, null, null],
+      spellTrapZones: [null, null, null, null, null],
+      fieldZone: null,
+      graveyard: [],
+      banished: [],
+      deckCount: 40,
+      extraDeckCount: 0,
+      hand: [],
+    };
+  }
+
+  private getPlayerField(controller: number): PlayerFieldState {
+    return controller === 0 ? this.player0Field : this.player1Field;
   }
 
   public async init(): Promise<EngineInitStatus> {
@@ -149,14 +182,23 @@ export class DuelEngineService {
     this.autoPlay = options.autoPlay ?? false;
     this.humanPlayerId = options.humanPlayerId ?? 0;
     this.lastPromptMessage = null;
+
+    const startingLP = options.startingLP ?? 8000;
+    this.player0Field = this.createEmptyPlayerState(0, this.humanPlayerId === 0 ? 'You' : 'Opponent');
+    this.player1Field = this.createEmptyPlayerState(1, this.humanPlayerId === 1 ? 'You' : 'Opponent');
+    this.player0Field.currentLp = startingLP;
+    this.player1Field.currentLp = startingLP;
+    this.player0Field.deckCount = options.player0Deck.length;
+    this.player1Field.deckCount = options.player1Deck.length;
+
     this.state = {
       isActive: true,
       isWaitingResponse: false,
       waitingPlayer: null,
       currentTurn: 0,
-      currentPhase: 'DRAW',
-      p0LP: options.startingLP ?? 8000,
-      p1LP: options.startingLP ?? 8000,
+      currentPhase: 'DP',
+      p0LP: startingLP,
+      p1LP: startingLP,
       winner: null,
       winReason: null,
       stepCount: 0,
@@ -172,12 +214,12 @@ export class DuelEngineService {
         BigInt(Math.floor(Math.random() * 1000000)),
       ],
       team1: {
-        startingLP: options.startingLP ?? 8000,
+        startingLP,
         startingDrawCount: options.startingDrawCount ?? 5,
         drawCountPerTurn: options.drawCountPerTurn ?? 1,
       },
       team2: {
-        startingLP: options.startingLP ?? 8000,
+        startingLP,
         startingDrawCount: options.startingDrawCount ?? 5,
         drawCountPerTurn: options.drawCountPerTurn ?? 1,
       },
@@ -232,6 +274,151 @@ export class DuelEngineService {
     return true;
   }
 
+  private updateBoardStateFromMessage(msg: OcgMessage): void {
+    const rawType = msg.type;
+
+    if (rawType === OcgMessageType.NEW_TURN) {
+      const activePlayer = msg.player;
+      this.player0Field.isTurn = activePlayer === 0;
+      this.player1Field.isTurn = activePlayer === 1;
+    } else if (rawType === OcgMessageType.DRAW) {
+      const pf = this.getPlayerField(msg.player);
+      pf.deckCount = Math.max(0, pf.deckCount - msg.drawn.length);
+      for (const item of msg.drawn) {
+        const isHuman = msg.player === this.humanPlayerId;
+        const code = isHuman ? item.code : 0;
+        const card: FieldCard = {
+          id: `hand-${msg.player}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          code,
+          name: code > 0 ? this.cardReader.getCardName(code) : 'Card Back',
+          controller: msg.player as 0 | 1,
+          location: 'hand',
+          sequence: pf.hand.length,
+          position: isHuman ? 'faceup_spell' : 'facedown_spell',
+        };
+        pf.hand.push(card);
+      }
+    } else if (rawType === OcgMessageType.MOVE) {
+      const { card: code, from, to } = msg;
+      this.handleCardMove(code, from, to);
+    } else if (rawType === OcgMessageType.POS_CHANGE) {
+      const { controller, location, sequence, position } = msg;
+      const pf = this.getPlayerField(controller);
+      if (location === OcgLocation.MZONE && pf.monsterZones[sequence]) {
+        const card = pf.monsterZones[sequence]!;
+        if ((position & OcgPosition.FACEUP_ATTACK) !== 0) card.position = 'faceup_attack';
+        else if ((position & OcgPosition.FACEUP_DEFENSE) !== 0) card.position = 'faceup_defense';
+        else if ((position & OcgPosition.FACEDOWN_DEFENSE) !== 0) card.position = 'facedown_defense';
+      }
+    } else if (rawType === OcgMessageType.LPUPDATE) {
+      const pf = this.getPlayerField(msg.player);
+      pf.currentLp = msg.lp;
+    } else if (rawType === OcgMessageType.DAMAGE) {
+      const pf = this.getPlayerField(msg.player);
+      pf.currentLp = Math.max(0, pf.currentLp - msg.amount);
+    } else if (rawType === OcgMessageType.RECOVER) {
+      const pf = this.getPlayerField(msg.player);
+      pf.currentLp += msg.amount;
+    }
+  }
+
+  private handleCardMove(code: number, from: { controller: number; location: number; sequence: number; position: number }, to: { controller: number; location: number; sequence: number; position: number }): void {
+    if (from.location === to.location && from.controller === to.controller && from.sequence === to.sequence) {
+      return;
+    }
+
+    let movedCard: FieldCard | null = null;
+
+    // 1. Remove from source
+    if (from.location !== 0) {
+      const fromPf = this.getPlayerField(from.controller);
+      if (from.location === OcgLocation.HAND) {
+        const idx = code > 0 ? fromPf.hand.findIndex((c) => c.code === code) : from.sequence;
+        if (idx >= 0 && idx < fromPf.hand.length) {
+          movedCard = fromPf.hand.splice(idx, 1)[0];
+        }
+      } else if (from.location === OcgLocation.MZONE) {
+        movedCard = fromPf.monsterZones[from.sequence];
+        fromPf.monsterZones[from.sequence] = null;
+      } else if (from.location === OcgLocation.SZONE) {
+        movedCard = fromPf.spellTrapZones[from.sequence];
+        fromPf.spellTrapZones[from.sequence] = null;
+      } else if (from.location === OcgLocation.FZONE) {
+        movedCard = fromPf.fieldZone;
+        fromPf.fieldZone = null;
+      } else if (from.location === OcgLocation.GRAVE) {
+        const idx = fromPf.graveyard.findIndex((c) => c.code === code);
+        if (idx >= 0) movedCard = fromPf.graveyard.splice(idx, 1)[0];
+      } else if (from.location === OcgLocation.REMOVED) {
+        const idx = fromPf.banished.findIndex((c) => c.code === code);
+        if (idx >= 0) movedCard = fromPf.banished.splice(idx, 1)[0];
+      }
+    }
+
+    // 2. Resolve final code and name
+    const finalCode = code > 0 ? code : (movedCard?.code ?? 0);
+    const cardName = finalCode > 0 ? this.cardReader.getCardName(finalCode) : 'Card';
+
+    if (!movedCard) {
+      movedCard = {
+        id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        code: finalCode,
+        name: cardName,
+        controller: to.controller as 0 | 1,
+        location: 'monster',
+        sequence: to.sequence,
+        position: 'faceup_attack',
+      };
+    } else {
+      movedCard.code = finalCode;
+      movedCard.name = cardName;
+      movedCard.controller = to.controller as 0 | 1;
+    }
+
+    // 3. Add to destination
+    if (to.location !== 0) {
+      const toPf = this.getPlayerField(to.controller);
+      if (to.location === OcgLocation.MZONE) {
+        let pos: CardPositionState = 'faceup_attack';
+        if ((to.position & OcgPosition.FACEUP_ATTACK) !== 0) pos = 'faceup_attack';
+        else if ((to.position & OcgPosition.FACEUP_DEFENSE) !== 0) pos = 'faceup_defense';
+        else if ((to.position & OcgPosition.FACEDOWN_DEFENSE) !== 0) pos = 'facedown_defense';
+
+        movedCard.location = 'monster';
+        movedCard.sequence = to.sequence;
+        movedCard.position = pos;
+        toPf.monsterZones[to.sequence] = movedCard;
+      } else if (to.location === OcgLocation.SZONE) {
+        const isFaceup = (to.position & OcgPosition.FACEUP) !== 0;
+        movedCard.location = 'spell-trap';
+        movedCard.sequence = to.sequence;
+        movedCard.position = isFaceup ? 'faceup_spell' : 'facedown_spell';
+        toPf.spellTrapZones[to.sequence] = movedCard;
+      } else if (to.location === OcgLocation.FZONE) {
+        movedCard.location = 'field';
+        movedCard.sequence = 0;
+        movedCard.position = 'faceup_spell';
+        toPf.fieldZone = movedCard;
+      } else if (to.location === OcgLocation.HAND) {
+        movedCard.location = 'hand';
+        movedCard.sequence = toPf.hand.length;
+        movedCard.position = to.controller === this.humanPlayerId ? 'faceup_spell' : 'facedown_spell';
+        if (to.controller !== this.humanPlayerId) movedCard.code = 0;
+        toPf.hand.push(movedCard);
+      } else if (to.location === OcgLocation.GRAVE) {
+        movedCard.location = 'graveyard';
+        movedCard.sequence = toPf.graveyard.length;
+        movedCard.position = 'faceup_spell';
+        toPf.graveyard.unshift(movedCard);
+      } else if (to.location === OcgLocation.REMOVED) {
+        movedCard.location = 'banished';
+        movedCard.sequence = toPf.banished.length;
+        movedCard.position = 'faceup_spell';
+        toPf.banished.unshift(movedCard);
+      }
+    }
+  }
+
   public processStep(): DecodedDuelEvent[] {
     if (!this.lib || !this.currentDuel || !this.state.isActive) {
       return [];
@@ -249,7 +436,6 @@ export class DuelEngineService {
         this.state.waitingPlayer = null;
         this.lastPromptMessage = null;
       } else {
-        // Cannot auto-respond, remain in waiting state
         return [];
       }
     }
@@ -265,13 +451,18 @@ export class DuelEngineService {
         const decoded = this.messageDecoder.decode(msg);
         allDecodedEvents.push(decoded);
 
+        // Update internal board tracking
+        this.updateBoardStateFromMessage(msg);
+
         // Track internal state
         if (decoded.type === 'NEW_TURN') {
           this.state.currentTurn++;
           decoded.turn = this.state.currentTurn;
           decoded.description = `Turn ${this.state.currentTurn} begins. Active player: Player ${decoded.player}`;
         }
-        if (decoded.phase !== undefined) this.state.currentPhase = decoded.phase;
+        if (decoded.phase !== undefined) {
+          this.state.currentPhase = (decoded.phase as DuelState['currentPhase']) || 'M1';
+        }
         if (
           decoded.type === 'LPUPDATE' &&
           decoded.player !== undefined &&
@@ -288,8 +479,16 @@ export class DuelEngineService {
           if (decoded.player === 0) this.state.p0LP = Math.max(0, this.state.p0LP - decoded.amount);
           if (decoded.player === 1) this.state.p1LP = Math.max(0, this.state.p1LP - decoded.amount);
         }
+        if (
+          decoded.type === 'RECOVER' &&
+          decoded.player !== undefined &&
+          decoded.amount !== undefined
+        ) {
+          if (decoded.player === 0) this.state.p0LP += decoded.amount;
+          if (decoded.player === 1) this.state.p1LP += decoded.amount;
+        }
         if (decoded.type === 'WIN') {
-          this.state.winner = decoded.player ?? null;
+          this.state.winner = (decoded.player as 0 | 1) ?? null;
           this.state.winReason = decoded.reason ?? null;
           this.state.isActive = false;
         }
@@ -314,24 +513,22 @@ export class DuelEngineService {
           this.state.waitingPlayer = promptPlayer;
           this.lastPromptMessage = lastMsg;
 
+          const isOpponent = promptPlayer !== this.humanPlayerId;
           // If opponent player (AI) or autoPlay is active: auto-respond and continue
-          if (promptPlayer === 1 || this.autoPlay) {
+          if (isOpponent || this.autoPlay) {
             const response = getAutoResponse(lastMsg);
             if (response) {
               this.lib.duelSetResponse(handle, response);
               this.state.isWaitingResponse = false;
               this.state.waitingPlayer = null;
               this.lastPromptMessage = null;
-              // Continue the loop to process the response
               continue;
             }
           }
         }
-        // If it's a prompt for human (Player 0) and autoPlay is false: stop and wait
+        // If it's a prompt for human and autoPlay is false: stop and wait
         break;
       }
-
-      // If status === CONTINUE, keep processing
     }
 
     return allDecodedEvents;
@@ -371,6 +568,23 @@ export class DuelEngineService {
     return { ...this.state };
   }
 
+  public getBoardState(): DuelBoardState {
+    const userField = this.humanPlayerId === 0 ? this.player0Field : this.player1Field;
+    const opponentField = this.humanPlayerId === 0 ? this.player1Field : this.player0Field;
+
+    return {
+      userField: JSON.parse(JSON.stringify(userField)),
+      opponentField: JSON.parse(JSON.stringify(opponentField)),
+      extraMonsterZones: [null, null],
+      turnNumber: this.state.currentTurn,
+      currentPhase: this.state.currentPhase,
+      activePrompt: null,
+      phaseGuideText: '',
+      winner: this.state.winner,
+      winReason: this.state.winReason,
+    };
+  }
+
   public getCardName(code: number): string {
     return this.cardReader.getCardName(code);
   }
@@ -400,3 +614,4 @@ export class DuelEngineService {
 }
 
 export const duelEngineService = new DuelEngineService();
+

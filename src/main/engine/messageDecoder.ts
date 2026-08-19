@@ -328,6 +328,25 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
   }
 }
 
+/**
+ * Convert any BigInt values in an object to strings for safe JSON/IPC serialization.
+ */
+export function sanitizeBigInts<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === 'bigint') return (obj as bigint).toString() as unknown as T;
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeBigInts(item)) as unknown as T;
+  }
+  if (typeof obj === 'object') {
+    const res: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      res[k] = sanitizeBigInts(v);
+    }
+    return res as unknown as T;
+  }
+  return obj;
+}
+
 export class MessageDecoder {
   private cardReader: CardReaderService;
 
@@ -341,18 +360,20 @@ export class MessageDecoder {
     let description = '';
     let isPrompt = false;
     let promptPlayer: number | undefined;
+    let promptType: string | undefined;
+    let promptData: unknown;
 
     switch (rawType) {
       case OcgMessageType.NEW_TURN: {
         type = 'NEW_TURN';
-        description = `New turn begins. Active player: Player ${msg.player}`;
+        description = `Turn begins. Active player: Player ${msg.player}`;
         return {
           type,
           rawType,
           player: msg.player,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
         };
       }
 
@@ -361,14 +382,24 @@ export class MessageDecoder {
         const phaseName =
           ocgPhaseString.get(msg.phase as Parameters<typeof ocgPhaseString.get>[0]) ??
           `PHASE_${msg.phase}`;
+        
+        let phaseCode = 'M1';
+        const pLower = phaseName.toLowerCase();
+        if (pLower.includes('draw')) phaseCode = 'DP';
+        else if (pLower.includes('standby')) phaseCode = 'SP';
+        else if (pLower.includes('main1')) phaseCode = 'M1';
+        else if (pLower.includes('battle') || pLower.includes('damage')) phaseCode = 'BP';
+        else if (pLower.includes('main2')) phaseCode = 'M2';
+        else if (pLower.includes('end')) phaseCode = 'EP';
+
         description = `Phase changed to ${phaseName.toUpperCase()}`;
         return {
           type,
           rawType,
-          phase: phaseName,
+          phase: phaseCode,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
         };
       }
 
@@ -387,7 +418,7 @@ export class MessageDecoder {
           drawnCards,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
         };
       }
 
@@ -403,14 +434,14 @@ export class MessageDecoder {
           cardName: name,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
         };
       }
 
       case OcgMessageType.SUMMONED: {
         type = 'SUMMONED';
         description = `Normal Summon successful.`;
-        return { type, rawType, isPrompt: false, description, raw: msg };
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
       }
 
       case OcgMessageType.SPSUMMONING: {
@@ -425,20 +456,67 @@ export class MessageDecoder {
           cardName: name,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
         };
       }
 
       case OcgMessageType.SPSUMMONED: {
         type = 'SPSUMMONED';
         description = `Special Summon successful.`;
-        return { type, rawType, isPrompt: false, description, raw: msg };
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.POS_CHANGE: {
+        type = 'POS_CHANGE';
+        const name = this.cardReader.getCardName(msg.code);
+        description = `Player ${msg.controller} changed position of ${name}.`;
+        return {
+          type,
+          rawType,
+          controller: msg.controller,
+          code: msg.code,
+          cardName: name,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SET: {
+        type = 'SET';
+        const name = this.cardReader.getCardName(msg.code);
+        description = `Player ${msg.controller} Set a card on the field.`;
+        return {
+          type,
+          rawType,
+          controller: msg.controller,
+          code: msg.code,
+          cardName: name,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.MOVE: {
+        type = 'MOVE';
+        const name = msg.card > 0 ? this.cardReader.getCardName(msg.card) : 'Card';
+        description = `Card moved to new location.`;
+        return {
+          type,
+          rawType,
+          code: msg.card,
+          cardName: name,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
       }
 
       case OcgMessageType.CHAINING: {
         type = 'CHAINING';
         const name = this.cardReader.getCardName(msg.code);
-        description = `Player ${msg.triggering_controller} activated effect of ${name} (Chain Size ${msg.chain_size})`;
+        description = `Player ${msg.triggering_controller} activated effect of ${name} (Chain Link ${msg.chain_size})`;
         return {
           type,
           rawType,
@@ -447,14 +525,14 @@ export class MessageDecoder {
           cardName: name,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
         };
       }
 
       case OcgMessageType.CHAIN_SOLVED: {
         type = 'CHAIN_SOLVED';
-        description = `Chain link (size ${msg.chain_size}) resolved.`;
-        return { type, rawType, isPrompt: false, description, raw: msg };
+        description = `Chain link (${msg.chain_size}) resolved.`;
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
       }
 
       case OcgMessageType.ATTACK: {
@@ -471,7 +549,7 @@ export class MessageDecoder {
           target: msg.target,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
         };
       }
 
@@ -479,7 +557,7 @@ export class MessageDecoder {
         type = 'BATTLE';
         const targetAtk = msg.target ? msg.target.attack : 0;
         description = `Battle clash: Attacker (ATK ${msg.card.attack}) vs Defender (ATK ${targetAtk}).`;
-        return { type, rawType, isPrompt: false, description, raw: msg };
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
       }
 
       case OcgMessageType.DAMAGE: {
@@ -492,7 +570,21 @@ export class MessageDecoder {
           amount: msg.amount,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.RECOVER: {
+        type = 'RECOVER';
+        description = `Player ${msg.player} recovered ${msg.amount} Life Points.`;
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          amount: msg.amount,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
         };
       }
 
@@ -506,7 +598,7 @@ export class MessageDecoder {
           lp: msg.lp,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
         };
       }
 
@@ -520,49 +612,314 @@ export class MessageDecoder {
           reason: msg.reason,
           isPrompt: false,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
         };
       }
 
       // Prompt Message Types
-      case OcgMessageType.SELECT_IDLECMD:
-      case OcgMessageType.SELECT_BATTLECMD:
-      case OcgMessageType.SELECT_CHAIN:
-      case OcgMessageType.SELECT_EFFECTYN:
-      case OcgMessageType.SELECT_YESNO:
-      case OcgMessageType.SELECT_OPTION:
-      case OcgMessageType.SELECT_CARD:
-      case OcgMessageType.SELECT_POSITION:
-      case OcgMessageType.SELECT_TRIBUTE:
-      case OcgMessageType.SELECT_PLACE:
-      case OcgMessageType.SELECT_DISFIELD:
-      case OcgMessageType.SELECT_SUM:
-      case OcgMessageType.SELECT_UNSELECT_CARD:
-      case OcgMessageType.ANNOUNCE_RACE:
-      case OcgMessageType.ANNOUNCE_ATTRIB:
-      case OcgMessageType.ANNOUNCE_CARD:
-      case OcgMessageType.ANNOUNCE_NUMBER:
-      case OcgMessageType.ROCK_PAPER_SCISSORS:
-      case OcgMessageType.SORT_CARD: {
+      case OcgMessageType.SELECT_IDLECMD: {
         isPrompt = true;
-        type = OcgMessageType[rawType] ?? `PROMPT_${rawType}`;
-        promptPlayer = 'player' in msg ? (msg.player as number) : undefined;
-        description = `Engine waiting for response from Player ${promptPlayer ?? '?'}`;
+        type = 'SELECT_IDLECMD';
+        promptType = 'SELECT_IDLECMD';
+        promptPlayer = msg.player;
+        description = `Main Phase: Choose an action (Normal Summon, Set, Activate Effect, Battle Phase, End Phase).`;
+
+        promptData = {
+          player: msg.player,
+          summons: msg.summons.map((s) => ({ ...s, cardName: this.cardReader.getCardName(s.code) })),
+          special_summons: msg.special_summons.map((s) => ({ ...s, cardName: this.cardReader.getCardName(s.code) })),
+          pos_changes: msg.pos_changes.map((s) => ({ ...s, cardName: this.cardReader.getCardName(s.code) })),
+          monster_sets: msg.monster_sets.map((s) => ({ ...s, cardName: this.cardReader.getCardName(s.code) })),
+          spell_sets: msg.spell_sets.map((s) => ({ ...s, cardName: this.cardReader.getCardName(s.code) })),
+          activates: msg.activates.map((s) => ({
+            ...s,
+            cardName: this.cardReader.getCardName(s.code),
+            description: s.description.toString(),
+          })),
+          to_bp: msg.to_bp,
+          to_ep: msg.to_ep,
+          shuffle: msg.shuffle,
+        };
+
         return {
           type,
           rawType,
           isPrompt,
           promptPlayer,
+          promptType,
+          promptData,
           description,
-          raw: msg,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_BATTLECMD: {
+        isPrompt = true;
+        type = 'SELECT_BATTLECMD';
+        promptType = 'SELECT_BATTLECMD';
+        promptPlayer = msg.player;
+        description = `Battle Phase: Choose a monster to declare an attack, or proceed to Main Phase 2 / End Phase.`;
+
+        promptData = {
+          player: msg.player,
+          chains: msg.chains.map((c) => ({
+            ...c,
+            cardName: this.cardReader.getCardName(c.code),
+            description: c.description.toString(),
+          })),
+          attacks: msg.attacks.map((a) => ({
+            ...a,
+            cardName: this.cardReader.getCardName(a.code),
+          })),
+          to_m2: msg.to_m2,
+          to_ep: msg.to_ep,
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_CARD: {
+        isPrompt = true;
+        type = 'SELECT_CARD';
+        promptType = 'SELECT_CARD';
+        promptPlayer = msg.player;
+
+        const isDiscardPrompt =
+          msg.selects.length > 0 &&
+          msg.selects.every((s) => s.location === OcgLocation.HAND) &&
+          msg.min > 0 &&
+          !msg.can_cancel;
+
+        description = isDiscardPrompt
+          ? `End Phase Cleanup: Hand size exceeds 6 cards. Choose ${msg.min} card(s) to discard.`
+          : `Select ${msg.min}${msg.max > msg.min ? ` to ${msg.max}` : ''} card(s).`;
+
+        promptData = {
+          player: msg.player,
+          can_cancel: msg.can_cancel,
+          min: msg.min,
+          max: msg.max,
+          isDiscardPrompt,
+          selects: msg.selects.map((s) => ({
+            ...s,
+            cardName: s.code > 0 ? this.cardReader.getCardName(s.code) : 'Card',
+          })),
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_CHAIN: {
+        isPrompt = true;
+        type = 'SELECT_CHAIN';
+        promptType = 'SELECT_CHAIN';
+        promptPlayer = msg.player;
+        description = msg.forced
+          ? `Mandatory trigger effect requires activation.`
+          : `Activate an effect in response, or pass priority.`;
+
+        promptData = {
+          player: msg.player,
+          forced: msg.forced,
+          selects: msg.selects.map((s) => ({
+            ...s,
+            cardName: this.cardReader.getCardName(s.code),
+            description: s.description.toString(),
+          })),
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_POSITION: {
+        isPrompt = true;
+        type = 'SELECT_POSITION';
+        promptType = 'SELECT_POSITION';
+        promptPlayer = msg.player;
+        const name = this.cardReader.getCardName(msg.code);
+        description = `Choose battle position for ${name}.`;
+
+        promptData = {
+          player: msg.player,
+          code: msg.code,
+          cardName: name,
+          positions: ocgPositionParse(msg.positions),
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_EFFECTYN: {
+        isPrompt = true;
+        type = 'SELECT_EFFECTYN';
+        promptType = 'SELECT_EFFECTYN';
+        promptPlayer = msg.player;
+        const name = this.cardReader.getCardName(msg.code);
+        description = `Activate effect of "${name}"?`;
+
+        promptData = {
+          player: msg.player,
+          code: msg.code,
+          cardName: name,
+          description: msg.description.toString(),
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_YESNO: {
+        isPrompt = true;
+        type = 'SELECT_YESNO';
+        promptType = 'SELECT_YESNO';
+        promptPlayer = msg.player;
+        description = `Do you wish to proceed?`;
+
+        promptData = {
+          player: msg.player,
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_OPTION: {
+        isPrompt = true;
+        type = 'SELECT_OPTION';
+        promptType = 'SELECT_OPTION';
+        promptPlayer = msg.player;
+        description = `Choose an option.`;
+
+        promptData = {
+          player: msg.player,
+          options: msg.options.map((o) => o.toString()),
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_TRIBUTE: {
+        isPrompt = true;
+        type = 'SELECT_TRIBUTE';
+        promptType = 'SELECT_TRIBUTE';
+        promptPlayer = msg.player;
+        description = `Select ${msg.min} monster(s) to Tribute.`;
+
+        promptData = {
+          player: msg.player,
+          min: msg.min,
+          max: msg.max,
+          selects: msg.selects.map((s) => ({
+            ...s,
+            cardName: this.cardReader.getCardName(s.code),
+          })),
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_PLACE:
+      case OcgMessageType.SELECT_DISFIELD: {
+        isPrompt = true;
+        type = 'SELECT_PLACE';
+        promptType = 'SELECT_PLACE';
+        promptPlayer = msg.player;
+        description = `Select a zone on the field.`;
+
+        promptData = {
+          player: msg.player,
+          count: msg.count,
+          field_mask: msg.field_mask,
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
         };
       }
 
       default: {
         type = OcgMessageType[rawType] ?? `MSG_${rawType}`;
         description = `Engine message: ${type}`;
-        return { type, rawType, isPrompt: false, description, raw: msg };
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
       }
     }
   }
 }
+

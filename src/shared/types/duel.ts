@@ -78,6 +78,95 @@ export interface MatchSetupConfig {
 }
 
 
+export interface OcgCardLocItem {
+  code: number;
+  controller: number;
+  location: number;
+  sequence: number;
+  cardName?: string;
+}
+
+export interface OcgCardLocActiveItem extends OcgCardLocItem {
+  description: string;
+  client_mode: number;
+}
+
+export interface OcgCardLocAttackItem extends OcgCardLocItem {
+  can_direct: boolean;
+}
+
+export interface OcgCardLocPosItem extends OcgCardLocItem {
+  position: number;
+}
+
+export interface SelectIdleCmdPayload {
+  player: number;
+  summons: OcgCardLocItem[];
+  special_summons: OcgCardLocItem[];
+  pos_changes: OcgCardLocItem[];
+  monster_sets: OcgCardLocItem[];
+  spell_sets: OcgCardLocItem[];
+  activates: OcgCardLocActiveItem[];
+  to_bp: boolean;
+  to_ep: boolean;
+  shuffle: boolean;
+}
+
+export interface SelectBattleCmdPayload {
+  player: number;
+  chains: OcgCardLocActiveItem[];
+  attacks: OcgCardLocAttackItem[];
+  to_m2: boolean;
+  to_ep: boolean;
+}
+
+export interface SelectCardPayload {
+  player: number;
+  can_cancel: boolean;
+  min: number;
+  max: number;
+  selects: OcgCardLocPosItem[];
+  isDiscardPrompt?: boolean;
+}
+
+export interface SelectChainPayload {
+  player: number;
+  forced: boolean;
+  selects: OcgCardLocActiveItem[];
+}
+
+export interface SelectPositionPayload {
+  player: number;
+  code: number;
+  cardName?: string;
+  positions: number[];
+}
+
+export interface SelectEffectYnPayload {
+  player: number;
+  code: number;
+  cardName?: string;
+  description: string;
+}
+
+export interface SelectOptionPayload {
+  player: number;
+  options: (string | number)[];
+}
+
+export interface SelectPlacePayload {
+  player: number;
+  count: number;
+  field_mask: number;
+}
+
+export interface SelectTributePayload {
+  player: number;
+  min: number;
+  max: number;
+  selects: OcgCardLocItem[];
+}
+
 export interface DuelEventPayload {
   type: string;
   rawType: number;
@@ -94,6 +183,8 @@ export interface DuelEventPayload {
   drawnCards?: { code: number; cardName: string }[];
   isPrompt: boolean;
   promptPlayer?: number;
+  promptType?: string;
+  promptData?: unknown;
   description: string;
   raw: unknown;
 }
@@ -110,3 +201,4 @@ export interface DuelStateSummary {
   winReason: number | null;
   stepCount: number;
 }
+

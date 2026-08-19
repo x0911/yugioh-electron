@@ -83,6 +83,10 @@ export function registerIpcHandlers(): void {
     return duelEngineService.getState();
   });
 
+  ipcMain.handle(IPC_CHANNELS.DUEL_GET_BOARD, async () => {
+    return duelEngineService.getBoardState();
+  });
+
   ipcMain.handle(IPC_CHANNELS.DUEL_GET_CARD_NAME, async (_event, code: number) => {
     return duelEngineService.getCardName(code);
   });
