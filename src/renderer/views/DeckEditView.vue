@@ -8,12 +8,15 @@
         Will feature the 3-column layout (Deck List 22%, Virtualized Card Grid 48%, Live Card
         Previewer 30%), filters (Attribute/Type/Level/ATK/DEF), and deck persistence.
       </p>
+      <YugiButton variant="primary" size="md" icon="←" to="/main-menu">
+        Return to Main Menu
+      </YugiButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// DeckEditView — Placeholder for Phase 7
+import YugiButton from '../components/common/YugiButton.vue';
 </script>
 
 <style scoped lang="scss">

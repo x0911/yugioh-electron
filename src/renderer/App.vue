@@ -1,7 +1,7 @@
 <template>
   <div class="app-layout">
-    <!-- Temporary Dev Navigation Bar (to be removed/gated in Phase 14) -->
-    <header class="dev-nav-bar">
+    <!-- Dev Navigation Bar (Gated behind dev flag & toggle) -->
+    <header v-if="isDev && devToolsStore.showDevNav" class="dev-nav-bar">
       <div class="dev-nav-bar__tag">
         <span>⚡</span>
         <span>YGO DUEL [DEV NAV]</span>
@@ -15,12 +15,34 @@
         <router-link to="/coin-toss" class="dev-nav-bar__link"> Coin Toss (P8) </router-link>
         <router-link to="/pre-duel-video" class="dev-nav-bar__link"> Pre-Duel (P8) </router-link>
         <router-link to="/duel" class="dev-nav-bar__link"> Duel (P9) </router-link>
-        <router-link v-if="isDev" to="/dev/kitchen-sink" class="dev-nav-bar__link dev-nav-bar__link--highlight"> Kitchen Sink (P4) </router-link>
+        <router-link to="/dev/kitchen-sink" class="dev-nav-bar__link dev-nav-bar__link--highlight"> Kitchen Sink (P4) </router-link>
+        <button
+          type="button"
+          class="dev-nav-bar__close-btn"
+          title="Close Dev Nav (Ctrl+Shift+D)"
+          @click="devToolsStore.toggleDevNav"
+        >
+          ✕
+        </button>
       </nav>
     </header>
 
+    <!-- Discrete Floating Dev Toggle Trigger (Dev-only) -->
+    <button
+      v-if="isDev && !devToolsStore.showDevNav"
+      type="button"
+      class="dev-nav-floating-toggle"
+      title="Toggle Dev Navigation (Ctrl+Shift+D)"
+      @click="devToolsStore.toggleDevNav"
+    >
+      <span>⚡ DEV</span>
+    </button>
+
     <!-- Main View Outlet -->
-    <main class="view-container">
+    <main
+      class="view-container"
+      :class="{ 'view-container--with-dev-nav': isDev && devToolsStore.showDevNav }"
+    >
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -31,7 +53,27 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount } from 'vue';
+import { useDevToolsStore } from './stores/devToolsStore.js';
+
 const isDev = import.meta.env.DEV;
+const devToolsStore = useDevToolsStore();
+
+function handleKeyDown(event: KeyboardEvent): void {
+  // Shortcut: Ctrl+Shift+D or Cmd+Shift+D to toggle Dev Nav in dev mode
+  if (isDev && (event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'd') {
+    event.preventDefault();
+    devToolsStore.toggleDevNav();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 </script>
 
 <style scoped lang="scss">
@@ -52,10 +94,61 @@ const isDev = import.meta.env.DEV;
 .view-container {
   flex: 1;
   width: 100%;
-  height: calc(100vh - 40px);
-  margin-top: 40px;
+  height: 100vh;
+  margin-top: 0;
   position: relative;
   overflow: hidden;
+  transition: height 0.2s ease, margin-top 0.2s ease;
+
+  &--with-dev-nav {
+    height: calc(100vh - 40px);
+    margin-top: 40px;
+  }
+}
+
+.dev-nav-bar__close-btn {
+  background: transparent;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  color: #b8b2a0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  margin-left: 6px;
+
+  &:hover {
+    background: rgba(235, 87, 87, 0.3);
+    border-color: #eb5757;
+    color: #fff;
+  }
+}
+
+.dev-nav-floating-toggle {
+  position: fixed;
+  top: 10px;
+  right: 14px;
+  z-index: 9999;
+  padding: 4px 10px;
+  background: rgba(18, 22, 30, 0.75);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  border-radius: 20px;
+  color: #e3c567;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: 'Oxanium', monospace, sans-serif;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  opacity: 0.45;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 1;
+    transform: translateY(1px);
+    border-color: #c9a227;
+    box-shadow: 0 0 12px rgba(201, 162, 39, 0.5);
+  }
 }
 
 .fade-enter-active,

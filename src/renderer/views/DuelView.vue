@@ -31,6 +31,9 @@
           {{ isAutoPlaying ? '⏹ Pause Auto-Play' : '⚡ Auto-Play Duel' }}
         </button>
         <button class="btn btn-outline" @click="clearLog">🗑 Clear Log</button>
+        <router-link to="/main-menu" class="btn btn-outline" style="text-decoration: none; margin-left: auto;">
+          ← Main Menu
+        </router-link>
       </div>
     </div>
 

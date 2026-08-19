@@ -8,12 +8,15 @@
         Will feature full-screen character intro cutscenes with skip-on-click, video buffering, and
         audio mixing before entering the duel arena.
       </p>
+      <YugiButton variant="primary" size="md" icon="←" to="/main-menu">
+        Return to Main Menu
+      </YugiButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// PreDuelVideoView — Placeholder for Phase 8
+import YugiButton from '../components/common/YugiButton.vue';
 </script>
 
 <style scoped lang="scss">

@@ -8,12 +8,15 @@
         Will feature the 20-character OpponentCarousel (10 Original DM + 10 GX), audio volume
         controls (BGM/SFX), video skip toggles, and developer options.
       </p>
+      <YugiButton variant="primary" size="md" icon="←" to="/main-menu">
+        Return to Main Menu
+      </YugiButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// SettingsView — Placeholder for Phase 6
+import YugiButton from '../components/common/YugiButton.vue';
 </script>
 
 <style scoped lang="scss">

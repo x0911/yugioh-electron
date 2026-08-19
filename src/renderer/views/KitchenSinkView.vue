@@ -2,12 +2,23 @@
   <div class="kitchen-sink-view">
     <!-- Header -->
     <header class="kitchen-sink-view__header">
-      <h1 class="kitchen-sink-view__title">
-        Design System Kitchen Sink
-      </h1>
-      <p class="kitchen-sink-view__subtitle">
-        Visual QA and state verification suite for Ancient Duel Arena components, tokens, typography, and motion.
-      </p>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h1 class="kitchen-sink-view__title">
+            Design System Kitchen Sink
+          </h1>
+          <p class="kitchen-sink-view__subtitle">
+            Visual QA and state verification suite for Ancient Duel Arena components, tokens, typography, and motion.
+          </p>
+        </div>
+        <router-link
+          to="/main-menu"
+          class="yugi-btn yugi-btn--secondary yugi-btn--sm"
+          style="text-decoration: none; white-space: nowrap;"
+        >
+          ← Return to Main Menu
+        </router-link>
+      </div>
     </header>
 
     <div class="kitchen-sink-view__grid">

@@ -8,12 +8,15 @@
         Will feature Heads/Tails selection, a 3D animated coin flip, starting turn determination,
         and seamless transition to the pre-duel video.
       </p>
+      <YugiButton variant="primary" size="md" icon="←" to="/main-menu">
+        Return to Main Menu
+      </YugiButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// CoinTossView — Placeholder for Phase 8
+import YugiButton from '../components/common/YugiButton.vue';
 </script>
 
 <style scoped lang="scss">

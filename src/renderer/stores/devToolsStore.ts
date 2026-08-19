@@ -8,6 +8,7 @@ export interface DevLogEntry {
 }
 
 export interface DevToolsState {
+  showDevNav: boolean;
   showDuelLog: boolean;
   messageHistory: DevLogEntry[];
   simulatedLagMs: number;
@@ -15,11 +16,15 @@ export interface DevToolsState {
 
 export const useDevToolsStore = defineStore('devTools', {
   state: (): DevToolsState => ({
+    showDevNav: false,
     showDuelLog: true,
     messageHistory: [],
     simulatedLagMs: 0,
   }),
   actions: {
+    toggleDevNav(): void {
+      this.showDevNav = !this.showDevNav;
+    },
     toggleDuelLog(): void {
       this.showDuelLog = !this.showDuelLog;
     },
