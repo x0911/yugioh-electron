@@ -8,7 +8,7 @@
           <div class="header-titles">
             <h3 class="header-title">Hand Size Limit Exceeded</h3>
             <p class="header-subtitle">
-              You hold more than 6 cards at End Phase. Select {{ selectCard.min }} card(s) to discard.
+              You hold more than 6 cards at End Phase. Select {{ selectCard.min }} card(s) to discard. (Mandatory)
             </p>
           </div>
         </div>
@@ -18,8 +18,8 @@
             v-for="(card, idx) in selectCard.selects"
             :key="`discard-${idx}-${card.code}`"
             class="card-select-tile"
-            :class="{ 'card-select-tile--selected': selectedIndices.includes(idx) }"
-            @click="toggleCardSelection(idx, selectCard.min)"
+            :class="{ 'card-select-tile--selected': isCardSelected(idx) }"
+            @click="toggleSelection(idx, selectCard.min)"
           >
             <div class="tile-art">
               <img
@@ -28,7 +28,7 @@
                 class="tile-art-img"
                 @error="handleArtFallback($event)"
               />
-              <div v-if="selectedIndices.includes(idx)" class="tile-check-badge">
+              <div v-if="isCardSelected(idx)" class="tile-check-badge">
                 ✓
               </div>
             </div>
@@ -39,22 +39,35 @@
         <div class="prompt-footer">
           <button
             class="action-btn action-btn--discard"
-            :disabled="selectedIndices.length !== selectCard.min"
+            :disabled="activeSelectedIndices.length !== selectCard.min"
             @click="confirmCardSelection"
           >
-            Discard ({{ selectedIndices.length }}/{{ selectCard.min }})
+            Discard ({{ activeSelectedIndices.length }}/{{ selectCard.min }})
           </button>
         </div>
       </template>
 
-      <!-- 2. General Card Selection Prompt -->
+      <!-- 2. General Card Selection / Cost Discard / Target Selection Prompt -->
       <template v-else-if="selectCard">
-        <div class="prompt-header">
-          <span class="header-icon">🎯</span>
+        <div
+          class="prompt-header"
+          :class="{
+            'prompt-header--cost': isCostPrompt,
+            'prompt-header--target': !isCostPrompt,
+          }"
+        >
+          <span class="header-icon">{{ isCostPrompt ? '⚡' : '🎯' }}</span>
           <div class="header-titles">
-            <h3 class="header-title">Select Card(s)</h3>
+            <h3 class="header-title">
+              {{ isCostPrompt ? 'Pay Activation Cost' : 'Select Target Card(s)' }}
+            </h3>
             <p class="header-subtitle">
-              Select {{ selectCard.min }}{{ selectCard.max > selectCard.min ? ` to ${selectCard.max}` : '' }} card(s) to proceed.
+              <template v-if="isCostPrompt">
+                Discard / send {{ selectCard.min }}{{ selectCard.max > selectCard.min ? ` to ${selectCard.max}` : '' }} card(s) from hand as a cost.
+              </template>
+              <template v-else>
+                Select {{ selectCard.min }}{{ selectCard.max > selectCard.min ? ` to ${selectCard.max}` : '' }} card(s) to proceed.
+              </template>
             </p>
           </div>
         </div>
@@ -64,8 +77,8 @@
             v-for="(card, idx) in selectCard.selects"
             :key="`select-${idx}-${card.code}`"
             class="card-select-tile"
-            :class="{ 'card-select-tile--selected': selectedIndices.includes(idx) }"
-            @click="toggleCardSelection(idx, selectCard.max)"
+            :class="{ 'card-select-tile--selected': isCardSelected(idx) }"
+            @click="toggleSelection(idx, selectCard.max)"
           >
             <div class="tile-art">
               <img
@@ -74,7 +87,7 @@
                 class="tile-art-img"
                 @error="handleArtFallback($event)"
               />
-              <div v-if="selectedIndices.includes(idx)" class="tile-check-badge">
+              <div v-if="isCardSelected(idx)" class="tile-check-badge">
                 ✓
               </div>
             </div>
@@ -92,10 +105,10 @@
           </button>
           <button
             class="action-btn action-btn--primary"
-            :disabled="selectedIndices.length < selectCard.min || selectedIndices.length > selectCard.max"
+            :disabled="activeSelectedIndices.length < selectCard.min || activeSelectedIndices.length > selectCard.max"
             @click="confirmCardSelection"
           >
-            Confirm ({{ selectedIndices.length }}/{{ selectCard.max }})
+            Confirm ({{ activeSelectedIndices.length }}/{{ selectCard.max }})
           </button>
         </div>
       </template>
@@ -223,12 +236,12 @@
 
       <!-- 7. Tribute Selection Prompt -->
       <template v-else-if="selectTribute">
-        <div class="prompt-header">
+        <div class="prompt-header prompt-header--tribute">
           <span class="header-icon">🔥</span>
           <div class="header-titles">
-            <h3 class="header-title">Select Tributes</h3>
+            <h3 class="header-title">Select Monsters to Tribute</h3>
             <p class="header-subtitle">
-              Select {{ selectTribute.min }}{{ selectTribute.max > selectTribute.min ? ` to ${selectTribute.max}` : '' }} monster(s) to Tribute.
+              Select {{ selectTribute.min }}{{ selectTribute.max > selectTribute.min ? ` to ${selectTribute.max}` : '' }} eligible monster(s) on your field for Tribute Summon.
             </p>
           </div>
         </div>
@@ -238,8 +251,8 @@
             v-for="(card, idx) in selectTribute.selects"
             :key="`trib-${idx}-${card.code}`"
             class="card-select-tile"
-            :class="{ 'card-select-tile--selected': selectedIndices.includes(idx) }"
-            @click="toggleCardSelection(idx, selectTribute.max)"
+            :class="{ 'card-select-tile--selected': isCardSelected(idx) }"
+            @click="toggleSelection(idx, selectTribute.max)"
           >
             <div class="tile-art">
               <img
@@ -248,7 +261,7 @@
                 class="tile-art-img"
                 @error="handleArtFallback($event)"
               />
-              <div v-if="selectedIndices.includes(idx)" class="tile-check-badge">
+              <div v-if="isCardSelected(idx)" class="tile-check-badge">
                 ✓
               </div>
             </div>
@@ -259,10 +272,10 @@
         <div class="prompt-footer">
           <button
             class="action-btn action-btn--primary"
-            :disabled="selectedIndices.length < selectTribute.min || selectedIndices.length > selectTribute.max"
+            :disabled="activeSelectedIndices.length < selectTribute.min || activeSelectedIndices.length > selectTribute.max"
             @click="confirmTributeSelection"
           >
-            Confirm Tribute ({{ selectedIndices.length }}/{{ selectTribute.max }})
+            Confirm Tribute ({{ activeSelectedIndices.length }}/{{ selectTribute.max }})
           </button>
         </div>
       </template>
@@ -282,14 +295,20 @@ import type {
 } from '../../../shared/types/duel.js';
 import { getCardImageUrl } from '../../utils/media.js';
 
-const props = defineProps<{
-  selectCard: SelectCardPayload | null;
-  selectChain: SelectChainPayload | null;
-  selectPosition: SelectPositionPayload | null;
-  selectEffectYn: SelectEffectYnPayload | null;
-  selectOption: SelectOptionPayload | null;
-  selectTribute: SelectTributePayload | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    selectCard: SelectCardPayload | null;
+    selectChain: SelectChainPayload | null;
+    selectPosition: SelectPositionPayload | null;
+    selectEffectYn: SelectEffectYnPayload | null;
+    selectOption: SelectOptionPayload | null;
+    selectTribute: SelectTributePayload | null;
+    syncedSelectedIndices?: number[];
+  }>(),
+  {
+    syncedSelectedIndices: () => [],
+  },
+);
 
 const emit = defineEmits<{
   (e: 'select-card', indices: number[]): void;
@@ -298,21 +317,42 @@ const emit = defineEmits<{
   (e: 'select-effect-yn', yes: boolean): void;
   (e: 'select-option', index: number): void;
   (e: 'select-tribute', indices: number[]): void;
+  (e: 'toggle-target', index: number): void;
 }>();
 
-const selectedIndices = ref<number[]>([]);
+const localSelectedIndices = ref<number[]>([]);
 
-// Clear selection whenever a new prompt appears
+// Clear local selection whenever a new prompt appears
 watch(
   () => [props.selectCard, props.selectTribute],
   () => {
-    selectedIndices.value = [];
+    localSelectedIndices.value = [];
   },
   { immediate: true },
 );
 
+const activeSelectedIndices = computed<number[]>(() => {
+  if (props.syncedSelectedIndices && props.syncedSelectedIndices.length > 0) {
+    return props.syncedSelectedIndices;
+  }
+  return localSelectedIndices.value;
+});
+
+function isCardSelected(idx: number): boolean {
+  return activeSelectedIndices.value.includes(idx);
+}
+
 const isDiscardPrompt = computed(() => {
   return !!props.selectCard?.isDiscardPrompt;
+});
+
+const isCostPrompt = computed(() => {
+  if (!props.selectCard || !props.selectCard.selects) return false;
+  return (
+    props.selectCard.selects.every((s) => s.location === 2) &&
+    !props.selectCard.isDiscardPrompt &&
+    props.selectCard.min > 0
+  );
 });
 
 const hasActivePrompt = computed(() => {
@@ -326,21 +366,23 @@ const hasActivePrompt = computed(() => {
   );
 });
 
-function toggleCardSelection(idx: number, maxAllowed: number): void {
-  const existingPos = selectedIndices.value.indexOf(idx);
+function toggleSelection(idx: number, maxAllowed: number): void {
+  emit('toggle-target', idx);
+
+  const existingPos = localSelectedIndices.value.indexOf(idx);
   if (existingPos >= 0) {
-    selectedIndices.value.splice(existingPos, 1);
+    localSelectedIndices.value.splice(existingPos, 1);
   } else {
-    if (selectedIndices.value.length < maxAllowed) {
-      selectedIndices.value.push(idx);
+    if (localSelectedIndices.value.length < maxAllowed) {
+      localSelectedIndices.value.push(idx);
     } else if (maxAllowed === 1) {
-      selectedIndices.value = [idx];
+      localSelectedIndices.value = [idx];
     }
   }
 }
 
 function confirmCardSelection(): void {
-  emit('select-card', [...selectedIndices.value]);
+  emit('select-card', [...activeSelectedIndices.value]);
 }
 
 function cancelCardSelection(): void {
@@ -348,7 +390,7 @@ function cancelCardSelection(): void {
 }
 
 function confirmTributeSelection(): void {
-  emit('select-tribute', [...selectedIndices.value]);
+  emit('select-tribute', [...activeSelectedIndices.value]);
 }
 
 function handleArtFallback(event: Event): void {
@@ -432,6 +474,18 @@ function handleArtFallback(event: Event): void {
 
   &--warning .header-title {
     color: #ff9999;
+  }
+
+  &--cost .header-title {
+    color: #80d8ff;
+  }
+
+  &--tribute .header-title {
+    color: #ffcc80;
+  }
+
+  &--target .header-title {
+    color: $color-gold-200;
   }
 }
 

@@ -15,6 +15,7 @@
         :current-phase="currentBoardState.currentPhase"
         :is-user-turn="currentBoardState.userField.isTurn"
         :guide-text="currentBoardState.phaseGuideText"
+        :guide-info="actionGuideInfo"
         :is-duel-log-open="isDuelLogOpen"
         :can-go-to-battle-phase="!isMockMode && duelStore.canGoToBattlePhase"
         :can-go-to-main-phase2="!isMockMode && duelStore.canGoToMainPhase2"
@@ -33,6 +34,8 @@
           <HandFan
             player="ai"
             :cards="currentBoardState.opponentField.hand"
+            :get-target-info="(card, idx) => duelStore.getTargetInfo(duelStore.opponentPlayerId, 2, card.sequence ?? idx)"
+            :is-prompt-active="duelStore.hasActiveSelectionPrompt"
             @hover-card="hoveredCard = $event"
           />
         </div>
@@ -58,8 +61,13 @@
           :user-state="currentBoardState.userField"
           :opponent-state="currentBoardState.opponentField"
           :extra-monster-zones="currentBoardState.extraMonsterZones"
+          :user-player-id="duelStore.userPlayerId"
+          :opponent-player-id="duelStore.opponentPlayerId"
+          :get-target-info="duelStore.getTargetInfo"
+          :is-prompt-active="duelStore.hasActiveSelectionPrompt"
           @hover-card="hoveredCard = $event"
           @click-card="onFieldCardClick"
+          @click-target="onTargetClick"
         />
       </section>
 
@@ -84,6 +92,8 @@
           <HandFan
             player="user"
             :cards="currentBoardState.userField.hand"
+            :get-target-info="(card, idx) => duelStore.getTargetInfo(duelStore.userPlayerId, 2, card.sequence ?? idx)"
+            :is-prompt-active="duelStore.hasActiveSelectionPrompt"
             @hover-card="hoveredCard = $event"
             @click-card="onHandCardClick"
           />
@@ -109,13 +119,42 @@
       :select-effect-yn="duelStore.activeSelectEffectYn"
       :select-option="duelStore.activeSelectOption"
       :select-tribute="duelStore.activeSelectTribute"
+      :synced-selected-indices="duelStore.selectedTargetIndices"
       @select-card="duelStore.executeSelectCard"
       @select-position="duelStore.executeSelectPosition"
       @select-chain="duelStore.executeSelectChain"
       @select-effect-yn="duelStore.executeSelectEffectYn"
       @select-option="duelStore.executeSelectOption"
       @select-tribute="duelStore.executeSelectTribute"
+      @toggle-target="duelStore.toggleTargetByIndex"
     />
+
+    <!-- Floating Target Selection Confirmation Bar (On-Field micro-dialog) -->
+    <div v-if="duelStore.hasActiveSelectionPrompt" class="target-confirmation-bar glass-panel">
+      <div class="target-bar-info">
+        <span class="target-bar-icon">{{ actionGuideInfo?.icon || '🎯' }}</span>
+        <div class="target-bar-text">
+          <span class="target-bar-title">{{ actionGuideInfo?.title }}</span>
+          <span class="target-bar-detail">{{ actionGuideInfo?.detail }}</span>
+        </div>
+      </div>
+      <div class="target-bar-actions">
+        <button
+          v-if="duelStore.activeSelectCard?.can_cancel"
+          class="micro-btn micro-btn--cancel"
+          @click="duelStore.cancelActiveSelection"
+        >
+          Cancel
+        </button>
+        <button
+          class="micro-btn micro-btn--confirm"
+          :disabled="!duelStore.canConfirmActiveSelection"
+          @click="duelStore.confirmActiveSelection"
+        >
+          Confirm ({{ duelStore.selectedTargetIndices.length }}/{{ duelStore.activeSelectionMax }})
+        </button>
+      </div>
+    </div>
 
     <!-- Game Over Victory / Defeat Overlay -->
     <div v-if="duelStore.isGameOver" class="game-over-modal-backdrop">
@@ -231,8 +270,9 @@ import type { FieldCard, DuelBoardState } from '../../shared/types/field.js';
 import type { DuelEventPayload } from '../../shared/types/duel.js';
 import { createMockDuelState } from '../utils/mockDuelState.js';
 import { getBackgroundUrl } from '../utils/media.js';
-import { useDuelStore, type CardActionOption } from '../stores/duelStore.js';
+import { useDuelStore, type CardActionOption, type TargetInfo } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
+import { getActionGuideInfo } from '../utils/guidanceHelper.js';
 import {
   DuelHud,
   DuelField,
@@ -280,6 +320,24 @@ const isUserWinner = computed(() => {
   return duelStore.boardState.winner === duelStore.userPlayerId;
 });
 
+// Dynamic Plain-Language Action Guide Calculation
+const actionGuideInfo = computed(() => {
+  return getActionGuideInfo({
+    activeSelectCard: duelStore.activeSelectCard,
+    activeSelectTribute: duelStore.activeSelectTribute,
+    activeSelectChain: duelStore.activeSelectChain,
+    activeSelectPosition: duelStore.activeSelectPosition,
+    activeSelectEffectYn: duelStore.activeSelectEffectYn,
+    activeSelectOption: duelStore.activeSelectOption,
+    activeIdleCmd: duelStore.activeIdleCmd,
+    activeBattleCmd: duelStore.activeBattleCmd,
+    selectedTargetIndices: duelStore.selectedTargetIndices,
+    userPlayerId: duelStore.userPlayerId,
+    currentPhase: duelStore.boardState.currentPhase,
+    isUserTurn: duelStore.boardState.userField.isTurn,
+  });
+});
+
 // Live Logs
 const duelLogs = ref<LogItem[]>([]);
 
@@ -320,6 +378,15 @@ function onHandCardClick(card: FieldCard, event: MouseEvent): void {
     return;
   }
 
+  // If there is an active selection prompt (e.g. Cost discard or hand cleanup)
+  if (duelStore.hasActiveSelectionPrompt) {
+    const target = duelStore.getTargetInfo(card.controller, 2, card.sequence ?? 0);
+    if (target && target.isSelectable) {
+      duelStore.toggleTargetByIndex(target.selectIndex);
+      return;
+    }
+  }
+
   const actions = duelStore.getLegalActionsForHandCard(card);
   if (actions.length > 0) {
     activeMenuCard.value = card;
@@ -342,6 +409,16 @@ function onFieldCardClick(card: FieldCard | null, event?: MouseEvent): void {
     return;
   }
 
+  // If there is an active selection prompt (e.g. Target selection or Tribute)
+  if (duelStore.hasActiveSelectionPrompt) {
+    const loc = card.position === 'faceup_spell' || card.position === 'facedown_spell' ? 8 : 4;
+    const target = duelStore.getTargetInfo(card.controller, loc, card.sequence ?? 0);
+    if (target && target.isSelectable) {
+      duelStore.toggleTargetByIndex(target.selectIndex);
+      return;
+    }
+  }
+
   // Only allow actions on player's own cards
   if (card.controller === duelStore.userPlayerId) {
     const actions = duelStore.getLegalActionsForFieldCard(card);
@@ -354,6 +431,12 @@ function onFieldCardClick(card: FieldCard | null, event?: MouseEvent): void {
     } else {
       closeCardActionMenu();
     }
+  }
+}
+
+function onTargetClick(targetInfo: TargetInfo): void {
+  if (targetInfo.isSelectable) {
+    duelStore.toggleTargetByIndex(targetInfo.selectIndex);
   }
 }
 
@@ -651,6 +734,104 @@ onUnmounted(() => {
     .game-over-title {
       color: #ff9999;
       text-shadow: 0 0 20px rgba(235, 87, 87, 0.8);
+    }
+  }
+}
+
+// Floating Target Selection Confirmation Bar (On-Field micro-dialog)
+.target-confirmation-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 24px;
+  border-radius: 30px;
+  background: rgba(14, 18, 26, 0.92);
+  border: 1px solid $color-gold-500;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.85),
+    0 0 24px rgba(201, 162, 39, 0.4);
+  backdrop-filter: blur(12px);
+  z-index: 400;
+  animation: modalPop 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.target-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .target-bar-icon {
+    font-size: 1.4rem;
+  }
+
+  .target-bar-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .target-bar-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $color-gold-100;
+    letter-spacing: 0.04em;
+  }
+
+  .target-bar-detail {
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    font-size: 0.8rem;
+    color: rgba(245, 241, 230, 0.8);
+  }
+}
+
+.target-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.micro-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-family: 'Oxanium', monospace, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &--confirm {
+    background: $color-gold-500;
+    border: 1px solid $color-gold-300;
+    color: #1a1406;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+
+    &:hover:not(:disabled) {
+      background: $color-gold-300;
+      box-shadow: 0 4px 14px rgba(201, 162, 39, 0.6);
+      transform: translateY(-2px);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+
+  &--cancel {
+    background: rgba(30, 36, 48, 0.7);
+    border: 1px solid rgba(201, 162, 39, 0.35);
+    color: #f5f1e6;
+
+    &:hover {
+      background: rgba(201, 162, 39, 0.2);
+      border-color: $color-gold-300;
+      transform: translateY(-2px);
     }
   }
 }

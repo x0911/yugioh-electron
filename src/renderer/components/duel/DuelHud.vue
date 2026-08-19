@@ -14,7 +14,13 @@
     </div>
 
     <!-- Center: Action Guide & Turn Banner -->
-    <div class="hud-center-banner glass-panel">
+    <div
+      class="hud-center-banner glass-panel"
+      :class="[
+        guideInfo?.category && `hud-center-banner--${guideInfo.category}`,
+        { 'hud-center-banner--has-guide': !!guideInfo },
+      ]"
+    >
       <div class="turn-callout">
         <span class="turn-number">TURN {{ turnNumber }}</span>
         <span class="turn-divider">•</span>
@@ -24,10 +30,15 @@
         >
           {{ isUserTurn ? 'YOUR TURN' : "OPPONENT'S TURN" }}
         </span>
+        <template v-if="guideInfo?.badge">
+          <span class="turn-divider">•</span>
+          <span class="guide-badge">{{ guideInfo.badge }}</span>
+        </template>
       </div>
       <div class="guide-prompt">
-        <span class="guide-icon">⚡</span>
-        <span class="guide-text">{{ guideText || defaultGuideText }}</span>
+        <span class="guide-icon">{{ guideInfo?.icon || '⚡' }}</span>
+        <span class="guide-text">{{ guideInfo?.title || guideText || defaultGuideText }}</span>
+        <span v-if="guideInfo?.progress" class="guide-progress-chip">{{ guideInfo.progress }}</span>
       </div>
 
       <!-- Turn Phase Progression Actions -->
@@ -124,6 +135,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { ActionGuideInfo } from '../../utils/guidanceHelper.js';
 import { getUiIconUrl } from '../../utils/media.js';
 import Tooltip from '../common/Tooltip.vue';
 
@@ -133,6 +145,7 @@ const props = withDefaults(
     currentPhase: string;
     isUserTurn: boolean;
     guideText?: string;
+    guideInfo?: ActionGuideInfo | null;
     isDuelLogOpen?: boolean;
     canGoToBattlePhase?: boolean;
     canGoToMainPhase2?: boolean;
@@ -140,6 +153,7 @@ const props = withDefaults(
   }>(),
   {
     guideText: '',
+    guideInfo: null,
     isDuelLogOpen: false,
     canGoToBattlePhase: false,
     canGoToMainPhase2: false,
@@ -269,9 +283,45 @@ function handleIconFallback(event: Event, fallbackEmoji: string): void {
     gap: 12px;
     padding: 6px 16px;
     border-radius: 20px;
-    background: rgba(18, 22, 30, 0.85);
+    background: rgba(18, 22, 30, 0.88);
     border: 1px solid rgba(201, 162, 39, 0.35);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    transition: all 0.25s ease;
+
+    &--has-guide {
+      border-color: $color-gold-500;
+      box-shadow: 0 0 16px rgba(201, 162, 39, 0.35);
+    }
+
+    &--tribute {
+      border-color: #ff9800;
+      background: rgba(30, 20, 10, 0.92);
+      box-shadow: 0 0 16px rgba(255, 152, 0, 0.4);
+    }
+
+    &--cost {
+      border-color: #00e5ff;
+      background: rgba(10, 24, 32, 0.92);
+      box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
+    }
+
+    &--chain {
+      border-color: #b388ff;
+      background: rgba(24, 12, 32, 0.92);
+      box-shadow: 0 0 16px rgba(179, 136, 255, 0.4);
+    }
+
+    &--discard {
+      border-color: #ff5252;
+      background: rgba(32, 12, 16, 0.92);
+      box-shadow: 0 0 16px rgba(255, 82, 82, 0.4);
+    }
+
+    &--target {
+      border-color: $color-gold-300;
+      background: rgba(24, 20, 10, 0.92);
+      box-shadow: 0 0 16px rgba(201, 162, 39, 0.45);
+    }
   }
 
   .turn-callout {
@@ -299,6 +349,17 @@ function handleIconFallback(event: Event, fallbackEmoji: string): void {
         color: #eb5757;
       }
     }
+
+    .guide-badge {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(201, 162, 39, 0.2);
+      border: 1px solid rgba(201, 162, 39, 0.5);
+      color: $color-gold-300;
+      letter-spacing: 0.03em;
+    }
   }
 
   .guide-prompt {
@@ -306,13 +367,25 @@ function handleIconFallback(event: Event, fallbackEmoji: string): void {
     align-items: center;
     gap: 6px;
     font-family: 'Barlow Semi Condensed', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 0.85rem;
+    font-weight: 600;
     color: #f5f1e6;
 
     .guide-icon {
       color: $color-gold-300;
-      font-size: 0.85rem;
+      font-size: 0.95rem;
+    }
+
+    .guide-progress-chip {
+      margin-left: 4px;
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: $color-gold-500;
+      color: #1a1406;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
     }
   }
 
