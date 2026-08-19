@@ -52,6 +52,12 @@ $font-body:
 $font-numeric: 'Oxanium', 'JetBrains Mono', monospace;
 $font-mono: 'Oxanium', 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 
+// Aliases
+$font-family-display: $font-display;
+$font-family-body: $font-body;
+$font-family-numeric: $font-numeric;
+$font-family-mono: $font-mono;
+
 // Typography Scale (rem, base 16px)
 $fs-xs: 0.75rem; // 12px
 $fs-sm: 0.875rem; // 14px

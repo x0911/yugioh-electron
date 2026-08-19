@@ -22,7 +22,13 @@ export const IPC_CHANNELS = {
   DUEL_PLAY_VIDEO: 'duel:play-video',
   DUEL_VIDEO_FINISHED: 'duel:video-finished',
 
-  // Deck (to be expanded in Phase 7)
+  // Deck & Card Pool (Phase 7)
+  DECK_GET_ALL_CARDS: 'deck:get-all-cards',
+  DECK_GET_CUSTOM_DECKS: 'deck:get-custom-decks',
+  DECK_SAVE_CUSTOM_DECK: 'deck:save-custom-deck',
+  DECK_DELETE_CUSTOM_DECK: 'deck:delete-custom-deck',
+  DECK_GET_ACTIVE_ID: 'deck:get-active-id',
+  DECK_SET_ACTIVE_ID: 'deck:set-active-id',
   DECK_LIST: 'deck:list',
   DECK_SAVE: 'deck:save',
   DECK_DELETE: 'deck:delete',
@@ -60,6 +66,12 @@ export interface DuelAPI {
 }
 
 export interface DeckAPI {
+  getAllCards: () => Promise<import('./card.js').CardDetail[]>;
+  getCustomDecks: () => Promise<import('./deck.js').CustomDeck[]>;
+  saveCustomDeck: (deck: import('./deck.js').CustomDeck) => Promise<import('./deck.js').CustomDeck>;
+  deleteCustomDeck: (deckId: string) => Promise<boolean>;
+  getActiveDeckId: () => Promise<string>;
+  setActiveDeckId: (deckId: string) => Promise<string>;
   listDecks: () => Promise<string[]>;
   saveDeck: (deckName: string, deckData: unknown) => Promise<boolean>;
   deleteDeck: (deckName: string) => Promise<boolean>;
