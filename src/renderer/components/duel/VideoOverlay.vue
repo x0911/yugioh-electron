@@ -104,6 +104,12 @@ const videoSrc = computed(() => {
   return `app-resource://${props.video.videoPath}`;
 });
 
+watch(videoElement, (el) => {
+  if (el) {
+    el.volume = Math.max(0, Math.min(1, settingsStore.bgmVolume / 100));
+  }
+});
+
 watch(
   () => props.visible,
   (isVis) => {
