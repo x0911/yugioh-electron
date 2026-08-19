@@ -174,6 +174,15 @@ export interface DuelEventPayload {
   controller?: number;
   code?: number;
   cardName?: string;
+  location?: number;
+  sequence?: number;
+  position?: number;
+  fromLocation?: number;
+  fromSequence?: number;
+  toLocation?: number;
+  toSequence?: number;
+  drawn?: { code: number; position: number; cardName: string }[];
+  count?: number;
   phase?: string;
   turn?: number;
   amount?: number;

@@ -87,12 +87,20 @@ export class DuelEngineService {
 
   private autoPlay = false;
   private eventListeners: ((event: DecodedDuelEvent) => void)[] = [];
+  private aiStepTimer: NodeJS.Timeout | null = null;
+  private readonly AI_STEP_DELAY_MS = 650;
 
   constructor() {
     this.cardReader = new CardReaderService();
     this.scriptReader = new ScriptReaderService();
     this.messageDecoder = new MessageDecoder(this.cardReader);
     this.viewFilter = new ViewFilterService();
+  }
+
+  private reindexHand(pf: PlayerFieldState): void {
+    for (let i = 0; i < pf.hand.length; i++) {
+      pf.hand[i].sequence = i;
+    }
   }
 
   private createEmptyPlayerState(playerId: 0 | 1, name: string): PlayerFieldState {
@@ -301,6 +309,7 @@ export class DuelEngineService {
         };
         pf.hand.push(card);
       }
+      this.reindexHand(pf);
     } else if (rawType === OcgMessageType.MOVE && 'from' in msg && 'to' in msg && 'card' in msg) {
       this.handleCardMove(msg.card, msg.from, msg.to);
     } else if (rawType === OcgMessageType.POS_CHANGE && 'position' in msg) {
@@ -339,6 +348,7 @@ export class DuelEngineService {
         if (idx >= 0 && idx < fromPf.hand.length) {
           movedCard = fromPf.hand.splice(idx, 1)[0];
         }
+        this.reindexHand(fromPf);
       } else if (from.location === OcgLocation.MZONE) {
         movedCard = fromPf.monsterZones[from.sequence];
         fromPf.monsterZones[from.sequence] = null;
@@ -407,6 +417,7 @@ export class DuelEngineService {
         movedCard.position = to.controller === this.humanPlayerId ? 'faceup_spell' : 'facedown_spell';
         if (to.controller !== this.humanPlayerId) movedCard.code = 0;
         toPf.hand.push(movedCard);
+        this.reindexHand(toPf);
       } else if (to.location === OcgLocation.GRAVE) {
         movedCard.location = 'graveyard';
         movedCard.sequence = toPf.graveyard.length;
@@ -419,6 +430,38 @@ export class DuelEngineService {
         toPf.banished.unshift(movedCard);
       }
     }
+  }
+
+  public destroyCurrentDuel(): void {
+    if (this.aiStepTimer) {
+      clearTimeout(this.aiStepTimer);
+      this.aiStepTimer = null;
+    }
+    if (this.lib && this.currentDuel) {
+      this.lib.destroyDuel(this.currentDuel);
+      this.currentDuel = null;
+    }
+    this.state.isActive = false;
+    this.state.isWaitingResponse = false;
+    this.lastPromptMessage = null;
+  }
+
+  private scheduleAiResponse(handle: OcgDuelHandle, response: OcgResponse): void {
+    if (this.aiStepTimer) {
+      clearTimeout(this.aiStepTimer);
+    }
+    this.aiStepTimer = setTimeout(() => {
+      if (!this.lib || !this.currentDuel || !this.state.isActive) return;
+      try {
+        this.lib.duelSetResponse(handle, response);
+        this.state.isWaitingResponse = false;
+        this.state.waitingPlayer = null;
+        this.lastPromptMessage = null;
+        this.processStep();
+      } catch (err) {
+        console.error('[DuelEngineService] AI Step Execution Error:', err);
+      }
+    }, this.AI_STEP_DELAY_MS);
   }
 
   public processStep(): DecodedDuelEvent[] {
@@ -549,15 +592,12 @@ export class DuelEngineService {
           }
 
           const isOpponent = promptPlayer !== this.humanPlayerId;
-          // If opponent player (AI) or autoPlay is active: auto-respond and continue
+          // If opponent player (AI) or autoPlay is active: schedule paced auto-response
           if (isOpponent || this.autoPlay) {
             const response = getAutoResponse(lastMsg);
             if (response) {
-              this.lib.duelSetResponse(handle, response);
-              this.state.isWaitingResponse = false;
-              this.state.waitingPlayer = null;
-              this.lastPromptMessage = null;
-              continue;
+              this.scheduleAiResponse(handle, response);
+              break;
             }
           }
         }
@@ -634,16 +674,6 @@ export class DuelEngineService {
 
   public getCardReader(): CardReaderService {
     return this.cardReader;
-  }
-
-  public destroyCurrentDuel(): void {
-    if (this.lib && this.currentDuel) {
-      this.lib.destroyDuel(this.currentDuel);
-      this.currentDuel = null;
-    }
-    this.state.isActive = false;
-    this.state.isWaitingResponse = false;
-    this.lastPromptMessage = null;
   }
 
   public close(): void {

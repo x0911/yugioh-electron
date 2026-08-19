@@ -22,6 +22,15 @@ export interface DecodedDuelEvent {
   controller?: number;
   code?: number;
   cardName?: string;
+  location?: number;
+  sequence?: number;
+  position?: number;
+  fromLocation?: number;
+  fromSequence?: number;
+  toLocation?: number;
+  toSequence?: number;
+  drawn?: { code: number; position: number; cardName: string }[];
+  count?: number;
   phase?: string;
   turn?: number;
   amount?: number;
@@ -434,6 +443,9 @@ export class MessageDecoder {
           controller: msg.controller,
           code: msg.code,
           cardName: name,
+          location: msg.location,
+          sequence: msg.sequence,
+          position: msg.position,
           isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),
@@ -456,6 +468,9 @@ export class MessageDecoder {
           controller: msg.controller,
           code: msg.code,
           cardName: name,
+          location: msg.location,
+          sequence: msg.sequence,
+          position: msg.position,
           isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),
@@ -478,6 +493,9 @@ export class MessageDecoder {
           controller: msg.controller,
           code: msg.code,
           cardName: name,
+          location: msg.location,
+          sequence: msg.sequence,
+          position: msg.position,
           isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),
@@ -486,7 +504,7 @@ export class MessageDecoder {
 
       case OcgMessageType.SET: {
         type = 'SET';
-        const name = this.cardReader.getCardName(msg.code);
+        const name = msg.code > 0 ? this.cardReader.getCardName(msg.code) : 'Card';
         description = `Player ${msg.controller} Set a card on the field.`;
         return {
           type,
@@ -494,6 +512,9 @@ export class MessageDecoder {
           controller: msg.controller,
           code: msg.code,
           cardName: name,
+          location: msg.location,
+          sequence: msg.sequence,
+          position: msg.position,
           isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),
@@ -509,6 +530,12 @@ export class MessageDecoder {
           rawType,
           code: msg.card,
           cardName: name,
+          controller: msg.to.controller,
+          fromLocation: msg.from.location,
+          fromSequence: msg.from.sequence,
+          toLocation: msg.to.location,
+          toSequence: msg.to.sequence,
+          position: msg.to.position,
           isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),

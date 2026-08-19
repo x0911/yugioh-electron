@@ -538,9 +538,12 @@ export const useDuelStore = defineStore('duel', {
       const actions: CardActionOption[] = [];
       if (!this.activeIdleCmd || !this.boardState.userField.isTurn) return actions;
 
-      // 1. Normal Summon
+      // 1. Normal Summon (location 2 = Hand)
       const summonIdx = this.activeIdleCmd.summons.findIndex(
-        (s) => s.code === card.code && (s.sequence === card.sequence || s.sequence === undefined),
+        (s) =>
+          s.code === card.code &&
+          (s.location === undefined || s.location === 2) &&
+          (s.sequence === card.sequence || s.sequence === undefined),
       );
       if (summonIdx >= 0) {
         actions.push({ type: 'summon', index: summonIdx, label: 'Normal Summon', icon: '⚔️' });
@@ -548,7 +551,10 @@ export const useDuelStore = defineStore('duel', {
 
       // 2. Special Summon
       const spIdx = this.activeIdleCmd.special_summons.findIndex(
-        (s) => s.code === card.code && (s.sequence === card.sequence || s.sequence === undefined),
+        (s) =>
+          s.code === card.code &&
+          (s.location === undefined || s.location === 2) &&
+          (s.sequence === card.sequence || s.sequence === undefined),
       );
       if (spIdx >= 0) {
         actions.push({ type: 'sp_summon', index: spIdx, label: 'Special Summon', icon: '✨' });
@@ -556,7 +562,10 @@ export const useDuelStore = defineStore('duel', {
 
       // 3. Set Monster
       const mSetIdx = this.activeIdleCmd.monster_sets.findIndex(
-        (s) => s.code === card.code && (s.sequence === card.sequence || s.sequence === undefined),
+        (s) =>
+          s.code === card.code &&
+          (s.location === undefined || s.location === 2) &&
+          (s.sequence === card.sequence || s.sequence === undefined),
       );
       if (mSetIdx >= 0) {
         actions.push({ type: 'monster_set', index: mSetIdx, label: 'Set Monster', icon: '🛡️' });
@@ -564,7 +573,10 @@ export const useDuelStore = defineStore('duel', {
 
       // 4. Set Spell / Trap
       const sSetIdx = this.activeIdleCmd.spell_sets.findIndex(
-        (s) => s.code === card.code && (s.sequence === card.sequence || s.sequence === undefined),
+        (s) =>
+          s.code === card.code &&
+          (s.location === undefined || s.location === 2) &&
+          (s.sequence === card.sequence || s.sequence === undefined),
       );
       if (sSetIdx >= 0) {
         actions.push({ type: 'spell_set', index: sSetIdx, label: 'Set Card', icon: '📜' });
@@ -572,10 +584,39 @@ export const useDuelStore = defineStore('duel', {
 
       // 5. Activate Spell from Hand
       const actIdx = this.activeIdleCmd.activates.findIndex(
-        (a) => a.code === card.code && a.location === 2 && (a.sequence === card.sequence || a.sequence === undefined),
+        (a) =>
+          a.code === card.code &&
+          (a.location === undefined || a.location === 2) &&
+          (a.sequence === card.sequence || a.sequence === undefined),
       );
       if (actIdx >= 0) {
         actions.push({ type: 'activate', index: actIdx, label: 'Activate', icon: '⚡' });
+      }
+
+      // Fallback matching: if strict sequence matching yielded no actions but an action exists for this card code in hand
+      if (actions.length === 0) {
+        const anySummonIdx = this.activeIdleCmd.summons.findIndex((s) => s.code === card.code);
+        if (anySummonIdx >= 0) {
+          actions.push({ type: 'summon', index: anySummonIdx, label: 'Normal Summon', icon: '⚔️' });
+        }
+        const anySpIdx = this.activeIdleCmd.special_summons.findIndex((s) => s.code === card.code);
+        if (anySpIdx >= 0) {
+          actions.push({ type: 'sp_summon', index: anySpIdx, label: 'Special Summon', icon: '✨' });
+        }
+        const anyMSetIdx = this.activeIdleCmd.monster_sets.findIndex((s) => s.code === card.code);
+        if (anyMSetIdx >= 0) {
+          actions.push({ type: 'monster_set', index: anyMSetIdx, label: 'Set Monster', icon: '🛡️' });
+        }
+        const anySSetIdx = this.activeIdleCmd.spell_sets.findIndex((s) => s.code === card.code);
+        if (anySSetIdx >= 0) {
+          actions.push({ type: 'spell_set', index: anySSetIdx, label: 'Set Card', icon: '📜' });
+        }
+        const anyActIdx = this.activeIdleCmd.activates.findIndex(
+          (a) => a.code === card.code && (a.location === undefined || a.location === 2),
+        );
+        if (anyActIdx >= 0) {
+          actions.push({ type: 'activate', index: anyActIdx, label: 'Activate', icon: '⚡' });
+        }
       }
 
       return actions;
