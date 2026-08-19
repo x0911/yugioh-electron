@@ -12,15 +12,19 @@
   background-color: $color-bg-void;
   user-select: none;
 
-  // Atmospheric background layers
+  // Atmospheric background layers with glassmorphism overlay
   &__bg {
     position: absolute;
     inset: 0;
-    background:
-      radial-gradient(circle at 50% 25%, rgba(201, 162, 39, 0.12) 0%, transparent 60%),
-      radial-gradient(circle at 20% 75%, rgba(47, 128, 237, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 80% 75%, rgba(235, 87, 87, 0.08) 0%, transparent 50%),
-      linear-gradient(180deg, rgba(10, 12, 16, 0.5) 0%, rgba(10, 12, 16, 0.9) 100%);
+    background-image:
+      radial-gradient(circle at 50% 20%, rgba(201, 162, 39, 0.16) 0%, transparent 65%),
+      radial-gradient(circle at 20% 75%, rgba(47, 128, 237, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 75%, rgba(235, 87, 87, 0.1) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(10, 12, 16, 0.65) 0%, rgba(10, 12, 16, 0.88) 100%),
+      url('app-resource://backgrounds/main-menu-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     pointer-events: none;
     z-index: 0;
   }

@@ -247,10 +247,14 @@ onMounted(() => {
   &__bg {
     position: absolute;
     inset: 0;
-    background:
+    background-image:
       radial-gradient(circle at 50% 30%, rgba(201, 162, 39, 0.15) 0%, transparent 65%),
       radial-gradient(circle at 50% 80%, rgba(47, 128, 237, 0.08) 0%, transparent 55%),
-      linear-gradient(180deg, rgba(10, 12, 16, 0.6) 0%, rgba(10, 12, 16, 0.95) 100%);
+      linear-gradient(180deg, rgba(10, 12, 16, 0.65) 0%, rgba(10, 12, 16, 0.94) 100%),
+      url('app-resource://backgrounds/loading-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     pointer-events: none;
   }
 

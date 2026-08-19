@@ -105,9 +105,11 @@
     min-height: 196px;
     padding: $space-3 $space-2;
     border-radius: 12px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     background:
-      radial-gradient(circle at 50% 30%, rgba(201, 162, 39, 0.12) 0%, transparent 70%),
-      linear-gradient(180deg, #181d28 0%, #0d1017 100%);
+      radial-gradient(circle at 50% 30%, rgba(201, 162, 39, 0.14) 0%, transparent 70%),
+      linear-gradient(180deg, rgba(24, 29, 40, 0.78) 0%, rgba(13, 16, 23, 0.88) 100%);
     border: 1.5px solid rgba($color-gold-500, 0.45);
     box-shadow:
       0 8px 24px rgba(0, 0, 0, 0.5),

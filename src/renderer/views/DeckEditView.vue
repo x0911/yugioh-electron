@@ -128,7 +128,13 @@ onMounted(async () => {
   gap: $space-2;
   box-sizing: border-box;
   overflow: hidden;
-  background: radial-gradient(circle at center, rgba(18, 22, 30, 0.6) 0%, rgba(10, 12, 16, 0.95) 100%);
+  background-image:
+    radial-gradient(circle at 50% 20%, rgba(201, 162, 39, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(10, 12, 16, 0.72) 0%, rgba(10, 12, 16, 0.92) 100%),
+    url('app-resource://backgrounds/deck-edit-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .deck-edit-header {
@@ -137,8 +143,11 @@ onMounted(async () => {
   align-items: center;
   padding: $space-2 $space-4;
   border-radius: 12px;
-  background: rgba(14, 18, 26, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: rgba(14, 18, 26, 0.8);
   border: 1px solid rgba(201, 162, 39, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   flex-shrink: 0;
 }
 
