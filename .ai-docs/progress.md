@@ -1011,11 +1011,31 @@
 - `src/renderer/stores/duelStore.ts`: Cleared prompts on `FLIPSUMMONED` and `POS_CHANGE`.
 - `tests/stack-inspection.test.ts`: Added Tests 4 & 5 verifying graveyard top-card resolution and flip summon state transformation.
 
+---
+
+## 2026-08-20 — Strict Zone Location Filtering for Field Card Action Menus
+
+**What was done:**
+- **Identified Cross-Zone Action Bleed Root Cause**:
+  - `getLegalActionsForFieldCard(card)` in `duelStore.ts` previously queried `this.activeIdleCmd.pos_changes` matching `(p) => p.location === 4 && p.sequence === card.sequence`.
+  - When clicking on a set Spell or Trap card in slot `S1` (sequence `0`, location `'spell-trap'`), the code found a monster in slot `M1` (sequence `0`, location `4`) and incorrectly attached "Change Position" to the Trap card.
+  - Clicking "Change Position" on the trap card subsequently sent the position change for `M1`'s monster.
+- **Implemented Strict Zone Location Guards**:
+  - `getLegalActionsForFieldCard` now checks the card's zone location:
+    - **Position Changes & Attack Declarations**: Strictly guarded to `card.location === 'monster' || card.location === 'extra-monster'`. Spells and Traps can never change position or declare attacks.
+    - **Field Activations & Battle Chains**: Strictly mapped to the card's exact zone (`'monster'` -> `4`, `'spell-trap'` -> `8`, `'field'` -> `256`).
+  - Added Test 5 in `tests/hand-and-pacing.test.ts` verifying that Trap cards sharing sequence `0` with a monster never receive position changes or attack actions.
+
+**Files created/modified:**
+- `src/renderer/stores/duelStore.ts`: Added strict zone type validation in `getLegalActionsForFieldCard` and `getLegalActionsForHandCard`.
+- `tests/hand-and-pacing.test.ts`: Added Test 5 for field action isolation.
+
 **How to manually verify this phase:**
-1. Run `npm test` — all 5 test suites pass.
-2. In a duel:
-   - Send multiple cards to the graveyard (e.g. activate Pot of Greed, then Dark Hole) — verify the graveyard spot shows the card most recently sent (Dark Hole), not the first card.
-   - Set a monster in face-down defense position. On a subsequent turn, select "Change Position" to Flip Summon it into face-up attack position — verify the card flips face-up with full artwork, ATK/DEF score, and is in vertical Attack position.
+1. Run `npm test` — all test suites pass.
+2. In a duel with a monster in `M1` and a set trap/spell in `S1`:
+   - Click on the set trap card in `S1`: Observe that "Change Position" does NOT appear. Only "Activate Effect" appears if legally triggerable.
+   - Click on the monster in `M1`: Observe that "Change Position" appears only on the monster.
+
 
 
 
