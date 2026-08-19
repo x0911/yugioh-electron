@@ -15,7 +15,7 @@
     "format:check": "prettier --check .",
     "typecheck": "vue-tsc --noEmit",
     "build:cards": "tsx scripts/build-card-pool.ts",
-    "download:cards": "tsx scripts/stub-download.ts",
+    "download:cards": "tsx scripts/download-card-images.ts",
     "rebuild:native": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
