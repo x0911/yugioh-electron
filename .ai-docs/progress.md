@@ -40,3 +40,52 @@
 
 **How to manually verify this phase:**
 - Run `npm run spike` in terminal and confirm the 40-card duel simulation executes, logs each turn, phase, summon, spell activation, battle clash, and terminates with `[PASS] Phase 0 Spike successfully validated ygopro-core execution in Node.js!`.
+
+## Phase 1 — Project Scaffolding — 2026-08-19
+
+**Status:** Complete
+
+**What was built:**
+- Scaffolded the complete Electron + Vue 3 + TypeScript + SCSS + Pinia application shell matching `architecture.md` §3's folder structure (`src/main/`, `src/preload/`, `src/renderer/`, `src/shared/`).
+- Configured Electron Main process (`src/main/index.ts`) with security best practices: `contextIsolation: true`, `nodeIntegration: false`, `webSecurity: true`, `sandbox: true`, minimum window boundaries (1280×800), and blocked unhandled popup navigations.
+- Implemented IPC handlers (`src/main/ipc/index.ts`) and typed bridge layer in `src/preload/index.ts` via `contextBridge.exposeInMainWorld` (`window.duelAPI`, `window.deckAPI`, `window.settingsAPI`, `window.appAPI`).
+- Created SCSS 7-1 modular design architecture in `src/renderer/assets/styles/` with "Ancient Duel Arena" tokens, colors, glassmorphism mixins, typography, and animation keyframes.
+- Installed and configured Vue Router with routes for all 7 screens (`/`, `/main-menu`, `/settings`, `/deck-edit`, `/coin-toss`, `/pre-duel-video`, `/duel`), each displaying a placeholder card indicating its target phase.
+- Built a temporary top Dev Navigation bar linking all 7 routes to enable immediate click-through verification across screens.
+- Created typed Pinia store skeletons: `duelStore.ts`, `uiStore.ts`, `deckEditStore.ts`, `settingsStore.ts`, and `devToolsStore.ts`.
+- Configured ESLint (flat config with `@eslint/js`, `typescript-eslint`, `eslint-plugin-vue`, `eslint-config-prettier`), Prettier, `.editorconfig`, and strict TypeScript settings across the monorepo.
+- Configured `package.json` scripts: `dev`, `build`, `spike`, `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `download:cards` (stub), and `rebuild:native`.
+
+**Files added/changed:**
+- `.editorconfig`, `.prettierrc`, `.prettierignore`, `eslint.config.js`, `tsconfig.json`, `vite.config.ts`
+- `package.json` & `package-lock.json`
+- `scripts/build.ts`, `scripts/dev.ts`, `scripts/stub-download.ts`
+- `src/shared/types/ipc.ts`, `src/shared/types/duel.ts`, `src/shared/types/index.ts`, `src/shared/constants/index.ts`
+- `src/preload/index.ts`
+- `src/main/index.ts`, `src/main/ipc/index.ts`
+- `src/renderer/env.d.ts`, `src/renderer/index.html`, `src/renderer/main.ts`, `src/renderer/App.vue`, `src/renderer/router/index.ts`
+- `src/renderer/stores/duelStore.ts`, `src/renderer/stores/uiStore.ts`, `src/renderer/stores/deckEditStore.ts`, `src/renderer/stores/settingsStore.ts`, `src/renderer/stores/devToolsStore.ts`, `src/renderer/stores/index.ts`
+- `src/renderer/views/LoadingView.vue`, `src/renderer/views/MainMenuView.vue`, `src/renderer/views/SettingsView.vue`, `src/renderer/views/DeckEditView.vue`, `src/renderer/views/CoinTossView.vue`, `src/renderer/views/PreDuelVideoView.vue`, `src/renderer/views/DuelView.vue`
+- `src/renderer/assets/styles/abstracts/*`, `base/*`, `components/*`, `layout/*`, `pages/*`, `themes/*`, `vendor/*`, `main.scss`
+
+**Decisions made / deviations from the plan:**
+- **Preload Output Format**: Preload script is compiled to CommonJS (`dist/preload/index.cjs`) using `esbuild` for universal compatibility with Electron's `contextBridge` and sandboxed preload loader, while main process runs as ES module (`dist/main/index.js`).
+- **Modern Sass API**: Configured `api: 'modern'` in `vite.config.ts` with `sass` / `sass-embedded` to ensure modern Sass `@use`/`@forward` module loading.
+
+**Known issues / TODO carried to next phase:**
+- **TODO (Temporary Dev Nav)**: Remove or gate the top dev navigation bar before Phase 14 finalizes packaging.
+- Phase 2 will implement `DuelEngineService` in `src/main/engine/` and build the full card pool filtering pipeline from `cards.cdb`.
+
+**How to manually verify this phase:**
+- Run `npm run dev` to launch the Electron application.
+- Verify the Ancient Duel Arena styled window opens at 1600×900.
+- Click each of the 7 links in the top dev navigation bar:
+  1. `Loading (P5)` -> shows Loading Screen placeholder
+  2. `Main Menu (P5)` -> shows Main Menu placeholder
+  3. `Settings (P6)` -> shows Settings & Opponents placeholder
+  4. `Deck Edit (P7)` -> shows Deck Construction placeholder
+  5. `Coin Toss (P8)` -> shows Coin Toss Decision placeholder
+  6. `Pre-Duel (P8)` -> shows Pre-Duel Video placeholder
+  7. `Duel (P9)` -> shows Ancient Duel Arena placeholder
+- Open DevTools (`Cmd+Opt+I` or detached) and verify 0 console errors.
+- Run `npm run build`, `npm run typecheck`, `npm run lint`, and `npm run format:check` to confirm automated QA passes.
