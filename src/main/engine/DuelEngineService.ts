@@ -514,6 +514,21 @@ export class DuelEngineService {
           this.state.waitingPlayer = promptPlayer;
           this.lastPromptMessage = lastMsg;
 
+          // Auto-resolve SELECT_PLACE and SELECT_DISFIELD for smooth card placement
+          if (
+            lastMsg.type === OcgMessageType.SELECT_PLACE ||
+            lastMsg.type === OcgMessageType.SELECT_DISFIELD
+          ) {
+            const autoPlace = getAutoResponse(lastMsg);
+            if (autoPlace) {
+              this.lib.duelSetResponse(handle, autoPlace);
+              this.state.isWaitingResponse = false;
+              this.state.waitingPlayer = null;
+              this.lastPromptMessage = null;
+              continue;
+            }
+          }
+
           const isOpponent = promptPlayer !== this.humanPlayerId;
           // If opponent player (AI) or autoPlay is active: auto-respond and continue
           if (isOpponent || this.autoPlay) {

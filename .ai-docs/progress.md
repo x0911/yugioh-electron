@@ -654,3 +654,68 @@
    - **Duel Log Button**: Click `Log` in top-right HUD -> confirms slide-out drawer displays duel event history.
    - **Tooltips**: Hover over `EMZ 1`, `EMZ 2`, `Pendulum Jewels`, `MATE`, `Field Status`, and `Activation Confirmation` buttons to confirm informative tooltips appear.
    - **Dev Toolbar**: Click `"🔄 Cycle Positions"` in bottom-right to verify Dark Magician flips dynamically between Attack, Face-up Defense, and Face-down Set.
+
+---
+
+## 2026-08-19 — Phase 10: Duel Field — Engine Wiring & Turn Flow
+
+**What was done:**
+- **Engine Query Snapshot & Perspective Redaction**: Implemented message-driven board state tracking and `duelEngineService.getBoardState()` returning `DuelBoardState` snapshot with anti-cheat card redaction (opponent hand and unrevealed face-down cards are masked to `code: 0` / `'Card Back'`).
+- **BigInt-Safe IPC Serialization**: Enhanced `messageDecoder.ts` and `DuelEngineService.ts` with `sanitizeBigInts()`, recursively converting all 64-bit engine integers (`hints`, `descriptions`, `options`) to strings, preventing JSON/IPC structured clone crashes.
+- **Human vs AI Dual-Perspective Prompt Router**: Wired engine event processing loop to distinguish human player prompts (`promptPlayer === humanPlayerId`) from opponent AI prompts (`promptPlayer !== humanPlayerId`). Opponent actions automatically execute via placeholder `getAutoResponse()`, while human prompts pause the engine and surface rich UI actions.
+- **Upgraded Pinia `duelStore`**: Added live reactive `boardState`, active prompt trackers (`activeIdleCmd`, `activeBattleCmd`, `activeSelectCard`, `activeSelectChain`, `activeSelectPosition`, `activeSelectEffectYn`, `activeSelectOption`, `activeSelectTribute`), and command execution dispatchers (`executeNormalSummon`, `executeSpecialSummon`, `executeMonsterSet`, `executeSpellSet`, `executeActivate`, `executePosChange`, `executeToBattlePhase`, `executeToMainPhase2`, `executeToEndPhase`, `executeDeclareAttack`, `executeSelectCard`, `executeSelectPosition`, `executeSelectChain`, `executeSelectEffectYn`, `executeSelectOption`).
+- **Interactive `CardActionMenu.vue`**: Built contextual popover menu for hand and field cards displaying only legal actions reported by the engine for that specific card (Normal Summon ⚔️, Special Summon ✨, Set Monster 🛡️, Set Card 📜, Activate Effect ⚡, Change Position 🔄, Declare Attack ⚔️).
+- **Interactive `PromptModal.vue`**: Built glass modal dialog handling all selection prompts from the engine:
+  - **End Phase Hand-Size Cleanup Rule (§3.4)**: If a player holds > 6 cards at End Phase, the engine halts with `SELECT_CARD (min: count - 6)`. The modal displays a dedicated warning header, card thumbnail grid, selection counters, and disables the Discard button until the exact required count is selected.
+  - **General Card Selection**: Min/max card selector with confirm/cancel buttons.
+  - **Position Choice**: Face-up Attack vs Face-up Defense vs Face-down Set Defense.
+  - **Chain Opportunity**: Activating card effect options + "Pass (Do Not Chain)" button.
+  - **Effect Yes/No**: Confirmation dialog for optional trigger activations.
+  - **Tribute Selection**: Monster tribute selector.
+- **Turn Progression HUD & Live Game Flow**: Added active phase pill highlights (`DP`, `SP`, `M1`, `BP`, `M2`, `EP`) and phase progression buttons (`⚔️ Battle Phase`, `🛡️ Main Phase 2`, `⌛ End Turn`) in `DuelHud.vue`. Connected Victory / Defeat game-over overlay in `DuelView.vue`.
+
+**Files created/modified:**
+- `src/shared/types/duel.ts`: Added prompt payload interfaces and action parameter definitions.
+- `src/shared/types/field.ts`: Added `winReason` to `DuelBoardState`.
+- `src/shared/types/ipc.ts`: Added `DUEL_GET_BOARD` channel and `getBoardState` to `DuelAPI`.
+- `src/main/ipc/index.ts`: Registered `DUEL_GET_BOARD` IPC handler.
+- `src/preload/index.ts`: Exposed `getBoardState()` to `window.duelAPI`.
+- `src/main/engine/messageDecoder.ts`: Added BigInt sanitation, prompt metadata enrichment, and phase code mapping.
+- `src/main/engine/DuelEngineService.ts`: Added message-driven board state tracking, `getBoardState()`, BigInt-safe IPC event broadcasting, and automatic `SELECT_PLACE` resolution.
+- `src/renderer/stores/duelStore.ts`: Added reactive `DuelBoardState`, active prompt state, legal action resolution helpers, and command execution methods.
+- `src/renderer/components/duel/CardActionMenu.vue`: Contextual card action popover.
+- `src/renderer/components/duel/PromptModal.vue`: Glass selection modal for hand cleanup, position, chain, and effect prompts.
+- `src/renderer/components/duel/DuelHud.vue`: Added phase progression buttons and dynamic active phase pills.
+- `src/renderer/components/duel/FieldZoneSlot.vue`: Passed MouseEvent coordinates on card clicks.
+- `src/renderer/components/duel/HandFan.vue`: Passed MouseEvent coordinates on card clicks.
+- `src/renderer/components/duel/index.ts`: Barrel export for new components.
+- `src/renderer/views/DuelView.vue`: Master integration with live engine default mode, prompt modal, card action menu, and victory/defeat overlay.
+
+**Decisions made / deviations from the plan:**
+- **Automatic `SELECT_PLACE` Resolution**: When activating Spells/Traps or placing monsters without a manual zone requirement, `DuelEngineService` automatically selects the first available valid zone via `getAutoResponse()`, matching official Master Duel / YGOPRO UX and preventing unnecessary modal interruptions.
+- **Strict Discard Validation**: Hand-size cleanup selection requires the exact `min` number of cards to be chosen before the "Discard" button is enabled, preventing invalid engine response errors.
+
+**Known issues / TODO carried to next phase:**
+- Phase 11 will build the real-time Guidance System (§3.5, HUD glow/pulse for playable cards, fast-effect chain prompt indicators, action timer bar, and tutorial tips).
+
+**How to manually verify this phase:**
+1. Run `npm run dev` to launch the application.
+2. From the **Main Menu**, click **"Start Duel"** -> select Heads/Tails -> skip intro -> arrives at the live **Duel Screen** (`/duel`).
+3. **Turn 1 (Main Phase 1)**:
+   - Click a Level 4 monster in hand (e.g. *Celtic Guardian*) -> click **"⚔️ Normal Summon"** -> verify the monster appears in your Monster Zone.
+   - Click a Spell/Trap card in hand (e.g. *Mirror Force*) -> click **"📜 Set Card"** -> verify it appears face-down in your Spell/Trap Zone.
+   - Click a Spell card in hand (e.g. *Pot of Greed*) -> click **"⚡ Activate"** -> verify 2 cards are drawn into your hand.
+4. **Phase Progression**:
+   - In the top HUD center banner, click **"⌛ End Turn"** -> verify phase switches to `EP` then turn passes to the Opponent.
+5. **Opponent Turn (Turn 2)**:
+   - Watch the Opponent AI automatically draw a card, Normal Summon a monster, and enter Battle Phase.
+   - When a Chain prompt appears (e.g. fast-effect window), click **"Pass (Do Not Chain)"**.
+6. **Battle Phase (Turn 3)**:
+   - On Turn 3, in the top HUD banner, click **"⚔️ Battle Phase"**.
+   - Click your Attack Position monster -> click **"⚔️ Declare Attack"** -> verify battle damage is dealt to opponent Life Points.
+7. **End Phase Hand-Size Cleanup Rule**:
+   - Activate Spells/Pots of Greed until holding more than 6 cards in hand.
+   - Click **"⌛ End Turn"**.
+   - Verify the **"Hand Size Limit Exceeded"** modal appears, displaying all cards in hand and instructing you to select the exact excess cards.
+   - Select the required number of cards and click **"Discard"** -> verify selected cards are sent to the Graveyard and turn passes cleanly.
+
