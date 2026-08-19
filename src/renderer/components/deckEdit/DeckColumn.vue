@@ -29,49 +29,68 @@
         <span v-if="store.isDirty" class="dirty-indicator" title="Unsaved changes">●</span>
       </div>
 
-      <!-- Deck Action Toolbar Buttons -->
-      <div class="deck-toolbar">
-        <button
-          type="button"
-          class="tool-btn tool-btn--save"
-          title="Save deck changes"
-          @click="store.saveCurrentDeck"
+      <!-- Deck Action Toolbar / Drag-to-Trash Zone -->
+      <div class="deck-toolbar-container">
+        <!-- Normal Action Buttons -->
+        <div
+          v-if="!isDraggingFromDeck"
+          class="deck-toolbar"
         >
-          <span class="tool-icon">💾</span> Save
-        </button>
-        <button
-          type="button"
-          class="tool-btn"
-          title="Create a new deck"
-          @click="onNewDeckClick"
+          <button
+            type="button"
+            class="tool-btn tool-btn--save"
+            title="Save deck changes"
+            @click="store.saveCurrentDeck"
+          >
+            <span class="tool-icon">💾</span> Save
+          </button>
+          <button
+            type="button"
+            class="tool-btn"
+            title="Create a new deck"
+            @click="onNewDeckClick"
+          >
+            <span class="tool-icon">➕</span> New
+          </button>
+          <button
+            type="button"
+            class="tool-btn"
+            title="Clone current deck"
+            @click="store.duplicateCurrentDeck"
+          >
+            <span class="tool-icon">📋</span> Clone
+          </button>
+          <button
+            type="button"
+            class="tool-btn tool-btn--danger"
+            title="Clear all cards from this deck"
+            @click="showClearModal = true"
+          >
+            <span class="tool-icon">🧹</span> Clear
+          </button>
+          <button
+            type="button"
+            class="tool-btn tool-btn--danger"
+            :disabled="store.customDecks.length <= 1"
+            title="Delete this custom deck"
+            @click="showDeleteModal = true"
+          >
+            <span class="tool-icon">🗑️</span> Delete
+          </button>
+        </div>
+
+        <!-- Active Drag-to-Trash Zone when dragging from deck -->
+        <div
+          v-else
+          class="deck-trash-zone"
+          :class="{ 'deck-trash-zone--hover': isTrashDragOver }"
+          @dragover="onTrashDragOver"
+          @dragleave="isTrashDragOver = false"
+          @drop="onTrashDrop"
         >
-          <span class="tool-icon">➕</span> New
-        </button>
-        <button
-          type="button"
-          class="tool-btn"
-          title="Clone current deck"
-          @click="store.duplicateCurrentDeck"
-        >
-          <span class="tool-icon">📋</span> Clone
-        </button>
-        <button
-          type="button"
-          class="tool-btn tool-btn--danger"
-          title="Clear all cards from this deck"
-          @click="showClearModal = true"
-        >
-          <span class="tool-icon">🧹</span> Clear
-        </button>
-        <button
-          type="button"
-          class="tool-btn tool-btn--danger"
-          :disabled="store.customDecks.length <= 1"
-          title="Delete this custom deck"
-          @click="showDeleteModal = true"
-        >
-          <span class="tool-icon">🗑️</span> Delete
-        </button>
+          <span class="trash-icon">🗑️</span>
+          <span class="trash-text">Drop here to remove "{{ store.draggingCard?.name || 'Card' }}"</span>
+        </div>
       </div>
     </div>
 
@@ -98,8 +117,17 @@
       </div>
     </div>
 
-    <!-- Main Deck Section (40 - 60 Cards in Columns Grid) -->
-    <div class="deck-section deck-section--main">
+    <!-- Main Deck Section (40 - 60 Cards in Columns Grid Dropzone) -->
+    <div
+      class="deck-section deck-section--main"
+      :class="{
+        'deck-section--drop-active': isPoolDraggingToMain,
+        'deck-section--drag-over': isMainDragOver,
+      }"
+      @dragover="onMainDragOver"
+      @dragleave="onMainDragLeave"
+      @drop="onMainDrop"
+    >
       <div class="section-title-bar">
         <div class="title-left">
           <span class="section-title">Main Deck</span>
@@ -127,17 +155,23 @@
       </div>
 
       <!-- Main Deck Grid (Cards arranged in columns) -->
-      <div class="deck-cards-scrollable">
+      <div ref="mainScrollRef" class="deck-cards-scrollable">
         <div v-if="mainDeckCards.length > 0" class="deck-cards-grid">
           <div
             v-for="item in mainDeckCards"
             :key="item.id"
             class="deck-card-tile"
-            :class="`deck-card-tile--${getCardKindClass(item.card)}`"
-            title="Click to remove 1 copy"
+            :class="{
+              [`deck-card-tile--${getCardKindClass(item.card)}`]: true,
+              'deck-card-tile--dragging': store.isDragging && store.draggingCard?.id === item.id,
+            }"
+            draggable="true"
+            title="Drag to remove, or click to remove 1 copy"
             @mouseenter="onCardHover(item.card)"
             @click="onRemoveCard(item.id, false)"
             @contextmenu.prevent="onCardHover(item.card)"
+            @dragstart="onDeckCardDragStart($event, item, false)"
+            @dragend="onDeckCardDragEnd"
           >
             <!-- Card Thumbnail -->
             <div class="tile-thumb-wrap">
@@ -152,6 +186,13 @@
               <!-- Quantity Pill Badge (x1, x2, x3) -->
               <div class="tile-count-badge" :class="`tile-count-badge--${item.count}`">
                 x{{ item.count }}
+              </div>
+
+              <!-- Drag Handle Indicator Icon on Hover -->
+              <div class="tile-drag-badge" title="Drag to remove">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                  <path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"/>
+                </svg>
               </div>
 
               <!-- Remove Overlay on Hover -->
@@ -179,13 +220,36 @@
         </div>
 
         <div v-else class="section-empty">
-          <span class="empty-hint">Main Deck is empty. Click cards in the card pool to add them.</span>
+          <span class="empty-hint">Main Deck is empty. Drag or click cards from the card pool to add them.</span>
         </div>
+
+        <!-- Main Deck Dropzone Overlay Highlight -->
+        <transition name="fade">
+          <div
+            v-if="isMainDragOver"
+            class="deck-drop-overlay deck-drop-overlay--main"
+          >
+            <span class="drop-action-icon">➕</span>
+            <span class="drop-action-text">Drop to Add to Main Deck</span>
+            <span class="drop-action-sub">
+              {{ store.draggingCard?.name }}
+            </span>
+          </div>
+        </transition>
       </div>
     </div>
 
-    <!-- Extra Deck Section (0 - 15 Cards in Columns Grid) -->
-    <div class="deck-section deck-section--extra">
+    <!-- Extra Deck Section (0 - 15 Cards in Columns Grid Dropzone) -->
+    <div
+      class="deck-section deck-section--extra"
+      :class="{
+        'deck-section--drop-active': isPoolDraggingToExtra,
+        'deck-section--drag-over': isExtraDragOver,
+      }"
+      @dragover="onExtraDragOver"
+      @dragleave="onExtraDragLeave"
+      @drop="onExtraDrop"
+    >
       <div class="section-title-bar">
         <div class="title-left">
           <span class="section-title">Extra Deck (Fusion)</span>
@@ -205,16 +269,22 @@
       </div>
 
       <!-- Extra Deck Grid (Cards arranged in columns) -->
-      <div class="deck-cards-scrollable deck-cards-scrollable--extra">
+      <div ref="extraScrollRef" class="deck-cards-scrollable deck-cards-scrollable--extra">
         <div v-if="extraDeckCards.length > 0" class="deck-cards-grid">
           <div
             v-for="item in extraDeckCards"
             :key="item.id"
             class="deck-card-tile deck-card-tile--fusion"
-            title="Click to remove 1 copy"
+            :class="{
+              'deck-card-tile--dragging': store.isDragging && store.draggingCard?.id === item.id,
+            }"
+            draggable="true"
+            title="Drag to remove, or click to remove 1 copy"
             @mouseenter="onCardHover(item.card)"
             @click="onRemoveCard(item.id, true)"
             @contextmenu.prevent="onCardHover(item.card)"
+            @dragstart="onDeckCardDragStart($event, item, true)"
+            @dragend="onDeckCardDragEnd"
           >
             <!-- Card Thumbnail -->
             <div class="tile-thumb-wrap">
@@ -229,6 +299,13 @@
               <!-- Quantity Pill Badge (x1, x2, x3) -->
               <div class="tile-count-badge" :class="`tile-count-badge--${item.count}`">
                 x{{ item.count }}
+              </div>
+
+              <!-- Drag Handle Indicator Icon on Hover -->
+              <div class="tile-drag-badge" title="Drag to remove">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                  <path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"/>
+                </svg>
               </div>
 
               <!-- Remove Overlay on Hover -->
@@ -253,8 +330,22 @@
         </div>
 
         <div v-else class="section-empty">
-          <span class="empty-hint">Extra Deck empty (optional, max 15 Fusions).</span>
+          <span class="empty-hint">Extra Deck empty (optional, max 15 Fusions). Drag fusion cards here.</span>
         </div>
+
+        <!-- Extra Deck Dropzone Overlay Highlight -->
+        <transition name="fade">
+          <div
+            v-if="isExtraDragOver"
+            class="deck-drop-overlay deck-drop-overlay--extra"
+          >
+            <span class="drop-action-icon">🌀</span>
+            <span class="drop-action-text">Drop to Add to Extra Deck</span>
+            <span class="drop-action-sub">
+              {{ store.draggingCard?.name }}
+            </span>
+          </div>
+        </transition>
       </div>
     </div>
 
@@ -319,6 +410,13 @@ const deckNameInput = ref(store.activeDeck.name);
 const showClearModal = ref(false);
 const showDeleteModal = ref(false);
 
+const isMainDragOver = ref(false);
+const isExtraDragOver = ref(false);
+const isTrashDragOver = ref(false);
+
+const mainScrollRef = ref<HTMLElement | null>(null);
+const extraScrollRef = ref<HTMLElement | null>(null);
+
 watch(
   () => store.activeDeck.name,
   (newName) => {
@@ -327,6 +425,24 @@ watch(
 );
 
 const validity = computed(() => store.deckValidity);
+
+const isDraggingFromDeck = computed(
+  () => store.isDragging && (store.dragSource === 'main-deck' || store.dragSource === 'extra-deck'),
+);
+
+const isPoolDraggingToMain = computed(
+  () =>
+    store.isDragging &&
+    (store.dragSource === 'pool' || store.dragSource === 'previewer') &&
+    (!store.draggingCard || !store.draggingCard.isExtraDeck),
+);
+
+const isPoolDraggingToExtra = computed(
+  () =>
+    store.isDragging &&
+    (store.dragSource === 'pool' || store.dragSource === 'previewer') &&
+    Boolean(store.draggingCard?.isExtraDeck),
+);
 
 interface EnrichedDeckCard {
   id: number;
@@ -417,6 +533,101 @@ function getCardKindClass(card: CardDetail | null): string {
   if (card.isTrap) return 'trap';
   if (card.isEffect) return 'effect';
   return 'normal';
+}
+
+// Drag from Deck to Remove / Reorder
+function onDeckCardDragStart(e: DragEvent, item: EnrichedDeckCard, isExtra: boolean): void {
+  if (e.dataTransfer && item.card) {
+    e.dataTransfer.setData(
+      'text/plain',
+      JSON.stringify({ cardId: item.id, isExtra, source: isExtra ? 'extra-deck' : 'main-deck' }),
+    );
+    e.dataTransfer.effectAllowed = 'copyMove';
+  }
+  if (item.card) {
+    store.startDrag(item.card, isExtra ? 'extra-deck' : 'main-deck');
+  }
+}
+
+function onDeckCardDragEnd(): void {
+  store.endDrag();
+  isMainDragOver.value = false;
+  isExtraDragOver.value = false;
+  isTrashDragOver.value = false;
+}
+
+// Main Deck Dropzone Handlers
+function onMainDragOver(e: DragEvent): void {
+  if (store.isDragging && (store.dragSource === 'pool' || store.dragSource === 'previewer')) {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+    isMainDragOver.value = true;
+  }
+}
+
+function onMainDragLeave(e: DragEvent): void {
+  const related = e.relatedTarget as HTMLElement | null;
+  if (!mainScrollRef.value?.contains(related)) {
+    isMainDragOver.value = false;
+  }
+}
+
+function onMainDrop(e: DragEvent): void {
+  isMainDragOver.value = false;
+  if (store.isDragging && (store.dragSource === 'pool' || store.dragSource === 'previewer')) {
+    e.preventDefault();
+    store.dropOnMainDeck();
+    store.endDrag();
+  }
+}
+
+// Extra Deck Dropzone Handlers
+function onExtraDragOver(e: DragEvent): void {
+  if (store.isDragging && (store.dragSource === 'pool' || store.dragSource === 'previewer')) {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+    isExtraDragOver.value = true;
+  }
+}
+
+function onExtraDragLeave(e: DragEvent): void {
+  const related = e.relatedTarget as HTMLElement | null;
+  if (!extraScrollRef.value?.contains(related)) {
+    isExtraDragOver.value = false;
+  }
+}
+
+function onExtraDrop(e: DragEvent): void {
+  isExtraDragOver.value = false;
+  if (store.isDragging && (store.dragSource === 'pool' || store.dragSource === 'previewer')) {
+    e.preventDefault();
+    store.dropOnExtraDeck();
+    store.endDrag();
+  }
+}
+
+// Trash Zone Drop Handlers
+function onTrashDragOver(e: DragEvent): void {
+  if (store.isDragging && (store.dragSource === 'main-deck' || store.dragSource === 'extra-deck')) {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+    isTrashDragOver.value = true;
+  }
+}
+
+function onTrashDrop(e: DragEvent): void {
+  isTrashDragOver.value = false;
+  if (store.isDragging && (store.dragSource === 'main-deck' || store.dragSource === 'extra-deck')) {
+    e.preventDefault();
+    store.dropOnRemove();
+    store.endDrag();
+  }
 }
 </script>
 
@@ -514,9 +725,57 @@ function getCardKindClass(card: CardDetail | null): string {
   font-size: 0.9rem;
 }
 
+.deck-toolbar-container {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
 .deck-toolbar {
   display: flex;
   gap: 4px;
+  width: 100%;
+}
+
+.deck-trash-zone {
+  width: 100%;
+  height: 32px;
+  background: rgba(235, 87, 87, 0.2);
+  border: 2px dashed rgba(235, 87, 87, 0.7);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 160ms ease;
+  animation: pulse-border 1.5s infinite alternate;
+
+  &--hover {
+    background: rgba(235, 87, 87, 0.45);
+    border-color: #ff6b6b;
+    box-shadow: 0 0 12px rgba(235, 87, 87, 0.6);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes pulse-border {
+  0% { border-color: rgba(235, 87, 87, 0.4); }
+  100% { border-color: rgba(235, 87, 87, 0.9); }
+}
+
+.trash-icon {
+  font-size: 1rem;
+}
+
+.trash-text {
+  font-family: $font-family-display;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #ff8787;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tool-btn {
@@ -631,6 +890,8 @@ function getCardKindClass(card: CardDetail | null): string {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  position: relative;
+  transition: all 200ms ease;
 
   &--main {
     flex: 3;
@@ -638,6 +899,20 @@ function getCardKindClass(card: CardDetail | null): string {
 
   &--extra {
     flex: 1.3;
+  }
+
+  &--drop-active {
+    .deck-cards-scrollable {
+      border: 2px dashed rgba(201, 162, 39, 0.6);
+      background: rgba(201, 162, 39, 0.04);
+    }
+  }
+
+  &--drag-over {
+    .deck-cards-scrollable {
+      border: 2px solid $color-gold-300;
+      box-shadow: 0 0 20px rgba(201, 162, 39, 0.3) inset;
+    }
   }
 }
 
@@ -712,6 +987,7 @@ function getCardKindClass(card: CardDetail | null): string {
 }
 
 .deck-cards-scrollable {
+  position: relative;
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -720,6 +996,7 @@ function getCardKindClass(card: CardDetail | null): string {
   border-top: none;
   border-radius: 0 0 6px 6px;
   padding: 6px;
+  transition: all 180ms ease;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -745,10 +1022,14 @@ function getCardKindClass(card: CardDetail | null): string {
   border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 6px;
   overflow: hidden;
-  cursor: pointer;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease, border-color 160ms ease;
+  cursor: grab;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease, border-color 160ms ease, opacity 160ms ease;
   user-select: none;
   box-sizing: border-box;
+
+  &:active {
+    cursor: grabbing;
+  }
 
   &:hover {
     transform: translateY(-3px) scale(1.02);
@@ -757,6 +1038,9 @@ function getCardKindClass(card: CardDetail | null): string {
     z-index: 2;
 
     .tile-remove-overlay {
+      opacity: 1;
+    }
+    .tile-drag-badge {
       opacity: 1;
     }
   }
@@ -775,6 +1059,13 @@ function getCardKindClass(card: CardDetail | null): string {
   }
   &--fusion {
     border-top: 2px solid #9b59b6;
+  }
+
+  &--dragging {
+    opacity: 0.35;
+    border-style: dashed;
+    border-color: #ff6b6b;
+    transform: scale(0.95);
   }
 }
 
@@ -820,6 +1111,24 @@ function getCardKindClass(card: CardDetail | null): string {
     border-color: #a3e4d7;
     box-shadow: 0 0 6px rgba(46, 204, 113, 0.6);
   }
+}
+
+.tile-drag-badge {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(201, 162, 39, 0.5);
+  color: $color-gold-300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 140ms ease;
+  pointer-events: none;
 }
 
 .tile-remove-overlay {
@@ -886,6 +1195,54 @@ function getCardKindClass(card: CardDetail | null): string {
   font-weight: 700;
 }
 
+.deck-drop-overlay {
+  position: absolute;
+  inset: 6px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  z-index: 30;
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+
+  &--main {
+    background: rgba(15, 20, 30, 0.92);
+    border: 2px dashed $color-gold-300;
+    box-shadow: 0 0 20px rgba(201, 162, 39, 0.4) inset;
+  }
+
+  &--extra {
+    background: rgba(22, 12, 32, 0.92);
+    border: 2px dashed #9b59b6;
+    box-shadow: 0 0 20px rgba(155, 89, 182, 0.4) inset;
+  }
+}
+
+.drop-action-icon {
+  font-size: 2rem;
+}
+
+.drop-action-text {
+  font-family: $font-family-display;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: $color-gold-100;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 10px rgba(201, 162, 39, 0.6);
+}
+
+.drop-action-sub {
+  font-size: 0.82rem;
+  color: $color-text-secondary;
+  max-width: 80%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .section-empty {
   display: flex;
   align-items: center;
@@ -916,5 +1273,15 @@ function getCardKindClass(card: CardDetail | null): string {
   display: flex;
   justify-content: flex-end;
   gap: $space-2;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 180ms ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

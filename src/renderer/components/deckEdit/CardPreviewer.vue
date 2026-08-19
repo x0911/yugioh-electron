@@ -15,7 +15,13 @@
     <div v-if="card" class="previewer-body">
       <!-- Full Image Container -->
       <div class="card-image-wrap">
-        <div class="card-frame-container">
+        <div
+          class="card-frame-container"
+          draggable="true"
+          title="Drag into Deck"
+          @dragstart="onPreviewDragStart"
+          @dragend="onPreviewDragEnd"
+        >
           <img
             :src="fullImageUrl"
             :alt="card.name"
@@ -24,6 +30,9 @@
             @error="handleImageError"
           />
           <div class="foil-sweep-layer"></div>
+          <div class="preview-drag-hint">
+            <span>✋ Drag into Deck</span>
+          </div>
         </div>
       </div>
 
@@ -157,6 +166,23 @@ function onRemoveCard(): void {
   if (card.value) {
     store.removeCardFromDeck(card.value.id, card.value.isExtraDeck);
   }
+}
+
+function onPreviewDragStart(e: DragEvent): void {
+  if (e.dataTransfer && card.value) {
+    e.dataTransfer.setData(
+      'text/plain',
+      JSON.stringify({ cardId: card.value.id, isExtra: card.value.isExtraDeck, source: 'previewer' }),
+    );
+    e.dataTransfer.effectAllowed = 'copy';
+  }
+  if (card.value) {
+    store.startDrag(card.value, 'previewer');
+  }
+}
+
+function onPreviewDragEnd(): void {
+  store.endDrag();
 }
 </script>
 
@@ -308,6 +334,41 @@ function onRemoveCard(): void {
   overflow: hidden;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(201, 162, 39, 0.2);
   border: 1px solid rgba(201, 162, 39, 0.4);
+  cursor: grab;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(201, 162, 39, 0.4);
+
+    .preview-drag-hint {
+      opacity: 1;
+    }
+  }
+}
+
+.preview-drag-hint {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(201, 162, 39, 0.6);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-family: $font-family-display;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: $color-gold-300;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .card-full-image {

@@ -1,5 +1,16 @@
 <template>
-  <div ref="containerRef" class="virtual-card-grid-container" @scroll="onScroll">
+  <div
+    ref="containerRef"
+    class="virtual-card-grid-container"
+    :class="{
+      'virtual-card-grid-container--drop-active': store.isDragging && (store.dragSource === 'main-deck' || store.dragSource === 'extra-deck'),
+      'virtual-card-grid-container--drag-over': isPoolDragOver,
+    }"
+    @scroll="onScroll"
+    @dragover="onPoolDragOver"
+    @dragleave="onPoolDragLeave"
+    @drop="onPoolDrop"
+  >
     <!-- Virtual Spacer to provide total scroll height -->
     <div
       v-if="totalCards > 0"
@@ -20,10 +31,14 @@
         :class="{
           'card-grid-item--in-deck': (deckCounts.get(card.id) ?? 0) > 0,
           'card-grid-item--max': (deckCounts.get(card.id) ?? 0) >= 3,
+          'card-grid-item--dragging': store.isDragging && store.draggingCard?.id === card.id,
         }"
+        draggable="true"
         @mouseenter="onCardHover(card)"
         @click="onCardClick(card)"
         @contextmenu.prevent="onCardRightClick(card)"
+        @dragstart="onDragStart($event, card)"
+        @dragend="onDragEnd"
       >
         <!-- Card Mini Thumbnail Container -->
         <div class="card-thumb-wrapper">
@@ -44,6 +59,13 @@
             }"
           >
             x{{ deckCounts.get(card.id) ?? 0 }}
+          </div>
+
+          <!-- Drag Handle / Indicator Icon on Hover -->
+          <div class="card-drag-indicator" title="Drag to Deck">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"/>
+            </svg>
           </div>
 
           <!-- Extra Deck / Fusion Indicator -->
@@ -73,8 +95,25 @@
       </div>
     </div>
 
+    <!-- Drop to Remove Overlay (Appears when dragging a card from Deck into Card Pool) -->
+    <transition name="fade">
+      <div
+        v-if="store.isDragging && (store.dragSource === 'main-deck' || store.dragSource === 'extra-deck')"
+        class="pool-drop-remove-zone"
+        :class="{ 'pool-drop-remove-zone--hover': isPoolDragOver }"
+      >
+        <div class="drop-remove-content">
+          <span class="drop-remove-icon">🗑️</span>
+          <h3 class="drop-remove-title">Drop Here to Remove from Deck</h3>
+          <p class="drop-remove-subtitle">
+            Release "{{ store.draggingCard?.name || 'Card' }}" to remove 1 copy
+          </p>
+        </div>
+      </div>
+    </transition>
+
     <!-- Empty State -->
-    <div v-else class="grid-empty-state">
+    <div v-if="totalCards === 0" class="grid-empty-state">
       <div class="empty-icon">🔍</div>
       <h4 class="empty-title">No Cards Found</h4>
       <p class="empty-desc">
@@ -99,6 +138,7 @@ const containerRef = ref<HTMLElement | null>(null);
 const scrollTop = ref(0);
 const containerHeight = ref(600);
 const containerWidth = ref(800);
+const isPoolDragOver = ref(false);
 
 // Geometry constants (in pixels)
 const ITEM_WIDTH = 110;
@@ -209,6 +249,48 @@ function onCardClick(card: CardDetail): void {
 function onCardRightClick(card: CardDetail): void {
   store.setHoveredCard(card);
 }
+
+// HTML5 Drag & Drop handlers
+function onDragStart(e: DragEvent, card: CardDetail): void {
+  if (e.dataTransfer) {
+    e.dataTransfer.setData(
+      'text/plain',
+      JSON.stringify({ cardId: card.id, isExtra: card.isExtraDeck, source: 'pool' }),
+    );
+    e.dataTransfer.effectAllowed = 'copyMove';
+  }
+  store.startDrag(card, 'pool');
+}
+
+function onDragEnd(): void {
+  store.endDrag();
+}
+
+function onPoolDragOver(e: DragEvent): void {
+  if (store.isDragging && (store.dragSource === 'main-deck' || store.dragSource === 'extra-deck')) {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+    isPoolDragOver.value = true;
+  }
+}
+
+function onPoolDragLeave(e: DragEvent): void {
+  const related = e.relatedTarget as HTMLElement | null;
+  if (!containerRef.value?.contains(related)) {
+    isPoolDragOver.value = false;
+  }
+}
+
+function onPoolDrop(e: DragEvent): void {
+  isPoolDragOver.value = false;
+  if (store.isDragging && (store.dragSource === 'main-deck' || store.dragSource === 'extra-deck')) {
+    e.preventDefault();
+    store.dropOnRemove();
+    store.endDrag();
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -225,6 +307,16 @@ function onCardRightClick(card: CardDetail): void {
   background: rgba(8, 11, 16, 0.6);
   border: 1px solid rgba(201, 162, 39, 0.25);
   border-radius: 12px;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+
+  &--drop-active {
+    border-color: rgba(235, 87, 87, 0.5);
+  }
+
+  &--drag-over {
+    border-color: rgba(235, 87, 87, 0.9);
+    box-shadow: 0 0 20px rgba(235, 87, 87, 0.35) inset;
+  }
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -269,16 +361,25 @@ function onCardRightClick(card: CardDetail): void {
   border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 8px;
   overflow: hidden;
-  cursor: pointer;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease, border-color 160ms ease;
+  cursor: grab;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease, border-color 160ms ease, opacity 160ms ease;
   user-select: none;
   box-sizing: border-box;
+
+  &:active {
+    cursor: grabbing;
+  }
 
   &:hover {
     transform: translateY(-4px) scale(1.02);
     border-color: $color-gold-300;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6), 0 0 12px rgba(227, 197, 103, 0.4);
     z-index: 2;
+
+    .card-drag-indicator {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   &--in-deck {
@@ -287,6 +388,13 @@ function onCardRightClick(card: CardDetail): void {
 
   &--max {
     border-color: rgba(61, 220, 151, 0.8);
+  }
+
+  &--dragging {
+    opacity: 0.4;
+    border-style: dashed;
+    border-color: $color-gold-300;
+    transform: scale(0.95);
   }
 }
 
@@ -303,6 +411,26 @@ function onCardRightClick(card: CardDetail): void {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.card-drag-indicator {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(201, 162, 39, 0.5);
+  color: $color-gold-300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 140ms ease;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
 .card-count-badge {
@@ -413,6 +541,56 @@ function onCardRightClick(card: CardDetail): void {
   font-weight: 700;
 }
 
+.pool-drop-remove-zone {
+  position: absolute;
+  inset: 12px;
+  background: rgba(18, 10, 12, 0.88);
+  border: 2px dashed rgba(235, 87, 87, 0.6);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+  transition: all 180ms ease;
+
+  &--hover {
+    background: rgba(45, 12, 16, 0.94);
+    border-color: #ff6b6b;
+    box-shadow: 0 0 30px rgba(235, 87, 87, 0.5) inset;
+    transform: scale(1.01);
+  }
+}
+
+.drop-remove-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.drop-remove-icon {
+  font-size: 2.8rem;
+}
+
+.drop-remove-title {
+  font-family: $font-family-display;
+  font-size: 1.3rem;
+  color: #ff6b6b;
+  margin: 0;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 10px rgba(235, 87, 87, 0.4);
+}
+
+.drop-remove-subtitle {
+  font-size: 0.9rem;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
 .grid-empty-state {
   display: flex;
   flex-direction: column;
@@ -460,5 +638,15 @@ function onCardRightClick(card: CardDetail): void {
     background: rgba(201, 162, 39, 0.35);
     box-shadow: 0 0 10px rgba(201, 162, 39, 0.3);
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 200ms ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

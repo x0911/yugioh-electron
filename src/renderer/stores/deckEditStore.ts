@@ -16,6 +16,9 @@ export interface DeckEditStoreState {
   isDirty: boolean;
   toastMessage: string | null;
   toastType: 'success' | 'warning' | 'danger' | 'info';
+  draggingCard: CardDetail | null;
+  dragSource: 'pool' | 'main-deck' | 'extra-deck' | 'previewer' | null;
+  isDragging: boolean;
 }
 
 function createEmptyDeck(id: string, name = 'New Custom Deck'): CustomDeck {
@@ -42,6 +45,9 @@ export const useDeckEditStore = defineStore('deckEdit', {
     isDirty: false,
     toastMessage: null,
     toastType: 'success',
+    draggingCard: null,
+    dragSource: null,
+    isDragging: false,
   }),
 
   getters: {
@@ -482,6 +488,60 @@ export const useDeckEditStore = defineStore('deckEdit', {
         }
       }
       return false;
+    },
+
+    startDrag(card: CardDetail, source: 'pool' | 'main-deck' | 'extra-deck' | 'previewer' = 'pool'): void {
+      this.draggingCard = card;
+      this.dragSource = source;
+      this.isDragging = true;
+      this.setHoveredCard(card);
+    },
+
+    endDrag(): void {
+      this.draggingCard = null;
+      this.dragSource = null;
+      this.isDragging = false;
+    },
+
+    dropOnMainDeck(cardId?: number): boolean {
+      const id = cardId ?? this.draggingCard?.id;
+      if (!id) return false;
+      const card = this.cardMap.get(id);
+      if (!card) return false;
+
+      // Auto-route Fusions to extra deck or notify
+      if (card.isExtraDeck) {
+        this.showToast(`"${card.name}" is a Fusion Monster — placed into Extra Deck!`, 'info');
+        return this.addCardToDeck(id);
+      }
+
+      return this.addCardToDeck(id);
+    },
+
+    dropOnExtraDeck(cardId?: number): boolean {
+      const id = cardId ?? this.draggingCard?.id;
+      if (!id) return false;
+      const card = this.cardMap.get(id);
+      if (!card) return false;
+
+      if (!card.isExtraDeck) {
+        this.showToast(`"${card.name}" belongs in the Main Deck (not Extra Deck).`, 'warning');
+        return false;
+      }
+
+      return this.addCardToDeck(id);
+    },
+
+    dropOnRemove(cardId?: number, isExtra?: boolean): boolean {
+      const id = cardId ?? this.draggingCard?.id;
+      if (!id) return false;
+      const card = this.cardMap.get(id);
+      const extra = isExtra ?? (this.dragSource === 'extra-deck' || (card?.isExtraDeck ?? false));
+      const removed = this.removeCardFromDeck(id, extra);
+      if (removed && card) {
+        this.showToast(`Removed 1 copy of "${card.name}" from deck.`, 'info');
+      }
+      return removed;
     },
 
     setHoveredCard(cardOrId: CardDetail | number | null): void {
