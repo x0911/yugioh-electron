@@ -974,10 +974,26 @@
 **Files created/modified:**
 - `src/renderer/stores/duelStore.ts`: Made `dealOpeningHand()` atomically apply the board snapshot.
 
+---
+
+## 2026-08-20 — Persistent Card Previewer (Always Visible)
+
+**What was done:**
+- **Persistent Card Previewer**:
+  - Previously, `activePreviewCard` reset to `null` when mouse left a card, causing the side previewer panel to collapse/disappear.
+  - Implemented `lastHoveredCard` state and `onCardHover(card)` in `DuelView.vue`.
+  - When the mouse leaves a card, the side card previewer stays permanently visible, retaining the last hovered card with full combat stats, type bracket, level stars, and lore text.
+  - On match start before any card is hovered, it gracefully falls back to the first card in the player's hand or field so the previewer is always active and informative.
+
+**Files created/modified:**
+- `src/renderer/views/DuelView.vue`: Retained `lastHoveredCard` state in `activePreviewCard` and updated all hover listeners.
+
 **How to manually verify this phase:**
-1. Start a match.
-2. Verify you begin with exactly 5 cards in your opening hand (no duplicated cards).
-3. Normal summon or activate a card — verify hand decreases cleanly to 4 cards.
+1. Start a duel.
+2. Notice the card previewer is visible immediately on the left showing your first hand card.
+3. Hover over any monster, spell, or trap in your hand or on the field.
+4. Move your mouse away into empty space — observe that the previewer stays open, displaying the card you just hovered.
+
 
 
 
