@@ -14,10 +14,12 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "vue-tsc --noEmit",
+    "build:cards": "tsx scripts/build-card-pool.ts",
     "download:cards": "tsx scripts/stub-download.ts",
     "rebuild:native": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
+    "better-sqlite3": "^13.0.3",
     "ocgcore-wasm": "^0.1.2",
     "pinia": "^3.0.4",
     "vue": "^3.5.29",
@@ -26,6 +28,7 @@
   "devDependencies": {
     "@electron/rebuild": "^3.7.2",
     "@eslint/js": "^9.39.2",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.13.4",
     "@vitejs/plugin-vue": "^5.2.4",
     "concurrently": "^9.1.2",
