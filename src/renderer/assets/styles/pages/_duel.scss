@@ -1,9 +1,160 @@
 @use '../abstracts' as *;
 
 .page-duel {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   position: relative;
   overflow: hidden;
   background-color: $color-bg-void;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Fullscreen Dark Arena Vignette Backdrop
+  .duel-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(14px) brightness(0.35);
+    transform: scale(1.08); // Prevents blur edges
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .duel-vignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 30%,
+      rgba(10, 12, 16, 0.75) 75%,
+      #0a0c10 100%
+    );
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  // 16:9 Letterboxed Arena Canvas
+  .duel-canvas-16-9 {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 1920px;
+    max-height: 1080px;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 2;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  // Top Area: Opponent LP & Opponent Hand
+  .duel-top-area {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 6px 24px 0 24px;
+    box-sizing: border-box;
+    z-index: 30;
+
+    .opponent-hand-wrapper {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      margin-top: -10px;
+    }
+
+    .opponent-lp-wrapper {
+      margin-left: auto;
+    }
+  }
+
+  // Center Arena Area
+  .duel-center-area {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  // Bottom Area: User LP & User Hand
+  .duel-bottom-area {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 24px 8px 24px;
+    box-sizing: border-box;
+    z-index: 30;
+
+    .user-lp-wrapper {
+      margin-right: auto;
+      margin-bottom: 8px;
+    }
+
+    .user-hand-wrapper {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      margin-bottom: -12px;
+    }
+  }
+
+  // Floating Dev Mode Toolbar
+  .dev-floating-controls {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(10, 12, 16, 0.9);
+    border: 1px solid rgba(201, 162, 39, 0.4);
+    border-radius: 20px;
+    padding: 4px 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
+
+    .dev-pill-btn {
+      background: transparent;
+      border: none;
+      color: $color-gold-300;
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(201, 162, 39, 0.2);
+        color: #fff;
+      }
+
+      &--active {
+        background: rgba(61, 220, 151, 0.25);
+        color: #3ddc97;
+      }
+    }
+  }
 }
