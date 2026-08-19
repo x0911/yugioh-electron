@@ -1,0 +1,15 @@
+@use '../abstracts' as *;
+
+.tooltip {
+  position: absolute;
+  z-index: $z-popup;
+  padding: $space-1 $space-3;
+  font-size: $fs-xs;
+  color: $color-gold-100;
+  background: rgba(10, 12, 16, 0.92);
+  border: 1px solid rgba($color-gold-500, 0.4);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  white-space: nowrap;
+}

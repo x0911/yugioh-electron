@@ -1,0 +1,17 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+%truncate-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+%unselectable {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+%tabular-numbers {
+  font-variant-numeric: tabular-nums;
+}

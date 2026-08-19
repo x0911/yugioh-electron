@@ -1,0 +1,53 @@
+@use '../abstracts' as *;
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: $font-display;
+  color: $color-gold-300;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 12px rgba($color-gold-500, 0.35);
+}
+
+h1 {
+  font-size: $fs-display;
+}
+
+h2 {
+  font-size: $fs-2xl;
+}
+
+h3 {
+  font-size: $fs-xl;
+}
+
+h4 {
+  font-size: $fs-lg;
+}
+
+p,
+span,
+label {
+  font-size: $fs-base;
+  line-height: 1.5;
+}
+
+.text-gold {
+  color: $color-gold-500;
+}
+
+.text-muted {
+  color: $color-text-muted;
+}
+
+.text-user {
+  color: $color-user;
+}
+
+.text-ai {
+  color: $color-ai;
+}

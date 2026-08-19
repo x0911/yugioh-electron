@@ -1,0 +1,11 @@
+// =============================================================================
+// Main Stylesheet — Ancient Duel Arena Theme (SCSS 7-1 Architecture)
+// =============================================================================
+
+@forward 'abstracts';
+@forward 'base';
+@forward 'components';
+@forward 'layout';
+@forward 'pages';
+@forward 'themes';
+@forward 'vendor';

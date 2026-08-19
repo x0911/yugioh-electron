@@ -1,0 +1,40 @@
+@use '../abstracts' as *;
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  border-radius: 10px;
+  font-family: $font-display;
+  font-size: $fs-base;
+  font-weight: 600;
+  color: $color-gold-100;
+  background: rgba($color-bg-panel-solid, 0.7);
+  border: 1.5px solid rgba($color-gold-500, 0.35);
+  transition: all $duration-component $ease-snappy;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: $color-gold-500;
+    color: $color-gold-300;
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 0 16px rgba($color-gold-500, 0.4);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(80%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-info;
+    outline-offset: 2px;
+  }
+}

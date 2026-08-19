@@ -1,0 +1,24 @@
+@use '../abstracts' as *;
+
+.icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  @include flex-center;
+  background: rgba(18, 22, 30, 0.7);
+  border: 1px solid rgba($color-gold-500, 0.4);
+  font-size: $fs-xs;
+  font-weight: 700;
+
+  &--user {
+    border-color: $color-user;
+    color: $color-user;
+    box-shadow: 0 0 10px $color-user-glow;
+  }
+
+  &--ai {
+    border-color: $color-ai;
+    color: $color-ai;
+    box-shadow: 0 0 10px $color-ai-glow;
+  }
+}

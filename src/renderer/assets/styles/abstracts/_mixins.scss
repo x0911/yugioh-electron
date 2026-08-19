@@ -1,0 +1,36 @@
+@use 'variables' as *;
+
+// Glassmorphism recipe
+@mixin glass-panel(
+  $tint: $color-bg-panel,
+  $border: $color-border-glass,
+  $blur: 18px
+) {
+  background: $tint;
+  backdrop-filter: blur($blur) saturate(140%);
+  -webkit-backdrop-filter: blur($blur) saturate(140%);
+  border: 1px solid $border;
+  border-radius: 14px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+// Gold Glow & Foil effect
+@mixin gold-glow($color: $color-gold-500, $intensity: 0.5) {
+  box-shadow: 0 0 16px rgba($color, $intensity);
+}
+
+// Flex Center shortcut
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Responsive / Media query helper
+@mixin desktop-only {
+  @media (min-width: 1280px) {
+    @content;
+  }
+}

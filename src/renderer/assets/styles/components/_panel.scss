@@ -1,0 +1,24 @@
+@use '../abstracts' as *;
+
+.glass-panel {
+  @include glass-panel;
+  padding: $space-4;
+
+  &--elevated {
+    box-shadow:
+      0 16px 48px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  &--accent-gold {
+    border-top: 2px solid $color-gold-500;
+  }
+
+  &--accent-user {
+    border-top: 2px solid $color-user;
+  }
+
+  &--accent-ai {
+    border-top: 2px solid $color-ai;
+  }
+}

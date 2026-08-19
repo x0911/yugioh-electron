@@ -1,0 +1,16 @@
+@use '../abstracts' as *;
+
+// Dark theme root CSS variables
+:root {
+  --color-bg-void: #{$color-bg-void};
+  --color-bg-panel: #{$color-bg-panel};
+  --color-border-glass: #{$color-border-glass};
+  --color-gold-500: #{$color-gold-500};
+  --color-gold-300: #{$color-gold-300};
+  --color-gold-100: #{$color-gold-100};
+  --color-user: #{$color-user};
+  --color-ai: #{$color-ai};
+  --color-text-primary: #{$color-text-primary};
+  --color-text-secondary: #{$color-text-secondary};
+  --color-text-muted: #{$color-text-muted};
+}

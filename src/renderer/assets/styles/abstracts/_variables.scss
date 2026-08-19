@@ -1,0 +1,74 @@
+// =============================================================================
+// Design System Color Palette & Tokens (Ancient Duel Arena Theme)
+// =============================================================================
+
+// Base
+$color-bg-void: #0a0c10; // fullscreen background base, behind imagery
+$color-bg-panel: rgba(18, 22, 30, 0.55); // glass panel fill
+$color-bg-panel-solid: #12161e; // fallback for non-glass contexts (e.g. dev tools)
+$color-border-glass: rgba(201, 162, 39, 0.35); // gold hairline on glass edges
+
+// Gold / brand accent (buttons, headers, card frames)
+$color-gold-100: #f4e4b8;
+$color-gold-300: #e3c567;
+$color-gold-500: #c9a227; // primary brand gold
+$color-gold-700: #8c6e16;
+$color-gold-900: #4a3a0c;
+
+// Player identity colors (used everywhere: LP bars, targeting icons, zone highlights)
+$color-user: #2f80ed; // blue — user-owned targets
+$color-user-glow: rgba(47, 128, 237, 0.55);
+$color-ai: #eb5757; // red — AI-owned targets
+$color-ai-glow: rgba(235, 87, 87, 0.55);
+
+// Semantic
+$color-success: #3ddc97;
+$color-warning: #f2c94c;
+$color-danger: #eb5757;
+$color-info: #56ccf2;
+
+// Text
+$color-text-primary: #f5f1e6;
+$color-text-secondary: #b8b2a0;
+$color-text-muted: #756f60;
+$color-text-on-gold: #1a1406;
+
+// Typography Font Families
+$font-display: 'Cinzel', 'Marcellus', 'Times New Roman', serif;
+$font-body: 'Inter', 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+// Typography Scale (rem, base 16px)
+$fs-xs: 0.75rem;     // 12px
+$fs-sm: 0.875rem;    // 14px
+$fs-base: 1rem;      // 16px
+$fs-md: 1.125rem;    // 18px
+$fs-lg: 1.375rem;    // 22px
+$fs-xl: 1.75rem;     // 28px
+$fs-2xl: 2.25rem;    // 36px
+$fs-display: 3rem;   // 48px
+
+// Spacing scale (8px base)
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 24px;
+$space-6: 32px;
+$space-7: 48px;
+$space-8: 64px;
+
+// Transitions & Motion
+$ease-snappy: cubic-bezier(0.22, 1, 0.36, 1);
+$duration-micro: 140ms;
+$duration-component: 260ms;
+$duration-screen: 450ms;
+
+// Z-index hierarchy
+$z-bg: 0;
+$z-field: 10;
+$z-field-overlay: 20;
+$z-hud: 30;
+$z-popup: 40;
+$z-modal: 50;
+$z-dev-nav: 9000;

@@ -1,0 +1,53 @@
+@use '../abstracts' as *;
+
+.dev-nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: rgba(10, 12, 16, 0.95);
+  border-bottom: 1px solid rgba($color-gold-500, 0.5);
+  z-index: $z-dev-nav;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 $space-4;
+  font-size: $fs-xs;
+
+  &__tag {
+    color: $color-gold-500;
+    font-weight: 700;
+    font-family: $font-mono;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__links {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__link {
+    padding: $space-1 $space-2;
+    border-radius: 4px;
+    color: $color-text-secondary;
+    border: 1px solid transparent;
+    transition: all $duration-micro ease;
+
+    &:hover {
+      color: $color-gold-300;
+      border-color: rgba($color-gold-500, 0.3);
+      background: rgba($color-bg-panel-solid, 0.6);
+    }
+
+    &.router-link-active {
+      color: $color-gold-100;
+      background: rgba($color-gold-700, 0.3);
+      border-color: $color-gold-500;
+      font-weight: 600;
+    }
+  }
+}

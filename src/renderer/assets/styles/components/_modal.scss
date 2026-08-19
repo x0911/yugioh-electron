@@ -1,0 +1,18 @@
+@use '../abstracts' as *;
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: $z-modal;
+  @include flex-center;
+}
+
+.modal-content {
+  @include glass-panel($tint: rgba(18, 22, 30, 0.85), $blur: 24px);
+  width: 90%;
+  max-width: 540px;
+  padding: $space-6;
+  border-top: 2px solid $color-gold-500;
+}
