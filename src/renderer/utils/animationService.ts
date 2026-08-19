@@ -47,15 +47,19 @@ export interface AnimationOptions {
 
 export const activeAnimations = ref<FlyingCard[]>([]);
 
+function toPlayerDomId(player: 'user' | 'opponent' | 'ai' | 0 | 1): 'user' | 'ai' {
+  return player === 0 || player === 'user' ? 'user' : 'ai';
+}
+
 /**
  * Resolves DOM bounding box for field zone slots.
  */
 export function getZoneRect(
-  player: 'user' | 'opponent' | 0 | 1,
+  player: 'user' | 'opponent' | 'ai' | 0 | 1,
   zoneType: 'monster' | 'spell-trap' | 'field' | 'szone' | 'mzone' | 'fzone' | number,
   sequence = 0,
 ): CardRect | null {
-  const pStr = player === 0 || player === 'user' ? 'user' : 'opponent';
+  const pStr = toPlayerDomId(player);
   let zStr = 'monster';
   if (zoneType === 'spell-trap' || zoneType === 'szone' || zoneType === 8) zStr = 'spell-trap';
   else if (zoneType === 'field' || zoneType === 'fzone' || zoneType === 256) zStr = 'field';
@@ -71,10 +75,10 @@ export function getZoneRect(
  * Resolves DOM bounding box for a card in hand.
  */
 export function getHandCardRect(
-  player: 'user' | 'opponent' | 0 | 1,
+  player: 'user' | 'opponent' | 'ai' | 0 | 1,
   sequence = 0,
 ): CardRect | null {
-  const pStr = player === 0 || player === 'user' ? 'user' : 'opponent';
+  const pStr = toPlayerDomId(player);
   const el = document.querySelector(`[data-hand-card-id="hand-${pStr}-${sequence}"]`);
   if (!el) return getHandFanRect(pStr);
   const r = el.getBoundingClientRect();
@@ -84,8 +88,8 @@ export function getHandCardRect(
 /**
  * Resolves DOM bounding box for the entire hand row.
  */
-export function getHandFanRect(player: 'user' | 'opponent' | 0 | 1): CardRect | null {
-  const pStr = player === 0 || player === 'user' ? 'user' : 'opponent';
+export function getHandFanRect(player: 'user' | 'opponent' | 'ai' | 0 | 1): CardRect | null {
+  const pStr = toPlayerDomId(player);
   const el = document.querySelector(`[data-hand-fan-id="hand-${pStr}-fan"]`);
   if (!el) {
     // Default fallback rect
@@ -103,10 +107,10 @@ export function getHandFanRect(player: 'user' | 'opponent' | 0 | 1): CardRect | 
  * Resolves DOM bounding box for Deck, GY, Banished, and Extra Deck stacks.
  */
 export function getStackRect(
-  player: 'user' | 'opponent' | 0 | 1,
+  player: 'user' | 'opponent' | 'ai' | 0 | 1,
   type: 'deck' | 'graveyard' | 'banished' | 'extra' | number,
 ): CardRect | null {
-  const pStr = player === 0 || player === 'user' ? 'user' : 'opponent';
+  const pStr = toPlayerDomId(player);
   let tStr = 'deck';
   if (type === 'graveyard' || type === 16) tStr = 'graveyard';
   else if (type === 'banished' || type === 32) tStr = 'banished';
@@ -122,8 +126,8 @@ export function getStackRect(
 /**
  * Resolves DOM bounding box for player Life Points / avatar meter.
  */
-export function getAvatarRect(player: 'user' | 'opponent' | 0 | 1): CardRect | null {
-  const pStr = player === 0 || player === 'user' ? 'user' : 'opponent';
+export function getAvatarRect(player: 'user' | 'opponent' | 'ai' | 0 | 1): CardRect | null {
+  const pStr = toPlayerDomId(player);
   const el = document.querySelector(`.lp-meter--${pStr}`);
   if (!el) return null;
   const r = el.getBoundingClientRect();

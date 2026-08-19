@@ -797,12 +797,56 @@ export class DuelEngineService {
   }
 
   public getBoardState(): DuelBoardState {
-    const userField = this.humanPlayerId === 0 ? this.player0Field : this.player1Field;
-    const opponentField = this.humanPlayerId === 0 ? this.player1Field : this.player0Field;
+    const userField: PlayerFieldState = this.humanPlayerId === 0 ? this.player0Field : this.player1Field;
+    const rawOpponentField: PlayerFieldState = this.humanPlayerId === 0 ? this.player1Field : this.player0Field;
+
+    const clonedOpponent: PlayerFieldState = JSON.parse(JSON.stringify(rawOpponentField));
+    // Mask opponent hand cards
+    clonedOpponent.hand = clonedOpponent.hand.map((c) => ({
+      ...c,
+      code: 0,
+      name: 'Card Back',
+      atk: undefined,
+      def: undefined,
+      level: undefined,
+      attribute: undefined,
+      race: undefined,
+      description: undefined,
+    }));
+    // Mask opponent face-down defense monsters
+    clonedOpponent.monsterZones = clonedOpponent.monsterZones.map((c) => {
+      if (!c || c.position !== 'facedown_defense') return c;
+      return {
+        ...c,
+        code: 0,
+        name: 'Face-down Monster',
+        atk: undefined,
+        def: undefined,
+        level: undefined,
+        attribute: undefined,
+        race: undefined,
+        description: undefined,
+      };
+    });
+    // Mask opponent face-down spell / traps
+    clonedOpponent.spellTrapZones = clonedOpponent.spellTrapZones.map((c) => {
+      if (!c || c.position !== 'facedown_spell') return c;
+      return {
+        ...c,
+        code: 0,
+        name: 'Face-down Card',
+        atk: undefined,
+        def: undefined,
+        level: undefined,
+        attribute: undefined,
+        race: undefined,
+        description: undefined,
+      };
+    });
 
     return {
       userField: JSON.parse(JSON.stringify(userField)),
-      opponentField: JSON.parse(JSON.stringify(opponentField)),
+      opponentField: clonedOpponent,
       extraMonsterZones: [null, null],
       turnNumber: this.state.currentTurn,
       currentPhase: this.state.currentPhase,

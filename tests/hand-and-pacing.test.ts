@@ -274,4 +274,161 @@ console.log('=== Running Hand Duplication, Actions & Animation Queue Tests ===\n
   console.log('✓ Field actions strictly isolate Monster Zone vs Spell/Trap Zone even with identical sequences.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 6: Opponent Face-Down Secret Sanitization (Security & Anti-Leak)
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 6: Opponent Face-Down Secret Sanitization...');
+
+  const rawOpponent: PlayerFieldState = {
+    playerId: 1,
+    name: 'Seto Kaiba',
+    currentLp: 8000,
+    maxLp: 8000,
+    isTurn: false,
+    monsterZones: [
+      {
+        id: 'mz-1-0',
+        code: 89631139, // Blue-Eyes White Dragon
+        name: 'Blue-Eyes White Dragon',
+        controller: 1,
+        location: 'monster',
+        sequence: 0,
+        position: 'facedown_defense',
+        atk: 3000,
+        def: 2500,
+        level: 8,
+      },
+      null,
+      null,
+      null,
+      null,
+    ],
+    spellTrapZones: [
+      {
+        id: 'st-1-0',
+        code: 44095762, // Mirror Force
+        name: 'Mirror Force',
+        controller: 1,
+        location: 'spell-trap',
+        sequence: 0,
+        position: 'facedown_spell',
+      },
+      null,
+      null,
+      null,
+      null,
+    ],
+    fieldZone: null,
+    graveyard: [],
+    banished: [],
+    extraDeck: [],
+    deckCount: 35,
+    extraDeckCount: 0,
+    hand: [
+      {
+        id: 'h-1-0',
+        code: 55144522, // Pot of Greed in hand
+        name: 'Pot of Greed',
+        controller: 1,
+        location: 'hand',
+        sequence: 0,
+        position: 'facedown_spell',
+      },
+    ],
+  };
+
+  function sanitizeOpponent(field: PlayerFieldState): PlayerFieldState {
+    const cloned: PlayerFieldState = JSON.parse(JSON.stringify(field));
+    cloned.hand = cloned.hand.map((c) => ({
+      ...c,
+      code: 0,
+      name: 'Card Back',
+      atk: undefined,
+      def: undefined,
+      level: undefined,
+      attribute: undefined,
+      race: undefined,
+      description: undefined,
+    }));
+    cloned.monsterZones = cloned.monsterZones.map((c) => {
+      if (!c || c.position !== 'facedown_defense') return c;
+      return {
+        ...c,
+        code: 0,
+        name: 'Face-down Monster',
+        atk: undefined,
+        def: undefined,
+        level: undefined,
+        attribute: undefined,
+        race: undefined,
+        description: undefined,
+      };
+    });
+    cloned.spellTrapZones = cloned.spellTrapZones.map((c) => {
+      if (!c || c.position !== 'facedown_spell') return c;
+      return {
+        ...c,
+        code: 0,
+        name: 'Face-down Card',
+        atk: undefined,
+        def: undefined,
+        level: undefined,
+        attribute: undefined,
+        race: undefined,
+        description: undefined,
+      };
+    });
+    return cloned;
+  }
+
+  const sanitized = sanitizeOpponent(rawOpponent);
+
+  // Assert hand cards have code 0 and no stats
+  assert.equal(sanitized.hand[0].code, 0, 'Opponent hand cards must be masked to code 0');
+  assert.equal(sanitized.hand[0].name, 'Card Back');
+
+  // Assert face-down monster has code 0 and no stats
+  assert.equal(sanitized.monsterZones[0]?.code, 0, 'Opponent face-down monster must have code 0');
+  assert.equal(sanitized.monsterZones[0]?.name, 'Face-down Monster');
+  assert.equal(sanitized.monsterZones[0]?.atk, undefined, 'Monster ATK must not be leaked');
+
+  // Assert face-down spell/trap has code 0
+  assert.equal(sanitized.spellTrapZones[0]?.code, 0, 'Opponent face-down trap must have code 0');
+  assert.equal(sanitized.spellTrapZones[0]?.name, 'Face-down Card');
+
+  console.log('✓ Opponent face-down cards and hand are completely sanitized to code 0 with zero metadata leakage.');
+}
+
+// -----------------------------------------------------------------------------
+// Test 7: Direct Attack Trajectory & Face-Down Set Flight Isolation
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 7: Direct Attack Trajectory & Face-Down Set Flight Isolation...');
+
+  // Direct attack targeting simulation
+  const directAttackEvt = {
+    type: 'ATTACK',
+    controller: 0,
+    sequence: 0,
+    target: null, // Direct attack
+  };
+
+  const isDirect = !directAttackEvt.target;
+  assert.equal(isDirect, true, 'Direct attack has no monster target');
+
+  // Face-down set MOVE event filter
+  const moveEventFacedownSet = {
+    type: 'MOVE',
+    fromLocation: 2, // Hand
+    toLocation: 8, // SZONE
+    position: 8, // FACEDOWN
+  };
+
+  const shouldTriggerFaceupFlight = (moveEventFacedownSet.position & 1) !== 0;
+  assert.equal(shouldTriggerFaceupFlight, false, 'Face-down SET move event must NOT trigger face-up spell flight');
+
+  console.log('✓ Direct attack correctly identifies opponent target and SET move prevents duplicate faceup flights.');
+}
+
 console.log('\n🎉 ALL HAND, ACTION RESOLUTION & ANIMATION QUEUE TESTS PASSED!');

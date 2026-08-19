@@ -591,15 +591,18 @@ export class MessageDecoder {
 
       case OcgMessageType.ATTACK: {
         type = 'ATTACK';
+        const cardSeq = msg.card?.sequence ?? 0;
+        const cardCtrl = msg.card?.controller ?? 0;
         if (msg.target) {
-          description = `Player ${msg.card.controller}'s monster declared an attack on opponent monster.`;
+          description = `Player ${cardCtrl}'s monster declared an attack on opponent monster.`;
         } else {
-          description = `Player ${msg.card.controller}'s monster declared a DIRECT ATTACK!`;
+          description = `Player ${cardCtrl}'s monster declared a DIRECT ATTACK!`;
         }
         return {
           type,
           rawType,
-          controller: msg.card.controller,
+          controller: cardCtrl,
+          sequence: cardSeq,
           target: msg.target,
           isPrompt: false,
           description,

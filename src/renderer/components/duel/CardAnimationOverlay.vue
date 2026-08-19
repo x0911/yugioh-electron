@@ -16,8 +16,17 @@
           },
         ]"
       >
-        <!-- Card 3D Flip Shell -->
-        <div class="flying-card__flipper">
+        <!-- Battle Attack Blade & Sword Slash Surge -->
+        <div v-if="anim.type === 'attack'" class="attack-blade-surge">
+          <div class="attack-sword-wrapper">
+            <span class="attack-sword-emoji">⚔️</span>
+            <div class="attack-slash-beam"></div>
+          </div>
+          <div class="attack-impact-flare"></div>
+        </div>
+
+        <!-- Standard Card 3D Flip Shell -->
+        <div v-else class="flying-card__flipper">
           <!-- Front Face -->
           <div class="flying-card__face flying-card__face--front">
             <img
@@ -42,9 +51,6 @@
 
         <!-- Summon Energy Landing Shockwave -->
         <div v-if="anim.type === 'summon' || anim.type === 'activate'" class="summon-shockwave"></div>
-
-        <!-- Attack Impact Flash -->
-        <div v-if="anim.type === 'attack'" class="attack-impact-flare"></div>
       </div>
     </div>
   </div>
@@ -224,6 +230,49 @@ function getWrapperStyle(anim: FlyingCard): CSSProperties {
   }
 }
 
+.attack-blade-surge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.attack-sword-wrapper {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attack-sword-emoji {
+  font-size: 3.2rem;
+  filter: drop-shadow(0 0 16px #ff4d4f) drop-shadow(0 0 24px #ffd700);
+  animation: attack-blade-pulse 0.35s ease-out infinite alternate;
+}
+
+.attack-slash-beam {
+  position: absolute;
+  width: 140%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, #ff4d4f, #ffd700, transparent);
+  filter: blur(2px);
+  box-shadow: 0 0 14px #ffd700;
+}
+
+@keyframes attack-blade-pulse {
+  0% {
+    transform: scale(0.95) rotate(-5deg);
+  }
+  100% {
+    transform: scale(1.15) rotate(5deg);
+  }
+}
+
 .summon-shockwave {
   position: absolute;
   top: 50%;
@@ -243,13 +292,30 @@ function getWrapperStyle(anim: FlyingCard): CSSProperties {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 100px;
-  height: 100px;
-  margin-top: -50px;
-  margin-left: -50px;
+  width: 130px;
+  height: 130px;
+  margin-top: -65px;
+  margin-left: -65px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(235, 87, 87, 0.6) 50%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(255, 77, 79, 0.85) 45%, rgba(201, 162, 39, 0.5) 75%, transparent 90%);
   pointer-events: none;
-  animation: attack-impact-flash 0.35s ease-out forwards;
+  animation: attack-impact-flash 0.38s ease-out forwards;
+  animation-delay: calc(var(--duration) * 0.7);
+}
+
+@keyframes attack-impact-flash {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.4);
+    opacity: 1;
+    filter: drop-shadow(0 0 20px #ff4d4f);
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
 }
 </style>

@@ -319,7 +319,14 @@ function onInspectStack(stackType: string, controller: number): void {
 const lastHoveredCard = ref<FieldCard | null>(null);
 
 function onCardHover(card: FieldCard | null): void {
-  if (card && card.code > 0) {
+  if (!card) return;
+  const isOpponentFacedown =
+    card.controller !== duelStore.userPlayerId &&
+    (card.position === 'facedown_defense' || card.position === 'facedown_spell' || card.code === 0);
+  if (isOpponentFacedown) {
+    return;
+  }
+  if (card.code > 0) {
     lastHoveredCard.value = card;
   }
 }
@@ -406,6 +413,13 @@ function onHandCardClick(card: FieldCard, event: MouseEvent): void {
 
 function onFieldCardClick(card: FieldCard | null, event?: MouseEvent): void {
   if (!card || card.code === 0) {
+    closeCardActionMenu();
+    return;
+  }
+  const isOpponentFacedown =
+    card.controller !== duelStore.userPlayerId &&
+    (card.position === 'facedown_defense' || card.position === 'facedown_spell' || card.code === 0);
+  if (isOpponentFacedown) {
     closeCardActionMenu();
     return;
   }
@@ -540,7 +554,7 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
       const fromRect = getHandCardRect(p, seq) || getHandFanRect(p);
       const toRect = getZoneRect(p, isSpell ? 'spell-trap' : 'monster', seq);
       await playCardFlight({
-        code: event.code || 0,
+        code: p === duelStore.userPlayerId ? (event.code || 0) : 0,
         cardName: event.cardName,
         fromRect,
         toRect,
@@ -558,6 +572,7 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
       const fromSeq = moveEvt.fromSequence ?? 0;
       const toLoc = moveEvt.toLocation;
       const toSeq = moveEvt.toSequence ?? 0;
+      const isFaceup = (moveEvt.position & 1) !== 0;
 
       if (toLoc === 16) {
         // Graveyard
@@ -574,8 +589,8 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
           type: fromLoc === 2 ? 'discard' : 'destroy-gy',
           durationMs: 440,
         });
-      } else if (toLoc === 8 && fromLoc === 2) {
-        // Spell / Trap activation from Hand -> Spell/Trap Zone
+      } else if (toLoc === 8 && fromLoc === 2 && isFaceup) {
+        // Spell / Trap activation from Hand -> Spell/Trap Zone (Only when Face-up)
         const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
         const toRect = getZoneRect(p, 'spell-trap', toSeq);
         await playCardFlight({
@@ -588,8 +603,8 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
           isDefense: false,
           durationMs: 480,
         });
-      } else if (toLoc === 4 && fromLoc === 2) {
-        // Monster from Hand -> Monster Zone
+      } else if (toLoc === 4 && fromLoc === 2 && isFaceup) {
+        // Monster from Hand -> Monster Zone (Only when Face-up)
         const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
         const toRect = getZoneRect(p, 'monster', toSeq);
         await playCardFlight({
@@ -629,18 +644,18 @@ async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
       const atkEvt = event as any;
       const p = (atkEvt.controller ?? (duelStore.boardState.userField.isTurn ? duelStore.userPlayerId : duelStore.opponentPlayerId)) as 0 | 1;
       const opp = (p === duelStore.userPlayerId ? duelStore.opponentPlayerId : duelStore.userPlayerId) as 0 | 1;
-      const seq = atkEvt.sequence ?? 0;
+      const seq = atkEvt.sequence ?? (atkEvt.card?.sequence ?? 0);
       const fromRect = getZoneRect(p, 'monster', seq);
       const toRect = atkEvt.target
         ? getZoneRect(atkEvt.target.controller, 'monster', atkEvt.target.sequence)
-        : getAvatarRect(opp);
+        : (getHandFanRect(opp) || getAvatarRect(opp));
       await playCardFlight({
-        code: atkEvt.code || 0,
-        cardName: 'Attack Surge',
+        code: 0,
+        cardName: 'Battle Attack',
         fromRect,
         toRect,
         type: 'attack',
-        durationMs: 380,
+        durationMs: 440,
       });
     }
     // 7. Monster Position Change / Flip Summon
