@@ -871,12 +871,30 @@
 - `tests/random-draw-and-deck.test.ts`: Created unit tests.
 - `package.json`: Updated `test` script.
 
+---
+
+## 2026-08-19 — Deck Edit 40-Card Save Validation & Stacks vs All Toggle
+
+**What was done:**
+- **Clarified Deck Card Count vs Grouped Tile Stacks**:
+  - The deck column groups duplicate cards into tiles with quantity badges (`x1`, `x2`, `x3`). For example, 17 unique card tiles can represent 42 actual cards in the Main Deck.
+  - Added a `🗂️ Stacks (Unique) / 🃏 All (40+)` toggle in `DeckColumn.vue`, allowing users to switch between grouped stacks and individual expanded cards with 1 click.
+- **Strict 40-Card Minimum Save Enforcement**:
+  - In `deckEditStore.ts`, updated `saveCurrentDeck()` to block saving whenever `mainDeck.length < 40` or the deck is invalid, showing a clear error toast.
+  - In `DeckColumn.vue` and `DeckEditView.vue`, disabled Save buttons with descriptive tooltip warnings when `mainDeckCount < 40` or `!deckValidity.isValid`.
+
+**Files created/modified:**
+- `src/renderer/components/deckEdit/DeckColumn.vue`: Added Stacks vs All toggle and disabled save button guard.
+- `src/renderer/views/DeckEditView.vue`: Enforced disabled state on header Save Deck button when invalid or under 40 cards.
+- `src/renderer/stores/deckEditStore.ts`: Enforced strict 40-card minimum validation in `saveCurrentDeck()`.
+
 **How to manually verify this phase:**
-1. Run `npm test` to verify all test suites pass.
-2. Run `npm run typecheck` and `npm run build` to verify clean compilation.
-3. Start multiple duels:
-   - Observe that opening hands are different each match and non-deterministic.
-   - Observe that the AI opponent plays different archetype decks across matches.
+1. Open Deck Construction:
+   - Notice the `🗂️ Stacks (17)` button in the Main Deck title bar. Clicking it toggles to `🃏 All (42)`, expanding all 42 individual cards on screen.
+   - Remove cards until the Main Deck has fewer than 40 cards (e.g. 39/60).
+   - Observe that the Save button is disabled and `⚠️ ILLEGAL DECK` is displayed.
+   - Adding back up to 40+ cards enables saving again.
+
 
 
 
