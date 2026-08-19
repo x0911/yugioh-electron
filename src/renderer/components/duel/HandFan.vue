@@ -32,7 +32,7 @@
         :style="getSlotStyle(idx, cards.length)"
         @mouseenter="onCardMouseEnter(card)"
         @mouseleave="onCardMouseLeave"
-        @click="onCardClick(card)"
+        @click="onCardClick(card, $event)"
       >
         <!-- User Hand Card (Full Art, Name, Level, Stats) -->
         <div v-if="player === 'user'" class="hand-card hand-card--user">
@@ -97,7 +97,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
-  (e: 'click-card', card: FieldCard): void;
+  (e: 'click-card', card: FieldCard, event: MouseEvent): void;
 }>();
 
 /**
@@ -200,9 +200,9 @@ function onCardMouseLeave(): void {
   }
 }
 
-function onCardClick(card: FieldCard): void {
+function onCardClick(card: FieldCard, event: MouseEvent): void {
   if (props.isInteractive && props.player === 'user') {
-    emit('click-card', card);
+    emit('click-card', card, event);
   }
 }
 </script>

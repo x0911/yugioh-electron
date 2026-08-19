@@ -29,6 +29,31 @@
         <span class="guide-icon">⚡</span>
         <span class="guide-text">{{ guideText || defaultGuideText }}</span>
       </div>
+
+      <!-- Turn Phase Progression Actions -->
+      <div v-if="isUserTurn" class="phase-actions">
+        <button
+          v-if="canGoToBattlePhase"
+          class="phase-action-btn phase-action-btn--bp"
+          @click="$emit('to-battle-phase')"
+        >
+          ⚔️ Battle Phase
+        </button>
+        <button
+          v-if="canGoToMainPhase2"
+          class="phase-action-btn phase-action-btn--m2"
+          @click="$emit('to-main-phase2')"
+        >
+          🛡️ Main Phase 2
+        </button>
+        <button
+          v-if="canEndTurn"
+          class="phase-action-btn phase-action-btn--ep"
+          @click="$emit('to-end-phase')"
+        >
+          ⌛ End Turn
+        </button>
+      </div>
     </div>
 
     <!-- Right: HUD Controls -->
@@ -109,16 +134,25 @@ const props = withDefaults(
     isUserTurn: boolean;
     guideText?: string;
     isDuelLogOpen?: boolean;
+    canGoToBattlePhase?: boolean;
+    canGoToMainPhase2?: boolean;
+    canEndTurn?: boolean;
   }>(),
   {
     guideText: '',
     isDuelLogOpen: false,
+    canGoToBattlePhase: false,
+    canGoToMainPhase2: false,
+    canEndTurn: false,
   },
 );
 
 defineEmits<{
   (e: 'open-menu'): void;
   (e: 'toggle-log'): void;
+  (e: 'to-battle-phase'): void;
+  (e: 'to-main-phase2'): void;
+  (e: 'to-end-phase'): void;
 }>();
 
 const phases = [
@@ -279,6 +313,63 @@ function handleIconFallback(event: Event, fallbackEmoji: string): void {
     .guide-icon {
       color: $color-gold-300;
       font-size: 0.85rem;
+    }
+  }
+
+  .phase-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 8px;
+  }
+
+  .phase-action-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: 'Oxanium', monospace, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    white-space: nowrap;
+
+    &--bp {
+      background: rgba(235, 87, 87, 0.25);
+      border: 1px solid #eb5757;
+      color: #ffb8b8;
+
+      &:hover {
+        background: #eb5757;
+        color: #ffffff;
+        box-shadow: 0 0 12px rgba(235, 87, 87, 0.6);
+        transform: translateY(-1px);
+      }
+    }
+
+    &--m2 {
+      background: rgba(47, 128, 237, 0.25);
+      border: 1px solid #2f80ed;
+      color: #c4e0ff;
+
+      &:hover {
+        background: #2f80ed;
+        color: #ffffff;
+        box-shadow: 0 0 12px rgba(47, 128, 237, 0.6);
+        transform: translateY(-1px);
+      }
+    }
+
+    &--ep {
+      background: rgba(201, 162, 39, 0.25);
+      border: 1px solid $color-gold-500;
+      color: $color-gold-100;
+
+      &:hover {
+        background: $color-gold-500;
+        color: #1a1406;
+        box-shadow: 0 0 12px rgba(201, 162, 39, 0.6);
+        transform: translateY(-1px);
+      }
     }
   }
 

@@ -7,3 +7,6 @@ export { default as CardPreviewPopup } from './CardPreviewPopup.vue';
 export { default as DuelHud } from './DuelHud.vue';
 export { default as DuelMenuModal } from './DuelMenuModal.vue';
 export { default as DuelLogPanel } from './DuelLogPanel.vue';
+export { default as CardActionMenu } from './CardActionMenu.vue';
+export { default as PromptModal } from './PromptModal.vue';
+

@@ -74,4 +74,5 @@ export interface DuelBoardState {
   activePrompt: string | null;
   phaseGuideText: string;
   winner: 0 | 1 | 'draw' | null;
+  winReason?: number | null;
 }

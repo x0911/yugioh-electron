@@ -5,6 +5,7 @@ import createCore, {
   OcgProcessResult,
   OcgLocation,
   OcgPosition,
+  OcgMessageType,
   type OcgMessage,
   type OcgResponse,
 } from 'ocgcore-wasm';
@@ -276,12 +277,13 @@ export class DuelEngineService {
 
   private updateBoardStateFromMessage(msg: OcgMessage): void {
     const rawType = msg.type;
+    const m = msg as unknown as Record<string, unknown>;
 
-    if (rawType === OcgMessageType.NEW_TURN) {
+    if (rawType === OcgMessageType.NEW_TURN && 'player' in msg) {
       const activePlayer = msg.player;
       this.player0Field.isTurn = activePlayer === 0;
       this.player1Field.isTurn = activePlayer === 1;
-    } else if (rawType === OcgMessageType.DRAW) {
+    } else if (rawType === OcgMessageType.DRAW && 'drawn' in msg && Array.isArray(msg.drawn)) {
       const pf = this.getPlayerField(msg.player);
       pf.deckCount = Math.max(0, pf.deckCount - msg.drawn.length);
       for (const item of msg.drawn) {
@@ -298,10 +300,9 @@ export class DuelEngineService {
         };
         pf.hand.push(card);
       }
-    } else if (rawType === OcgMessageType.MOVE) {
-      const { card: code, from, to } = msg;
-      this.handleCardMove(code, from, to);
-    } else if (rawType === OcgMessageType.POS_CHANGE) {
+    } else if (rawType === OcgMessageType.MOVE && 'from' in msg && 'to' in msg && 'card' in msg) {
+      this.handleCardMove(msg.card, msg.from, msg.to);
+    } else if (rawType === OcgMessageType.POS_CHANGE && 'position' in msg) {
       const { controller, location, sequence, position } = msg;
       const pf = this.getPlayerField(controller);
       if (location === OcgLocation.MZONE && pf.monsterZones[sequence]) {
@@ -310,15 +311,15 @@ export class DuelEngineService {
         else if ((position & OcgPosition.FACEUP_DEFENSE) !== 0) card.position = 'faceup_defense';
         else if ((position & OcgPosition.FACEDOWN_DEFENSE) !== 0) card.position = 'facedown_defense';
       }
-    } else if (rawType === OcgMessageType.LPUPDATE) {
+    } else if (rawType === OcgMessageType.LPUPDATE && 'lp' in msg && 'player' in msg) {
       const pf = this.getPlayerField(msg.player);
       pf.currentLp = msg.lp;
-    } else if (rawType === OcgMessageType.DAMAGE) {
+    } else if (rawType === OcgMessageType.DAMAGE && 'amount' in msg && 'player' in msg) {
       const pf = this.getPlayerField(msg.player);
       pf.currentLp = Math.max(0, pf.currentLp - msg.amount);
-    } else if (rawType === OcgMessageType.RECOVER) {
-      const pf = this.getPlayerField(msg.player);
-      pf.currentLp += msg.amount;
+    } else if (rawType === OcgMessageType.RECOVER && typeof m.amount === 'number' && typeof m.player === 'number') {
+      const pf = this.getPlayerField(m.player);
+      pf.currentLp += m.amount;
     }
   }
 

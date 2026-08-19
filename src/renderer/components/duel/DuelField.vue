@@ -67,7 +67,7 @@
             player="ai"
             :card="slot"
             @hover-card="$emit('hover-card', $event)"
-            @click-card="$emit('click-card', $event)"
+            @click-card="(card, ev) => $emit('click-card', card, ev)"
           />
 
           <div class="pendulum-jewel pendulum-jewel--right">
@@ -116,7 +116,7 @@
             player="ai"
             :card="slot"
             @hover-card="$emit('hover-card', $event)"
-            @click-card="$emit('click-card', $event)"
+            @click-card="(card, ev) => $emit('click-card', card, ev)"
           />
         </div>
 
@@ -128,7 +128,7 @@
           player="ai"
           :card="opponentState.fieldZone"
           @hover-card="$emit('hover-card', $event)"
-          @click-card="$emit('click-card', $event)"
+          @click-card="(card, ev) => $emit('click-card', card, ev)"
         />
       </div>
     </div>
@@ -185,7 +185,7 @@
           player="user"
           :card="userState.fieldZone"
           @hover-card="$emit('hover-card', $event)"
-          @click-card="$emit('click-card', $event)"
+          @click-card="(card, ev) => $emit('click-card', card, ev)"
         />
 
         <!-- User 5 Main Monster Zones -->
@@ -200,7 +200,7 @@
             player="user"
             :card="slot"
             @hover-card="$emit('hover-card', $event)"
-            @click-card="$emit('click-card', $event)"
+            @click-card="(card, ev) => $emit('click-card', card, ev)"
           />
         </div>
 
@@ -249,7 +249,7 @@
             player="user"
             :card="slot"
             @hover-card="$emit('hover-card', $event)"
-            @click-card="$emit('click-card', $event)"
+            @click-card="(card, ev) => $emit('click-card', card, ev)"
           />
 
           <div class="pendulum-jewel pendulum-jewel--right">
@@ -317,7 +317,7 @@ withDefaults(
 
 defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
-  (e: 'click-card', card: FieldCard | null): void;
+  (e: 'click-card', card: FieldCard | null, event?: MouseEvent): void;
 }>();
 </script>
 

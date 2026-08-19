@@ -31,8 +31,10 @@ export interface DecodedDuelEvent {
   drawnCards?: { code: number; cardName: string }[];
   isPrompt: boolean;
   promptPlayer?: number;
+  promptType?: string;
+  promptData?: unknown;
   description: string;
-  raw: OcgMessage;
+  raw: unknown;
 }
 
 /**

@@ -14,7 +14,7 @@
     ]"
     @mouseenter="onMouseEnter"
     @mouseleave="onMouseLeave"
-    @click="onClick"
+    @click="onClick($event)"
   >
     <Tooltip
       :text="tooltipText"
@@ -123,7 +123,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
-  (e: 'click-card', card: FieldCard | null): void;
+  (e: 'click-card', card: FieldCard | null, event: MouseEvent): void;
 }>();
 
 const isDefensePosition = computed(() => {
@@ -194,9 +194,9 @@ function onMouseLeave(): void {
   emit('hover-card', null);
 }
 
-function onClick(): void {
+function onClick(event: MouseEvent): void {
   if (!props.isInert) {
-    emit('click-card', props.card);
+    emit('click-card', props.card, event);
   }
 }
 </script>

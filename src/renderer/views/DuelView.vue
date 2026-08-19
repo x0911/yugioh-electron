@@ -9,15 +9,21 @@
 
     <!-- 16:9 Letterboxed Arena Canvas -->
     <main class="duel-canvas-16-9">
-      <!-- 1. Top HUD Bar -->
+      <!-- 1. Top HUD Bar with Live Phases and Action Triggers -->
       <DuelHud
-        :turn-number="boardState.turnNumber"
-        :current-phase="boardState.currentPhase"
-        :is-user-turn="boardState.userField.isTurn"
-        :guide-text="boardState.phaseGuideText"
+        :turn-number="currentBoardState.turnNumber"
+        :current-phase="currentBoardState.currentPhase"
+        :is-user-turn="currentBoardState.userField.isTurn"
+        :guide-text="currentBoardState.phaseGuideText"
         :is-duel-log-open="isDuelLogOpen"
+        :can-go-to-battle-phase="!isMockMode && duelStore.canGoToBattlePhase"
+        :can-go-to-main-phase2="!isMockMode && duelStore.canGoToMainPhase2"
+        :can-end-turn="!isMockMode && duelStore.canEndTurn"
         @open-menu="isMenuOpen = true"
         @toggle-log="isDuelLogOpen = !isDuelLogOpen"
+        @to-battle-phase="duelStore.executeToBattlePhase"
+        @to-main-phase2="duelStore.executeToMainPhase2"
+        @to-end-phase="duelStore.executeToEndPhase"
       />
 
       <!-- 2. Top Area: Opponent Hand & Opponent LP Meter -->
@@ -26,7 +32,7 @@
         <div class="opponent-hand-wrapper">
           <HandFan
             player="ai"
-            :cards="boardState.opponentField.hand"
+            :cards="currentBoardState.opponentField.hand"
             @hover-card="hoveredCard = $event"
           />
         </div>
@@ -35,13 +41,13 @@
         <div class="opponent-lp-wrapper">
           <LifePointsMeter
             player="ai"
-            :name="boardState.opponentField.name"
-            :title="boardState.opponentField.title"
-            :series="boardState.opponentField.series"
-            :character-id="boardState.opponentField.characterId"
-            :current-lp="boardState.opponentField.currentLp"
-            :max-lp="boardState.opponentField.maxLp"
-            :is-turn="boardState.opponentField.isTurn"
+            :name="currentBoardState.opponentField.name"
+            :title="currentBoardState.opponentField.title"
+            :series="currentBoardState.opponentField.series"
+            :character-id="currentBoardState.opponentField.characterId"
+            :current-lp="currentBoardState.opponentField.currentLp"
+            :max-lp="currentBoardState.opponentField.maxLp"
+            :is-turn="currentBoardState.opponentField.isTurn"
           />
         </div>
       </section>
@@ -49,9 +55,9 @@
       <!-- 3. Center Area: Duel Field with all 14+ Zones -->
       <section class="duel-center-area">
         <DuelField
-          :user-state="boardState.userField"
-          :opponent-state="boardState.opponentField"
-          :extra-monster-zones="boardState.extraMonsterZones"
+          :user-state="currentBoardState.userField"
+          :opponent-state="currentBoardState.opponentField"
+          :extra-monster-zones="currentBoardState.extraMonsterZones"
           @hover-card="hoveredCard = $event"
           @click-card="onFieldCardClick"
         />
@@ -63,13 +69,13 @@
         <div class="user-lp-wrapper">
           <LifePointsMeter
             player="user"
-            :name="boardState.userField.name"
-            :title="boardState.userField.title"
-            :series="boardState.userField.series"
-            :character-id="boardState.userField.characterId"
-            :current-lp="boardState.userField.currentLp"
-            :max-lp="boardState.userField.maxLp"
-            :is-turn="boardState.userField.isTurn"
+            :name="currentBoardState.userField.name"
+            :title="currentBoardState.userField.title"
+            :series="currentBoardState.userField.series"
+            :character-id="currentBoardState.userField.characterId"
+            :current-lp="currentBoardState.userField.currentLp"
+            :max-lp="currentBoardState.userField.maxLp"
+            :is-turn="currentBoardState.userField.isTurn"
           />
         </div>
 
@@ -77,13 +83,65 @@
         <div class="user-hand-wrapper">
           <HandFan
             player="user"
-            :cards="boardState.userField.hand"
+            :cards="currentBoardState.userField.hand"
             @hover-card="hoveredCard = $event"
             @click-card="onHandCardClick"
           />
         </div>
       </section>
     </main>
+
+    <!-- Contextual Card Action Menu (Normal Summon, Set, Activate, Attack, etc.) -->
+    <CardActionMenu
+      v-if="activeMenuCard && activeCardActions.length > 0"
+      :card="activeMenuCard"
+      :actions="activeCardActions"
+      :anchor-pos="menuAnchorPos"
+      @select="onSelectCardAction"
+      @close="closeCardActionMenu"
+    />
+
+    <!-- Interactive Prompt Modal (End Phase Hand-Size Cleanup, Position, Chain, Effect Yes/No) -->
+    <PromptModal
+      :select-card="duelStore.activeSelectCard"
+      :select-chain="duelStore.activeSelectChain"
+      :select-position="duelStore.activeSelectPosition"
+      :select-effect-yn="duelStore.activeSelectEffectYn"
+      :select-option="duelStore.activeSelectOption"
+      :select-tribute="duelStore.activeSelectTribute"
+      @select-card="duelStore.executeSelectCard"
+      @select-position="duelStore.executeSelectPosition"
+      @select-chain="duelStore.executeSelectChain"
+      @select-effect-yn="duelStore.executeSelectEffectYn"
+      @select-option="duelStore.executeSelectOption"
+      @select-tribute="duelStore.executeSelectTribute"
+    />
+
+    <!-- Game Over Victory / Defeat Overlay -->
+    <div v-if="duelStore.isGameOver" class="game-over-modal-backdrop">
+      <div
+        class="game-over-modal glass-panel"
+        :class="isUserWinner ? 'game-over-modal--victory' : 'game-over-modal--defeat'"
+      >
+        <div class="game-over-banner">
+          <h2 class="game-over-title">
+            {{ isUserWinner ? '👑 VICTORY!' : '💀 DEFEAT' }}
+          </h2>
+          <p class="game-over-subtitle">
+            {{ isUserWinner ? 'You have defeated your opponent in battle!' : 'Your Life Points reached 0.' }}
+          </p>
+        </div>
+
+        <div class="game-over-actions">
+          <button class="action-btn action-btn--primary" @click="onRestartMatch">
+            🔄 Rematch
+          </button>
+          <button class="action-btn action-btn--secondary" @click="returnToCharacters">
+            🏠 Exit to Menu
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Side Card Previewer Popup (Hover-driven) -->
     <CardPreviewPopup
@@ -108,7 +166,7 @@
       @clear="duelLogs = []"
     />
 
-    <!-- Floating Dev QA Toolbar (Toggle between Mock Field & Live Engine) -->
+    <!-- Floating Dev QA Toolbar -->
     <aside class="dev-floating-controls">
       <button
         class="dev-pill-btn"
@@ -129,7 +187,7 @@
       </button>
 
       <button
-        v-if="isMockMode && boardState.userField.hand.length !== 5"
+        v-if="isMockMode && mockBoardState.userField.hand.length !== 5"
         class="dev-pill-btn"
         title="Reset Hand to 5 cards"
         @click="resetMockHand"
@@ -168,11 +226,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import type { FieldCard, DuelBoardState } from '../../shared/types/field.js';
 import type { DuelEventPayload } from '../../shared/types/duel.js';
 import { createMockDuelState } from '../utils/mockDuelState.js';
 import { getBackgroundUrl } from '../utils/media.js';
-import { useDuelStore } from '../stores/duelStore.js';
+import { useDuelStore, type CardActionOption } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
 import {
   DuelHud,
@@ -182,6 +241,8 @@ import {
   CardPreviewPopup,
   DuelMenuModal,
   DuelLogPanel,
+  CardActionMenu,
+  PromptModal,
 } from '../components/duel/index.js';
 
 interface LogItem {
@@ -190,139 +251,43 @@ interface LogItem {
   description: string;
 }
 
+const router = useRouter();
 const duelStore = useDuelStore();
 const settingsStore = useSettingsStore();
 
 // Modals and Drawers
 const isMenuOpen = ref(false);
 const isDuelLogOpen = ref(false);
-const isMockMode = ref(true); // Default to mock static field for Phase 9 verification
+const isMockMode = ref(false); // Default to live engine mode for Phase 10!
 
 // Hover-previewed card state
 const hoveredCard = ref<FieldCard | null>(null);
 
-// Board State (initialized with rich mock state)
-const boardState = reactive<DuelBoardState>(createMockDuelState());
+// Card Action Menu State
+const activeMenuCard = ref<FieldCard | null>(null);
+const activeCardActions = ref<CardActionOption[]>([]);
+const menuAnchorPos = ref<{ x: number; y: number } | null>(null);
+
+// Mock Board State for testing fallback
+const mockBoardState = reactive<DuelBoardState>(createMockDuelState());
+
+// Reactive board state selector
+const currentBoardState = computed<DuelBoardState>(() => {
+  return isMockMode.value ? mockBoardState : duelStore.boardState;
+});
+
+const isUserWinner = computed(() => {
+  return duelStore.boardState.winner === duelStore.userPlayerId;
+});
 
 // Live Logs
-const duelLogs = ref<LogItem[]>([
-  {
-    time: '00:01.0',
-    type: 'DUEL_START',
-    description: 'Duel initiated: Yugi Muto vs Seto Kaiba in the Ancient Duel Arena.',
-  },
-  {
-    time: '00:01.2',
-    type: 'DRAW',
-    description: 'Player 0 (Yugi) drew 5 starting cards.',
-  },
-  {
-    time: '00:01.3',
-    type: 'DRAW',
-    description: 'Player 1 (Kaiba) drew 5 starting cards.',
-  },
-  {
-    time: '00:02.1',
-    type: 'SUMMON',
-    description: 'Yugi Normal Summoned "Dark Magician" (2500/2100) in Attack Position.',
-  },
-  {
-    time: '00:02.5',
-    type: 'SET',
-    description: 'Yugi Set "Celtic Guardian" in Defense Position.',
-  },
-  {
-    time: '00:02.8',
-    type: 'SPELL_ACTIVATE',
-    description: 'Yugi activated Field Spell "Yami". Fiend and Spellcaster monsters gain 200 ATK/DEF.',
-  },
-  {
-    time: '00:03.4',
-    type: 'SUMMON',
-    description: 'Kaiba Normal Summoned "Blue-Eyes White Dragon" (3000/2500) in Attack Position.',
-  },
-]);
+const duelLogs = ref<LogItem[]>([]);
 
-// Sample Cards Pool for Extra Hand Draw QA
-const sampleCardsPool: Omit<FieldCard, 'id' | 'sequence'>[] = [
-  {
-    code: 55144522,
-    name: 'Pot of Greed',
-    controller: 0,
-    location: 'hand',
-    position: 'faceup_spell',
-    level: 0,
-    attribute: 'SPELL',
-    race: 'Normal',
-    description: 'Draw 2 cards from your Deck.',
-  },
-  {
-    code: 53129443,
-    name: 'Dark Hole',
-    controller: 0,
-    location: 'hand',
-    position: 'faceup_spell',
-    level: 0,
-    attribute: 'SPELL',
-    race: 'Normal',
-    description: 'Destroy all monsters on the field.',
-  },
-  {
-    code: 70781052,
-    name: 'Summoned Skull',
-    controller: 0,
-    location: 'hand',
-    position: 'faceup_attack',
-    atk: 2500,
-    def: 1200,
-    baseAtk: 2500,
-    baseDef: 1200,
-    level: 6,
-    attribute: 'DARK',
-    race: 'Fiend',
-    description: 'A fiend with dark powers for confusing the enemy. Boasts considerable strength.',
-  },
-  {
-    code: 26202165,
-    name: 'Sangan',
-    controller: 0,
-    location: 'hand',
-    position: 'faceup_attack',
-    atk: 1000,
-    def: 600,
-    baseAtk: 1000,
-    baseDef: 600,
-    level: 3,
-    attribute: 'DARK',
-    race: 'Fiend',
-    description: 'If this card is sent from the field to the GY: Add 1 monster with 1500 or less ATK from your Deck to your hand.',
-  },
-  {
-    code: 78193831,
-    name: 'Buster Blader',
-    controller: 0,
-    location: 'hand',
-    position: 'faceup_attack',
-    atk: 2600,
-    def: 2300,
-    baseAtk: 2600,
-    baseDef: 2300,
-    level: 7,
-    attribute: 'EARTH',
-    race: 'Warrior',
-    description: 'Gains 500 ATK for each Dragon monster your opponent controls or is in their GY.',
-  },
-];
-
-/**
- * Sticky previewer: shows hovered card (if not hidden), or falls back to user's first monster.
- */
 const activePreviewCard = computed<FieldCard | null>(() => {
   if (hoveredCard.value && hoveredCard.value.code > 0) {
     return hoveredCard.value;
   }
-  // Fallback to active monster on user field for immediate inspection
-  return boardState.userField.monsterZones[0] || null;
+  return currentBoardState.value.userField.monsterZones[0] || null;
 });
 
 function formatTime(): string {
@@ -341,59 +306,135 @@ function appendLog(type: string, description: string): void {
 function toggleMode(): void {
   isMockMode.value = !isMockMode.value;
   if (isMockMode.value) {
-    Object.assign(boardState, createMockDuelState());
-    appendLog('MODE', 'Switched to Static Mock Field State (Phase 9 QA).');
+    Object.assign(mockBoardState, createMockDuelState());
+    appendLog('MODE', 'Switched to Static Mock Field State.');
   } else {
     appendLog('MODE', 'Switched to Live Engine Duel State.');
   }
 }
 
+function onHandCardClick(card: FieldCard, event: MouseEvent): void {
+  hoveredCard.value = card;
+  if (isMockMode.value) {
+    appendLog('SELECT', `Selected hand card: ${card.name}`);
+    return;
+  }
+
+  const actions = duelStore.getLegalActionsForHandCard(card);
+  if (actions.length > 0) {
+    activeMenuCard.value = card;
+    activeCardActions.value = actions;
+    menuAnchorPos.value = { x: event.clientX, y: event.clientY };
+  } else {
+    closeCardActionMenu();
+  }
+}
+
+function onFieldCardClick(card: FieldCard | null, event?: MouseEvent): void {
+  if (!card || card.code === 0) {
+    closeCardActionMenu();
+    return;
+  }
+  hoveredCard.value = card;
+
+  if (isMockMode.value) {
+    appendLog('SELECT', `Selected field card: ${card.name} (${card.position})`);
+    return;
+  }
+
+  // Only allow actions on player's own cards
+  if (card.controller === duelStore.userPlayerId) {
+    const actions = duelStore.getLegalActionsForFieldCard(card);
+    if (actions.length > 0) {
+      activeMenuCard.value = card;
+      activeCardActions.value = actions;
+      if (event) {
+        menuAnchorPos.value = { x: event.clientX, y: event.clientY };
+      }
+    } else {
+      closeCardActionMenu();
+    }
+  }
+}
+
+async function onSelectCardAction(action: CardActionOption): Promise<void> {
+  closeCardActionMenu();
+  switch (action.type) {
+    case 'summon':
+      await duelStore.executeNormalSummon(action.index);
+      break;
+    case 'sp_summon':
+      await duelStore.executeSpecialSummon(action.index);
+      break;
+    case 'monster_set':
+      await duelStore.executeMonsterSet(action.index);
+      break;
+    case 'spell_set':
+      await duelStore.executeSpellSet(action.index);
+      break;
+    case 'activate':
+      await duelStore.executeActivate(action.index);
+      break;
+    case 'pos_change':
+      await duelStore.executePosChange(action.index);
+      break;
+    case 'attack':
+      await duelStore.executeDeclareAttack(action.index);
+      break;
+  }
+}
+
+function closeCardActionMenu(): void {
+  activeMenuCard.value = null;
+  activeCardActions.value = [];
+  menuAnchorPos.value = null;
+}
+
 function drawMockCard(): void {
-  const sample = sampleCardsPool[boardState.userField.hand.length % sampleCardsPool.length];
+  const sample = {
+    code: 55144522,
+    name: 'Pot of Greed',
+    controller: 0 as const,
+    location: 'hand' as const,
+    position: 'faceup_spell' as const,
+  };
   const newCard: FieldCard = {
     ...sample,
-    id: `hand-extra-${Date.now()}-${boardState.userField.hand.length}`,
-    sequence: boardState.userField.hand.length,
+    id: `hand-extra-${Date.now()}-${mockBoardState.userField.hand.length}`,
+    sequence: mockBoardState.userField.hand.length,
   };
-  boardState.userField.hand.push(newCard);
-
-  // Also draw for opponent to test both sides
-  boardState.opponentField.hand.push({
+  mockBoardState.userField.hand.push(newCard);
+  mockBoardState.opponentField.hand.push({
     id: `hand-ai-extra-${Date.now()}`,
     code: 0,
     name: 'Hidden Card',
     controller: 1,
     location: 'hand',
-    sequence: boardState.opponentField.hand.length,
+    sequence: mockBoardState.opponentField.hand.length,
     position: 'facedown_spell',
   });
-
-  appendLog('DRAW', `Drew "${newCard.name}". Hand size now: ${boardState.userField.hand.length} cards.`);
+  appendLog('DRAW', `Drew "${newCard.name}". Hand size: ${mockBoardState.userField.hand.length} cards.`);
 }
 
 function resetMockHand(): void {
   const fresh = createMockDuelState();
-  boardState.userField.hand = fresh.userField.hand;
-  boardState.opponentField.hand = fresh.opponentField.hand;
+  mockBoardState.userField.hand = fresh.userField.hand;
+  mockBoardState.opponentField.hand = fresh.opponentField.hand;
   appendLog('HAND', 'Reset hand size to default 5 cards.');
 }
 
-/**
- * Cycle through battle positions on User MMZ 0 & 1 for interactive QA.
- */
 function cycleMockPositions(): void {
-  const dm = boardState.userField.monsterZones[0];
+  const dm = mockBoardState.userField.monsterZones[0];
   if (dm) {
     if (dm.position === 'faceup_attack') {
       dm.position = 'faceup_defense';
-      appendLog('POSITION', 'Dark Magician shifted to Face-up Defense Position (Rotated 90°).');
+      appendLog('POSITION', 'Shifted to Face-up Defense Position.');
     } else if (dm.position === 'faceup_defense') {
       dm.position = 'facedown_defense';
-      appendLog('POSITION', 'Dark Magician shifted to Face-down Defense "Set" Position (Card Back).');
+      appendLog('POSITION', 'Shifted to Face-down Defense (Set) Position.');
     } else {
       dm.position = 'faceup_attack';
-      dm.name = 'Dark Magician';
-      appendLog('POSITION', 'Dark Magician shifted to Face-up Attack Position.');
+      appendLog('POSITION', 'Shifted to Face-up Attack Position.');
     }
   }
 }
@@ -408,48 +449,50 @@ async function stepLiveDuel(): Promise<void> {
   }
 }
 
-function onFieldCardClick(card: FieldCard | null): void {
-  if (!card || card.code === 0) return;
-  hoveredCard.value = card;
-  appendLog('SELECT', `Selected field card: ${card.name} (${card.position})`);
-}
-
-function onHandCardClick(card: FieldCard): void {
-  hoveredCard.value = card;
-  appendLog('SELECT', `Selected hand card: ${card.name}`);
-}
-
-function onRestartMatch(): void {
-  Object.assign(boardState, createMockDuelState());
-  appendLog('RESTART', 'Match restarted with fresh initial field state.');
+async function onRestartMatch(): Promise<void> {
+  isMenuOpen.value = false;
+  closeCardActionMenu();
+  if (isMockMode.value) {
+    Object.assign(mockBoardState, createMockDuelState());
+    appendLog('RESTART', 'Match restarted with fresh mock field.');
+  } else {
+    appendLog('RESTART', 'Restarting live duel...');
+    await duelStore.startPreparedDuel();
+  }
 }
 
 function onSurrender(): void {
+  isMenuOpen.value = false;
+  closeCardActionMenu();
   appendLog('SURRENDER', 'Player surrendered the match.');
+  router.push('/characters');
+}
+
+function returnToCharacters(): void {
+  router.push('/characters');
 }
 
 let unsubscribeEvents: (() => void) | null = null;
 
-function handleLiveDuelEvent(event: DuelEventPayload): void {
-  if (isMockMode.value) return;
+async function handleLiveDuelEvent(event: DuelEventPayload): Promise<void> {
   appendLog(event.type, event.description);
-  if (event.turn !== undefined) boardState.turnNumber = event.turn;
-  if (event.phase !== undefined) {
-    boardState.currentPhase = (event.phase as DuelBoardState['currentPhase']) || 'M1';
+  if (!isMockMode.value) {
+    await duelStore.handleEngineEvent(event);
   }
 }
 
 onMounted(async () => {
   await settingsStore.initializeSettings();
-  if (duelStore.selectedOpponent) {
-    boardState.opponentField.name = duelStore.selectedOpponent.name;
-    boardState.opponentField.title = duelStore.selectedOpponent.title;
-    boardState.opponentField.series = duelStore.selectedOpponent.series;
-    boardState.opponentField.characterId = duelStore.selectedOpponent.id;
-  }
 
   if (window.duelAPI) {
     unsubscribeEvents = window.duelAPI.onEvent(handleLiveDuelEvent);
+  }
+
+  // Start live duel if not already active
+  if (!duelStore.isDuelActive) {
+    await duelStore.startPreparedDuel();
+  } else {
+    await duelStore.fetchBoardState();
   }
 });
 
@@ -459,3 +502,277 @@ onUnmounted(() => {
   }
 });
 </script>
+
+<style scoped lang="scss">
+@use '../assets/styles/abstracts' as *;
+
+.page-duel {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #06080a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.duel-backdrop {
+  position: absolute;
+  inset: -20px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px) brightness(0.25) saturate(1.2);
+  transform: scale(1.05);
+  z-index: 0;
+}
+
+.duel-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 40%,
+    rgba(6, 8, 10, 0.75) 80%,
+    rgba(4, 5, 7, 0.96) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.duel-canvas-16-9 {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 177.78vh;
+  max-height: 56.25vw;
+  aspect-ratio: 16 / 9;
+  display: grid;
+  grid-template-rows: 52px 130px 1fr 130px;
+  grid-template-columns: 100%;
+  box-sizing: border-box;
+  z-index: 10;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.9);
+}
+
+.duel-top-area {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-sizing: border-box;
+  z-index: 20;
+
+  .opponent-hand-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .opponent-lp-wrapper {
+    width: 280px;
+    flex-shrink: 0;
+  }
+}
+
+.duel-center-area {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  z-index: 15;
+}
+
+.duel-bottom-area {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-sizing: border-box;
+  z-index: 20;
+
+  .user-lp-wrapper {
+    width: 280px;
+    flex-shrink: 0;
+  }
+
+  .user-hand-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+// Game Over Modal
+.game-over-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(4, 6, 10, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.game-over-modal {
+  width: 100%;
+  max-width: 480px;
+  padding: 36px 32px;
+  border-radius: 20px;
+  background: rgba(18, 22, 30, 0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  text-align: center;
+  animation: modalPop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &--victory {
+    border: 2px solid $color-gold-500;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.9),
+      0 0 40px rgba(201, 162, 39, 0.4);
+
+    .game-over-title {
+      color: $color-gold-100;
+      text-shadow: 0 0 20px rgba(201, 162, 39, 0.8);
+    }
+  }
+
+  &--defeat {
+    border: 2px solid #eb5757;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.9),
+      0 0 40px rgba(235, 87, 87, 0.4);
+
+    .game-over-title {
+      color: #ff9999;
+      text-shadow: 0 0 20px rgba(235, 87, 87, 0.8);
+    }
+  }
+}
+
+.game-over-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.game-over-title {
+  margin: 0;
+  font-family: 'Cinzel', serif;
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.game-over-subtitle {
+  margin: 0;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 1.1rem;
+  color: rgba(245, 241, 230, 0.85);
+}
+
+.game-over-actions {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  justify-content: center;
+}
+
+.dev-floating-controls {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  z-index: 500;
+  background: rgba(14, 18, 26, 0.88);
+  padding: 4px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  backdrop-filter: blur(6px);
+}
+
+.dev-pill-btn {
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  background: rgba(26, 32, 44, 0.8);
+  color: #f5f1e6;
+  font-family: 'Oxanium', monospace, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &:hover {
+    background: rgba(201, 162, 39, 0.25);
+    border-color: $color-gold-300;
+    color: $color-gold-100;
+  }
+
+  &--active {
+    background: rgba(201, 162, 39, 0.35);
+    border-color: $color-gold-500;
+    color: $color-gold-100;
+  }
+}
+
+.action-btn {
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-family: 'Oxanium', monospace, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &--primary {
+    background: $color-gold-500;
+    border: 1px solid $color-gold-300;
+    color: #1a1406;
+
+    &:hover {
+      background: $color-gold-300;
+      box-shadow: 0 4px 16px rgba(201, 162, 39, 0.5);
+      transform: translateY(-2px);
+    }
+  }
+
+  &--secondary {
+    background: rgba(30, 36, 48, 0.7);
+    border: 1px solid rgba(201, 162, 39, 0.3);
+    color: #f5f1e6;
+
+    &:hover {
+      background: rgba(201, 162, 39, 0.2);
+      border-color: $color-gold-300;
+      transform: translateY(-2px);
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+</style>

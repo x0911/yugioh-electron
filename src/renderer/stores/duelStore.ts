@@ -20,7 +20,6 @@ import type {
   DuelBoardState,
   FieldCard,
   PlayerFieldState,
-  CardPositionState,
 } from '../../shared/types/field.js';
 import { useSettingsStore } from './settingsStore.js';
 import { useDeckEditStore } from './deckEditStore.js';
