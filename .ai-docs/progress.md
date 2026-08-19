@@ -803,14 +803,48 @@
 - `tests/hand-and-pacing.test.ts`: Created unit tests.
 - `package.json`: Updated `test` script.
 
+---
+
+## 2026-08-19 — Graveyard & Extra Deck Inspection Dialogs
+
+**What was done:**
+- **Graveyard Inspection**:
+  - Clicking any Graveyard spot (Player or Opponent) opens a specialized card viewer modal if and only if the Graveyard contains 1 or more cards. Empty graveyards do not trigger the dialog.
+  - Cards in the Graveyard are displayed with a `#TOP` order tag for the topmost card, artwork, name, and combat/type stats.
+- **Extra Deck Inspection**:
+  - Clicking any Extra Deck spot (Player or Opponent) opens a specialized card viewer modal if and only if the Extra Deck contains 1 or more cards. Empty Extra Decks do not trigger the dialog.
+- **CardListModal Component**:
+  - Built `CardListModal.vue` utilizing `YugiModal` with Gold/User/AI owner accents (`$color-user` vs `$color-ai`).
+  - Hovering cards in the modal emits `hover-card` to synchronize with the main arena's card preview popup.
+- **Full Extra Deck Lifecycle & State Tracking**:
+  - Updated `PlayerFieldState` in `field.ts` to include `extraDeck: FieldCard[]`.
+  - Updated `DuelEngineService.ts` to initialize and track extra deck cards through `OcgLocation.EXTRA`.
+  - Added `DEFAULT_USER_EXTRA_DECK` (Flame Swordsman, Thousand Dragon, Gaia the Dragon Champion, Dark Paladin, B. Skull Dragon) and populated mock extra decks.
+- **Unit Test Suite**:
+  - Created `tests/stack-inspection.test.ts` verifying that empty stacks do not open modals and non-empty stacks open with full card metadata and owner styling.
+  - Updated `npm test` script.
+
+**Files created/modified:**
+- `src/renderer/components/duel/CardListModal.vue`: Created card stack viewer dialog.
+- `src/renderer/components/duel/DuelField.vue`: Added `inspect-stack` emit on non-prompt stack clicks.
+- `src/renderer/components/duel/index.ts`: Exported `CardListModal`.
+- `src/renderer/views/DuelView.vue`: Mounted `CardListModal` and added `onInspectStack` handler.
+- `src/shared/types/field.ts`: Added `extraDeck` to `PlayerFieldState`.
+- `src/shared/types/duel.ts`: Added `player0ExtraDeck` and `player1ExtraDeck` to `DuelInitOptions`.
+- `src/main/engine/DuelEngineService.ts`: Added extra deck tracking and move handling.
+- `src/renderer/stores/duelStore.ts`: Added default extra deck and extra deck initialization.
+- `src/renderer/utils/mockDuelState.ts`: Populated user and opponent mock extra decks.
+- `tests/stack-inspection.test.ts`: Created automated test suite.
+- `package.json`: Updated `test` script.
+
 **How to manually verify this phase:**
-1. Run `npm test` to verify all unit tests pass.
+1. Run `npm test` to verify all test suites pass.
 2. Run `npm run typecheck` and `npm run build` to verify clean compilation.
-3. Run `npm run dev` to launch the duel simulator and play a match:
-   - Verify hand starts with exactly 5 cards.
-   - Verify setting a card face-down smoothly flips the card 180° in 3D to its card-back and lands in the target slot.
-   - Verify clicking multiple copies of the same card in hand opens the context menu reliably.
-   - Click "End Turn" -> observe the AI turn executing step-by-step with paced delays and smooth card movements.
+3. In duel:
+   - Click an empty Graveyard -> nothing opens.
+   - Destroy/discard a card to the Graveyard -> click Graveyard -> modal opens showing the cards in the graveyard with `#TOP` indicator.
+   - Click User Extra Deck -> modal opens showing all 5 Fusion Monsters.
+
 
 
 
