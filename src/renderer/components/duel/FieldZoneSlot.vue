@@ -17,11 +17,7 @@
     @click="onClick"
   >
     <!-- Tooltip for inert zones (EMZ, Pendulum, etc.) or slot info -->
-    <Tooltip
-      v-if="tooltipText"
-      :content="tooltipText"
-      position="top"
-    >
+    <Tooltip v-if="tooltipText" :content="tooltipText" position="top">
       <div class="slot-frame">
         <slot-content />
       </div>
@@ -85,10 +81,7 @@
       </div>
 
       <!-- 2. Level / Rank Stars Badge (Always 0° Straight at Top-Right) -->
-      <div
-        v-if="card && isFaceUpMonster && card.level && card.level > 0"
-        class="slot-level-badge"
-      >
+      <div v-if="card && isFaceUpMonster && card.level && card.level > 0" class="slot-level-badge">
         ★{{ card.level }}
       </div>
     </div>
@@ -131,24 +124,15 @@ const emit = defineEmits<{
 }>();
 
 const isDefensePosition = computed(() => {
-  return (
-    props.card?.position === 'faceup_defense' ||
-    props.card?.position === 'facedown_defense'
-  );
+  return props.card?.position === 'faceup_defense' || props.card?.position === 'facedown_defense';
 });
 
 const isFaceDown = computed(() => {
-  return (
-    props.card?.position === 'facedown_defense' ||
-    props.card?.position === 'facedown_spell'
-  );
+  return props.card?.position === 'facedown_defense' || props.card?.position === 'facedown_spell';
 });
 
 const isFaceUpMonster = computed(() => {
-  return (
-    props.card?.position === 'faceup_attack' ||
-    props.card?.position === 'faceup_defense'
-  );
+  return props.card?.position === 'faceup_attack' || props.card?.position === 'faceup_defense';
 });
 
 /**
@@ -173,9 +157,7 @@ const activeStatMode = computed<'atk' | 'def'>(() => {
 
 const activeStatValue = computed<number | string>(() => {
   if (!props.card) return '';
-  return props.card.position === 'faceup_defense'
-    ? (props.card.def ?? 0)
-    : (props.card.atk ?? 0);
+  return props.card.position === 'faceup_defense' ? (props.card.def ?? 0) : (props.card.atk ?? 0);
 });
 
 const tooltipText = computed(() => {
@@ -406,13 +388,13 @@ function onClick(): void {
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
     .stat-prefix {
-      font-size: 0.50rem;
+      font-size: 0.5rem;
       font-weight: 700;
       letter-spacing: 0.04em;
     }
 
     .stat-value {
-      font-size: 0.58rem;
+      font-size: 0.7rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;

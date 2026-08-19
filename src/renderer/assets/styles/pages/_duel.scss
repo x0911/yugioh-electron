@@ -77,7 +77,10 @@
     }
 
     .opponent-lp-wrapper {
-      margin-left: auto;
+      position: absolute;
+      bottom: 50%;
+      right: 0;
+      transform: translateY(50%);
     }
   }
 
@@ -104,8 +107,10 @@
     z-index: 30;
 
     .user-lp-wrapper {
-      margin-right: auto;
-      margin-bottom: 8px;
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
     }
 
     .user-hand-wrapper {

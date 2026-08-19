@@ -46,10 +46,7 @@
             </div>
 
             <!-- Bottom ATK/DEF Footer for Monsters -->
-            <div
-              v-if="card.atk !== undefined && card.def !== undefined"
-              class="hand-card__stats"
-            >
+            <div v-if="card.atk !== undefined && card.def !== undefined" class="hand-card__stats">
               <span class="stat-atk">{{ card.atk }}</span>
               <span class="stat-slash">/</span>
               <span class="stat-def">{{ card.def }}</span>
@@ -319,6 +316,7 @@ function onCardClick(card: FieldCard): void {
 
       .stat-atk {
         color: #f5f1e6;
+        font-size: 0.7rem;
       }
       .stat-slash {
         color: $color-gold-500;
@@ -327,6 +325,7 @@ function onCardClick(card: FieldCard): void {
       }
       .stat-def {
         color: #b8b2a0;
+        font-size: 0.7rem;
       }
     }
   }
