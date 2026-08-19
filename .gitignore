@@ -1,0 +1,22 @@
+# AI documentation & session memory (local)
+.ai-docs
+
+# Dependencies
+node_modules/
+
+# Build & distribution outputs
+dist/
+release/
+out/
+
+# Card asset downloads (large binary files populated in Phase 3 via download script)
+resources/cards/full/
+resources/cards/art/
+resources/cards/mini/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
