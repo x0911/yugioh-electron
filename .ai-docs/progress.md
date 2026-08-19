@@ -149,3 +149,58 @@
 4. Click **"⚡ Auto-Play Duel"** to watch the real-time duel simulation execute at 50ms intervals, or click **"⏩ Next Step"** to step through manually.
 5. Verify real card names appear in the live log (e.g. *Dark Magician*, *Summoned Skull*, *Lady Panther*, *Just Desserts*, *Hinotama*, *Restructer Revolution*).
 6. Verify the LP bars and numbers update in real-time as damage is dealt, and a green victory banner announces the winner when a player reaches 0 LP.
+
+## Phase 3 — Asset Pipeline — 2026-08-19
+
+**Status:** Complete
+
+**What was built:**
+- Created robust, resumable card image downloader (`scripts/download-card-images.ts`) with:
+  - Global token-bucket rate limiter enforcing $\le 18\text{ req/s}$ (strictly compliant with YGOPRODeck CDN $\le 20\text{ req/s}$ limit).
+  - Resumable skip logic checking existing non-zero files before issuing network calls.
+  - Multi-worker concurrency pool (default: 10 workers) with real-time ETA, download speed, and progress reporting.
+  - Exponential backoff retries on network/HTTP 429/5xx errors (up to 4 attempts).
+  - Automated fallback placeholder insertion if an image variant fails permanently.
+  - CLI options for selective batching (`--limit <N>`), force redownload (`--force`), and custom concurrency (`--concurrency <N>`).
+- Integrated Sharp image processing pipeline:
+  - Re-encodes `mini` card variant from CDN small images to a fixed $96 \times 140\text{ px}$ progressive JPEG with Lanczos-3 resampling for smooth 60fps rendering in Deck Edit virtualized grids.
+  - Populates `resources/cards/full` ($813 \times 1185\text{ px}$), `resources/cards/art` ($624 \times 624\text{ px}$), and `resources/cards/mini` ($96 \times 140\text{ px}$).
+- Generated stylized "Ancient Duel Arena" fallback assets:
+  - `resources/cards/card-back.jpg` & `resources/ui/card-back.png`: Egyptian obsidian/gold swirl card back with Millennium Eye motif.
+  - `resources/cards/placeholder.jpg` & `0.jpg` in `full/`, `art/`, and `mini/`: High-resolution "Card Image Unavailable" fallback assets ensuring no broken image icons ever appear in the UI.
+- Scaffolded self-hosted web fonts in `resources/fonts/` and `src/renderer/assets/fonts/`:
+  - **Cinzel** (Regular 400, SemiBold 600, Bold 700) for Display / Headers.
+  - **Inter** (Regular 400, Medium 500, SemiBold 600, Bold 700) for UI, Body, and Tabular Numerals (`font-variant-numeric: tabular-nums`).
+  - Added `resources/fonts/OFL.txt` and `resources/fonts/FONTS.md` documenting SIL Open Font License 1.1 terms.
+  - Updated `src/renderer/assets/styles/base/_typography.scss` with `@font-face` definitions.
+- Configured Git & Documentation:
+  - Updated `.gitignore` to exclude large binary card collections while tracking font assets and placeholder fallbacks.
+  - Authored comprehensive root `README.md` documenting prerequisites, card database builds, asset pipeline execution, and npm scripts.
+  - Wired `package.json`'s `npm run download:cards` to run `scripts/download-card-images.ts`.
+
+**Files added/changed:**
+- `package.json` & `package-lock.json`: Added `sharp` & `@types/sharp`, wired `download:cards`.
+- `scripts/download-card-images.ts`: Main rate-limited resumable card downloader script.
+- `scripts/stub-download.ts`: Removed obsolete stub.
+- `resources/fonts/*`: Cinzel and Inter WOFF2 files, `OFL.txt`, `FONTS.md`.
+- `src/renderer/assets/fonts/*`: Bundled WOFF2 fonts for Vite.
+- `src/renderer/assets/styles/base/_typography.scss`: Added `@font-face` rules.
+- `resources/cards/*`: Generated `card-back.jpg`, `placeholder.jpg`, `0.jpg` fallbacks.
+- `resources/ui/card-back.png`: Card back asset for UI overlays.
+- `.gitignore`: Configured card asset ignores while retaining fallbacks.
+- `README.md`: Created project documentation.
+
+**Decisions made / deviations from the plan:**
+- **Gitignore Strategy**: 2,826 cards $\times$ 3 variants = 8,478 image files totaling $\sim 500\text{ MB}$. Committing this volume of binary data to Git would bloat repository clone size and history permanently. Therefore, `resources/cards/full/*`, `resources/cards/art/*`, and `resources/cards/mini/*` are gitignored, while `0.jpg`, `placeholder.jpg`, and font assets remain tracked in Git. `npm run download:cards` is established as a required one-time setup step after cloning.
+- **Font Licensing**: Cinzel and Inter are released under the SIL Open Font License (OFL 1.1), permitting free personal and commercial embedding and bundling with desktop software.
+- **Sharp Re-Encoding**: CDN small images ($268 \times 391\text{ px}$) are oversized for virtualized deck edit grids; resizing to $96 \times 140\text{ px}$ reduces memory footprint by $> 80\%$ per card and eliminates runtime GPU scaling overhead.
+
+**Known issues / TODO carried to next phase:**
+- Phase 4 will build shared design system components (`GlassPanel`, `YugiButton`, `YugiModal`, `Tooltip`, `IconIndicator`, `LoadingSpinner`) and a `/dev/kitchen-sink` QA route.
+- Temporary Dev Nav bar remains active for navigation testing.
+
+**How to manually verify this phase:**
+1. Run `npm run download:cards -- --limit 20` to download a sample batch.
+2. Verify files exist in `resources/cards/full/`, `resources/cards/art/`, and `resources/cards/mini/`.
+3. Run `npm run download:cards` to fetch and optimize the complete 2,826-card offline collection.
+
