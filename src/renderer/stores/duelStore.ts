@@ -522,17 +522,8 @@ export const useDuelStore = defineStore('duel', {
           this.boardState.opponentField.characterId = this.selectedOpponent.id;
         }
 
-        // Copy the user field but start with an empty hand
-        const fullUserField = { ...snapshot.userField };
-        const fullHand = [...(snapshot.userField.hand || [])];
-        this.boardState.userField = { ...fullUserField, hand: [] };
-
-        // Deal user hand cards one by one with 380ms stagger
-        const DEAL_DELAY_MS = 380;
-        for (const card of fullHand) {
-          await new Promise<void>((resolve) => setTimeout(resolve, DEAL_DELAY_MS));
-          this.boardState.userField.hand = [...this.boardState.userField.hand, card];
-        }
+        // Apply user field cleanly without racy async array concatenation
+        this.boardState.userField = snapshot.userField;
       } catch (err) {
         console.error('[DuelStore] Failed dealing opening hand:', err);
         // Fallback: fetch everything at once
