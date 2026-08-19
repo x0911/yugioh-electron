@@ -392,30 +392,30 @@ function onClick(): void {
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 1px 7px;
-    border-radius: 8px;
+    gap: 3px;
+    padding: 1px 5px;
+    border-radius: 6px;
     background: rgba(10, 12, 16, 0.94);
     backdrop-filter: blur(4px);
     font-family: 'Oxanium', monospace, sans-serif;
-    font-size: 0.62rem;
-    font-weight: 800;
     pointer-events: none;
     z-index: 25;
     white-space: nowrap;
     box-shadow:
-      0 4px 10px rgba(0, 0, 0, 0.85),
+      0 3px 8px rgba(0, 0, 0, 0.85),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
     .stat-prefix {
-      font-size: 0.52rem;
+      font-size: 0.48rem;
       font-weight: 700;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
     }
 
     .stat-value {
+      font-size: 0.52rem;
+      font-weight: 700;
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
     }
 
     &--atk {

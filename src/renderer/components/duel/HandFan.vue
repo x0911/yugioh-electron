@@ -305,23 +305,25 @@ function onCardClick(card: FieldCard): void {
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 1px 4px;
-      background: rgba(10, 12, 16, 0.92);
+      padding: 1px 3px;
+      background: rgba(10, 12, 16, 0.94);
       border-top: 1px solid rgba(201, 162, 39, 0.3);
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
       font-family: 'Oxanium', monospace, sans-serif;
-      font-size: 0.6rem;
+      font-size: 0.46rem;
       font-weight: 700;
+      letter-spacing: 0.01em;
 
       .stat-atk {
         color: #f5f1e6;
       }
       .stat-slash {
         color: $color-gold-500;
-        font-size: 0.55rem;
+        font-size: 0.42rem;
+        opacity: 0.7;
       }
       .stat-def {
         color: #b8b2a0;
