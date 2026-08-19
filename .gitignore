@@ -11,9 +11,15 @@ release/
 out/
 
 # Card asset downloads (large binary files populated in Phase 3 via download script)
-resources/cards/full/
-resources/cards/art/
-resources/cards/mini/
+resources/cards/full/*
+!resources/cards/full/0.jpg
+!resources/cards/full/placeholder.jpg
+resources/cards/art/*
+!resources/cards/art/0.jpg
+!resources/cards/art/placeholder.jpg
+resources/cards/mini/*
+!resources/cards/mini/0.jpg
+!resources/cards/mini/placeholder.jpg
 
 # OS & Editor files
 .DS_Store
