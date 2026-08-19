@@ -960,12 +960,25 @@
 - `src/renderer/router/index.ts`: Added `/characters` -> `/main-menu` redirect.
 - `tests/hand-and-pacing.test.ts`: Added Test 4 verifying the 4-step Spell Activation & Resolution sequence.
 
+---
+
+## 2026-08-20 — Startup Hand Duplicate Card Race Condition Fix
+
+**What was done:**
+- **Identified and Eliminated Startup Hand Race Condition**:
+  - `dealOpeningHand()` previously used a 5-step asynchronous loop (`380ms` timeout per card) appending cards into `this.boardState.userField.hand`.
+  - While this loop was running, initial turn and idle prompts (`SELECT_IDLECMD`) emitted from the engine invoked `handleEngineEvent -> fetchBoardState()`, which populated `this.boardState.userField.hand` with the full 5 cards.
+  - The remaining iterations of the `dealOpeningHand()` loop then appended additional cards onto the already populated array, resulting in 8 cards in hand on startup.
+  - Replaced the racy asynchronous mutation loop with atomic state assignment (`this.boardState.userField = snapshot.userField`), while `HandFan.vue`'s CSS/FLIP transition group naturally and reliably handles the smooth staggered entrance.
+
+**Files created/modified:**
+- `src/renderer/stores/duelStore.ts`: Made `dealOpeningHand()` atomically apply the board snapshot.
+
 **How to manually verify this phase:**
-1. Run `npm test` to verify all 4 test suites pass.
-2. Run `npm run typecheck` and `npm run build` to verify clean build.
-3. In a duel:
-   - Activate *Pot of Greed*: Observe the exact sequence: *Pot of Greed* flies from Hand to Field spot -> Activates -> 2 cards fly from Deck to Hand -> *Pot of Greed* flies from Field to Graveyard.
-   - Finish a duel and click "Exit to Menu": Verify it smoothly transitions to the Main Menu Arena screen without a blank screen.
+1. Start a match.
+2. Verify you begin with exactly 5 cards in your opening hand (no duplicated cards).
+3. Normal summon or activate a card — verify hand decreases cleanly to 4 cards.
+
 
 
 
