@@ -336,5 +336,90 @@
    - Click **"Exit Game"** -> verifies the Exit Confirmation modal opens. Click "Cancel" to dismiss. Click "Exit Game" -> confirms the Electron app closes cleanly.
 4. Verify Dev Nav is hidden by default. Click the `⚡ DEV` floating pill in the top-right corner (or press `Ctrl+Shift+D`) to toggle the Dev Nav bar.
 
+## Phase 6 — Settings Screen & Character Data — 2026-08-19
+
+**Status:** Complete
+
+**What was built:**
+- Curated and generated 20 iconic Yu-Gi-Oh! duelists in `data/characters.json`:
+  - **10 Original Series (Duel Monsters) Characters**:
+    1. **Yugi Muto** (King of Games / Magnet & Gadget Arsenal)
+    2. **Yami Yugi** (Pharaoh Atem / Dark Magician & Slifer the Sky Dragon)
+    3. **Seto Kaiba** (KaibaCorp President / Blue-Eyes Dragon Fury & Obelisk)
+    4. **Joey Wheeler** (Godfather of Games / Red-Eyes Ferocity & Gambler's Luck)
+    5. **Téa Gardner** (Friendship Guardian / Shining Fairies & Maha Vailo)
+    6. **Tristan Taylor** (Cybernetic Striker / Command Infantry & Heavy Siege)
+    7. **Mai Valentine** (Queen of the Sky / Harpie Lady Flurry & Amazoness)
+    8. **Bakura Ryou** (Shadow Realm Wanderer / Destiny Board & Zombies)
+    9. **Marik Ishtar** (Tomb Keeper / The Winged Dragon of Ra & Necrovalley)
+    10. **Maximillion Pegasus** (Creator of Duel Monsters / Toon World & Relinquished)
+  - **10 Yu-Gi-Oh! GX Characters**:
+    11. **Jaden Yuki** (Slifer Red Champion / Elemental HERO Fusion & Neos)
+    12. **Zane Truesdale** (The Cyber Duelist / Cyber Dragon & Cyberdark)
+    13. **Syrus Truesdale** (Vehicroid Engineer / Super Vehicroid Connection)
+    14. **Chazz Princeton** (The Chazz / Armed Dragon LV & Ojama Hurricane)
+    15. **Alexis Rhodes** (Obelisk Blue Queen / Cyber Blader & Ocean Control)
+    16. **Bastion Misawa** (Analytical Duelist / Water Dragon Chemistry & Earth)
+    17. **Chumley Huffington** (Outback Beast Master / Master of Oz Koalas)
+    18. **Aster Phoenix** (Destiny HERO Prodigy / Clock Tower Prison & Plasma)
+    19. **Jesse Anderson** (Crystal Beast Sovereign / Rainbow Dragon Overdrive)
+    20. **Dr. Vellian Crowler** (Obelisk Blue Chair / Ancient Gear Golem Siege)
+- Built automated deck generation script `scripts/generate-character-decks.ts`:
+  - Generated **60 archetype-appropriate placeholder decks** (3 decks per character) saved in `resources/decks/*.ydk` (40 cards each, plus extra deck fusions where applicable).
+  - Validated all 2,432 card references against `resources/cards.cdb` via `better-sqlite3`.
+  - Stamped metadata, signature cards, and deck references into `data/characters.json`.
+- Implemented persistent settings storage via `electron-store`:
+  - Created `src/main/persistence/store.ts` managing `bgmVolume`, `sfxVolume`, `selectedOpponentId`, `selectedSeriesFilter`, `devMode`, and `skipPreDuelVideo`.
+  - Created `src/main/decks/deckLoader.ts` to load character metadata, parse `.ydk` decks, and pick random decks.
+  - Wired IPC channels: `SETTINGS_GET`, `SETTINGS_SET`, `CHARACTERS_GET`, `CHARACTERS_GET_BY_ID`, `CHARACTERS_GET_RANDOM_DECK`.
+- Built Settings & Character UI components:
+  - `CharacterCard.vue`: Card-style frame with series badge (`DM` gold vs `GX` cyan), character theme glow, selection badge, hover foil light-sweep gleam, and styled SVG holographic silhouette fallback when custom portrait PNGs are not yet present.
+  - `OpponentCarousel.vue`: Interactive horizontal carousel with series filter tabs (`All [20]`, `Original Series [10]`, `Yu-Gi-Oh! GX [10]`), smooth scroll snap, next/prev arrow buttons, mouse-wheel scroll, and keyboard navigation (`ArrowLeft`, `ArrowRight`, `Home`, `End`).
+  - `SettingsView.vue`: Complete Ancient Duel Arena Settings view featuring the carousel, active opponent preview dossier (portrait, bio, 3 decks, signature cards, video status), BGM / SFX volume range sliders (0 - 100%), video skip toggle, and dev mode toggle.
+  - `settingsStore.ts`: Pinia store synchronizing settings and character data with `electron-store` over IPC.
+- Implemented randomized deck selection logic:
+  - Added "🎲 One picked randomly when duel starts" logic to `settingsStore` and wired an interactive test in `DuelView.vue` (`⚔️ Duel vs [Opponent] (Random Deck)`).
+
+**Files added/changed:**
+- `data/characters.json`: 20 characters with 3 decks each, avatar/video paths, theme colors.
+- `resources/decks/*.ydk`: 60 generated 40-card `.ydk` deck files.
+- `scripts/generate-character-decks.ts`: Card pool querying and `.ydk` generator script.
+- `src/shared/types/character.ts`: TypeScript interfaces for `CharacterData`, `CharacterDeckData`, `SettingsConfig`.
+- `src/shared/types/ipc.ts`: Added `SettingsAPI` and character IPC channels.
+- `src/main/persistence/store.ts`: `electron-store` wrapper.
+- `src/main/decks/deckLoader.ts`: Main process character & deck loader.
+- `src/main/ipc/index.ts` & `src/preload/index.ts`: Wired settings & character IPC channels.
+- `src/renderer/components/settings/CharacterCard.vue`: Character card component with silhouette fallback.
+- `src/renderer/components/settings/OpponentCarousel.vue`: Horizontal carousel with series filters and keyboard navigation.
+- `src/renderer/components/settings/index.ts`: Barrel export.
+- `src/renderer/stores/settingsStore.ts`: Pinia store with electron-store sync.
+- `src/renderer/views/SettingsView.vue`: Settings and opponents view.
+- `src/renderer/assets/styles/pages/_settings.scss` & `_index.scss`: BEM SCSS styling for Settings.
+- `src/renderer/views/DuelView.vue`: Added random opponent deck test launcher.
+
+**Decisions made / deviations from the plan:**
+- **Placeholder Decks**: All 60 decks (3 per character) were programmatically generated from the Phase 2 filtered card pool using valid card IDs from `data/card-pool-whitelist.json` and verified in SQLite `cards.cdb`. These serve as archetype-appropriate placeholders pending user curation.
+- **Silhouette Fallbacks**: In the absence of user-provided transparent portrait PNGs (`resources/characters/portraits/<id>.png`), `CharacterCard.vue` and `SettingsView.vue` render a responsive SVG anime duelist silhouette with Egyptian/GX energy runes glowing in each character's custom theme color.
+- **Keyboard Navigation**: In addition to mouse-wheel scrolling and arrow buttons, `OpponentCarousel` supports full keyboard navigation (`ArrowLeft`, `ArrowRight`, `Home`, `End`) and accessibility attributes (`role="tablist"`, `aria-selected`, `aria-pressed`).
+
+**Known issues / TODO carried to next phase:**
+- User portrait PNGs and pre-duel MP4 videos can be placed into `resources/characters/portraits/` and `resources/videos/characters/` at any time to replace the styled placeholders.
+- Phase 7 will build the 3-column Deck Edit screen (`DeckColumn`, `CardGridVirtualized`, `CardFilterBar`, `CardPreviewer`).
+
+**How to manually verify this phase:**
+1. Run `npm run dev` to launch the application.
+2. From the **Main Menu**, click **"Settings"** (or press the Settings card CTA).
+3. In **Settings & Opponents**, browse the carousel of 20 characters:
+   - Click the filter pills (**"All Duelists (20)"**, **"Original Series (10)"**, **"Yu-Gi-Oh! GX (10)"**).
+   - Use the `<` and `>` arrow buttons or keyboard `Left`/`Right` arrow keys to scroll through duelists.
+   - Click on any character (e.g. *Seto Kaiba*, *Zane Truesdale*, *Chazz Princeton*) to select them.
+4. Observe the **Active Opponent Dossier**:
+   - Verify character title, anime tagline, backstory bio, theme color glow, and 3 prebuilt deck archetypes.
+5. In **Sound & Gameplay Settings**:
+   - Adjust the **Music Volume (BGM)** and **Sound Effects (SFX)** sliders.
+   - Toggle **Skip Pre-Duel Character Videos** or **Developer Engine Diagnostics**.
+6. Close the app (or click **"Return to Main Menu"** -> **"Exit Game"**), then re-run `npm run dev`.
+7. Reopen **Settings** and confirm that your selected opponent and volume/toggle settings persisted from `electron-store`.
+
 
 
