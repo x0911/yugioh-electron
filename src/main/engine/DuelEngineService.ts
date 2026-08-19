@@ -8,10 +8,21 @@ import createCore, {
   type OcgMessage,
   type OcgResponse,
 } from 'ocgcore-wasm';
+import path from 'node:path';
+import fs from 'node:fs';
 import { CardReaderService } from './cardReader.js';
 import { ScriptReaderService } from './scriptReader.js';
 import { MessageDecoder, getAutoResponse, type DecodedDuelEvent } from './messageDecoder.js';
 import { ViewFilterService } from './viewFilter.js';
+
+export interface EngineInitStatus {
+  initialized: boolean;
+  engineVersion: string;
+  cardCount: number;
+  scriptsCount: number;
+  ready: boolean;
+  error?: string;
+}
 
 export interface DuelOptions {
   player0Deck: number[];
@@ -67,11 +78,45 @@ export class DuelEngineService {
     this.viewFilter = new ViewFilterService();
   }
 
-  public async init(): Promise<void> {
-    if (this.lib) return;
-    this.lib = await createCore({ sync: true });
+  public async init(): Promise<EngineInitStatus> {
+    if (!this.lib) {
+      this.lib = await createCore({ sync: true });
+      const [maj, min] = this.lib.getVersion();
+      console.log(`[DuelEngineService] ocgcore-wasm initialized (v${maj}.${min})`);
+    }
+    return this.getStatus();
+  }
+
+  public getStatus(): EngineInitStatus {
+    const cardCount = this.cardReader.getCardCount();
+    let scriptsCount = 0;
+    try {
+      const officialScriptsDir = path.join(this.scriptReader.getScriptsDirectory(), 'official');
+      if (fs.existsSync(officialScriptsDir)) {
+        scriptsCount = fs.readdirSync(officialScriptsDir).filter((f) => f.endsWith('.lua')).length;
+      }
+    } catch {
+      scriptsCount = 0;
+    }
+
+    if (!this.lib) {
+      return {
+        initialized: false,
+        engineVersion: 'unknown',
+        cardCount,
+        scriptsCount,
+        ready: false,
+      };
+    }
+
     const [maj, min] = this.lib.getVersion();
-    console.log(`[DuelEngineService] ocgcore-wasm initialized (v${maj}.${min})`);
+    return {
+      initialized: true,
+      engineVersion: `v${maj}.${min}`,
+      cardCount,
+      scriptsCount,
+      ready: cardCount > 0,
+    };
   }
 
   public onEvent(callback: (event: DecodedDuelEvent) => void): () => void {

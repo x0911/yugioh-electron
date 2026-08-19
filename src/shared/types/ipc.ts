@@ -7,6 +7,8 @@ import type { DuelInitOptions, DuelEventPayload, DuelStateSummary } from './duel
 export const IPC_CHANNELS = {
   // App
   APP_GET_VERSION: 'app:get-version',
+  APP_INIT_ENGINE: 'app:init-engine',
+  APP_GET_INIT_STATUS: 'app:get-init-status',
   APP_EXIT: 'app:exit',
 
   // Duel
@@ -31,6 +33,15 @@ export const IPC_CHANNELS = {
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
+
+export interface EngineInitStatus {
+  initialized: boolean;
+  engineVersion: string;
+  cardCount: number;
+  scriptsCount: number;
+  ready: boolean;
+  error?: string;
+}
 
 // Window API surfaces exposed via contextBridge in preload.ts
 export interface DuelAPI {
@@ -58,6 +69,8 @@ export interface SettingsAPI {
 
 export interface AppAPI {
   getVersion: () => Promise<string>;
+  initEngine: () => Promise<EngineInitStatus>;
+  getInitStatus: () => Promise<EngineInitStatus>;
   exitApp: () => Promise<void>;
   platform: NodeJS.Platform;
 }

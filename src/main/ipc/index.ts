@@ -19,6 +19,26 @@ export function registerIpcHandlers(): void {
 
   // App
   ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => app.getVersion());
+  ipcMain.handle(IPC_CHANNELS.APP_INIT_ENGINE, async () => {
+    try {
+      const status = await duelEngineService.init();
+      isServiceInitialized = true;
+      return status;
+    } catch (err: unknown) {
+      console.error('[Main IPC] Error initializing duel engine:', err);
+      return {
+        initialized: false,
+        engineVersion: 'unknown',
+        cardCount: 0,
+        scriptsCount: 0,
+        ready: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  });
+  ipcMain.handle(IPC_CHANNELS.APP_GET_INIT_STATUS, async () => {
+    return duelEngineService.getStatus();
+  });
   ipcMain.handle(IPC_CHANNELS.APP_EXIT, () => {
     app.quit();
   });

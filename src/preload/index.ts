@@ -71,6 +71,12 @@ const appAPI: AppAPI = {
   getVersion: (): Promise<string> => {
     return ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION);
   },
+  initEngine: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.APP_INIT_ENGINE);
+  },
+  getInitStatus: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.APP_GET_INIT_STATUS);
+  },
   exitApp: (): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.APP_EXIT);
   },

@@ -138,6 +138,16 @@ export class CardReaderService {
     }
   }
 
+  public getCardCount(): number {
+    if (!this.db) return 0;
+    try {
+      const row = this.db.prepare('SELECT count(*) as count FROM datas').get() as { count: number };
+      return row?.count ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
   public close(): void {
     if (this.db) {
       this.db.close();
