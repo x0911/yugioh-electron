@@ -404,12 +404,13 @@
 
 **What was built:**
 - Built the 3-column Deck Construction & Edit screen (`DeckEditView.vue`):
-  - **Col-1 (Deck Construction & Validity — ~24%)**:
-    - `DeckColumn.vue`: Live Main Deck (40-60 cards) and Extra Deck (0-15 cards) management with real-time card counters, archetype breakdowns (Monsters, Spells, Traps, Fusions), and individual card copy count pills (`x1`, `x2`, `x3`).
+  - **Col-1 (Deck Construction & Visual Card Grid — ~37%)**:
+    - `DeckColumn.vue`: Redesigned Main Deck (40-60 cards) and Extra Deck (0-15 cards) to display cards in a responsive **columns grid** (mini card tiles side-by-side) mirroring Col-2, with real-time card counters, archetype breakdowns (Monsters, Spells, Traps, Fusions), and individual card copy count pills (`x1`, `x2`, `x3`).
+    - Cards in deck are automatically sorted cleanly (Monsters by Level/ATK, then Spells, then Traps) with category-colored top border accents (gold, orange, teal, magenta, purple) and hover remove overlay `✕`.
     - Real-time validity state banner: green "✓ Legal Deck (Main: 40/40-60, Extra: 0/0-15)" vs. red/orange "⚠️ Illegal Deck (Main: 24/40-60 • Needs 16 more cards)" with granular error callouts (minimum 40 cards, maximum 60 cards, maximum 15 Extra deck cards, and strict 3-copy rule per card).
     - Custom deck management toolbar: active deck selector dropdown, inline deck name editor, "💾 Save Deck", "➕ New Deck", "📋 Clone Deck", "🧹 Clear Deck" (with confirmation modal), and "🗑️ Delete Deck" (with confirmation modal).
     - Single-click to decrement / remove cards; hover to preview in Col-3.
-  - **Col-2 (Card Database & Virtualized Grid — ~48%)**:
+  - **Col-2 (Card Database & Virtualized Grid — ~39%)**:
     - `CardFilterBar.vue`: Comprehensive multi-criteria filter bar featuring:
       - Instant name and card lore/effect text search with quick clear button.
       - Series / Era tabs (`All Eras [2,826]`, `DM`, `GX`).
