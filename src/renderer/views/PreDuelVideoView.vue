@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDuelStore } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
@@ -128,6 +128,15 @@ const videoUrl = computed(() => getCharacterVideoUrl(opponentId.value));
 const opponentAvatarUrl = computed(() => getCharacterPortraitUrl(opponentId.value));
 const expectedVideoPath = computed(() => `resources/videos/characters/${opponentId.value}.mp4`);
 
+watch(videoElement, (el) => {
+  if (el) {
+    el.volume = Math.max(0, Math.min(1, settingsStore.bgmVolume / 100));
+    el.play().catch((err) => {
+      console.warn('[PreDuelVideoView] Video autoplay failed:', err);
+    });
+  }
+});
+
 onMounted(async () => {
   // If user configured skip in Settings, bypass video immediately
   if (settingsStore.skipPreDuelVideo) {
@@ -140,13 +149,15 @@ onMounted(async () => {
     await duelStore.setupMatch();
   }
 
-  // Configure video volume if player starts
+  // Configure video volume if player exists
   if (videoElement.value) {
     videoElement.value.volume = Math.max(0, Math.min(1, settingsStore.bgmVolume / 100));
+    videoElement.value.play().catch(() => {});
+  } else if (!videoUrl.value) {
+    // If no video URL at all, initiate fallback countdown
+    videoError.value = true;
+    startProgressTimer();
   }
-
-  // Start progress countdown for fallback
-  startProgressTimer();
 });
 
 onUnmounted(() => {
