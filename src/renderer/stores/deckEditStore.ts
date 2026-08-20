@@ -378,10 +378,12 @@ export const useDeckEditStore = defineStore('deckEdit', {
       }
 
       try {
-        const deckToSave: CustomDeck = {
-          ...this.activeDeck,
-          updatedAt: Date.now(),
-        };
+        const deckToSave: CustomDeck = JSON.parse(
+          JSON.stringify({
+            ...this.activeDeck,
+            updatedAt: Date.now(),
+          })
+        );
 
         // Update local customDecks list
         const index = this.customDecks.findIndex((d) => d.id === deckToSave.id);
@@ -404,7 +406,8 @@ export const useDeckEditStore = defineStore('deckEdit', {
         return true;
       } catch (err) {
         console.error('[DeckEditStore] Error saving deck:', err);
-        this.showToast('Failed to save deck.', 'danger');
+        const detail = err instanceof Error ? `: ${err.message}` : '';
+        this.showToast(`Failed to save deck${detail}`, 'danger');
         return false;
       }
     },

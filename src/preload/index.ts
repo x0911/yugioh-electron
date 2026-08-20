@@ -64,7 +64,8 @@ const deckAPI: DeckAPI = {
     return ipcRenderer.invoke(IPC_CHANNELS.DECK_GET_CUSTOM_DECKS);
   },
   saveCustomDeck: (deck) => {
-    return ipcRenderer.invoke(IPC_CHANNELS.DECK_SAVE_CUSTOM_DECK, deck);
+    const plainDeck = JSON.parse(JSON.stringify(deck));
+    return ipcRenderer.invoke(IPC_CHANNELS.DECK_SAVE_CUSTOM_DECK, plainDeck);
   },
   deleteCustomDeck: (deckId: string) => {
     return ipcRenderer.invoke(IPC_CHANNELS.DECK_DELETE_CUSTOM_DECK, deckId);
@@ -79,7 +80,8 @@ const deckAPI: DeckAPI = {
     return ipcRenderer.invoke(IPC_CHANNELS.DECK_LIST);
   },
   saveDeck: (deckName: string, deckData: unknown): Promise<boolean> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.DECK_SAVE, deckName, deckData);
+    const plainData = JSON.parse(JSON.stringify(deckData));
+    return ipcRenderer.invoke(IPC_CHANNELS.DECK_SAVE, deckName, plainData);
   },
   deleteDeck: (deckName: string): Promise<boolean> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DECK_DELETE, deckName);
@@ -91,7 +93,8 @@ const settingsAPI: SettingsAPI = {
     return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET);
   },
   saveSettings: (settings) => {
-    return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, settings);
+    const plainSettings = JSON.parse(JSON.stringify(settings));
+    return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, plainSettings);
   },
   getCharacters: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.CHARACTERS_GET);
