@@ -86,22 +86,6 @@ export class ScriptReaderService {
       const boot = [
         'Duel.LoadScript("constant.lua")',
         'Duel.LoadScript("utility.lua")',
-        'Duel.LoadScript("cards_specific_functions.lua")',
-        'Duel.LoadScript("proc_fusion.lua")',
-        'Duel.LoadScript("proc_fusion_spell.lua")',
-        'Duel.LoadScript("proc_ritual.lua")',
-        'Duel.LoadScript("proc_synchro.lua")',
-        'Duel.LoadScript("proc_xyz.lua")',
-        'Duel.LoadScript("proc_union.lua")',
-        'Duel.LoadScript("proc_link.lua")',
-        'Duel.LoadScript("proc_pendulum.lua")',
-        'Duel.LoadScript("proc_equip.lua")',
-        'Duel.LoadScript("proc_gemini.lua")',
-        'Duel.LoadScript("proc_spirit.lua")',
-        'Duel.LoadScript("proc_normal.lua")',
-        'Duel.LoadScript("proc_persistent.lua")',
-        'Duel.LoadScript("proc_workaround.lua")',
-        'Duel.LoadScript("deprecated_functions.lua")',
       ].join('\n');
       this.scriptCache.set(name, boot);
       return boot;
@@ -109,10 +93,16 @@ export class ScriptReaderService {
 
     // Official card scripts (e.g. c12580477.lua)
     if (/^c\d+\.lua$/.test(name)) {
+      const cardId = parseInt(name.slice(1, -4), 10);
+      const preamble = !isNaN(cardId)
+        ? `self_code = ${cardId}\nself_table = _G["c${cardId}"] or {}\n_G["c${cardId}"] = self_table\n`
+        : '';
+
       const officialPath = path.join(this.officialScriptsDir, name);
       if (fs.existsSync(officialPath)) {
         try {
-          const content = fs.readFileSync(officialPath, 'utf-8');
+          const rawContent = fs.readFileSync(officialPath, 'utf-8');
+          const content = preamble + rawContent;
           this.scriptCache.set(name, content);
           return content;
         } catch (err) {
@@ -121,12 +111,12 @@ export class ScriptReaderService {
       }
 
       // Check alias script fallback if direct script is missing
-      const cardId = parseInt(name.slice(1, -4), 10);
       if (!isNaN(cardId)) {
         const aliasPath = this.resolveAliasScriptPath(cardId);
         if (aliasPath && fs.existsSync(aliasPath)) {
           try {
-            const content = fs.readFileSync(aliasPath, 'utf-8');
+            const rawContent = fs.readFileSync(aliasPath, 'utf-8');
+            const content = preamble + rawContent;
             this.scriptCache.set(name, content);
             return content;
           } catch (err) {

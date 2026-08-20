@@ -62,12 +62,28 @@ export function evaluateAttackOption(
     let targetScore = 0;
     let targetReason = '';
 
+    // Check if target is known to have continuous battle immunity
+    const isBattleImmune =
+      target.code === 11662742 || // Gellenduo
+      target.code === 31305911 || // Marshmallon
+      target.code === 23205979 || // Spirit Reaper
+      target.code === 37412656 || // Arcana Force 0 - The Fool
+      target.code === 78371393 || // Yubel
+      target.code === 4779091 ||  // Yubel - Terror Incarnate
+      target.code === 31764782 || // Yubel - The Ultimate Nightmare
+      (target.description &&
+        (target.description.toLowerCase().includes('cannot be destroyed by battle') ||
+          target.description.toLowerCase().includes('not destroyed by battle')));
+
     if (target.position === 'faceup_attack') {
       const targetAtk = target.atk ?? 0;
       if (attacker.attackerAtk > targetAtk) {
         const battleDamage = attacker.attackerAtk - targetAtk;
-        targetScore = 400 + battleDamage * 1.2 + targetAtk * 0.3;
-        targetReason = `Attack ${target.name} (${targetAtk} ATK) -> Destroy monster & inflict ${battleDamage} battle damage`;
+        const destroyBonus = isBattleImmune ? 0 : 400;
+        targetScore = destroyBonus + battleDamage * 1.2 + targetAtk * 0.3;
+        targetReason = isBattleImmune
+          ? `Attack battle-immune ${target.name} in Attack Position -> Inflict ${battleDamage} battle damage`
+          : `Attack ${target.name} (${targetAtk} ATK) -> Destroy monster & inflict ${battleDamage} battle damage`;
 
         if (battleDamage >= oppLp) {
           targetScore += 15000;
@@ -85,7 +101,11 @@ export function evaluateAttackOption(
       }
     } else if (target.position === 'faceup_defense') {
       const targetDef = target.def ?? 0;
-      if (attacker.attackerAtk > targetDef) {
+      if (isBattleImmune) {
+        // Futile attack: Deals 0 damage and does not destroy the monster
+        targetScore = -800;
+        targetReason = `[AVOID] Futile attack against battle-immune ${target.name} in Defense Position`;
+      } else if (attacker.attackerAtk > targetDef) {
         targetScore = 300 + targetDef * 0.2;
         targetReason = `Destroy defensive wall ${target.name} (${targetDef} DEF)`;
       } else if (attacker.attackerAtk === targetDef) {

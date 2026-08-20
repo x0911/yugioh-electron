@@ -118,6 +118,9 @@ export interface DuelStoreState {
 
   // Card Selection Modal State
   isCardSelectionModalOpen: boolean;
+
+  // Chain Loop Deduplication
+  lastChainedCode: number | null;
 }
 
 export interface TargetInfo {
@@ -213,6 +216,7 @@ export const useDuelStore = defineStore('duel', {
     activeVideoPayload: null,
 
     isCardSelectionModalOpen: false,
+    lastChainedCode: null,
   }),
 
   getters: {
@@ -932,10 +936,11 @@ export const useDuelStore = defineStore('duel', {
             card.position = 'facedown_defense';
           }
         }
-      } else if (event.type === 'DAMAGE' && event.player !== undefined && (event as any).amount !== undefined) {
+      } else if ((event.type === 'DAMAGE' || event.type === 'PAY_LPCOST') && event.player !== undefined) {
         const p = event.player as 0 | 1;
         const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
-        pf.currentLp = Math.max(0, pf.currentLp - ((event as any).amount as number));
+        const amount = ((event as any).amount ?? (event as any).cost ?? 0) as number;
+        pf.currentLp = Math.max(0, pf.currentLp - amount);
       } else if (event.type === 'RECOVER' && event.player !== undefined && (event as any).amount !== undefined) {
         const p = event.player as 0 | 1;
         const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
@@ -944,6 +949,8 @@ export const useDuelStore = defineStore('duel', {
         const p = event.player as 0 | 1;
         const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
         pf.currentLp = (event as any).lp as number;
+      } else if (event.type === 'CHAIN_END' || event.type === 'NEW_TURN' || event.type === 'NEW_PHASE') {
+        this.lastChainedCode = null;
       }
 
       // If this event is a prompt for the human player:
@@ -996,10 +1003,25 @@ export const useDuelStore = defineStore('duel', {
           this.isCardSelectionModalOpen = Boolean(hasHiddenLocations);
         } else if (event.promptType === 'SELECT_CHAIN') {
           const chainPayload = event.promptData as SelectChainPayload;
-          // Only show chain dialog if there are actual cards the player can chain with
-          // Empty chain windows (no selects, not forced) are auto-resolved by the engine
-          if (chainPayload.selects && chainPayload.selects.length > 0) {
-            this.activeSelectChain = chainPayload;
+          let availableSelects = chainPayload.selects || [];
+
+          // Deduplicate continuous trap self-chain loops (e.g. Ultimate Offering chaining into itself)
+          if (!chainPayload.forced && this.lastChainedCode && availableSelects.length > 0) {
+            const filtered = availableSelects.filter((s) => s.code !== this.lastChainedCode);
+            if (filtered.length === 0) {
+              // Only option is redundant self-chain on the same chain link — auto-pass to let chain resolve
+              this.isPromptWaiting = false;
+              await this.executeSelectChain(null);
+              return;
+            }
+            availableSelects = filtered;
+          }
+
+          if (availableSelects.length > 0) {
+            this.activeSelectChain = {
+              ...chainPayload,
+              selects: availableSelects,
+            };
           } else if (!chainPayload.forced) {
             // Nothing to chain — auto-pass immediately without showing dialog
             this.isPromptWaiting = false;
@@ -1599,6 +1621,9 @@ export const useDuelStore = defineStore('duel', {
     },
 
     async executeSelectChain(chainIndex: number | null): Promise<boolean> {
+      if (chainIndex !== null && this.activeSelectChain?.selects?.[chainIndex]) {
+        this.lastChainedCode = this.activeSelectChain.selects[chainIndex].code;
+      }
       return this.sendCommand({
         type: 8, // SELECT_CHAIN
         index: chainIndex,

@@ -54,6 +54,8 @@ export interface DuelOptions {
   player1Graveyard?: number[];
   player0Monsters?: Array<{ code: number; sequence: number; position?: number }>;
   player1Monsters?: Array<{ code: number; sequence: number; position?: number }>;
+  player0SpellTraps?: Array<{ code: number; sequence: number; position?: number }>;
+  player1SpellTraps?: Array<{ code: number; sequence: number; position?: number }>;
   noShuffle?: boolean;
   startingLP?: number;
   startingDrawCount?: number;
@@ -330,39 +332,6 @@ export class DuelEngineService {
 
     this.currentDuel = handle;
 
-    // Load all base engine scripts and procedures into duel state
-    const coreScripts = [
-      'constant.lua',
-      'utility.lua',
-      'cards_specific_functions.lua',
-      'proc_fusion.lua',
-      'proc_fusion_spell.lua',
-      'proc_ritual.lua',
-      'proc_synchro.lua',
-      'proc_xyz.lua',
-      'proc_union.lua',
-      'proc_link.lua',
-      'proc_pendulum.lua',
-      'proc_equip.lua',
-      'proc_gemini.lua',
-      'proc_spirit.lua',
-      'proc_normal.lua',
-      'proc_persistent.lua',
-      'proc_workaround.lua',
-      'deprecated_functions.lua',
-    ];
-
-    for (const scriptName of coreScripts) {
-      const src = this.scriptReader.getBaseScript(scriptName);
-      if (src) {
-        try {
-          this.lib.loadScript(handle, scriptName, src);
-        } catch (err) {
-          console.warn(`[DuelEngineService] Failed preloading ${scriptName}:`, err);
-        }
-      }
-    }
-
     // Shuffle Player 0 and Player 1 decks randomly using Fisher-Yates (unless noShuffle is requested)
     const p0DeckShuffled = options.noShuffle ? [...options.player0Deck] : this.shuffleArray(options.player0Deck);
     const p1DeckShuffled = options.noShuffle ? [...options.player1Deck] : this.shuffleArray(options.player1Deck);
@@ -598,6 +567,62 @@ export class DuelEngineService {
       }
     }
 
+    if (options.player0SpellTraps) {
+      for (const st of options.player0SpellTraps) {
+        const pos = (st.position ?? OcgPosition.FACEDOWN) as OcgPosition;
+        this.lib.duelNewCard(handle, {
+          team: 0,
+          duelist: 0,
+          code: st.code,
+          controller: 0,
+          location: OcgLocation.SZONE,
+          sequence: st.sequence,
+          position: pos,
+        });
+        const detail = this.cardReader.getCardDetail(st.code);
+        const isFaceup = (pos & OcgPosition.FACEUP) !== 0;
+        const card: FieldCard = {
+          id: `szone-0-${st.sequence}-${Date.now()}`,
+          code: st.code,
+          name: detail?.name ?? this.cardReader.getCardName(st.code),
+          controller: 0,
+          location: 'spell-trap',
+          sequence: st.sequence,
+          position: isFaceup ? 'faceup_spell' : 'facedown_spell',
+          statuses: [],
+        };
+        this.player0Field.spellTrapZones[st.sequence] = card;
+      }
+    }
+
+    if (options.player1SpellTraps) {
+      for (const st of options.player1SpellTraps) {
+        const pos = (st.position ?? OcgPosition.FACEDOWN) as OcgPosition;
+        this.lib.duelNewCard(handle, {
+          team: 1,
+          duelist: 0,
+          code: st.code,
+          controller: 1,
+          location: OcgLocation.SZONE,
+          sequence: st.sequence,
+          position: pos,
+        });
+        const detail = this.cardReader.getCardDetail(st.code);
+        const isFaceup = (pos & OcgPosition.FACEUP) !== 0;
+        const card: FieldCard = {
+          id: `szone-1-${st.sequence}-${Date.now()}`,
+          code: st.code,
+          name: detail?.name ?? this.cardReader.getCardName(st.code),
+          controller: 1,
+          location: 'spell-trap',
+          sequence: st.sequence,
+          position: isFaceup ? 'faceup_spell' : 'facedown_spell',
+          statuses: [],
+        };
+        this.player1Field.spellTrapZones[st.sequence] = card;
+      }
+    }
+
     this.lib.startDuel(handle);
 
     // Run initial processing step
@@ -810,6 +835,12 @@ export class DuelEngineService {
     } else if (rawType === OcgMessageType.DAMAGE && 'player' in msg && 'amount' in msg) {
       const pf = this.getPlayerField(msg.player);
       pf.currentLp = Math.max(0, pf.currentLp - msg.amount);
+      if (msg.player === 0) this.state.p0LP = pf.currentLp;
+      else this.state.p1LP = pf.currentLp;
+    } else if (rawType === OcgMessageType.PAY_LPCOST && 'player' in msg) {
+      const pf = this.getPlayerField(msg.player);
+      const cost = (msg as any).cost ?? (msg as any).amount ?? 0;
+      pf.currentLp = Math.max(0, pf.currentLp - cost);
       if (msg.player === 0) this.state.p0LP = pf.currentLp;
       else this.state.p1LP = pf.currentLp;
     } else if (rawType === OcgMessageType.RECOVER && 'player' in msg && 'amount' in msg) {

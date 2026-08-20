@@ -4,7 +4,9 @@
     <div v-if="card" class="previewer-header">
       <div class="header-main">
         <h3 class="card-name" :title="card.name">{{ card.name }}</h3>
-        <span class="era-badge" :class="`era-badge--${card.era.toLowerCase()}`">{{ card.era }}</span>
+        <span class="era-badge" :class="`era-badge--${card.era.toLowerCase()}`">{{
+          card.era
+        }}</span>
       </div>
       <div class="attribute-tag" :class="`attribute-tag--${card.attributeName.toLowerCase()}`">
         {{ card.attributeName }}
@@ -106,7 +108,9 @@
     <!-- Empty / Fallback State -->
     <div v-else class="previewer-empty">
       <div class="empty-icon">🎴</div>
-      <p class="empty-text">Hover over any card in the grid or deck list to view its full details.</p>
+      <p class="empty-text">
+        Hover over any card in the grid or deck list to view its full details.
+      </p>
     </div>
   </div>
 </template>
@@ -145,7 +149,11 @@ function onPreviewDragStart(e: DragEvent): void {
   if (e.dataTransfer && card.value) {
     e.dataTransfer.setData(
       'text/plain',
-      JSON.stringify({ cardId: card.value.id, isExtra: card.value.isExtraDeck, source: 'previewer' }),
+      JSON.stringify({
+        cardId: card.value.id,
+        isExtra: card.value.isExtraDeck,
+        source: 'previewer',
+      }),
     );
     e.dataTransfer.effectAllowed = 'copy';
   }
@@ -295,20 +303,23 @@ function onPreviewDragEnd(): void {
   display: flex;
   justify-content: center;
   align-items: center;
-  max-height: 250px;
   flex-shrink: 0;
 }
 
 .card-frame-container {
   position: relative;
-  height: 240px;
-  width: 165px;
+  height: auto;
+  width: 280px;
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(201, 162, 39, 0.2);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(201, 162, 39, 0.2);
   border: 1px solid rgba(201, 162, 39, 0.4);
   cursor: grab;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease;
+  transition:
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms ease;
 
   &:active {
     cursor: grabbing;
@@ -316,7 +327,9 @@ function onPreviewDragEnd(): void {
 
   &:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(201, 162, 39, 0.4);
+    box-shadow:
+      0 10px 24px rgba(0, 0, 0, 0.7),
+      0 0 16px rgba(201, 162, 39, 0.4);
 
     .preview-drag-hint {
       opacity: 1;

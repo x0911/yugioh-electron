@@ -738,6 +738,21 @@ export class MessageDecoder {
         };
       }
 
+      case OcgMessageType.PAY_LPCOST: {
+        type = 'PAY_LPCOST';
+        description = `Player ${msg.player} paid ${msg.cost} LP as cost.`;
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          cost: msg.cost,
+          amount: msg.cost,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
       case OcgMessageType.WIN: {
         type = 'WIN';
         description = `Duel ended! Winner: Player ${msg.player} (Reason: ${msg.reason}).`;
