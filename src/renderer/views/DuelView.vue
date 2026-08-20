@@ -150,7 +150,10 @@
       :instruction="actionGuideInfo?.instruction || 'Select card(s) to proceed with the active effect.'"
       :sub-text="actionGuideInfo?.subText"
       @update:model-value="duelStore.isCardSelectionModalOpen = $event"
+      @toggle-target="duelStore.toggleTargetByIndex"
       @toggle-index="duelStore.toggleTargetByIndex"
+      @minimize="duelStore.closeCardSelectionModal"
+      @hover-card="onCardHover"
       @cancel="duelStore.cancelActiveSelection"
       @confirm="duelStore.confirmActiveSelection"
     />
