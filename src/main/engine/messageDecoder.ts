@@ -38,6 +38,7 @@ export interface DecodedDuelEvent {
   reason?: number;
   target?: unknown;
   drawnCards?: { code: number; cardName: string }[];
+  cards?: number[];
   isPrompt: boolean;
   promptPlayer?: number;
   promptType?: string;
@@ -269,8 +270,77 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
     }
 
     case OcgMessageType.SELECT_SUM: {
-      const count = Math.max(1, msg.min ?? 1);
-      const indicies = Array.from({ length: count }, (_, i) => i);
+      const candidates = [...(msg.selects_must || []), ...(msg.selects || [])];
+      if (candidates.length === 0) {
+        return {
+          type: OcgResponseType.SELECT_SUM,
+          indicies: [],
+        };
+      }
+
+      const targetSum = msg.amount ?? 0;
+      const minCount = Math.max(1, msg.min || 1);
+      const maxCount = msg.max && msg.max > 0 ? msg.max : candidates.length;
+      const isEqualMode = msg.select_max === 0; // 0: Equal, 1: Greater or equal (or vice versa)
+
+      // Helper to get card values (primary level and alternate ritual tribute level if any)
+      const getCardValues = (c: any): number[] => {
+        const rawAmt = c.amount ?? 0;
+        const v1 = rawAmt & 0xffff;
+        const v2 = (rawAmt >> 16) & 0xffff;
+        const values: number[] = [];
+        if (v1 > 0) values.push(v1);
+        if (v2 > 0 && v2 !== v1) values.push(v2);
+        if (values.length === 0) values.push(1);
+        return values;
+      };
+
+      // Find combination of indices satisfying the sum condition
+      let bestIndices: number[] | null = null;
+      let bestSum = Infinity;
+
+      const search = (
+        idx: number,
+        currentIndices: number[],
+        currentSum: number,
+      ) => {
+        if (currentIndices.length >= minCount && currentIndices.length <= maxCount) {
+          if (isEqualMode && currentSum === targetSum) {
+            bestIndices = [...currentIndices];
+            return true;
+          } else if (!isEqualMode && currentSum >= targetSum) {
+            if (currentSum < bestSum) {
+              bestSum = currentSum;
+              bestIndices = [...currentIndices];
+            }
+            // Once we reach or exceed in greater mode, don't keep adding cards unnecessarily
+            return;
+          }
+        }
+
+        if (idx >= candidates.length || currentIndices.length >= maxCount) {
+          return;
+        }
+
+        // Try including candidate idx
+        const vals = getCardValues(candidates[idx]);
+        for (const v of vals) {
+          currentIndices.push(idx);
+          const foundExact = search(idx + 1, currentIndices, currentSum + v);
+          currentIndices.pop();
+          if (foundExact) return true;
+        }
+
+        // Try skipping candidate idx
+        const found = search(idx + 1, currentIndices, currentSum);
+        if (found) return true;
+
+        return false;
+      };
+
+      search(0, [], 0);
+
+      const indicies = bestIndices ?? Array.from({ length: Math.min(minCount, candidates.length) }, (_, i) => i);
       return {
         type: OcgResponseType.SELECT_SUM,
         indicies,
@@ -779,6 +849,45 @@ export class MessageDecoder {
         };
       }
 
+      case OcgMessageType.SELECT_UNSELECT_CARD: {
+        isPrompt = true;
+        type = 'SELECT_UNSELECT_CARD';
+        promptType = 'SELECT_UNSELECT_CARD';
+        promptPlayer = msg.player;
+
+        const description =
+          msg.min === 0
+            ? `Select up to ${msg.max} card(s).`
+            : `Select ${msg.min}${msg.max > msg.min ? ` to ${msg.max}` : ''} card(s).`;
+
+        promptData = {
+          player: msg.player,
+          can_finish: msg.can_finish,
+          can_cancel: msg.can_cancel,
+          min: msg.min,
+          max: msg.max,
+          selects: (msg.select_cards || []).map((s) => ({
+            ...s,
+            cardName: s.code > 0 ? this.cardReader.getCardName(s.code) : 'Card',
+          })),
+          unselects: (msg.unselect_cards || []).map((u) => ({
+            ...u,
+            cardName: u.code > 0 ? this.cardReader.getCardName(u.code) : 'Card',
+          })),
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
       case OcgMessageType.SELECT_CHAIN: {
         isPrompt = true;
         type = 'SELECT_CHAIN';
@@ -941,6 +1050,43 @@ export class MessageDecoder {
         };
       }
 
+      case OcgMessageType.SELECT_SUM: {
+        isPrompt = true;
+        type = 'SELECT_SUM';
+        promptType = 'SELECT_SUM';
+        promptPlayer = msg.player;
+        const targetSum = msg.amount ?? 0;
+        const isEqual = msg.select_max === 0;
+        description = isEqual
+          ? `Select monsters whose total Level equals ${targetSum}.`
+          : `Select monsters whose total Level equals or exceeds ${targetSum}.`;
+
+        const allSelects = [...(msg.selects_must || []), ...(msg.selects || [])];
+
+        promptData = {
+          player: msg.player,
+          select_max: msg.select_max,
+          amount: msg.amount,
+          min: msg.min,
+          max: msg.max,
+          selects: allSelects.map((s) => ({
+            ...s,
+            cardName: this.cardReader.getCardName(s.code),
+          })),
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
       case OcgMessageType.SELECT_PLACE:
       case OcgMessageType.SELECT_DISFIELD: {
         isPrompt = true;
@@ -958,6 +1104,125 @@ export class MessageDecoder {
         return {
           type,
           rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SHUFFLE_HAND: {
+        type = 'SHUFFLE_HAND';
+        const p = msg.player;
+        const cards = Array.isArray(msg.cards) ? msg.cards.map((c: any) => Number(c)) : [];
+        return {
+          type,
+          rawType,
+          player: p,
+          cards,
+          isPrompt: false,
+          description: `Player ${p} shuffled hand.`,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.ANNOUNCE_CARD: {
+        isPrompt = true;
+        type = 'ANNOUNCE_CARD';
+        promptType = 'ANNOUNCE_CARD';
+        promptPlayer = msg.player;
+        description = `Declare a card name.`;
+
+        const opcodes = Array.isArray(msg.opcodes) ? msg.opcodes.map((o: any) => sanitizeBigInts(o)) : [];
+
+        promptData = {
+          player: msg.player,
+          opcodes,
+        };
+
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.ANNOUNCE_RACE: {
+        isPrompt = true;
+        type = 'ANNOUNCE_RACE';
+        promptType = 'ANNOUNCE_RACE';
+        promptPlayer = msg.player;
+        description = `Declare ${msg.count} Monster Type(s).`;
+
+        promptData = {
+          player: msg.player,
+          count: msg.count,
+          available: sanitizeBigInts(msg.available),
+        };
+
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.ANNOUNCE_ATTRIB: {
+        isPrompt = true;
+        type = 'ANNOUNCE_ATTRIB';
+        promptType = 'ANNOUNCE_ATTRIB';
+        promptPlayer = msg.player;
+        description = `Declare ${msg.count} Attribute(s).`;
+
+        promptData = {
+          player: msg.player,
+          count: msg.count,
+          available: msg.available,
+        };
+
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.ANNOUNCE_NUMBER: {
+        isPrompt = true;
+        type = 'ANNOUNCE_NUMBER';
+        promptType = 'ANNOUNCE_NUMBER';
+        promptPlayer = msg.player;
+        description = `Declare a number.`;
+
+        promptData = {
+          player: msg.player,
+          options: Array.isArray(msg.options) ? msg.options.map((o: any) => sanitizeBigInts(o)) : [],
+        };
+
+        return {
+          type,
+          rawType,
+          player: msg.player,
           isPrompt,
           promptPlayer,
           promptType,

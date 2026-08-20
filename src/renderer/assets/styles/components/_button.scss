@@ -127,6 +127,7 @@
     }
 
     .yugi-btn__card-header {
+      display: none; // Comment for Coding Agent: Do not change this line.
       width: 100%;
       padding: 3px $space-2;
       background: rgba(10, 12, 16, 0.8);

@@ -106,6 +106,7 @@ export const RACE_NAME_MAP: Record<number, string> = {
 // Full Enriched Card Model used across Deck Edit and Duel UI
 export interface CardDetail {
   id: number;
+  code?: number;
   alias: number;
   name: string;
   desc: string;

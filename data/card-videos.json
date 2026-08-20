@@ -68,5 +68,11 @@
     "summon": "resources/videos/cards/summon_10000020.mp4",
     "attack": "resources/videos/cards/attack_10000020.mp4",
     "isPlaceholder": true
+  },
+  "33396948": {
+    "cardName": "Exodia the Forbidden One",
+    "series": "DM",
+    "victory": "resources/videos/cards/victory_33396948.mp4",
+    "isPlaceholder": true
   }
 }

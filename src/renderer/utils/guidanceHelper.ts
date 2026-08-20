@@ -161,6 +161,29 @@ export function getActionGuideInfo(
     }
 
     if (isFieldTarget) {
+      const isBattleAttackTarget =
+        boardState.currentPhase === 'BP' &&
+        prompts.selectCard.selects.every(
+          (s) => s.controller !== boardState.userField.playerId && (s.location === 4 || s.location === undefined)
+        );
+
+      if (isBattleAttackTarget) {
+        return {
+          category: 'target',
+          categoryLabel: 'Attack Target',
+          categoryIcon: '⚔️',
+          instruction: `Attack Target: Select a monster to attack.`,
+          subText: "Click the opponent's monster highlighted with a target icon on the field.",
+          isMandatory: !canCancel,
+          canCancel,
+          selectionProgress: {
+            current: selectedCount,
+            requiredMin: min,
+            requiredMax: max,
+          },
+        };
+      }
+
       return {
         category: 'target',
         categoryLabel: 'Effect Target',

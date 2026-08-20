@@ -115,6 +115,7 @@ import { computed } from 'vue';
 import type { FieldCard, FieldZoneType } from '../../../shared/types/field.js';
 import type { TargetInfo } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
+import { formatCombatStat } from '../../utils/format.js';
 import Tooltip from '../common/Tooltip.vue';
 import IconIndicator from '../common/IconIndicator.vue';
 
@@ -148,7 +149,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
-  (e: 'click-card', card: FieldCard | null, event: MouseEvent): void;
+  (e: 'click-card', card: FieldCard | null, event: MouseEvent, targetInfo?: TargetInfo | null): void;
+  (e: 'click-target', targetInfo: TargetInfo): void;
 }>();
 
 const isDefensePosition = computed(() => {
@@ -183,18 +185,13 @@ const activeStatMode = computed<'atk' | 'def'>(() => {
   return props.card?.position === 'faceup_defense' ? 'def' : 'atk';
 });
 
-const activeStatValue = computed<number | string>(() => {
+const activeStatValue = computed<string>(() => {
   if (!props.card) return '';
-  return props.card.position === 'faceup_defense' ? (props.card.def ?? 0) : (props.card.atk ?? 0);
+  const raw = props.card.position === 'faceup_defense' ? props.card.def : props.card.atk;
+  return formatCombatStat(raw);
 });
 
 const tooltipText = computed(() => {
-  if (props.isInert && props.inertTooltip) {
-    return props.inertTooltip;
-  }
-  if (props.isPromptActive && props.card && (!props.targetInfo || !props.targetInfo.isSelectable)) {
-    return 'This card cannot be selected as a target';
-  }
   if (props.targetInfo && props.targetInfo.isSelectable) {
     return props.targetInfo.tooltipText;
   }
@@ -202,6 +199,12 @@ const tooltipText = computed(() => {
     return props.card.position === 'facedown_defense'
       ? 'Face-down Defense Monster (Set)'
       : 'Face-down Spell/Trap (Set)';
+  }
+  if (props.isInert && props.inertTooltip) {
+    return props.inertTooltip;
+  }
+  if (props.isPromptActive && props.card && (!props.targetInfo || !props.targetInfo.isSelectable)) {
+    return 'This card cannot be selected as a target';
   }
   return '';
 });
@@ -226,9 +229,12 @@ function onMouseLeave(): void {
 }
 
 function onClick(event: MouseEvent): void {
-  if (!props.isInert) {
-    emit('click-card', props.card, event);
+  if (props.isInert) return;
+  if (props.targetInfo && props.targetInfo.isSelectable) {
+    emit('click-target', props.targetInfo);
+    return;
   }
+  emit('click-card', props.card, event, props.targetInfo);
 }
 </script>
 

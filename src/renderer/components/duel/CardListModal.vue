@@ -90,8 +90,8 @@
                 </span>
               </div>
               <div class="tile-combat-stats">
-                <span class="stat-atk">{{ card.atk ?? 0 }}</span>
-                <span class="stat-def">{{ card.def ?? 0 }}</span>
+                <span class="stat-atk">{{ formatCombatStat(card.atk) }}</span>
+                <span class="stat-def">{{ formatCombatStat(card.def) }}</span>
               </div>
             </div>
 
@@ -126,6 +126,7 @@ import type { FieldCard } from '../../../shared/types/field.js';
 import { useDuelStore } from '../../stores/duelStore.js';
 import YugiModal from '../common/YugiModal.vue';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
+import { formatCombatStat } from '../../utils/format.js';
 
 const props = withDefaults(
   defineProps<{

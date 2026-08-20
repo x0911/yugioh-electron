@@ -86,12 +86,12 @@
           >
             <div class="stat-col">
               <span class="stat-lbl">ATK</span>
-              <span class="stat-val stat-val--atk">{{ effectiveCard.atk ?? 0 }}</span>
+              <span class="stat-val stat-val--atk">{{ formatCombatStat(effectiveCard.atk) }}</span>
             </div>
             <div class="stat-divider">/</div>
             <div class="stat-col">
               <span class="stat-lbl">DEF</span>
-              <span class="stat-val stat-val--def">{{ effectiveCard.def ?? 0 }}</span>
+              <span class="stat-val stat-val--def">{{ formatCombatStat(effectiveCard.def) }}</span>
             </div>
           </div>
 
@@ -143,6 +143,7 @@ import { computed } from 'vue';
 import type { FieldCard, CardStatusType } from '../../../shared/types/field.js';
 import { useDuelStore } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
+import { formatCombatStat } from '../../utils/format.js';
 import IconIndicator from '../common/IconIndicator.vue';
 
 const props = withDefaults(

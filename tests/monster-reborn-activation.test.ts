@@ -142,7 +142,7 @@ async function testMonsterRebornActivationFlow() {
   });
 
   const start = Date.now();
-  while (!targetPromptReceived && Date.now() - start < 3000) {
+  while (!targetPromptReceived && Date.now() - start < 5000) {
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
 

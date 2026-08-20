@@ -16,11 +16,18 @@ import type {
   SelectOptionPayload,
   SelectPlacePayload,
   SelectTributePayload,
+  SelectSumPayload,
+  SelectUnselectCardPayload,
+  AnnounceCardPayload,
+  AnnounceRacePayload,
+  AnnounceAttribPayload,
+  AnnounceNumberPayload,
 } from '../../shared/types/duel.js';
 import type {
   DuelBoardState,
   FieldCard,
   PlayerFieldState,
+  CardPositionState,
 } from '../../shared/types/field.js';
 import { useSettingsStore } from './settingsStore.js';
 import { useDeckEditStore } from './deckEditStore.js';
@@ -36,14 +43,13 @@ const DEFAULT_USER_MAIN_DECK = [
   54652250, 54652250, 54652250, // Man-Eater Bug x3
   40640057, 40640057, // Sangan x2
   33782437, 33782437, // Gemini Elf x2
-  79759861, 79759861, 79759861, // Tribute to The Doomed x3 (Cost discard + target destroy on field)
-  77414702, 77414702, // Magic Jammer x2 (Cost discard + trap chain)
-  55144522, 55144522, 55144522, // Pot of Greed x3
-  53129443, 53129443, // Dark Hole x2
+  79571449, 79571449, // Graceful Charity x2
+  53129443, // Dark Hole x1
   12580477, // Raigeki x1
-  4206964, 4206964, 4206964, // Trap Hole x3
-  44095762, 44095762, // Mirror Force x2
-  24068492, 24068492, // Just Desserts x2
+  83764718, // Monster Reborn x1
+  5318639, // Mystical Space Typhoon x1
+  44095762, // Mirror Force x1
+  78193831, // Trap Hole x1
 ];
 
 // Default Extra Deck (Fusion Monsters)
@@ -90,6 +96,12 @@ export interface DuelStoreState {
   activeSelectOption: SelectOptionPayload | null;
   activeSelectPlace: SelectPlacePayload | null;
   activeSelectTribute: SelectTributePayload | null;
+  activeSelectSum: SelectSumPayload | null;
+  activeSelectUnselectCard: SelectUnselectCardPayload | null;
+  activeAnnounceCard: AnnounceCardPayload | null;
+  activeAnnounceRace: AnnounceRacePayload | null;
+  activeAnnounceAttrib: AnnounceAttribPayload | null;
+  activeAnnounceNumber: AnnounceNumberPayload | null;
 
   // Card Database Cache
   cardMap: Map<number, CardDetail>;
@@ -185,6 +197,12 @@ export const useDuelStore = defineStore('duel', {
     activeSelectOption: null,
     activeSelectPlace: null,
     activeSelectTribute: null,
+    activeSelectSum: null,
+    activeSelectUnselectCard: null,
+    activeAnnounceCard: null,
+    activeAnnounceRace: null,
+    activeAnnounceAttrib: null,
+    activeAnnounceNumber: null,
     cardMap: new Map(),
     isCardsLoaded: false,
     selectedTargetIndices: [],
@@ -231,19 +249,30 @@ export const useDuelStore = defineStore('duel', {
       return !!state.activeIdleCmd?.to_ep;
     },
 
+    activeSelectionPayload: (state): SelectCardPayload | SelectTributePayload | SelectSumPayload | SelectUnselectCardPayload | null => {
+      return state.activeSelectUnselectCard || state.activeSelectSum || state.activeSelectCard || state.activeSelectTribute;
+    },
+
     hasActiveSelectionPrompt(state): boolean {
-      return !!state.activeSelectCard || !!state.activeSelectTribute;
+      return !!state.activeSelectUnselectCard || !!state.activeSelectSum || !!state.activeSelectCard || !!state.activeSelectTribute;
     },
 
     activeSelectionMin(state): number {
-      return state.activeSelectTribute?.min ?? state.activeSelectCard?.min ?? 1;
+      return state.activeSelectSum?.min || state.activeSelectUnselectCard?.min || state.activeSelectTribute?.min || state.activeSelectCard?.min || 1;
     },
 
     activeSelectionMax(state): number {
-      return state.activeSelectTribute?.max ?? state.activeSelectCard?.max ?? 1;
+      return state.activeSelectSum?.max || state.activeSelectUnselectCard?.max || state.activeSelectTribute?.max || state.activeSelectCard?.max || 1;
     },
 
     canConfirmActiveSelection(state): boolean {
+      if (state.activeSelectUnselectCard) {
+        if (state.activeSelectUnselectCard.can_finish && state.selectedTargetIndices.length === 0) return true;
+        return state.selectedTargetIndices.length > 0;
+      }
+      if (state.activeSelectSum) {
+        return state.selectedTargetIndices.length > 0;
+      }
       const min = state.activeSelectTribute?.min ?? state.activeSelectCard?.min ?? 1;
       const max = state.activeSelectTribute?.max ?? state.activeSelectCard?.max ?? 1;
       return state.selectedTargetIndices.length >= min && state.selectedTargetIndices.length <= max;
@@ -565,9 +594,54 @@ export const useDuelStore = defineStore('duel', {
               this.boardState.opponentField.series = this.selectedOpponent.series;
               this.boardState.opponentField.characterId = this.selectedOpponent.id;
             }
+
+            this.enrichDynamicStatsOnBoard();
           }
         } catch (err) {
           console.error('[DuelStore] Failed fetching board state:', err);
+        }
+      }
+    },
+
+    enrichDynamicStatsOnBoard(): void {
+      const uPf = this.boardState.userField;
+      const oPf = this.boardState.opponentField;
+      for (const card of uPf.monsterZones) {
+        if (!card || card.code <= 0) continue;
+        if (card.code === 10000020) {
+          card.atk = uPf.hand.length * 1000;
+          card.def = uPf.hand.length * 1000;
+        } else if (card.code === 98777992) {
+          card.atk = uPf.hand.length * 600;
+          card.def = uPf.hand.length * 600;
+        } else if (card.code === 36584821) {
+          const totalBanished = uPf.banished.length + oPf.banished.length;
+          card.atk = totalBanished * 400;
+          card.def = totalBanished * 400;
+        } else if (card.code === 36021814) {
+          const servCodes = [32274490, 36021814, 16638212, 78636495];
+          const count = uPf.graveyard.filter((c) => servCodes.includes(c.code)).length;
+          card.atk = count * 1000;
+          card.def = 0;
+        }
+      }
+      for (const card of oPf.monsterZones) {
+        if (!card || card.code <= 0) continue;
+        if (card.code === 10000020) {
+          card.atk = oPf.hand.length * 1000;
+          card.def = oPf.hand.length * 1000;
+        } else if (card.code === 98777992) {
+          card.atk = oPf.hand.length * 600;
+          card.def = oPf.hand.length * 600;
+        } else if (card.code === 36584821) {
+          const totalBanished = uPf.banished.length + oPf.banished.length;
+          card.atk = totalBanished * 400;
+          card.def = totalBanished * 400;
+        } else if (card.code === 36021814) {
+          const servCodes = [32274490, 36021814, 16638212, 78636495];
+          const count = oPf.graveyard.filter((c) => servCodes.includes(c.code)).length;
+          card.atk = count * 1000;
+          card.def = 0;
         }
       }
     },
@@ -582,9 +656,192 @@ export const useDuelStore = defineStore('duel', {
       this.activeSelectOption = null;
       this.activeSelectPlace = null;
       this.activeSelectTribute = null;
+      this.activeSelectSum = null;
+      this.activeSelectUnselectCard = null;
+      this.activeAnnounceCard = null;
+      this.activeAnnounceRace = null;
+      this.activeAnnounceAttrib = null;
+      this.activeAnnounceNumber = null;
       this.selectedTargetIndices = [];
       this.isPromptWaiting = false;
       this.isCardSelectionModalOpen = false;
+    },
+
+    applyCardMoveToBoard(moveEvt: {
+      code?: number;
+      cardName?: string;
+      controller?: number;
+      fromLocation?: number;
+      fromSequence?: number;
+      toLocation?: number;
+      toSequence?: number;
+      position?: number;
+      reason?: number;
+    }): void {
+      const code = moveEvt.code ?? 0;
+      const fromLoc = moveEvt.fromLocation ?? 0;
+      const fromSeq = moveEvt.fromSequence ?? 0;
+      const toLoc = moveEvt.toLocation ?? 0;
+      const toSeq = moveEvt.toSequence ?? 0;
+      const pos = moveEvt.position ?? 1;
+      const controller = (moveEvt.controller ?? 0) as 0 | 1;
+
+      if (fromLoc === toLoc && fromSeq === toSeq) return;
+
+      const getPf = (c: 0 | 1) => (c === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField);
+      const fromPf = getPf(controller);
+      const toPf = getPf(controller);
+
+      let card: FieldCard | null = null;
+
+      // 1. Remove from source
+      if (fromLoc === 2) {
+        // Hand
+        let idx = -1;
+        if (controller === this.userPlayerId && code > 0) {
+          idx = fromPf.hand.findIndex((c) => c && c.code === code);
+        }
+        if (idx < 0) {
+          idx = fromSeq >= 0 && fromSeq < fromPf.hand.length ? fromSeq : (fromPf.hand.length - 1);
+        }
+        if (idx >= 0 && idx < fromPf.hand.length) {
+          card = fromPf.hand.splice(idx, 1)[0];
+        }
+        for (let i = 0; i < fromPf.hand.length; i++) {
+          if (fromPf.hand[i]) fromPf.hand[i].sequence = i;
+        }
+      } else if (fromLoc === 4) {
+        // Monster Zone
+        card = fromPf.monsterZones[fromSeq] ?? null;
+        fromPf.monsterZones[fromSeq] = null;
+      } else if (fromLoc === 8) {
+        // Spell/Trap Zone or Field Zone
+        if (fromSeq === 5) {
+          card = fromPf.fieldZone;
+          fromPf.fieldZone = null;
+        } else {
+          card = fromPf.spellTrapZones[fromSeq] ?? null;
+          fromPf.spellTrapZones[fromSeq] = null;
+        }
+      } else if (fromLoc === 16) {
+        // Graveyard
+        const idx = code > 0 ? fromPf.graveyard.findIndex((c) => c && c.code === code) : 0;
+        if (idx >= 0 && idx < fromPf.graveyard.length) {
+          card = fromPf.graveyard.splice(idx, 1)[0];
+        }
+      } else if (fromLoc === 32) {
+        // Banished
+        const idx = code > 0 ? fromPf.banished.findIndex((c) => c && c.code === code) : 0;
+        if (idx >= 0 && idx < fromPf.banished.length) {
+          card = fromPf.banished.splice(idx, 1)[0];
+        }
+      } else if (fromLoc === 64) {
+        // Extra Deck
+        const idx = code > 0 ? fromPf.extraDeck.findIndex((c) => c && c.code === code) : 0;
+        if (idx >= 0 && idx < fromPf.extraDeck.length) {
+          card = fromPf.extraDeck.splice(idx, 1)[0];
+        }
+        fromPf.extraDeckCount = fromPf.extraDeck.length;
+      } else if (fromLoc === 1) {
+        // Deck
+        fromPf.deckCount = Math.max(0, fromPf.deckCount - 1);
+      }
+
+      // 2. Resolve card detail
+      const finalCode = code > 0 ? code : (card?.code ?? 0);
+      const detail = finalCode > 0 ? this.cardMap.get(finalCode) : null;
+      const cardName = moveEvt.cardName || detail?.name || card?.name || 'Card';
+
+      if (!card) {
+        card = {
+          id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          code: finalCode,
+          name: cardName,
+          controller,
+          location: 'monster',
+          sequence: toSeq,
+          position: 'faceup_attack',
+          atk: detail?.isMonster ? detail.atk : undefined,
+          def: detail?.isMonster ? detail.def : undefined,
+          level: detail?.isMonster ? detail.level : undefined,
+          attribute: detail?.attributeName,
+          race: detail?.raceName,
+          description: detail?.desc,
+          statuses: [],
+        };
+      } else {
+        card.code = finalCode;
+        card.name = cardName;
+        card.controller = controller;
+        if (detail) {
+          if (detail.isMonster) {
+            card.atk = detail.atk;
+            card.def = detail.def;
+            card.level = detail.level;
+          }
+          card.attribute = detail.attributeName;
+          card.race = detail.raceName;
+          card.description = detail.desc;
+        }
+      }
+
+      // 3. Add to destination
+      if (toLoc === 4) {
+        // Monster Zone
+        let pState: CardPositionState = 'faceup_attack';
+        if ((pos & 0x1) !== 0) pState = 'faceup_attack';
+        else if ((pos & 0x4) !== 0) pState = 'faceup_defense';
+        else if ((pos & 0x8) !== 0) pState = 'facedown_defense';
+        card.location = 'monster';
+        card.sequence = toSeq;
+        card.position = pState;
+        toPf.monsterZones[toSeq] = card;
+      } else if (toLoc === 8) {
+        // Spell Zone
+        if (toSeq === 5) {
+          card.location = 'field';
+          card.sequence = 0;
+          card.position = 'faceup_spell';
+          toPf.fieldZone = card;
+        } else {
+          const isFaceup = (pos & 0x5) !== 0;
+          card.location = 'spell-trap';
+          card.sequence = toSeq;
+          card.position = isFaceup ? 'faceup_spell' : 'facedown_spell';
+          toPf.spellTrapZones[toSeq] = card;
+        }
+      } else if (toLoc === 16) {
+        // Graveyard
+        card.location = 'graveyard';
+        card.position = 'faceup_spell';
+        card.sequence = toPf.graveyard.length;
+        toPf.graveyard.unshift(card);
+      } else if (toLoc === 32) {
+        // Banished
+        card.location = 'banished';
+        card.position = 'faceup_spell';
+        card.sequence = toPf.banished.length;
+        toPf.banished.unshift(card);
+      } else if (toLoc === 2) {
+        // Hand
+        card.location = 'hand';
+        card.sequence = toPf.hand.length;
+        card.position = controller === this.userPlayerId ? 'faceup_spell' : 'facedown_spell';
+        if (controller !== this.userPlayerId) card.code = 0;
+        toPf.hand.push(card);
+        for (let i = 0; i < toPf.hand.length; i++) {
+          if (toPf.hand[i]) toPf.hand[i].sequence = i;
+        }
+      } else if (toLoc === 1) {
+        // Deck
+        toPf.deckCount++;
+      } else if (toLoc === 64) {
+        // Extra Deck
+        card.location = 'extra-deck';
+        card.position = 'facedown_spell';
+        toPf.extraDeck.unshift(card);
+        toPf.extraDeckCount = toPf.extraDeck.length;
+      }
     },
 
     /**
@@ -597,12 +854,116 @@ export const useDuelStore = defineStore('duel', {
       if (event.phase !== undefined) {
         this.boardState.currentPhase = (event.phase as DuelBoardState['currentPhase']) || 'M1';
       }
+      if (event.type === 'NEW_TURN' && event.player !== undefined) {
+        const turnPlayer = event.player as 0 | 1;
+        this.boardState.userField.isTurn = turnPlayer === this.userPlayerId;
+        this.boardState.opponentField.isTurn = turnPlayer !== this.userPlayerId;
+      }
       if (event.type === 'WIN') {
         this.boardState.winner = (event.player as 0 | 1) ?? null;
         this.boardState.winReason = event.reason ?? null;
         this.clearPrompts();
         await this.fetchBoardState();
         return;
+      }
+
+      // Incremental board state updates for non-prompt events
+      if (event.type === 'MOVE') {
+        this.applyCardMoveToBoard(event as any);
+      } else if (event.type === 'SHUFFLE_HAND' && event.player !== undefined) {
+        const p = event.player as 0 | 1;
+        const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+        const newCodes = (event as any).cards as number[];
+        if (newCodes && newCodes.length > 0 && p === this.userPlayerId) {
+          const remaining = [...pf.hand];
+          const newHand: FieldCard[] = [];
+          for (const code of newCodes) {
+            const idx = remaining.findIndex((c) => c && c.code === code);
+            if (idx >= 0) {
+              newHand.push(remaining.splice(idx, 1)[0]);
+            } else if (remaining.length > 0) {
+              newHand.push(remaining.shift()!);
+            }
+          }
+          while (remaining.length > 0) {
+            newHand.push(remaining.shift()!);
+          }
+          for (let i = 0; i < newHand.length; i++) {
+            newHand[i].sequence = i;
+          }
+          pf.hand = newHand;
+        } else {
+          for (let i = 0; i < pf.hand.length; i++) {
+            if (pf.hand[i]) pf.hand[i].sequence = i;
+          }
+        }
+      } else if (event.type === 'DRAW' && event.player !== undefined) {
+        const p = event.player as 0 | 1;
+        const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+        pf.deckCount = Math.max(0, pf.deckCount - 1);
+        const drawnCards = (event as any).drawnCards || (event as any).drawn || [];
+        if (drawnCards.length > 0) {
+          for (const d of drawnCards) {
+            const code = p === this.userPlayerId ? (d.code || 0) : 0;
+            const detail = code > 0 ? this.cardMap.get(code) : null;
+            const card: FieldCard = {
+              id: `hand-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              code,
+              name: detail?.name || d.cardName || 'Card',
+              controller: p,
+              location: 'hand',
+              sequence: pf.hand.length,
+              position: p === this.userPlayerId ? 'faceup_spell' : 'facedown_spell',
+              atk: detail?.isMonster ? detail.atk : undefined,
+              def: detail?.isMonster ? detail.def : undefined,
+              level: detail?.isMonster ? detail.level : undefined,
+              attribute: detail?.attributeName,
+              race: detail?.raceName,
+              description: detail?.desc,
+              statuses: [],
+            };
+            pf.hand.push(card);
+          }
+        }
+      } else if (event.type === 'POS_CHANGE' || event.type === 'FLIPSUMMONING') {
+        const p = (event.controller ?? this.userPlayerId) as 0 | 1;
+        const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+        const seq = event.sequence ?? 0;
+        const card = pf.monsterZones[seq];
+        if (card) {
+          if (event.code && event.code > 0) {
+            card.code = event.code;
+            const detail = this.cardMap.get(event.code);
+            card.name = detail?.name || event.cardName || card.name;
+            if (detail?.isMonster) {
+              card.atk = detail.atk;
+              card.def = detail.def;
+              card.level = detail.level;
+              card.attribute = detail.attributeName;
+              card.race = detail.raceName;
+              card.description = detail.desc;
+            }
+          }
+          if (event.type === 'FLIPSUMMONING' || (event.position && (event.position & 0x1) !== 0)) {
+            card.position = 'faceup_attack';
+          } else if (event.position && (event.position & 0x4) !== 0) {
+            card.position = 'faceup_defense';
+          } else if (event.position && (event.position & 0x8) !== 0) {
+            card.position = 'facedown_defense';
+          }
+        }
+      } else if (event.type === 'DAMAGE' && event.player !== undefined && (event as any).amount !== undefined) {
+        const p = event.player as 0 | 1;
+        const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+        pf.currentLp = Math.max(0, pf.currentLp - ((event as any).amount as number));
+      } else if (event.type === 'RECOVER' && event.player !== undefined && (event as any).amount !== undefined) {
+        const p = event.player as 0 | 1;
+        const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+        pf.currentLp += (event as any).amount as number;
+      } else if (event.type === 'LPUPDATE' && event.player !== undefined && (event as any).lp !== undefined) {
+        const p = event.player as 0 | 1;
+        const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+        pf.currentLp = (event as any).lp as number;
       }
 
       // If this event is a prompt for the human player:
@@ -618,10 +979,40 @@ export const useDuelStore = defineStore('duel', {
           const cardPayload = event.promptData as SelectCardPayload;
           this.activeSelectCard = cardPayload;
           // Open center modal ONLY if at least one selectable card is in a hidden zone (Deck, Graveyard, Banished, Extra Deck)
-          const hasHiddenLocations = cardPayload.selects?.some((s) => {
-            const loc = s.location ?? 1;
-            return loc === 1 || loc === 16 || loc === 32 || loc === 64;
-          });
+          const isHiddenLoc = (loc?: number) => {
+            if (!loc) return false;
+            return (
+              loc === 1 ||
+              loc === 16 ||
+              loc === 32 ||
+              loc === 64 ||
+              (loc & 1) !== 0 ||
+              (loc & 16) !== 0 ||
+              (loc & 32) !== 0 ||
+              (loc & 64) !== 0
+            );
+          };
+          const hasHiddenLocations = cardPayload.selects?.some((s) => isHiddenLoc(s.location));
+          this.isCardSelectionModalOpen = Boolean(hasHiddenLocations);
+        } else if (event.promptType === 'SELECT_UNSELECT_CARD') {
+          const unselectPayload = event.promptData as SelectUnselectCardPayload;
+          this.activeSelectUnselectCard = unselectPayload;
+          const isHiddenLoc = (loc?: number) => {
+            if (!loc) return false;
+            return (
+              loc === 1 ||
+              loc === 16 ||
+              loc === 32 ||
+              loc === 64 ||
+              (loc & 1) !== 0 ||
+              (loc & 16) !== 0 ||
+              (loc & 32) !== 0 ||
+              (loc & 64) !== 0
+            );
+          };
+          const hasHiddenLocations =
+            unselectPayload.selects?.some((s) => isHiddenLoc(s.location)) ||
+            unselectPayload.unselects?.some((s) => isHiddenLoc(s.location));
           this.isCardSelectionModalOpen = Boolean(hasHiddenLocations);
         } else if (event.promptType === 'SELECT_CHAIN') {
           const chainPayload = event.promptData as SelectChainPayload;
@@ -649,12 +1040,51 @@ export const useDuelStore = defineStore('duel', {
           const tributePayload = event.promptData as SelectTributePayload;
           this.activeSelectTribute = tributePayload;
           // Tributes on the field or in hand don't need center modal by default
-          const hasHiddenLocations = tributePayload.selects?.some((s) => {
-            const loc = s.location ?? 4;
-            return loc === 1 || loc === 16 || loc === 32 || loc === 64;
-          });
+          const isHiddenLoc = (loc?: number) => {
+            if (!loc) return false;
+            return (
+              loc === 1 ||
+              loc === 16 ||
+              loc === 32 ||
+              loc === 64 ||
+              (loc & 1) !== 0 ||
+              (loc & 16) !== 0 ||
+              (loc & 32) !== 0 ||
+              (loc & 64) !== 0
+            );
+          };
+          const hasHiddenLocations = tributePayload.selects?.some((s) => isHiddenLoc(s.location));
           this.isCardSelectionModalOpen = Boolean(hasHiddenLocations);
+        } else if (event.promptType === 'SELECT_SUM') {
+          const sumPayload = event.promptData as SelectSumPayload;
+          this.activeSelectSum = sumPayload;
+          const isHiddenLoc = (loc?: number) => {
+            if (!loc) return false;
+            return (
+              loc === 1 ||
+              loc === 16 ||
+              loc === 32 ||
+              loc === 64 ||
+              (loc & 1) !== 0 ||
+              (loc & 16) !== 0 ||
+              (loc & 32) !== 0 ||
+              (loc & 64) !== 0
+            );
+          };
+          const hasHiddenLocations = sumPayload.selects?.some((s) => isHiddenLoc(s.location));
+          this.isCardSelectionModalOpen = Boolean(hasHiddenLocations);
+        } else if (event.promptType === 'ANNOUNCE_CARD') {
+          this.activeAnnounceCard = event.promptData as AnnounceCardPayload;
+        } else if (event.promptType === 'ANNOUNCE_RACE') {
+          this.activeAnnounceRace = event.promptData as AnnounceRacePayload;
+        } else if (event.promptType === 'ANNOUNCE_ATTRIB') {
+          this.activeAnnounceAttrib = event.promptData as AnnounceAttribPayload;
+        } else if (event.promptType === 'ANNOUNCE_NUMBER') {
+          this.activeAnnounceNumber = event.promptData as AnnounceNumberPayload;
         }
+
+        // Snapshot synchronization when waiting for player response
+        await this.fetchBoardState();
       } else if (!event.isPrompt) {
         if (
           event.type === 'NEW_TURN' ||
@@ -668,9 +1098,6 @@ export const useDuelStore = defineStore('duel', {
           this.clearPrompts();
         }
       }
-
-      // Sync board state snapshot
-      await this.fetchBoardState();
     },
 
     /**
@@ -920,11 +1347,77 @@ export const useDuelStore = defineStore('duel', {
         }
       }
 
+      // 3. Check active Select/Unselect Card prompt
+      if (this.activeSelectUnselectCard && this.activeSelectUnselectCard.selects) {
+        const selectIndex = this.activeSelectUnselectCard.selects.findIndex(
+          (s) => s.controller === controller && (s.location === location || (s.location & location) !== 0) && s.sequence === sequence,
+        );
+        if (selectIndex >= 0) {
+          const item = this.activeSelectUnselectCard.selects[selectIndex];
+          const isSelected = this.selectedTargetIndices.includes(selectIndex);
+          const owner = controller === this.userPlayerId ? 'user' : 'ai';
+          const cardName = item.cardName || 'Card';
+
+          let locType: TargetInfo['locationType'] = 'field';
+          if (location === 2) locType = 'hand';
+          else if (location === 1) locType = 'deck';
+          else if (location === 64) locType = 'extra-deck';
+          else if (location === 16) locType = 'graveyard';
+          else if (location === 32) locType = 'banished';
+
+          return {
+            isSelectable: true,
+            selectIndex,
+            isSelected,
+            owner,
+            locationType: locType,
+            tooltipText: `Selectable Cost/Target: ${cardName}`,
+            isCost: true,
+            isTribute: false,
+          };
+        }
+      }
+
+      // 4. Check active Select Sum prompt (e.g. Ritual Tributes / Synchro Materials)
+      if (this.activeSelectSum && this.activeSelectSum.selects) {
+        const selectIndex = this.activeSelectSum.selects.findIndex(
+          (s) => s.controller === controller && (s.location === location || (s.location & location) !== 0) && s.sequence === sequence,
+        );
+        if (selectIndex >= 0) {
+          const item = this.activeSelectSum.selects[selectIndex];
+          const isSelected = this.selectedTargetIndices.includes(selectIndex);
+          const owner = controller === this.userPlayerId ? 'user' : 'ai';
+          const cardName = item.cardName || 'Monster';
+
+          let locType: TargetInfo['locationType'] = 'field';
+          if (location === 2) locType = 'hand';
+          else if (location === 1) locType = 'deck';
+          else if (location === 64) locType = 'extra-deck';
+          else if (location === 16) locType = 'graveyard';
+          else if (location === 32) locType = 'banished';
+
+          return {
+            isSelectable: true,
+            selectIndex,
+            isSelected,
+            owner,
+            locationType: locType,
+            tooltipText: `Selectable Ritual/Level Tribute: ${cardName}`,
+            isCost: true,
+            isTribute: true,
+          };
+        }
+      }
+
       return null;
     },
 
     toggleTargetByIndex(selectIndex: number): void {
-      const maxAllowed = this.activeSelectTribute?.max ?? this.activeSelectCard?.max ?? 1;
+      if (this.activeSelectUnselectCard) {
+        this.executeSelectUnselectCard(selectIndex);
+        return;
+      }
+      const maxAllowed = this.activeSelectSum?.max || this.activeSelectTribute?.max || this.activeSelectCard?.max || 99;
       const existingPos = this.selectedTargetIndices.indexOf(selectIndex);
       if (existingPos >= 0) {
         this.selectedTargetIndices.splice(existingPos, 1);
@@ -942,6 +1435,13 @@ export const useDuelStore = defineStore('duel', {
     },
 
     async confirmActiveSelection(): Promise<boolean> {
+      if (this.activeSelectUnselectCard) {
+        return this.executeSelectUnselectCard(null);
+      }
+      if (this.activeSelectSum) {
+        const indices = [...this.selectedTargetIndices];
+        return this.executeSelectSum(indices);
+      }
       if (this.activeSelectTribute) {
         const indices = [...this.selectedTargetIndices];
         return this.executeSelectTribute(indices);
@@ -954,6 +1454,9 @@ export const useDuelStore = defineStore('duel', {
     },
 
     async cancelActiveSelection(): Promise<boolean> {
+      if (this.activeSelectUnselectCard && this.activeSelectUnselectCard.can_cancel) {
+        return this.executeSelectUnselectCard(null);
+      }
       if (this.activeSelectCard && this.activeSelectCard.can_cancel) {
         return this.executeSelectCard([]);
       }
@@ -1078,11 +1581,31 @@ export const useDuelStore = defineStore('duel', {
       });
     },
 
+    async executeSelectUnselectCard(index: number | null): Promise<boolean> {
+      if (index === null) {
+        this.isCardSelectionModalOpen = false;
+      }
+      this.selectedTargetIndices = [];
+      return this.sendCommand({
+        type: 7, // SELECT_UNSELECT_CARD
+        index,
+      });
+    },
+
     async executeSelectTribute(selectedIndices: number[]): Promise<boolean> {
       this.isCardSelectionModalOpen = false;
       return this.sendCommand({
         type: 12, // SELECT_TRIBUTE
         cards: selectedIndices,
+        indicies: selectedIndices,
+      });
+    },
+
+    async executeSelectSum(selectedIndices: number[]): Promise<boolean> {
+      this.isCardSelectionModalOpen = false;
+      return this.sendCommand({
+        type: 14, // SELECT_SUM
+        indicies: selectedIndices,
       });
     },
 
@@ -1118,6 +1641,34 @@ export const useDuelStore = defineStore('duel', {
       return this.sendCommand({
         type: 4, // SELECT_OPTION
         index: optionIndex,
+      });
+    },
+
+    async executeAnnounceCard(code: number): Promise<boolean> {
+      return this.sendCommand({
+        type: 18, // ANNOUNCE_CARD
+        card: code,
+      });
+    },
+
+    async executeAnnounceRace(races: bigint[] | number[]): Promise<boolean> {
+      return this.sendCommand({
+        type: 16, // ANNOUNCE_RACE
+        races,
+      });
+    },
+
+    async executeAnnounceAttrib(attributes: number[]): Promise<boolean> {
+      return this.sendCommand({
+        type: 17, // ANNOUNCE_ATTRIB
+        attributes,
+      });
+    },
+
+    async executeAnnounceNumber(value: number): Promise<boolean> {
+      return this.sendCommand({
+        type: 19, // ANNOUNCE_NUMBER
+        value,
       });
     },
 

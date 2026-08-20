@@ -40,6 +40,11 @@ export interface DuelOptions {
   player1Deck: number[];
   player0ExtraDeck?: number[];
   player1ExtraDeck?: number[];
+  player0Graveyard?: number[];
+  player1Graveyard?: number[];
+  player0Monsters?: Array<{ code: number; sequence: number; position?: number }>;
+  player1Monsters?: Array<{ code: number; sequence: number; position?: number }>;
+  noShuffle?: boolean;
   startingLP?: number;
   startingDrawCount?: number;
   drawCountPerTurn?: number;
@@ -285,15 +290,42 @@ export class DuelEngineService {
 
     this.currentDuel = handle;
 
-    // Load base engine scripts into duel state
-    const constantSrc = this.scriptReader.getBaseScript('constant.lua');
-    const utilitySrc = this.scriptReader.getBaseScript('utility.lua');
-    if (constantSrc) this.lib.loadScript(handle, 'constant.lua', constantSrc);
-    if (utilitySrc) this.lib.loadScript(handle, 'utility.lua', utilitySrc);
+    // Load all base engine scripts and procedures into duel state
+    const coreScripts = [
+      'constant.lua',
+      'utility.lua',
+      'cards_specific_functions.lua',
+      'proc_fusion.lua',
+      'proc_fusion_spell.lua',
+      'proc_ritual.lua',
+      'proc_synchro.lua',
+      'proc_xyz.lua',
+      'proc_union.lua',
+      'proc_link.lua',
+      'proc_pendulum.lua',
+      'proc_equip.lua',
+      'proc_gemini.lua',
+      'proc_spirit.lua',
+      'proc_normal.lua',
+      'proc_persistent.lua',
+      'proc_workaround.lua',
+      'deprecated_functions.lua',
+    ];
 
-    // Shuffle Player 0 and Player 1 decks randomly using Fisher-Yates
-    const p0DeckShuffled = this.shuffleArray(options.player0Deck);
-    const p1DeckShuffled = this.shuffleArray(options.player1Deck);
+    for (const scriptName of coreScripts) {
+      const src = this.scriptReader.getBaseScript(scriptName);
+      if (src) {
+        try {
+          this.lib.loadScript(handle, scriptName, src);
+        } catch (err) {
+          console.warn(`[DuelEngineService] Failed preloading ${scriptName}:`, err);
+        }
+      }
+    }
+
+    // Shuffle Player 0 and Player 1 decks randomly using Fisher-Yates (unless noShuffle is requested)
+    const p0DeckShuffled = options.noShuffle ? [...options.player0Deck] : this.shuffleArray(options.player0Deck);
+    const p1DeckShuffled = options.noShuffle ? [...options.player1Deck] : this.shuffleArray(options.player1Deck);
 
     // Place cards into Player 0 and Player 1 decks
     for (const code of p0DeckShuffled) {
@@ -318,6 +350,70 @@ export class DuelEngineService {
         sequence: 0,
         position: OcgPosition.FACEDOWN,
       });
+    }
+
+    if (options.player0Graveyard) {
+      for (const code of options.player0Graveyard) {
+        this.lib.duelNewCard(handle, {
+          team: 0,
+          duelist: 0,
+          code,
+          controller: 0,
+          location: OcgLocation.GRAVE,
+          sequence: 0,
+          position: OcgPosition.FACEUP,
+        });
+        const detail = this.cardReader.getCardDetail(code);
+        const card: FieldCard = {
+          id: `grave-0-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          code,
+          name: detail?.name ?? this.cardReader.getCardName(code),
+          controller: 0,
+          location: 'graveyard',
+          sequence: this.player0Field.graveyard.length,
+          position: 'faceup_spell',
+          atk: detail?.isMonster ? detail.atk : undefined,
+          def: detail?.isMonster ? detail.def : undefined,
+          level: detail?.isMonster ? detail.level : undefined,
+          attribute: detail?.attributeName,
+          race: detail?.raceName,
+          description: detail?.desc,
+          statuses: [],
+        };
+        this.player0Field.graveyard.unshift(card);
+      }
+    }
+
+    if (options.player1Graveyard) {
+      for (const code of options.player1Graveyard) {
+        this.lib.duelNewCard(handle, {
+          team: 1,
+          duelist: 0,
+          code,
+          controller: 1,
+          location: OcgLocation.GRAVE,
+          sequence: 0,
+          position: OcgPosition.FACEUP,
+        });
+        const detail = this.cardReader.getCardDetail(code);
+        const card: FieldCard = {
+          id: `grave-1-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          code,
+          name: detail?.name ?? this.cardReader.getCardName(code),
+          controller: 1,
+          location: 'graveyard',
+          sequence: this.player1Field.graveyard.length,
+          position: 'faceup_spell',
+          atk: detail?.isMonster ? detail.atk : undefined,
+          def: detail?.isMonster ? detail.def : undefined,
+          level: detail?.isMonster ? detail.level : undefined,
+          attribute: detail?.attributeName,
+          race: detail?.raceName,
+          description: detail?.desc,
+          statuses: [],
+        };
+        this.player1Field.graveyard.unshift(card);
+      }
     }
 
     if (options.player0ExtraDeck) {
@@ -384,6 +480,82 @@ export class DuelEngineService {
         this.player1Field.extraDeck.push(card);
       }
       this.player1Field.extraDeckCount = this.player1Field.extraDeck.length;
+    }
+
+    if (options.player0Monsters) {
+      for (const m of options.player0Monsters) {
+        const pos = (m.position ?? OcgPosition.FACEUP_ATTACK) as OcgPosition;
+        this.lib.duelNewCard(handle, {
+          team: 0,
+          duelist: 0,
+          code: m.code,
+          controller: 0,
+          location: OcgLocation.MZONE,
+          sequence: m.sequence,
+          position: pos,
+        });
+        const detail = this.cardReader.getCardDetail(m.code);
+        let pState: CardPositionState = 'faceup_attack';
+        if ((pos & OcgPosition.FACEUP_ATTACK) !== 0) pState = 'faceup_attack';
+        else if ((pos & OcgPosition.FACEUP_DEFENSE) !== 0) pState = 'faceup_defense';
+        else if ((pos & OcgPosition.FACEDOWN_DEFENSE) !== 0) pState = 'facedown_defense';
+
+        const card: FieldCard = {
+          id: `mzone-0-${m.sequence}-${Date.now()}`,
+          code: m.code,
+          name: detail?.name ?? this.cardReader.getCardName(m.code),
+          controller: 0,
+          location: 'monster',
+          sequence: m.sequence,
+          position: pState,
+          atk: detail?.isMonster ? detail.atk : undefined,
+          def: detail?.isMonster ? detail.def : undefined,
+          level: detail?.isMonster ? detail.level : undefined,
+          attribute: detail?.attributeName,
+          race: detail?.raceName,
+          description: detail?.desc,
+          statuses: [],
+        };
+        this.player0Field.monsterZones[m.sequence] = card;
+      }
+    }
+
+    if (options.player1Monsters) {
+      for (const m of options.player1Monsters) {
+        const pos = (m.position ?? OcgPosition.FACEUP_ATTACK) as OcgPosition;
+        this.lib.duelNewCard(handle, {
+          team: 1,
+          duelist: 0,
+          code: m.code,
+          controller: 1,
+          location: OcgLocation.MZONE,
+          sequence: m.sequence,
+          position: pos,
+        });
+        const detail = this.cardReader.getCardDetail(m.code);
+        let pState: CardPositionState = 'faceup_attack';
+        if ((pos & OcgPosition.FACEUP_ATTACK) !== 0) pState = 'faceup_attack';
+        else if ((pos & OcgPosition.FACEUP_DEFENSE) !== 0) pState = 'faceup_defense';
+        else if ((pos & OcgPosition.FACEDOWN_DEFENSE) !== 0) pState = 'facedown_defense';
+
+        const card: FieldCard = {
+          id: `mzone-1-${m.sequence}-${Date.now()}`,
+          code: m.code,
+          name: detail?.name ?? this.cardReader.getCardName(m.code),
+          controller: 1,
+          location: 'monster',
+          sequence: m.sequence,
+          position: pState,
+          atk: detail?.isMonster ? detail.atk : undefined,
+          def: detail?.isMonster ? detail.def : undefined,
+          level: detail?.isMonster ? detail.level : undefined,
+          attribute: detail?.attributeName,
+          race: detail?.raceName,
+          description: detail?.desc,
+          statuses: [],
+        };
+        this.player1Field.monsterZones[m.sequence] = card;
+      }
     }
 
     this.lib.startDuel(handle);
@@ -471,6 +643,21 @@ export class DuelEngineService {
       }
     }
 
+    // 3. Victory Cutscene Video Trigger (e.g. Exodia 0x10)
+    if (rawType === OcgMessageType.WIN && 'reason' in msg) {
+      const reason = msg.reason as number;
+      if (reason === 0x10) {
+        return {
+          code: 33396948,
+          cardName: 'Exodia the Forbidden One',
+          videoType: 'victory',
+          videoPath: 'resources/videos/cards/victory_33396948.mp4',
+          controller: typeof msg.player === 'number' ? msg.player : 0,
+          isPlaceholder: true,
+        };
+      }
+    }
+
     return null;
   }
 
@@ -509,6 +696,30 @@ export class DuelEngineService {
         pf.hand.push(card);
       }
       this.reindexHand(pf);
+    } else if (rawType === OcgMessageType.SHUFFLE_HAND && 'player' in msg && Array.isArray((msg as any).cards)) {
+      const pf = this.getPlayerField(msg.player);
+      const newCodes = (msg as any).cards as number[];
+      if (newCodes && newCodes.length > 0 && msg.player === this.humanPlayerId) {
+        const remaining = [...pf.hand];
+        const newHand: FieldCard[] = [];
+        for (const c of newCodes) {
+          const idx = remaining.findIndex((card) => card && card.code === c);
+          if (idx >= 0) {
+            newHand.push(remaining.splice(idx, 1)[0]);
+          } else if (remaining.length > 0) {
+            newHand.push(remaining.shift()!);
+          }
+        }
+        while (remaining.length > 0) {
+          newHand.push(remaining.shift()!);
+        }
+        for (let i = 0; i < newHand.length; i++) {
+          newHand[i].sequence = i;
+        }
+        pf.hand = newHand;
+      } else {
+        this.reindexHand(pf);
+      }
     } else if (rawType === OcgMessageType.MOVE && 'from' in msg && 'to' in msg && 'card' in msg) {
       const reason = typeof m.reason === 'number' ? m.reason : 0;
       this.handleCardMove(msg.card, msg.from, msg.to, reason);
@@ -536,9 +747,12 @@ export class DuelEngineService {
       const { controller, location, sequence, position, code } = msg;
       const pf = this.getPlayerField(controller);
       const isMonsterZone = location === OcgLocation.MZONE || location === undefined;
-      if (isMonsterZone && pf.monsterZones[sequence]) {
-        const card = pf.monsterZones[sequence]!;
-        if (code && code > 0) {
+      const targetList = isMonsterZone ? pf.monsterZones : pf.spellTrapZones;
+      const seq = sequence ?? 0;
+      if (targetList[seq]) {
+        const card = targetList[seq]!;
+        card.position = this.convertPosition(position, isMonsterZone);
+        if (typeof code === 'number' && code > 0) {
           card.code = code;
           const detail = this.cardReader.getCardDetail(code);
           card.name = detail?.name ?? this.cardReader.getCardName(code);
@@ -551,38 +765,23 @@ export class DuelEngineService {
             card.description = detail.desc;
           }
         }
-        if ((position & OcgPosition.FACEUP_ATTACK) !== 0) card.position = 'faceup_attack';
-        else if ((position & OcgPosition.FACEUP_DEFENSE) !== 0) card.position = 'faceup_defense';
-        else if ((position & OcgPosition.FACEDOWN_DEFENSE) !== 0) card.position = 'facedown_defense';
         card.statuses = this.computeCardStatuses(card);
       }
-    } else if (rawType === OcgMessageType.CHAIN_NEGATED || rawType === OcgMessageType.CHAIN_DISABLED) {
-      if ('code' in msg && typeof msg.code === 'number') {
-        const targetCode = msg.code;
-        const markNegated = (pf: PlayerFieldState) => {
-          for (const card of pf.monsterZones) {
-            if (card && card.code === targetCode) {
-              card.statuses = Array.from(new Set([...(card.statuses || []), 'negated']));
-            }
-          }
-          for (const card of pf.spellTrapZones) {
-            if (card && card.code === targetCode) {
-              card.statuses = Array.from(new Set([...(card.statuses || []), 'negated']));
-            }
-          }
-        };
-        markNegated(this.player0Field);
-        markNegated(this.player1Field);
-      }
-    } else if (rawType === OcgMessageType.LPUPDATE && 'lp' in msg && 'player' in msg) {
-      const pf = this.getPlayerField(msg.player);
-      pf.currentLp = msg.lp;
-    } else if (rawType === OcgMessageType.DAMAGE && 'amount' in msg && 'player' in msg) {
+    } else if (rawType === OcgMessageType.DAMAGE && 'player' in msg && 'amount' in msg) {
       const pf = this.getPlayerField(msg.player);
       pf.currentLp = Math.max(0, pf.currentLp - msg.amount);
-    } else if (rawType === OcgMessageType.RECOVER && typeof m.amount === 'number' && typeof m.player === 'number') {
-      const pf = this.getPlayerField(m.player);
-      pf.currentLp += m.amount;
+      if (msg.player === 0) this.state.p0LP = pf.currentLp;
+      else this.state.p1LP = pf.currentLp;
+    } else if (rawType === OcgMessageType.RECOVER && 'player' in msg && 'amount' in msg) {
+      const pf = this.getPlayerField(msg.player);
+      pf.currentLp = pf.currentLp + msg.amount;
+      if (msg.player === 0) this.state.p0LP = pf.currentLp;
+      else this.state.p1LP = pf.currentLp;
+    } else if (rawType === OcgMessageType.LPUPDATE && 'player' in msg && 'lp' in msg) {
+      const pf = this.getPlayerField(msg.player);
+      pf.currentLp = msg.lp;
+      if (msg.player === 0) this.state.p0LP = pf.currentLp;
+      else this.state.p1LP = pf.currentLp;
     }
   }
 
@@ -602,7 +801,13 @@ export class DuelEngineService {
     if (from.location !== 0) {
       const fromPf = this.getPlayerField(from.controller);
       if (from.location === OcgLocation.HAND) {
-        const idx = code > 0 ? fromPf.hand.findIndex((c) => c.code === code) : from.sequence;
+        let idx = -1;
+        if (from.controller === this.humanPlayerId && code > 0) {
+          idx = fromPf.hand.findIndex((c) => c.code === code);
+        }
+        if (idx < 0) {
+          idx = from.sequence >= 0 && from.sequence < fromPf.hand.length ? from.sequence : 0;
+        }
         if (idx >= 0 && idx < fromPf.hand.length) {
           movedCard = fromPf.hand.splice(idx, 1)[0];
         }
@@ -779,6 +984,15 @@ export class DuelEngineService {
         console.error('[DuelEngineService] AI Step Execution Error:', err);
       }
     }, this.AI_STEP_DELAY_MS);
+  }
+
+  private convertPosition(position: number, isMonster: boolean): CardPositionState {
+    if (isMonster) {
+      if ((position & OcgPosition.FACEDOWN_DEFENSE) !== 0) return 'facedown_defense';
+      if ((position & OcgPosition.FACEUP_DEFENSE) !== 0) return 'faceup_defense';
+      return 'faceup_attack';
+    }
+    return (position & OcgPosition.FACEUP) !== 0 ? 'faceup_spell' : 'facedown_spell';
   }
 
   private shuffleArray<T>(array: readonly T[]): T[] {
@@ -1004,12 +1218,43 @@ export class DuelEngineService {
     return { ...this.state, isVideoPlaying: this.isVideoPlaying };
   }
 
+  private enrichDynamicStatsForField(pf: PlayerFieldState, oppPf: PlayerFieldState): void {
+    for (const card of pf.monsterZones) {
+      if (!card || card.code <= 0) continue;
+      // Slifer the Sky Dragon (10000020): gains 1000 ATK/DEF per card in hand
+      if (card.code === 10000020) {
+        card.atk = pf.hand.length * 1000;
+        card.def = pf.hand.length * 1000;
+      }
+      // Tragoedia (98777992): gains 600 ATK/DEF per card in hand
+      else if (card.code === 98777992) {
+        card.atk = pf.hand.length * 600;
+        card.def = pf.hand.length * 600;
+      }
+      // Gren Maju Da Eiza (36584821): gains 400 ATK/DEF per banished card
+      else if (card.code === 36584821) {
+        const totalBanished = pf.banished.length + oppPf.banished.length;
+        card.atk = totalBanished * 400;
+        card.def = totalBanished * 400;
+      }
+      // King of the Skull Servants (36021814): 1000 ATK per Skull Servant / King in GY
+      else if (card.code === 36021814) {
+        const servCodes = [32274490, 36021814, 16638212, 78636495];
+        const count = pf.graveyard.filter((c) => servCodes.includes(c.code)).length;
+        card.atk = count * 1000;
+        card.def = 0;
+      }
+    }
+  }
+
   public getBoardState(): DuelBoardState {
     const rawUserField: PlayerFieldState = this.humanPlayerId === 0 ? this.player0Field : this.player1Field;
     const rawOpponentField: PlayerFieldState = this.humanPlayerId === 0 ? this.player1Field : this.player0Field;
 
     this.enrichStatusesForField(rawUserField);
     this.enrichStatusesForField(rawOpponentField);
+    this.enrichDynamicStatsForField(rawUserField, rawOpponentField);
+    this.enrichDynamicStatsForField(rawOpponentField, rawUserField);
 
     const userField = this.viewFilter.filterPlayerFieldForViewer(rawUserField, this.humanPlayerId);
     const opponentField = this.viewFilter.filterPlayerFieldForViewer(rawOpponentField, this.humanPlayerId);

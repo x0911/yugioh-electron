@@ -30,7 +30,7 @@
             class="video-overlay__type-badge"
             :class="`video-overlay__type-badge--${video.videoType}`"
           >
-            {{ video.videoType === 'summon' ? '⚡ SPECIAL SUMMON ⚡' : '⚔️ BATTLE ATTACK ⚔️' }}
+            {{ video.videoType === 'summon' ? '⚡ SPECIAL SUMMON ⚡' : video.videoType === 'victory' ? '👑 SPECIAL VICTORY: EXODIA OBLITERATE! 👑' : '⚔️ BATTLE ATTACK ⚔️' }}
           </span>
           <h1 class="video-overlay__card-name">{{ video.cardName || 'Iconic Card' }}</h1>
         </header>
@@ -254,6 +254,14 @@ onUnmounted(() => {
       border: 1px solid #eb5757;
       color: #ffcccc;
       text-shadow: 0 0 10px rgba(235, 87, 87, 0.8);
+    }
+
+    &--victory {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 140, 0, 0.4));
+      border: 1px solid #ffd700;
+      color: #fff4cc;
+      text-shadow: 0 0 14px rgba(255, 215, 0, 0.9);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
     }
   }
 

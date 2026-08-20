@@ -48,6 +48,11 @@ export interface DuelInitOptions {
   player1Deck: number[];
   player0ExtraDeck?: number[];
   player1ExtraDeck?: number[];
+  player0Graveyard?: number[];
+  player1Graveyard?: number[];
+  player0Monsters?: Array<{ code: number; sequence: number; position?: number }>;
+  player1Monsters?: Array<{ code: number; sequence: number; position?: number }>;
+  noShuffle?: boolean;
   startingLP?: number;
   startingDrawCount?: number;
   drawCountPerTurn?: number;
@@ -131,6 +136,16 @@ export interface SelectCardPayload {
   isDiscardPrompt?: boolean;
 }
 
+export interface SelectUnselectCardPayload {
+  player: number;
+  can_finish: boolean;
+  can_cancel: boolean;
+  min: number;
+  max: number;
+  selects: OcgCardLocPosItem[];
+  unselects: OcgCardLocPosItem[];
+}
+
 export interface SelectChainPayload {
   player: number;
   forced: boolean;
@@ -169,6 +184,38 @@ export interface SelectTributePayload {
   selects: OcgCardLocItem[];
 }
 
+export interface SelectSumPayload {
+  player: number;
+  select_max: number;
+  amount: number;
+  min: number;
+  max: number;
+  selects: OcgCardLocItem[];
+}
+
+export interface AnnounceCardPayload {
+  player: number;
+  opcodes: (number | bigint)[];
+  candidateCodes?: number[];
+}
+
+export interface AnnounceRacePayload {
+  player: number;
+  count: number;
+  available: number | bigint;
+}
+
+export interface AnnounceAttribPayload {
+  player: number;
+  count: number;
+  available: number;
+}
+
+export interface AnnounceNumberPayload {
+  player: number;
+  options: (number | bigint)[];
+}
+
 export interface DuelEventPayload {
   type: string;
   rawType: number;
@@ -184,6 +231,7 @@ export interface DuelEventPayload {
   toLocation?: number;
   toSequence?: number;
   drawn?: { code: number; position: number; cardName: string }[];
+  cards?: number[];
   count?: number;
   phase?: string;
   turn?: number;
@@ -219,15 +267,17 @@ export interface CardVideoEntry {
   series: 'DM' | 'GX';
   summon?: string;
   attack?: string;
+  victory?: string;
   isPlaceholder?: boolean;
 }
 
 export interface CardVideoPayload {
   code: number;
   cardName: string;
-  videoType: 'summon' | 'attack';
+  videoType: 'summon' | 'attack' | 'victory';
   videoPath: string;
   controller: number;
   isPlaceholder?: boolean;
 }
+
 

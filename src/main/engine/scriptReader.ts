@@ -83,7 +83,26 @@ export class ScriptReaderService {
 
     // Special bootstrap script
     if (name === 'c0.lua') {
-      const boot = 'Duel.LoadScript("constant.lua")\nDuel.LoadScript("utility.lua")';
+      const boot = [
+        'Duel.LoadScript("constant.lua")',
+        'Duel.LoadScript("utility.lua")',
+        'Duel.LoadScript("cards_specific_functions.lua")',
+        'Duel.LoadScript("proc_fusion.lua")',
+        'Duel.LoadScript("proc_fusion_spell.lua")',
+        'Duel.LoadScript("proc_ritual.lua")',
+        'Duel.LoadScript("proc_synchro.lua")',
+        'Duel.LoadScript("proc_xyz.lua")',
+        'Duel.LoadScript("proc_union.lua")',
+        'Duel.LoadScript("proc_link.lua")',
+        'Duel.LoadScript("proc_pendulum.lua")',
+        'Duel.LoadScript("proc_equip.lua")',
+        'Duel.LoadScript("proc_gemini.lua")',
+        'Duel.LoadScript("proc_spirit.lua")',
+        'Duel.LoadScript("proc_normal.lua")',
+        'Duel.LoadScript("proc_persistent.lua")',
+        'Duel.LoadScript("proc_workaround.lua")',
+        'Duel.LoadScript("deprecated_functions.lua")',
+      ].join('\n');
       this.scriptCache.set(name, boot);
       return boot;
     }
@@ -127,6 +146,12 @@ export class ScriptReaderService {
       } catch (err) {
         console.warn(`[ScriptReaderService] Failed reading base script ${name}:`, err);
       }
+    }
+
+    // If a system helper or procedure script is requested by utility.lua/constant.lua and not found, return empty stub to prevent crashing
+    if (name.endsWith('.lua') && !/^c\d+\.lua$/.test(name)) {
+      this.scriptCache.set(name, '');
+      return '';
     }
 
     this.scriptCache.set(name, null);

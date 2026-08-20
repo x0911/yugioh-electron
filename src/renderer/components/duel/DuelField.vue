@@ -75,7 +75,8 @@
             :target-info="getSlotTarget(opponentPlayerId, 8, idx)"
             :is-prompt-active="isPromptActive"
             @hover-card="$emit('hover-card', $event)"
-            @click-card="(card, ev) => $emit('click-card', card, ev)"
+            @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
+            @click-target="$emit('click-target', $event)"
           />
 
           <div class="pendulum-jewel pendulum-jewel--right">
@@ -103,8 +104,11 @@
         />
       </div>
 
-      <!-- Opponent Front Row (Graveyard, 5 Monster Zones, Field Zone) -->
+      <!-- Opponent Front Row (Spacer, Graveyard, 5 Monster Zones, Field Zone) -->
       <div class="field-row field-row--front">
+        <!-- Opponent Alignment Spacer (Col 0 to balance 8-column layout) -->
+        <div class="zone-spacer" />
+
         <!-- Opponent Graveyard Zone -->
         <DeckStack
           type="graveyard"
@@ -132,7 +136,8 @@
             :target-info="getSlotTarget(opponentPlayerId, 4, idx)"
             :is-prompt-active="isPromptActive"
             @hover-card="$emit('hover-card', $event)"
-            @click-card="(card, ev) => $emit('click-card', card, ev)"
+            @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
+            @click-target="$emit('click-target', $event)"
           />
         </div>
 
@@ -146,7 +151,8 @@
           :target-info="getSlotTarget(opponentPlayerId, 256, 0)"
           :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
-          @click-card="(card, ev) => $emit('click-card', card, ev)"
+          @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
+          @click-target="$emit('click-target', $event)"
         />
       </div>
     </div>
@@ -197,7 +203,7 @@
     <!-- USER FIELD (Bottom Half) -->
     <!-- ================================================================= -->
     <div class="field-half field-half--user">
-      <!-- User Front Row (Field Zone, 5 Monster Zones, Graveyard) -->
+      <!-- User Front Row (Field Zone, 5 Monster Zones, Graveyard, Spacer) -->
       <div class="field-row field-row--front">
         <!-- User Field Zone -->
         <FieldZoneSlot
@@ -209,7 +215,8 @@
           :target-info="getSlotTarget(userPlayerId, 256, 0)"
           :is-prompt-active="isPromptActive"
           @hover-card="$emit('hover-card', $event)"
-          @click-card="(card, ev) => $emit('click-card', card, ev)"
+          @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
+          @click-target="$emit('click-target', $event)"
         />
 
         <!-- User 5 Main Monster Zones -->
@@ -226,7 +233,8 @@
             :target-info="getSlotTarget(userPlayerId, 4, idx)"
             :is-prompt-active="isPromptActive"
             @hover-card="$emit('hover-card', $event)"
-            @click-card="(card, ev) => $emit('click-card', card, ev)"
+            @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
+            @click-target="$emit('click-target', $event)"
           />
         </div>
 
@@ -242,6 +250,9 @@
           @hover-card="$emit('hover-card', $event)"
           @click-stack="onStackClick('graveyard', userPlayerId)"
         />
+
+        <!-- User Alignment Spacer (Col 7 to balance 8-column layout) -->
+        <div class="zone-spacer" />
       </div>
 
       <!-- User Back Row (Extra Deck, 5 S/T Zones, Main Deck, Banished) -->
@@ -283,7 +294,8 @@
             :target-info="getSlotTarget(userPlayerId, 8, idx)"
             :is-prompt-active="isPromptActive"
             @hover-card="$emit('hover-card', $event)"
-            @click-card="(card, ev) => $emit('click-card', card, ev)"
+            @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
+            @click-target="$emit('click-target', $event)"
           />
 
           <div class="pendulum-jewel pendulum-jewel--right">
@@ -328,8 +340,8 @@
       <!-- User Mate Slot (Inert Placeholder) -->
       <div class="mate-slot mate-slot--user">
         <Tooltip content="Your Mate Slot (Reserved for future release)" position="top">
-          <div class="mate-pedestal">
-            <span class="mate-icon">⚔️</span>
+          <div class="mate-container">
+            <span class="mate-icon">👑</span>
             <span class="mate-label">MATE</span>
           </div>
         </Tooltip>
@@ -367,7 +379,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
-  (e: 'click-card', card: FieldCard | null, event?: MouseEvent): void;
+  (e: 'click-card', card: FieldCard | null, event?: MouseEvent, targetInfo?: TargetInfo | null): void;
   (e: 'click-target', targetInfo: TargetInfo): void;
   (e: 'inspect-stack', stackType: string, controller: number): void;
 }>();
@@ -488,6 +500,14 @@ function onStackClick(stackType: string, controller: number): void {
     justify-content: center;
     gap: 26px;
     width: 100%;
+  }
+
+  .zone-spacer {
+    width: 96px;
+    height: 138px;
+    visibility: hidden;
+    pointer-events: none;
+    flex-shrink: 0;
   }
 
   .zone-group {

@@ -39,7 +39,7 @@
         :style="getSlotStyle(idx, cards.length)"
         @mouseenter="onCardMouseEnter(card)"
         @mouseleave="onCardMouseLeave"
-        @click="onCardClick(card, $event)"
+        @click="onCardClick(card, $event, idx)"
       >
         <!-- User Hand Card (Full Art, Name, Level, Stats) -->
         <div
@@ -70,9 +70,9 @@
 
             <!-- Bottom ATK/DEF Footer for Monsters -->
             <div v-if="card.atk !== undefined && card.def !== undefined" class="hand-card__stats">
-              <span class="stat-atk">{{ card.atk }}</span>
+              <span class="stat-atk">{{ formatCombatStat(card.atk) }}</span>
               <span class="stat-slash">/</span>
-              <span class="stat-def">{{ card.def }}</span>
+              <span class="stat-def">{{ formatCombatStat(card.def) }}</span>
             </div>
 
             <!-- Target Selection IconIndicator Overlay (Blue for User) -->
@@ -135,6 +135,7 @@ import type { CSSProperties } from 'vue';
 import type { FieldCard } from '../../../shared/types/field.js';
 import type { TargetInfo } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
+import { formatCombatStat } from '../../utils/format.js';
 import IconIndicator from '../common/IconIndicator.vue';
 
 const props = withDefaults(
@@ -162,6 +163,7 @@ function getCardTarget(card: FieldCard, idx: number): TargetInfo | null {
 const emit = defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
   (e: 'click-card', card: FieldCard, event: MouseEvent): void;
+  (e: 'click-target', targetInfo: TargetInfo): void;
 }>();
 
 /**
@@ -264,7 +266,12 @@ function onCardMouseLeave(): void {
   }
 }
 
-function onCardClick(card: FieldCard, event: MouseEvent): void {
+function onCardClick(card: FieldCard, event: MouseEvent, idx: number): void {
+  const target = getCardTarget(card, idx);
+  if (target && target.isSelectable) {
+    emit('click-target', target);
+    return;
+  }
   if (props.isInteractive && props.player === 'user') {
     emit('click-card', card, event);
   }

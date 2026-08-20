@@ -8,7 +8,7 @@
       <div class="menu-header">
         <div class="menu-header__info">
           <span class="card-name">{{ card.name }}</span>
-          <span v-if="card.atk !== undefined" class="card-stats">ATK {{ card.atk }} / DEF {{ card.def }}</span>
+          <span v-if="card.atk !== undefined" class="card-stats">ATK {{ formatCombatStat(card.atk) }} / DEF {{ formatCombatStat(card.def) }}</span>
         </div>
         <button aria-label="Close action menu" class="close-btn" @click="$emit('close')">✕</button>
       </div>
@@ -38,6 +38,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { FieldCard } from '../../../shared/types/field.js';
+import { formatCombatStat } from '../../utils/format.js';
 import type { CardActionOption } from '../../stores/duelStore.js';
 
 const props = defineProps<{

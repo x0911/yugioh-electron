@@ -29,7 +29,7 @@
               'selection-counter-badge--pending': !isSelectionComplete,
             }"
           >
-            {{ selectedIndices.length }} / {{ max }} Selected
+            {{ selectedCount }} / {{ max }} Selected
           </span>
         </div>
       </div>
@@ -123,9 +123,9 @@
                 </span>
               </div>
               <div class="tile-combat-row">
-                <span class="stat-atk">{{ card.atk ?? 0 }}</span>
+                <span class="stat-atk">{{ formatCombatStat(card.atk) }}</span>
                 <span class="stat-separator">/</span>
-                <span class="stat-def">{{ card.def ?? 0 }}</span>
+                <span class="stat-def">{{ formatCombatStat(card.def) }}</span>
               </div>
             </div>
 
@@ -160,7 +160,7 @@
         </div>
 
         <div class="footer-right">
-          <!-- Cancel / Pass Button (if can_cancel or min === 0) -->
+          <!-- Cancel / Pass Button (if canCancel or min === 0) -->
           <button
             v-if="canCancel || min === 0"
             type="button"
@@ -178,7 +178,7 @@
             @click="$emit('confirm')"
           >
             <span class="btn-icon">✓</span>
-            <span>Confirm ({{ selectedIndices.length }}/{{ max }})</span>
+            <span>Confirm ({{ selectedCount }}/{{ max }})</span>
           </button>
         </div>
       </div>
@@ -188,11 +188,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import type { SelectCardPayload, SelectTributePayload } from '../../../shared/types/duel.js';
+import type { SelectCardPayload, SelectTributePayload, SelectSumPayload, SelectUnselectCardPayload } from '../../../shared/types/duel.js';
 import type { FieldCard } from '../../../shared/types/field.js';
 import { useDuelStore } from '../../stores/duelStore.js';
 import YugiModal from '../common/YugiModal.vue';
 import { getCardImageUrl, handleImageError } from '../../utils/media.js';
+import { formatCombatStat } from '../../utils/format.js';
 
 interface EnrichedSelectCard {
   selectIndex: number;
@@ -201,7 +202,7 @@ interface EnrichedSelectCard {
   location: number;
   locationName: string;
   sequence: number;
-  position?: number;
+  position: number;
   controller: number;
   owner: 'user' | 'ai';
   isMonster: boolean;
@@ -210,7 +211,7 @@ interface EnrichedSelectCard {
   level?: number;
   attribute?: string;
   race?: string;
-  type?: string;
+  type?: number;
   desc?: string;
   isSelected: boolean;
   selectionOrder: number;
@@ -219,20 +220,18 @@ interface EnrichedSelectCard {
 const props = withDefaults(
   defineProps<{
     modelValue: boolean;
-    selectPayload: SelectCardPayload | SelectTributePayload | null;
+    selectPayload: SelectCardPayload | SelectTributePayload | SelectSumPayload | SelectUnselectCardPayload | null;
     selectedIndices: number[];
-    canCancel?: boolean;
     min?: number;
     max?: number;
+    canCancel?: boolean;
     instruction?: string;
-    subText?: string;
   }>(),
   {
-    canCancel: false,
     min: 1,
     max: 1,
-    instruction: 'Select card(s) to proceed with the active effect.',
-    subText: '',
+    canCancel: false,
+    instruction: 'Select card(s) to proceed.',
   },
 );
 
@@ -248,32 +247,67 @@ const emit = defineEmits<{
 const duelStore = useDuelStore();
 const searchQuery = ref('');
 
-function getLocationName(loc: number): string {
-  if (loc === 1) return 'DECK';
-  if (loc === 2) return 'HAND';
-  if (loc === 4) return 'MONSTER ZONE';
-  if (loc === 8) return 'SPELL/TRAP';
-  if (loc === 16) return 'GRAVEYARD';
-  if (loc === 32) return 'BANISHED';
-  if (loc === 64) return 'EXTRA DECK';
-  return 'FIELD';
+function getLocationName(location: number): string {
+  if (location === 1) return 'Deck';
+  if (location === 2) return 'Hand';
+  if (location === 4) return 'Monster Zone';
+  if (location === 8) return 'Spell/Trap Zone';
+  if (location === 16) return 'Graveyard';
+  if (location === 32) return 'Banished';
+  if (location === 64) return 'Extra Deck';
+  return 'Field';
 }
 
-function getLocationIcon(loc: number): string {
-  if (loc === 1) return '🎴';
-  if (loc === 2) return '🃏';
-  if (loc === 4) return '⚔️';
-  if (loc === 8) return '📜';
-  if (loc === 16) return '🪦';
-  if (loc === 32) return '🌀';
-  if (loc === 64) return '⚡';
+function getLocationIcon(location: number): string {
+  if (location === 1) return '📦';
+  if (location === 2) return '✋';
+  if (location === 4) return '⚔️';
+  if (location === 8) return '🔮';
+  if (location === 16) return '🪦';
+  if (location === 32) return '🌌';
+  if (location === 64) return '✨';
   return '🎯';
 }
 
 const enrichedCards = computed<EnrichedSelectCard[]>(() => {
-  if (!props.selectPayload || !props.selectPayload.selects) return [];
+  if (!props.selectPayload) return [];
+  const result: EnrichedSelectCard[] = [];
+  const unselectCards = (props.selectPayload as any).unselect_cards || [];
+  const selectCards = props.selectPayload.selects || [];
 
-  return props.selectPayload.selects.map((item, originalIndex) => {
+  // First, already selected cards in multi-step SELECT_UNSELECT_CARD prompts
+  unselectCards.forEach((item: any, unselectIdx: number) => {
+    const detail = duelStore.getCardDetail(item.code);
+    const loc = item.location || 16;
+    const locName = getLocationName(loc);
+    const owner = item.controller === duelStore.userPlayerId ? 'user' : 'ai';
+    const isMonster = detail?.isMonster ?? (detail?.atk !== undefined || (detail?.level ?? 0) > 0);
+
+    result.push({
+      selectIndex: selectCards.length + unselectIdx,
+      code: item.code,
+      name: item.cardName && item.cardName !== 'Card' ? item.cardName : detail?.name || `Card #${item.code}`,
+      location: loc,
+      locationName: locName,
+      sequence: item.sequence,
+      position: 'position' in item ? (item as any).position : 1,
+      controller: item.controller,
+      owner,
+      isMonster,
+      atk: detail?.atk,
+      def: detail?.def,
+      level: detail?.level,
+      attribute: detail?.attributeName,
+      race: detail?.raceName,
+      type: detail?.type,
+      desc: detail?.desc,
+      isSelected: true,
+      selectionOrder: unselectIdx + 1,
+    });
+  });
+
+  // Second, candidate selectable cards
+  selectCards.forEach((item: any, originalIndex: number) => {
     const detail = duelStore.getCardDetail(item.code);
     const loc = item.location || 1;
     const locName = getLocationName(loc);
@@ -283,7 +317,7 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
     const isSelected = props.selectedIndices.includes(originalIndex);
     const orderIdx = props.selectedIndices.indexOf(originalIndex);
 
-    return {
+    result.push({
       selectIndex: originalIndex,
       code: item.code,
       name: item.cardName && item.cardName !== 'Card' ? item.cardName : detail?.name || `Card #${item.code}`,
@@ -302,9 +336,16 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
       type: detail?.type,
       desc: detail?.desc,
       isSelected,
-      selectionOrder: orderIdx >= 0 ? orderIdx + 1 : 0,
-    };
+      selectionOrder: orderIdx >= 0 ? unselectCards.length + orderIdx + 1 : 0,
+    });
   });
+
+  return result;
+});
+
+const selectedCount = computed<number>(() => {
+  const unselectCards = (props.selectPayload as any)?.unselect_cards || [];
+  return unselectCards.length + props.selectedIndices.length;
 });
 
 const filteredCards = computed<EnrichedSelectCard[]>(() => {
@@ -315,7 +356,6 @@ const filteredCards = computed<EnrichedSelectCard[]>(() => {
     if (c.name.toLowerCase().includes(query)) return true;
     if (c.attribute && c.attribute.toLowerCase().includes(query)) return true;
     if (c.race && c.race.toLowerCase().includes(query)) return true;
-    if (c.type && c.type.toLowerCase().includes(query)) return true;
     if (c.level && String(c.level) === query) return true;
     if (c.atk !== undefined && String(c.atk).includes(query)) return true;
     if (c.def !== undefined && String(c.def).includes(query)) return true;
@@ -348,12 +388,16 @@ const headerTitle = computed<string>(() => {
 });
 
 const isSelectionValid = computed<boolean>(() => {
+  if (duelStore.activeSelectUnselectCard) {
+    if (duelStore.activeSelectUnselectCard.can_finish) return true;
+    return selectedCount.value >= props.min && selectedCount.value <= props.max;
+  }
   const count = props.selectedIndices.length;
   return count >= props.min && count <= props.max;
 });
 
 const isSelectionComplete = computed<boolean>(() => {
-  return props.selectedIndices.length >= props.max;
+  return selectedCount.value >= props.max;
 });
 
 function onMouseEnter(card: EnrichedSelectCard): void {
@@ -361,10 +405,9 @@ function onMouseEnter(card: EnrichedSelectCard): void {
     id: `sel-${card.selectIndex}-${card.code}`,
     code: card.code,
     name: card.name,
-    type: card.isMonster ? 'monster' : 'spell',
     location: card.location === 4 ? 'monster' : card.location === 8 ? 'spell-trap' : 'graveyard',
     sequence: card.sequence,
-    controller: card.owner,
+    controller: card.owner === 'user' ? 0 : 1,
     position: 'faceup_attack',
     atk: card.atk,
     def: card.def,
