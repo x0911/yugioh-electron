@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { DuelEngineService } from '../src/main/engine/DuelEngineService.js';
 import { formatCombatStat } from '../src/renderer/utils/format.js';
-import { OcgResponseType, SelectIdleCMDAction } from 'ocgcore-wasm';
+import { OcgResponseType, SelectIdleCMDAction, OcgQueryFlags, OcgLocation } from 'ocgcore-wasm';
 import type { DecodedDuelEvent } from '../src/main/engine/messageDecoder.js';
 
 console.log('=== Running Battle Selection, Multi-Step Cost & Variable Stats Tests ===\n');
@@ -191,11 +191,98 @@ async function testLocationVisibilityClassification() {
   console.log('✓ Location visibility accurately differentiates field actions from hidden stack modals.');
 }
 
+async function testFogKingTributeSummonDynamicStats() {
+  console.log('\nTest 5: Fog King (69355133) Tribute Summon combined ATK calculation...');
+
+  const engine = new DuelEngineService();
+  await engine.init();
+
+  const hiitaCode = 4376658; // Familiar-Possessed - Hiita (ATK 1850)
+  const meiseiCode = 2468169; // Sealmaster Meisei (ATK 1100)
+  const fogKingCode = 6614221; // Fog King (Base ATK 0)
+
+  let idleStep = 0;
+
+  engine.onEvent((ev: DecodedDuelEvent) => {
+    if (ev.isPrompt) {
+      const pData = ev.promptData as any;
+      if (ev.promptType === 'SELECT_IDLECMD' && ev.promptPlayer === 0) {
+        idleStep++;
+
+        const fkSummon = pData.summons?.find((s: any) => s.code === fogKingCode);
+        if (fkSummon) {
+          const idx = pData.summons.indexOf(fkSummon);
+          setTimeout(() => {
+            engine.sendResponse({
+              type: OcgResponseType.SELECT_IDLECMD,
+              action: SelectIdleCMDAction.SELECT_SUMMON,
+              index: idx,
+            });
+          }, 5);
+        }
+      } else if (ev.promptType === 'SELECT_OPTION') {
+        setTimeout(() => {
+          engine.sendResponse({
+            type: OcgResponseType.SELECT_OPTION,
+            index: 0,
+          });
+        }, 5);
+      } else if (ev.promptType === 'SELECT_TRIBUTE') {
+        setTimeout(() => {
+          engine.sendResponse({
+            type: OcgResponseType.SELECT_TRIBUTE,
+            indicies: [0, 1], // tribute both monsters
+          });
+        }, 5);
+      } else if (ev.promptType === 'SELECT_CHAIN') {
+        setTimeout(() => {
+          engine.sendResponse({
+            type: OcgResponseType.SELECT_CHAIN,
+            index: -1,
+          });
+        }, 5);
+      }
+    }
+  });
+
+  const p0Deck: number[] = [];
+  while (p0Deck.length < 40) p0Deck.push(fogKingCode);
+
+  const p1Deck: number[] = [];
+  while (p1Deck.length < 40) p1Deck.push(91152256);
+
+  engine.startNewDuel({
+    player0Deck: p0Deck,
+    player1Deck: p1Deck,
+    player0Monsters: [
+      { code: hiitaCode, sequence: 0 },
+      { code: meiseiCode, sequence: 1 },
+    ],
+    startingLP: 8000,
+    startingDrawCount: 1,
+    drawCountPerTurn: 1,
+    humanPlayerId: 0,
+    autoPlay: false,
+    noShuffle: true,
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const board = engine.getBoardState();
+  const fogKingOnField = board.userField.monsterZones.find((m) => m && m.code === fogKingCode);
+
+  assert.ok(fogKingOnField, 'Fog King must be on the field after tribute summon');
+  assert.strictEqual(fogKingOnField.atk, 2950, 'Fog King ATK must equal 1850 + 1100 = 2950');
+  console.log(`✓ Fog King dynamic ATK correctly computed: ${fogKingOnField.atk} (Expected 2950).`);
+  engine.close();
+}
+
 async function runAll() {
   testCombatStatFormatter();
   await testSliferDynamicOnFieldStats();
   await testChaosSorcererMultiStepSelection();
   await testLocationVisibilityClassification();
+  await testFogKingTributeSummonDynamicStats();
   console.log('\n🎉 ALL BATTLE SELECTION, COST & VARIABLE STATS TESTS PASSED SUCCESSFULLY!');
 }
 

@@ -232,6 +232,15 @@ export interface DuelEventPayload {
   toSequence?: number;
   drawn?: { code: number; position: number; cardName: string }[];
   cards?: number[];
+  fieldStats?: Array<{
+    controller: 0 | 1;
+    sequence: number;
+    atk?: number;
+    def?: number;
+    level?: number;
+    baseAtk?: number;
+    baseDef?: number;
+  }>;
   count?: number;
   phase?: string;
   turn?: number;

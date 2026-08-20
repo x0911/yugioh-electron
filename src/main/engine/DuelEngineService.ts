@@ -7,6 +7,7 @@ import createCore, {
   OcgPosition,
   OcgMessageType,
   OcgResponseType,
+  OcgQueryFlags,
   type OcgMessage,
   type OcgResponse,
 } from 'ocgcore-wasm';
@@ -210,6 +211,12 @@ export class DuelEngineService {
   }
 
   private emitEvent(event: DecodedDuelEvent): void {
+    if (this.lib && this.currentDuel && !event.fieldStats) {
+      const stats = this.syncFieldCardStats();
+      if (stats.length > 0) {
+        event.fieldStats = stats;
+      }
+    }
     const filteredEvent = this.viewFilter.filterEventForViewer(event, this.humanPlayerId);
     for (const listener of this.eventListeners) {
       listener(filteredEvent);
@@ -1218,27 +1225,105 @@ export class DuelEngineService {
     return { ...this.state, isVideoPlaying: this.isVideoPlaying };
   }
 
+  public syncFieldCardStats(): Array<{
+    controller: 0 | 1;
+    sequence: number;
+    atk?: number;
+    def?: number;
+    level?: number;
+    baseAtk?: number;
+    baseDef?: number;
+  }> {
+    const stats: Array<{
+      controller: 0 | 1;
+      sequence: number;
+      atk?: number;
+      def?: number;
+      level?: number;
+      baseAtk?: number;
+      baseDef?: number;
+    }> = [];
+    if (!this.lib || !this.currentDuel) return stats;
+
+    const queryFlags =
+      OcgQueryFlags.ATTACK |
+      OcgQueryFlags.DEFENSE |
+      OcgQueryFlags.BASE_ATTACK |
+      OcgQueryFlags.BASE_DEFENSE |
+      OcgQueryFlags.LEVEL;
+
+    for (const p of [0, 1] as const) {
+      const pf = this.getPlayerField(p);
+      for (let seq = 0; seq < pf.monsterZones.length; seq++) {
+        const card = pf.monsterZones[seq];
+        if (!card) continue;
+
+        try {
+          const query = this.lib.duelQuery(this.currentDuel, {
+            flags: queryFlags,
+            controller: p,
+            location: OcgLocation.MZONE,
+            sequence: seq,
+            overlaySequence: 0,
+          });
+
+          if (query) {
+            if (typeof query.attack === 'number') {
+              card.atk = query.attack;
+            }
+            if (typeof query.defense === 'number') {
+              card.def = query.defense;
+            }
+            if (typeof query.baseAttack === 'number') {
+              card.baseAtk = query.baseAttack;
+            }
+            if (typeof query.baseDefense === 'number') {
+              card.baseDef = query.baseDefense;
+            }
+            if (typeof query.level === 'number') {
+              card.level = query.level;
+            }
+
+            stats.push({
+              controller: p,
+              sequence: seq,
+              atk: card.atk,
+              def: card.def,
+              level: card.level,
+              baseAtk: card.baseAtk,
+              baseDef: card.baseDef,
+            });
+          }
+        } catch {
+          // Ignore transient ocgcore query errors during zone transitions
+        }
+      }
+    }
+
+    return stats;
+  }
+
   private enrichDynamicStatsForField(pf: PlayerFieldState, oppPf: PlayerFieldState): void {
     for (const card of pf.monsterZones) {
       if (!card || card.code <= 0) continue;
       // Slifer the Sky Dragon (10000020): gains 1000 ATK/DEF per card in hand
-      if (card.code === 10000020) {
+      if (card.code === 10000020 && (card.atk === undefined || card.atk === 0)) {
         card.atk = pf.hand.length * 1000;
         card.def = pf.hand.length * 1000;
       }
       // Tragoedia (98777992): gains 600 ATK/DEF per card in hand
-      else if (card.code === 98777992) {
+      else if (card.code === 98777992 && (card.atk === undefined || card.atk === 0)) {
         card.atk = pf.hand.length * 600;
         card.def = pf.hand.length * 600;
       }
       // Gren Maju Da Eiza (36584821): gains 400 ATK/DEF per banished card
-      else if (card.code === 36584821) {
+      else if (card.code === 36584821 && (card.atk === undefined || card.atk === 0)) {
         const totalBanished = pf.banished.length + oppPf.banished.length;
         card.atk = totalBanished * 400;
         card.def = totalBanished * 400;
       }
       // King of the Skull Servants (36021814): 1000 ATK per Skull Servant / King in GY
-      else if (card.code === 36021814) {
+      else if (card.code === 36021814 && (card.atk === undefined || card.atk === 0)) {
         const servCodes = [32274490, 36021814, 16638212, 78636495];
         const count = pf.graveyard.filter((c) => servCodes.includes(c.code)).length;
         card.atk = count * 1000;
@@ -1253,6 +1338,7 @@ export class DuelEngineService {
 
     this.enrichStatusesForField(rawUserField);
     this.enrichStatusesForField(rawOpponentField);
+    this.syncFieldCardStats();
     this.enrichDynamicStatsForField(rawUserField, rawOpponentField);
     this.enrichDynamicStatsForField(rawOpponentField, rawUserField);
 

@@ -867,6 +867,21 @@ export const useDuelStore = defineStore('duel', {
         return;
       }
 
+      // Synchronize live combat stats and levels directly from engine
+      if (event.fieldStats && Array.isArray(event.fieldStats)) {
+        for (const s of event.fieldStats) {
+          const pf = s.controller === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+          const card = pf.monsterZones[s.sequence];
+          if (card) {
+            if (typeof s.atk === 'number') card.atk = s.atk;
+            if (typeof s.def === 'number') card.def = s.def;
+            if (typeof s.level === 'number') card.level = s.level;
+            if (typeof s.baseAtk === 'number') card.baseAtk = s.baseAtk;
+            if (typeof s.baseDef === 'number') card.baseDef = s.baseDef;
+          }
+        }
+      }
+
       // Incremental board state updates for non-prompt events
       if (event.type === 'MOVE') {
         this.applyCardMoveToBoard(event as any);

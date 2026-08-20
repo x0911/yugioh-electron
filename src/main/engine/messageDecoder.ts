@@ -39,6 +39,15 @@ export interface DecodedDuelEvent {
   target?: unknown;
   drawnCards?: { code: number; cardName: string }[];
   cards?: number[];
+  fieldStats?: Array<{
+    controller: 0 | 1;
+    sequence: number;
+    atk?: number;
+    def?: number;
+    level?: number;
+    baseAtk?: number;
+    baseDef?: number;
+  }>;
   isPrompt: boolean;
   promptPlayer?: number;
   promptType?: string;
