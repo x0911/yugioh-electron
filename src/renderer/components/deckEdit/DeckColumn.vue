@@ -2,18 +2,13 @@
   <div class="deck-column glass-panel glass-panel--elevated">
     <!-- Top Deck Management Bar -->
     <div class="deck-header">
-      <!-- Deck Select Dropdown -->
+      <!-- Premium Custom Deck Autocomplete Selector -->
       <div class="deck-select-row">
-        <label class="deck-label">Active Deck:</label>
-        <select
-          :value="store.activeDeckId"
-          class="deck-dropdown"
-          @change="onSelectDeckChange"
-        >
-          <option v-for="d in store.customDecks" :key="d.id" :value="d.id">
-            {{ d.name }} ({{ d.main.length }}/{{ d.extra.length }})
-          </option>
-        </select>
+        <DeckSelectorAutocomplete
+          :model-value="store.activeDeckId"
+          :decks="store.customDecks"
+          @update:model-value="onDeckAutocompleteSelect"
+        />
       </div>
 
       <!-- Editable Deck Name -->
@@ -410,6 +405,7 @@ import type { CardDetail } from '../../../shared/types/card.js';
 import { getCardImageUrl, handleImageError } from '../../utils/media.js';
 import YugiModal from '../common/YugiModal.vue';
 import YugiButton from '../common/YugiButton.vue';
+import DeckSelectorAutocomplete from './DeckSelectorAutocomplete.vue';
 
 const store = useDeckEditStore();
 
@@ -515,8 +511,7 @@ const extraDeckCards = computed<EnrichedDeckCard[]>(() => {
   });
 });
 
-function onSelectDeckChange(e: Event): void {
-  const deckId = (e.target as HTMLSelectElement).value;
+function onDeckAutocompleteSelect(deckId: string): void {
   store.selectDeck(deckId);
 }
 

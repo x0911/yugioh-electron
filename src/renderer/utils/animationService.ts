@@ -57,7 +57,7 @@ export function getAnimationUserPlayerId(): 0 | 1 {
   return activeUserPlayerId;
 }
 
-function toPlayerDomId(player: 'user' | 'opponent' | 'ai' | 0 | 1): 'user' | 'ai' {
+export function toPlayerDomId(player: 'user' | 'opponent' | 'ai' | 0 | 1): 'user' | 'ai' {
   if (player === 'user') return 'user';
   if (player === 'opponent' || player === 'ai') return 'ai';
   return player === activeUserPlayerId ? 'user' : 'ai';

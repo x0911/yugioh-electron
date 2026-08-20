@@ -287,7 +287,7 @@ export const useDeckEditStore = defineStore('deckEdit', {
         }
 
         // 3. Fetch active deck id
-        let activeId = 'starter-yugi-dm';
+        let activeId = 'yugi_deck_1';
         if (window.deckAPI?.getActiveDeckId) {
           activeId = await window.deckAPI.getActiveDeckId();
         }

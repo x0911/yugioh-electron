@@ -9,6 +9,10 @@ export interface CustomDeck {
   extra: number[]; // card code IDs (Fusion / Extra deck)
   createdAt: number;
   updatedAt: number;
+  series?: 'DM' | 'GX' | 'ALL';
+  archetype?: string;
+  characterName?: string;
+  category?: 'character-dm' | 'character-gx' | 'popular-dm' | 'popular-gx' | 'custom' | string;
 }
 
 export interface DeckValidity {
