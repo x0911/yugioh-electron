@@ -1,6 +1,4 @@
 # AI documentation & session memory (local, except progress.md)
-.ai-docs/*
-!.ai-docs/progress.md
 
 # Dependencies
 node_modules/
@@ -28,4 +26,3 @@ Thumbs.db
 .vscode/
 .idea/
 
-monsters-videos-prompts.md
