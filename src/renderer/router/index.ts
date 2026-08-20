@@ -44,6 +44,11 @@ const routes: RouteRecordRaw[] = [
     component: DuelView,
   },
   {
+    path: '/logs',
+    name: 'logs',
+    component: () => import('../views/LogsView.vue'),
+  },
+  {
     path: '/characters',
     redirect: '/main-menu',
   },

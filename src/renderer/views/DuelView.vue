@@ -282,6 +282,7 @@ import { type DuelEventPayload, getGameOverSubtitle } from '../../shared/types/d
 import { getBackgroundUrl } from '../utils/media.js';
 import { useDuelStore, type CardActionOption, type TargetInfo } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
+import { useDuelLogsStore } from '../stores/duelLogsStore.js';
 import { getActionGuideInfo } from '../utils/guidanceHelper.js';
 import {
   DuelHud,
@@ -325,6 +326,9 @@ interface InspectStackState {
 const router = useRouter();
 const duelStore = useDuelStore();
 const settingsStore = useSettingsStore();
+const duelLogsStore = useDuelLogsStore();
+
+let hasSavedCurrentDuel = false;
 
 // Modals and Drawers
 const isMenuOpen = ref(false);
@@ -566,9 +570,67 @@ function closeCardActionMenu(): void {
   menuAnchorPos.value = null;
 }
 
+function saveCurrentDuelLog(overrideOutcome?: 'victory' | 'defeat' | 'draw' | 'surrender'): void {
+  if (hasSavedCurrentDuel) return;
+  if (duelLogs.value.length === 0) return;
+
+  const uPf = currentBoardState.value.userField;
+  const oPf = currentBoardState.value.opponentField;
+  const winnerId = duelStore.boardState.winner;
+
+  let outcome: 'victory' | 'defeat' | 'draw' | 'surrender' = overrideOutcome || 'draw';
+  if (!overrideOutcome) {
+    if (winnerId === duelStore.userPlayerId) {
+      outcome = 'victory';
+    } else if (winnerId !== null) {
+      outcome = 'defeat';
+    }
+  }
+
+  let outcomeLabel = 'MATCH COMPLETE';
+  if (outcome === 'victory') outcomeLabel = 'VICTORY';
+  else if (outcome === 'defeat') outcomeLabel = 'DEFEAT';
+  else if (outcome === 'surrender') outcomeLabel = 'SURRENDER';
+  else if (outcome === 'draw') outcomeLabel = 'DRAW';
+
+  const markdownLog = duelLogsStore.buildMarkdownReport(currentBoardState.value, duelLogs.value, {
+    outcome,
+    winReason: gameOverSubtitle.value,
+    guideInstruction: actionGuideInfo.value.instruction,
+    guideSubText: actionGuideInfo.value.subText,
+  });
+
+  duelLogsStore.recordDuel({
+    playerName: uPf.name || 'Player (You)',
+    playerDeckName: duelStore.selectedUserDeck?.name || 'Custom Deck',
+    playerStartingLp: uPf.maxLp,
+    playerFinalLp: uPf.currentLp,
+    opponentId: duelStore.selectedOpponent?.id || 'opponent',
+    opponentName: oPf.name || duelStore.opponentName,
+    opponentTitle: oPf.title || duelStore.opponentTitle,
+    opponentSeries: oPf.series || duelStore.opponentSeries,
+    opponentDeckName:
+      duelStore.selectedOpponentDeck?.name || duelStore.selectedOpponent?.title || 'Challenger Deck',
+    opponentAvatar: duelStore.selectedOpponent?.avatar || '',
+    opponentStartingLp: oPf.maxLp,
+    opponentFinalLp: oPf.currentLp,
+    turns: currentBoardState.value.turnNumber,
+    outcome,
+    outcomeLabel,
+    winReason: gameOverSubtitle.value,
+    totalEvents: duelLogs.value.length,
+    markdownLog,
+    logs: [...duelLogs.value],
+  });
+
+  hasSavedCurrentDuel = true;
+}
+
 async function onRestartMatch(): Promise<void> {
   isMenuOpen.value = false;
   closeCardActionMenu();
+  hasSavedCurrentDuel = false;
+  duelLogs.value = [];
   appendLog('RESTART', 'Restarting live duel...');
   await duelStore.startPreparedDuel();
 }
@@ -577,10 +639,12 @@ function onSurrender(): void {
   isMenuOpen.value = false;
   closeCardActionMenu();
   appendLog('SURRENDER', 'Player surrendered the match.');
+  saveCurrentDuelLog('surrender');
   router.push('/main-menu');
 }
 
 function returnToCharacters(): void {
+  saveCurrentDuelLog();
   router.push('/main-menu');
 }
 
@@ -756,6 +820,10 @@ async function setupEngineEventListener(): Promise<void> {
 
       // Update store state incrementally as animation finishes
       await duelStore.handleEngineEvent(event);
+
+      if (event.type === 'WIN') {
+        saveCurrentDuelLog();
+      }
     });
   });
 }

@@ -15,6 +15,7 @@
         <router-link to="/coin-toss" class="dev-nav-bar__link"> Coin Toss (P8) </router-link>
         <router-link to="/pre-duel-video" class="dev-nav-bar__link"> Pre-Duel (P8) </router-link>
         <router-link to="/duel" class="dev-nav-bar__link"> Duel (P9) </router-link>
+        <router-link to="/logs" class="dev-nav-bar__link dev-nav-bar__link--logs"> Logs </router-link>
         <router-link to="/dev/kitchen-sink" class="dev-nav-bar__link dev-nav-bar__link--highlight">
           Kitchen Sink (P4)
         </router-link>

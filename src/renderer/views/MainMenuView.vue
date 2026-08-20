@@ -25,6 +25,15 @@
       </div>
 
       <div class="main-menu-view__header-status">
+        <router-link
+          to="/logs"
+          class="main-menu-view__about-btn"
+          title="View Last 10 Duel Logs & Diagnostics"
+        >
+          <span class="about-icon">📜</span>
+          <span>Logs</span>
+        </router-link>
+
         <button
           type="button"
           class="main-menu-view__about-btn"
