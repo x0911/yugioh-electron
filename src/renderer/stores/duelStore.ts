@@ -103,6 +103,9 @@ export interface DuelStoreState {
   // In-Duel Video Playback
   isVideoPlaying: boolean;
   activeVideoPayload: import('../../shared/types/duel.js').CardVideoPayload | null;
+
+  // Card Selection Modal State
+  isCardSelectionModalOpen: boolean;
 }
 
 export interface TargetInfo {
@@ -190,6 +193,8 @@ export const useDuelStore = defineStore('duel', {
 
     isVideoPlaying: false,
     activeVideoPayload: null,
+
+    isCardSelectionModalOpen: false,
   }),
 
   getters: {
@@ -579,6 +584,7 @@ export const useDuelStore = defineStore('duel', {
       this.activeSelectTribute = null;
       this.selectedTargetIndices = [];
       this.isPromptWaiting = false;
+      this.isCardSelectionModalOpen = false;
     },
 
     /**
@@ -610,6 +616,7 @@ export const useDuelStore = defineStore('duel', {
           this.activeBattleCmd = event.promptData as SelectBattleCmdPayload;
         } else if (event.promptType === 'SELECT_CARD') {
           this.activeSelectCard = event.promptData as SelectCardPayload;
+          this.isCardSelectionModalOpen = true;
         } else if (event.promptType === 'SELECT_CHAIN') {
           const chainPayload = event.promptData as SelectChainPayload;
           // Only show chain dialog if there are actual cards the player can chain with
@@ -634,6 +641,7 @@ export const useDuelStore = defineStore('duel', {
           this.activeSelectPlace = event.promptData as SelectPlacePayload;
         } else if (event.promptType === 'SELECT_TRIBUTE') {
           this.activeSelectTribute = event.promptData as SelectTributePayload;
+          this.isCardSelectionModalOpen = true;
         }
       } else if (!event.isPrompt) {
         if (
@@ -1030,6 +1038,18 @@ export const useDuelStore = defineStore('duel', {
       });
     },
 
+    openCardSelectionModal(): void {
+      this.isCardSelectionModalOpen = true;
+    },
+
+    closeCardSelectionModal(): void {
+      this.isCardSelectionModalOpen = false;
+    },
+
+    toggleCardSelectionModal(): void {
+      this.isCardSelectionModalOpen = !this.isCardSelectionModalOpen;
+    },
+
     async executeDeclareAttack(attackIndex: number): Promise<boolean> {
       return this.sendCommand({
         type: 0, // SELECT_BATTLECMD
@@ -1039,9 +1059,18 @@ export const useDuelStore = defineStore('duel', {
     },
 
     async executeSelectCard(selectedIndices: number[]): Promise<boolean> {
+      this.isCardSelectionModalOpen = false;
       return this.sendCommand({
         type: 5, // SELECT_CARD
         indicies: selectedIndices,
+      });
+    },
+
+    async executeSelectTribute(selectedIndices: number[]): Promise<boolean> {
+      this.isCardSelectionModalOpen = false;
+      return this.sendCommand({
+        type: 12, // SELECT_TRIBUTE
+        cards: selectedIndices,
       });
     },
 
@@ -1077,13 +1106,6 @@ export const useDuelStore = defineStore('duel', {
       return this.sendCommand({
         type: 4, // SELECT_OPTION
         index: optionIndex,
-      });
-    },
-
-    async executeSelectTribute(tributeIndices: number[]): Promise<boolean> {
-      return this.sendCommand({
-        type: 12, // SELECT_TRIBUTE
-        indicies: tributeIndices,
       });
     },
 

@@ -127,7 +127,26 @@
       @select-option="duelStore.executeSelectOption"
     />
 
-    <!-- Floating Target Selection Confirmation Bar (On-Field micro-dialog) -->
+    <!-- Dedicated Card Selection Modal (Deck, Graveyard, Extra Deck, Banished, Hand Search/Targeting) -->
+    <CardSelectionModal
+      v-if="duelStore.hasActiveSelectionPrompt"
+      :model-value="duelStore.isCardSelectionModalOpen"
+      :select-payload="duelStore.activeSelectCard || duelStore.activeSelectTribute"
+      :selected-indices="duelStore.selectedTargetIndices"
+      :can-cancel="duelStore.activeSelectCard?.can_cancel ?? false"
+      :min="duelStore.activeSelectionMin"
+      :max="duelStore.activeSelectionMax"
+      :instruction="actionGuideInfo?.instruction || 'Select card(s) to proceed with the active effect.'"
+      :sub-text="actionGuideInfo?.subText"
+      @toggle-target="duelStore.toggleTargetByIndex"
+      @confirm="duelStore.confirmActiveSelection"
+      @cancel="duelStore.cancelActiveSelection"
+      @minimize="duelStore.closeCardSelectionModal"
+      @hover-card="onCardHover"
+      @update:model-value="duelStore.isCardSelectionModalOpen = $event"
+    />
+
+    <!-- Floating Target Selection Confirmation Bar (On-Field micro-dialog / Minimized state) -->
     <div v-if="duelStore.hasActiveSelectionPrompt" class="target-confirmation-bar glass-panel">
       <div class="target-bar-info">
         <span class="target-bar-icon">{{ actionGuideInfo?.categoryIcon || '🎯' }}</span>
@@ -137,6 +156,13 @@
         </div>
       </div>
       <div class="target-bar-actions">
+        <button
+          v-if="!duelStore.isCardSelectionModalOpen"
+          class="micro-btn micro-btn--browse"
+          @click="duelStore.openCardSelectionModal"
+        >
+          📋 Browse Cards ({{ duelStore.selectedTargetIndices.length }}/{{ duelStore.activeSelectionMax }})
+        </button>
         <button
           v-if="duelStore.activeSelectCard?.can_cancel"
           class="micro-btn micro-btn--cancel"
@@ -254,6 +280,7 @@ import {
   PromptModal,
   CardAnimationOverlay,
   CardListModal,
+  CardSelectionModal,
   VideoOverlay,
 } from '../components/duel/index.js';
 import {
@@ -986,6 +1013,20 @@ onUnmounted(() => {
     &:hover {
       background: rgba(201, 162, 39, 0.2);
       border-color: $color-gold-300;
+      transform: translateY(-2px);
+    }
+  }
+
+  &--browse {
+    background: rgba(66, 153, 225, 0.25);
+    border: 1px solid #63b3ed;
+    color: #bee3f8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+
+    &:hover {
+      background: rgba(66, 153, 225, 0.45);
+      border-color: #90cdf4;
+      box-shadow: 0 4px 14px rgba(66, 153, 225, 0.5);
       transform: translateY(-2px);
     }
   }

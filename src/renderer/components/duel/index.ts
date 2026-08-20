@@ -11,6 +11,7 @@ export { default as CardActionMenu } from './CardActionMenu.vue';
 export { default as PromptModal } from './PromptModal.vue';
 export { default as CardAnimationOverlay } from './CardAnimationOverlay.vue';
 export { default as CardListModal } from './CardListModal.vue';
+export { default as CardSelectionModal } from './CardSelectionModal.vue';
 export { default as VideoOverlay } from './VideoOverlay.vue';
 
 
