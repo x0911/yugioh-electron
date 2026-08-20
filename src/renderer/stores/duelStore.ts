@@ -515,10 +515,6 @@ export const useDuelStore = defineStore('duel', {
             humanPlayerId: Number(humanPlayerId),
           });
           this.isDuelActive = success;
-          if (success) {
-            // Deal opening hand cards one-by-one with staggered animation
-            await this.dealOpeningHand();
-          }
           return success;
         } catch (err) {
           console.error('[DuelStore] Failed starting prepared duel:', err);
@@ -528,48 +524,6 @@ export const useDuelStore = defineStore('duel', {
 
       this.isDuelActive = true;
       return true;
-    },
-
-    /**
-     * Deals the opening hand one card at a time with a staggered animation delay.
-     * Fetches the full snapshot but reveals user hand cards incrementally so players
-     * can see each card being "dealt" from the deck, like in real card games.
-     */
-    async dealOpeningHand(): Promise<void> {
-      if (!window.duelAPI) return;
-      await this.initCardDatabase();
-      try {
-        const rawSnapshot = await window.duelAPI.getBoardState();
-        if (!rawSnapshot) return;
-
-        const snapshot = {
-          ...rawSnapshot,
-          userField: this.hydratePlayerField(rawSnapshot.userField),
-          opponentField: this.hydratePlayerField(rawSnapshot.opponentField),
-        };
-
-        // Apply non-hand fields immediately (LP, phase, field zones, opponent)
-        this.boardState.turnNumber = snapshot.turnNumber;
-        this.boardState.currentPhase = snapshot.currentPhase;
-        this.boardState.winner = snapshot.winner;
-        this.boardState.winReason = snapshot.winReason;
-
-        // Apply opponent data (with character info)
-        this.boardState.opponentField = { ...snapshot.opponentField };
-        if (this.selectedOpponent) {
-          this.boardState.opponentField.name = this.selectedOpponent.name;
-          this.boardState.opponentField.title = this.selectedOpponent.title;
-          this.boardState.opponentField.series = this.selectedOpponent.series;
-          this.boardState.opponentField.characterId = this.selectedOpponent.id;
-        }
-
-        // Apply user field cleanly without racy async array concatenation
-        this.boardState.userField = snapshot.userField;
-      } catch (err) {
-        console.error('[DuelStore] Failed dealing opening hand:', err);
-        // Fallback: fetch everything at once
-        await this.fetchBoardState();
-      }
     },
 
     /**
@@ -915,8 +869,9 @@ export const useDuelStore = defineStore('duel', {
       } else if (event.type === 'DRAW' && event.player !== undefined) {
         const p = event.player as 0 | 1;
         const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
-        pf.deckCount = Math.max(0, pf.deckCount - 1);
         const drawnCards = (event as any).drawnCards || (event as any).drawn || [];
+        const count = drawnCards.length || 1;
+        pf.deckCount = Math.max(0, pf.deckCount - count);
         if (drawnCards.length > 0) {
           for (const d of drawnCards) {
             const code = p === this.userPlayerId ? (d.code || 0) : 0;
@@ -1593,6 +1548,7 @@ export const useDuelStore = defineStore('duel', {
       return this.sendCommand({
         type: 5, // SELECT_CARD
         indicies: selectedIndices,
+        cards: selectedIndices,
       });
     },
 
@@ -1621,6 +1577,7 @@ export const useDuelStore = defineStore('duel', {
       return this.sendCommand({
         type: 14, // SELECT_SUM
         indicies: selectedIndices,
+        cards: selectedIndices,
       });
     },
 

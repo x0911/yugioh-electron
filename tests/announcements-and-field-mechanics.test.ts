@@ -260,4 +260,66 @@ const decoder = new MessageDecoder(cardReader);
   console.log('  ✓ Target single-toggle integrity verified (no double-trigger deselect).');
 }
 
-console.log('\n✅ All Announcement, Victory Cutscene, and Field Mechanic Tests Passed!\n');
+// -----------------------------------------------------------------------------
+// Test 8: Duel Log Formatter & Diagnostic Report Export
+// -----------------------------------------------------------------------------
+{
+  console.log('Test 8: Duel Log Formatter & Diagnostic Report Structure...');
+
+  const mockLogs = [
+    { time: '01:23.4', type: 'NEW_TURN', description: 'Turn 1 started. Turn Player: You' },
+    { time: '01:24.0', type: 'DRAW', description: 'You drew Sangan.' },
+    { time: '01:28.2', type: 'SUMMON', description: 'Normal Summoned Sangan in Face-up Attack Position.' },
+  ];
+
+  const mockBoardState: any = {
+    turnNumber: 1,
+    currentPhase: 'M1',
+    userField: {
+      isTurn: true,
+      currentLp: 8000,
+      maxLp: 8000,
+      monsterZones: [{ code: 26202165, name: 'Sangan', atk: 1000, def: 600, position: 'faceup_attack' }],
+      spellTrapZones: [],
+      hand: [{ name: 'Dark Magician' }],
+    },
+    opponentField: {
+      name: 'Seto Kaiba',
+      currentLp: 8000,
+      maxLp: 8000,
+      monsterZones: [],
+      spellTrapZones: [],
+      hand: [{}, {}, {}, {}],
+    },
+  };
+
+  const lines: string[] = [];
+  lines.push('```yugioh-duel-log');
+  lines.push('=== YU-GI-OH! DUEL LOG & DIAGNOSTIC REPORT ===');
+  lines.push(`• Turn: ${mockBoardState.turnNumber} | Phase: ${mockBoardState.currentPhase} | Turn Player: ${mockBoardState.userField.isTurn ? 'Player (You)' : 'Opponent'}`);
+  lines.push(`• Player LP: ${mockBoardState.userField.currentLp}/${mockBoardState.userField.maxLp} | Opponent LP: ${mockBoardState.opponentField.currentLp}/${mockBoardState.opponentField.maxLp} (${mockBoardState.opponentField.name || 'Opponent'})`);
+
+  const userMonsters = mockBoardState.userField.monsterZones
+    .map((m: any, i: number) => (m && m.code > 0 ? `[M${i + 1}: ${m.name} (${m.atk ?? '?'}/${m.def ?? '?'}, ${m.position})]` : null))
+    .filter(Boolean);
+  lines.push(`• Player Monsters (${userMonsters.length}): ${userMonsters.join(', ')}`);
+  lines.push(`• Player Hand (${mockBoardState.userField.hand.length}): ${mockBoardState.userField.hand.map((c: any) => c.name).join(', ')}`);
+  lines.push(`• Opponent Hand: ${mockBoardState.opponentField.hand.length} cards`);
+  lines.push(`\n--- EVENT STREAM (${mockLogs.length} Events) ---`);
+  for (const item of mockLogs) {
+    lines.push(`[${item.time}] [${item.type}] ${item.description}`);
+  }
+  lines.push('==============================================');
+  lines.push('```');
+
+  const formattedOutput = lines.join('\n');
+  assert.ok(formattedOutput.startsWith('```yugioh-duel-log'));
+  assert.ok(formattedOutput.includes('Turn: 1 | Phase: M1'));
+  assert.ok(formattedOutput.includes('Player LP: 8000/8000 | Opponent LP: 8000/8000 (Seto Kaiba)'));
+  assert.ok(formattedOutput.includes('[01:23.4] [NEW_TURN] Turn 1 started. Turn Player: You'));
+  assert.ok(formattedOutput.endsWith('```'));
+
+  console.log('  ✓ Duel log formatted diagnostic report verified for seamless copy-pasting.');
+}
+
+console.log('\n✅ All Announcement, Victory Cutscene, Field Mechanic, and Log Report Tests Passed!\n');

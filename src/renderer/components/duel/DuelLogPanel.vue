@@ -11,6 +11,14 @@
           </div>
 
           <div class="header-actions">
+            <button
+              class="action-btn action-btn--copy"
+              :class="{ 'action-btn--copied': isCopied }"
+              :title="isCopied ? 'Copied to Clipboard!' : 'Copy Formatted Logs for AI / Bug Report'"
+              @click="copyLogsToClipboard"
+            >
+              {{ isCopied ? '✓' : '📋' }}
+            </button>
             <button class="action-btn" title="Clear Event Log" @click="$emit('clear')">
               🗑
             </button>
@@ -50,6 +58,20 @@
             <span class="log-msg">{{ item.description }}</span>
           </div>
         </div>
+
+        <!-- Drawer Footer Quick Actions -->
+        <div class="drawer-footer">
+          <button
+            type="button"
+            class="copy-all-btn"
+            :class="{ 'copy-all-btn--copied': isCopied }"
+            :disabled="logs.length === 0"
+            @click="copyLogsToClipboard"
+          >
+            <span class="btn-icon">{{ isCopied ? '✓' : '📋' }}</span>
+            <span>{{ isCopied ? 'Copied to Clipboard!' : 'Copy Formatted Duel Logs' }}</span>
+          </button>
+        </div>
       </div>
     </div>
   </Transition>
@@ -57,6 +79,8 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
+import type { DuelBoardState } from '../../../shared/types/field.js';
+import type { ActionGuideInfo } from '../../utils/guidanceHelper.js';
 
 export interface DuelLogItem {
   time: string;
@@ -68,10 +92,14 @@ const props = withDefaults(
   defineProps<{
     isOpen: boolean;
     logs: DuelLogItem[];
+    boardState?: DuelBoardState | null;
+    guideInfo?: ActionGuideInfo | null;
   }>(),
   {
     isOpen: false,
     logs: () => [],
+    boardState: null,
+    guideInfo: null,
   },
 );
 
@@ -110,6 +138,88 @@ const filteredLogs = computed(() => {
     return true;
   });
 });
+
+const isCopied = ref(false);
+let copyTimeout: any = null;
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // fallback
+  }
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return successful;
+  } catch (err) {
+    console.error('[DuelLogPanel] Failed copying to clipboard:', err);
+    return false;
+  }
+}
+
+async function copyLogsToClipboard(): Promise<void> {
+  if (props.logs.length === 0) return;
+
+  const lines: string[] = [];
+  lines.push('```yugioh-duel-log');
+  lines.push('=== YU-GI-OH! DUEL LOG & DIAGNOSTIC REPORT ===');
+
+  if (props.boardState) {
+    const uPf = props.boardState.userField;
+    const oPf = props.boardState.opponentField;
+    lines.push(`• Turn: ${props.boardState.turnNumber} | Phase: ${props.boardState.currentPhase} | Turn Player: ${uPf.isTurn ? 'Player (You)' : 'Opponent'}`);
+    lines.push(`• Player LP: ${uPf.currentLp}/${uPf.maxLp} | Opponent LP: ${oPf.currentLp}/${oPf.maxLp} (${oPf.name || 'Opponent'})`);
+
+    const userMonsters = uPf.monsterZones
+      .map((m, i) => (m && m.code > 0 ? `[M${i + 1}: ${m.name} (${m.atk ?? '?'}/${m.def ?? '?'}, ${m.position})]` : null))
+      .filter(Boolean);
+    const oppMonsters = oPf.monsterZones
+      .map((m, i) => (m && m.code > 0 ? `[M${i + 1}: ${m.name || 'Monster'} (${m.atk ?? '?'}/${m.def ?? '?'}, ${m.position})]` : null))
+      .filter(Boolean);
+
+    lines.push(`• Player Monsters (${userMonsters.length}): ${userMonsters.length > 0 ? userMonsters.join(', ') : 'None'}`);
+    lines.push(`• Opponent Monsters (${oppMonsters.length}): ${oppMonsters.length > 0 ? oppMonsters.join(', ') : 'None'}`);
+    lines.push(`• Player Hand (${uPf.hand.length}): ${uPf.hand.map((c) => c.name).join(', ')}`);
+    lines.push(`• Opponent Hand: ${oPf.hand.length} cards`);
+  }
+
+  if (props.guideInfo) {
+    lines.push(`• Active Guidance: ${props.guideInfo.instruction || 'None'}`);
+    if (props.guideInfo.subText) {
+      lines.push(`• Context Details: ${props.guideInfo.subText}`);
+    }
+  }
+
+  lines.push(`\n--- EVENT STREAM (${props.logs.length} Events) ---`);
+  for (const item of props.logs) {
+    lines.push(`[${item.time}] [${item.type}] ${item.description}`);
+  }
+  lines.push('==============================================');
+  lines.push('```');
+
+  const fullText = lines.join('\n');
+  const success = await copyToClipboard(fullText);
+
+  if (success) {
+    isCopied.value = true;
+    if (copyTimeout) clearTimeout(copyTimeout);
+    copyTimeout = setTimeout(() => {
+      isCopied.value = false;
+    }, 2200);
+  }
+}
 
 watch(
   () => props.logs.length,
@@ -205,6 +315,17 @@ watch(
     &:hover {
       background: rgba(201, 162, 39, 0.2);
       border-color: $color-gold-300;
+    }
+
+    &--copy {
+      color: $color-gold-300;
+    }
+
+    &--copied {
+      background: rgba(72, 187, 120, 0.3) !important;
+      border-color: #48bb78 !important;
+      color: #68d391 !important;
+      font-weight: 700;
     }
 
     &--close:hover {
@@ -315,6 +436,62 @@ watch(
     &--spell .log-badge {
       background: rgba(86, 204, 242, 0.2);
       color: #56ccf2;
+    }
+  }
+
+  // Drawer Footer
+  .drawer-footer {
+    padding-top: 10px;
+    margin-top: 6px;
+    border-top: 1px solid rgba(201, 162, 39, 0.25);
+    display: flex;
+  }
+
+  .copy-all-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(201, 162, 39, 0.15);
+    border: 1px solid rgba(201, 162, 39, 0.4);
+    color: $color-gold-300;
+    font-family: $font-display;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+    &:hover:not(:disabled) {
+      background: rgba(201, 162, 39, 0.3);
+      border-color: $color-gold-300;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(201, 162, 39, 0.25);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    &--copied {
+      background: rgba(72, 187, 120, 0.25) !important;
+      border-color: rgba(72, 187, 120, 0.6) !important;
+      color: #68d391 !important;
+      box-shadow: 0 0 12px rgba(72, 187, 120, 0.3) !important;
+    }
+
+    .btn-icon {
+      font-size: 0.95rem;
     }
   }
 }

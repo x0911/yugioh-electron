@@ -239,7 +239,6 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void;
   (e: 'toggle-target', selectIndex: number): void;
-  (e: 'toggle-index', selectIndex: number): void;
   (e: 'confirm'): void;
   (e: 'cancel'): void;
   (e: 'minimize'): void;
@@ -427,7 +426,6 @@ function onMouseLeave(): void {
 
 function onCardClick(card: EnrichedSelectCard): void {
   emit('toggle-target', card.selectIndex);
-  emit('toggle-index', card.selectIndex);
 }
 
 function onCardDblClick(card: EnrichedSelectCard): void {
@@ -435,7 +433,6 @@ function onCardDblClick(card: EnrichedSelectCard): void {
   if (props.max === 1) {
     if (!card.isSelected) {
       emit('toggle-target', card.selectIndex);
-      emit('toggle-index', card.selectIndex);
     }
     setTimeout(() => {
       emit('confirm');

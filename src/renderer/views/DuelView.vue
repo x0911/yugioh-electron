@@ -151,7 +151,6 @@
       :sub-text="actionGuideInfo?.subText"
       @update:model-value="duelStore.isCardSelectionModalOpen = $event"
       @toggle-target="duelStore.toggleTargetByIndex"
-      @toggle-index="duelStore.toggleTargetByIndex"
       @minimize="duelStore.closeCardSelectionModal"
       @hover-card="onCardHover"
       @cancel="duelStore.cancelActiveSelection"
@@ -245,11 +244,12 @@
       :type="activeInspectStack.type"
       @hover-card="onCardHover"
     />
-
     <!-- Slide-Out Duel Log Drawer -->
     <DuelLogPanel
       :is-open="isDuelLogOpen"
       :logs="duelLogs"
+      :board-state="currentBoardState"
+      :guide-info="actionGuideInfo"
       @close="isDuelLogOpen = false"
       @clear="duelLogs = []"
     />

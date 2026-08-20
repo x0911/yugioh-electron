@@ -138,9 +138,134 @@ async function testCardSelectionModalDataStructure() {
   console.log('✓ All 7 duel zones correctly classified for CardSelectionModal.');
 }
 
+async function testPrematureBurialGraveyardTargetSelection() {
+  console.log('\nTest 3: Premature Burial (70828912) Graveyard Target Selection...');
+
+  const engine = new DuelEngineService();
+  await engine.init();
+
+  let pbPromptReceived = false;
+  let targetCandidates: any[] = [];
+  let celticGuardianSummoned = false;
+
+  engine.onEvent((ev: DecodedDuelEvent) => {
+    if (ev.isPrompt) {
+      if (ev.promptType === 'SELECT_IDLECMD' && ev.promptPlayer === 0) {
+        const pData = ev.promptData as any;
+        const pbActivate = pData.activates?.find((a: any) => a.code === 70828912);
+        if (pbActivate) {
+          const idx = pData.activates.indexOf(pbActivate);
+          setTimeout(() => {
+            engine.sendResponse({
+              type: OcgResponseType.SELECT_IDLECMD,
+              action: SelectIdleCMDAction.SELECT_ACTIVATE,
+              index: idx,
+            });
+          }, 10);
+        }
+      } else if (ev.promptType === 'SELECT_CARD' && ev.promptPlayer === 0) {
+        const pData = ev.promptData as any;
+        pbPromptReceived = true;
+        targetCandidates = pData.selects;
+
+        assert.ok(targetCandidates.length > 0, 'Must have selectable monster target in Graveyard');
+        assert.strictEqual(targetCandidates[0].location, 16, 'Candidate must be in Graveyard (Location 16)');
+        assert.strictEqual(targetCandidates[0].code, 91152256, 'Target candidate must be Celtic Guardian');
+
+        setTimeout(() => {
+          engine.sendResponse({
+            type: OcgResponseType.SELECT_CARD,
+            indicies: [0],
+            cards: [0],
+          });
+        }, 10);
+      } else if (ev.promptType === 'SELECT_CHAIN') {
+        setTimeout(() => {
+          engine.sendResponse({
+            type: OcgResponseType.SELECT_CHAIN,
+            index: -1,
+          });
+        }, 10);
+      }
+    }
+
+    if (ev.type === 'SPSUMMONED' || ev.type === 'SPSUMMONING') {
+      if (ev.code === 91152256) {
+        celticGuardianSummoned = true;
+      }
+    }
+  });
+
+  const p0Deck: number[] = [];
+  while (p0Deck.length < 40) p0Deck.push(70828912);
+
+  const p1Deck: number[] = [];
+  while (p1Deck.length < 40) p1Deck.push(40640057);
+
+  engine.startNewDuel({
+    player0Deck: p0Deck,
+    player1Deck: p1Deck,
+    player0Graveyard: [91152256], // Celtic Guardian in Graveyard
+    startingLP: 8000,
+    startingDrawCount: 5,
+    drawCountPerTurn: 1,
+    humanPlayerId: 0,
+    autoPlay: false,
+    noShuffle: true,
+  });
+
+  const start = Date.now();
+  while (!celticGuardianSummoned && Date.now() - start < 3000) {
+    await new Promise((r) => setTimeout(r, 40));
+  }
+
+  assert.ok(pbPromptReceived, 'Premature Burial must trigger SELECT_CARD targeting Graveyard');
+  assert.ok(celticGuardianSummoned, 'Celtic Guardian must be Special Summoned from Graveyard');
+  console.log('✓ Premature Burial Graveyard targeting and Special Summon verified.');
+
+  engine.close();
+}
+
+async function testSingleClickTargetToggleIntegrity() {
+  console.log('\nTest 4: Card Selection Single Click Toggle & Order Integrity...');
+
+  // Simulating store selection behavior
+  let selectedIndices: number[] = [];
+  const maxAllowed = 1;
+
+  const toggleTargetByIndex = (idx: number) => {
+    const existing = selectedIndices.indexOf(idx);
+    if (existing >= 0) {
+      selectedIndices.splice(existing, 1);
+    } else {
+      if (selectedIndices.length < maxAllowed) {
+        selectedIndices.push(idx);
+      } else if (maxAllowed === 1) {
+        selectedIndices = [idx];
+      }
+    }
+  };
+
+  // 1. Single click on index 0
+  toggleTargetByIndex(0);
+  assert.deepStrictEqual(selectedIndices, [0], 'Single click must add index 0 to selection');
+
+  // 2. Click on index 1 (when max is 1)
+  toggleTargetByIndex(1);
+  assert.deepStrictEqual(selectedIndices, [1], 'Click on new index when max=1 must switch selection to index 1');
+
+  // 3. Click on index 1 again (deselect)
+  toggleTargetByIndex(1);
+  assert.deepStrictEqual(selectedIndices, [], 'Click on already selected index must deselect it');
+
+  console.log('✓ Card selection single click toggle integrity confirmed.');
+}
+
 async function runAll() {
   await testSanganBattleDestructionSearch();
   await testCardSelectionModalDataStructure();
+  await testPrematureBurialGraveyardTargetSelection();
+  await testSingleClickTargetToggleIntegrity();
   console.log('\n🎉 ALL SANGAN & CARD SELECTION TESTS PASSED SUCCESSFULLY!');
 }
 

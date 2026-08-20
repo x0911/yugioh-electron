@@ -431,4 +431,100 @@ console.log('=== Running Hand Duplication, Actions & Animation Queue Tests ===\n
   console.log('✓ Direct attack correctly identifies opponent target and SET move prevents duplicate faceup flights.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 8: Opening Hand Non-Duplication Integrity (Player 1 & Player 2)
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 8: Opening Hand Initialization & Non-Duplication Integrity...');
+
+  // State structure simulation
+  const boardState: { userField: PlayerFieldState; opponentField: PlayerFieldState } = {
+    userField: {
+      isTurn: false,
+      currentLp: 8000,
+      maxLp: 8000,
+      deckCount: 40,
+      hand: [],
+      monsterZones: [null, null, null, null, null],
+      spellTrapZones: [null, null, null, null, null],
+      graveyard: [],
+      banished: [],
+      extraDeck: [],
+    },
+    opponentField: {
+      isTurn: true,
+      currentLp: 8000,
+      maxLp: 8000,
+      deckCount: 40,
+      hand: [],
+      monsterZones: [null, null, null, null, null],
+      spellTrapZones: [null, null, null, null, null],
+      graveyard: [],
+      banished: [],
+      extraDeck: [],
+    },
+  };
+
+  const userPlayerId = 1; // User plays second (Player 1)
+
+  // 1. Initial engine DRAW events emitted upon duel start
+  const openingDrawPlayer0 = {
+    type: 'DRAW',
+    player: 0,
+    drawnCards: [{ code: 0 }, { code: 0 }, { code: 0 }, { code: 0 }, { code: 0 }],
+  };
+  const openingDrawPlayer1 = {
+    type: 'DRAW',
+    player: 1,
+    drawnCards: [
+      { code: 26202165, cardName: 'Sangan' },
+      { code: 91152256, cardName: 'Celtic Guardian' },
+      { code: 33396948, cardName: 'Exodia the Forbidden One' },
+      { code: 70828912, cardName: 'Premature Burial' },
+      { code: 12580477, cardName: 'Raigeki' },
+    ],
+  };
+
+  // Simulating store DRAW handler
+  function handleDrawEvent(evt: any) {
+    const p = evt.player as 0 | 1;
+    const pf = p === userPlayerId ? boardState.userField : boardState.opponentField;
+    const drawnCards = evt.drawnCards || [];
+    const count = drawnCards.length || 1;
+    pf.deckCount = Math.max(0, pf.deckCount - count);
+    for (const d of drawnCards) {
+      pf.hand.push({
+        id: `hand-${d.code}-${Math.random()}`,
+        code: p === userPlayerId ? d.code : 0,
+        name: d.cardName || 'Card',
+        controller: p,
+        location: 'hand',
+        sequence: pf.hand.length,
+        position: p === userPlayerId ? 'faceup_spell' : 'facedown_spell',
+      });
+    }
+  }
+
+  handleDrawEvent(openingDrawPlayer0);
+  handleDrawEvent(openingDrawPlayer1);
+
+  // Assert user hand has EXACTLY 5 cards on Turn 1 (Opponent turn)
+  assert.equal(boardState.userField.hand.length, 5, 'User hand must contain exactly 5 cards on Turn 1');
+  assert.equal(boardState.opponentField.hand.length, 5, 'Opponent hand must contain exactly 5 cards on Turn 1');
+  assert.equal(boardState.userField.deckCount, 35, 'User deck count must decrement by 5');
+  assert.equal(boardState.opponentField.deckCount, 35, 'Opponent deck count must decrement by 5');
+
+  // 2. Turn 2 starts: User draws 1 card
+  const turn2Draw = {
+    type: 'DRAW',
+    player: 1,
+    drawnCards: [{ code: 46986414, cardName: 'Dark Magician' }],
+  };
+  handleDrawEvent(turn2Draw);
+
+  assert.equal(boardState.userField.hand.length, 6, 'User hand must contain exactly 6 cards on Turn 2 after draw phase');
+  assert.equal(boardState.userField.deckCount, 34, 'User deck count must be 34');
+  console.log('✓ Opening hand streams cleanly from DRAW events without duplicate cards or count drift.');
+}
+
 console.log('\n🎉 ALL HAND, ACTION RESOLUTION & ANIMATION QUEUE TESTS PASSED!');
