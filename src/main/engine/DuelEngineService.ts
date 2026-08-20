@@ -1042,6 +1042,7 @@ export class DuelEngineService {
   public close(): void {
     this.destroyCurrentDuel();
     this.cardReader.close();
+    this.scriptReader.close();
   }
 }
 

@@ -122,6 +122,7 @@ async function downloadScriptWithRetry(cardId: number): Promise<string | null> {
 
 async function downloadBatchScripts(
   cardIds: number[],
+  aliasMap?: Map<number, number>,
   concurrency = 15,
 ): Promise<{ downloaded: number; notFound: number }> {
   let downloaded = 0;
@@ -135,7 +136,23 @@ async function downloadBatchScripts(
         return;
       }
 
-      const content = await downloadScriptWithRetry(id);
+      let content = await downloadScriptWithRetry(id);
+      const alias = aliasMap?.get(id);
+
+      // If id script not found, try alias script
+      if (!content && alias && alias > 0) {
+        const aliasPath = path.join(RESOURCES_OFFICIAL_SCRIPTS_DIR, `c${alias}.lua`);
+        if (fs.existsSync(aliasPath)) {
+          content = fs.readFileSync(aliasPath, 'utf-8');
+        } else {
+          content = await downloadScriptWithRetry(alias);
+          if (content) {
+            fs.writeFileSync(aliasPath, content, 'utf-8');
+            downloaded++;
+          }
+        }
+      }
+
       if (content) {
         fs.writeFileSync(scriptPath, content, 'utf-8');
         downloaded++;
@@ -442,8 +459,14 @@ export async function buildCardPool(): Promise<void> {
   console.log(
     `      • Fetching missing card scripts for ${matchingCardIds.size} filtered cards...`,
   );
+  const aliasMap = new Map<number, number>();
+  for (const r of filteredRows) {
+    if (r.alias && r.alias > 0) {
+      aliasMap.set(r.id, r.alias);
+    }
+  }
   const cardIdArray = Array.from(matchingCardIds);
-  const result = await downloadBatchScripts(cardIdArray);
+  const result = await downloadBatchScripts(cardIdArray, aliasMap);
   console.log(
     `      ✓ Script sync complete! Downloaded ${result.downloaded} new scripts (${result.notFound} normal/vanilla cards without scripts).`,
   );

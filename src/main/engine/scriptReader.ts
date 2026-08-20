@@ -1,14 +1,18 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import Database, { type Database as DatabaseType, type Statement } from 'better-sqlite3';
 
 export class ScriptReaderService {
   private scriptsDir: string;
   private officialScriptsDir: string;
   private scriptCache = new Map<string, string | null>();
+  private db: DatabaseType | null = null;
+  private stmtGetAlias: Statement<[number], { alias: number }> | null = null;
 
-  constructor(customScriptsDir?: string) {
+  constructor(customScriptsDir?: string, customDbPath?: string) {
     this.scriptsDir = this.resolveScriptsDir(customScriptsDir);
     this.officialScriptsDir = path.join(this.scriptsDir, 'official');
+    this.initDatabase(customDbPath);
   }
 
   private resolveScriptsDir(customDir?: string): string {
@@ -31,6 +35,45 @@ export class ScriptReaderService {
     if (fs.existsSync(relativePath)) return relativePath;
 
     throw new Error(`[ScriptReaderService] Cannot locate scripts directory at: ${devPath}`);
+  }
+
+  private initDatabase(customDbPath?: string): void {
+    try {
+      let cdbPath = customDbPath;
+      if (!cdbPath) {
+        if (process.resourcesPath) {
+          const packaged = path.join(process.resourcesPath, 'resources/cards.cdb');
+          if (fs.existsSync(packaged)) cdbPath = packaged;
+        }
+        if (!cdbPath) {
+          const dev = path.resolve(process.cwd(), 'resources/cards.cdb');
+          if (fs.existsSync(dev)) cdbPath = dev;
+        }
+      }
+
+      if (cdbPath && fs.existsSync(cdbPath)) {
+        this.db = new Database(cdbPath, { readonly: true });
+        this.stmtGetAlias = this.db.prepare('SELECT alias FROM datas WHERE id = ?');
+      }
+    } catch (err) {
+      console.warn('[ScriptReaderService] Could not open SQLite database for alias resolution:', err);
+    }
+  }
+
+  private resolveAliasScriptPath(cardId: number): string | null {
+    if (!this.stmtGetAlias) return null;
+    try {
+      const row = this.stmtGetAlias.get(cardId);
+      if (row && row.alias && row.alias > 0) {
+        const aliasPath = path.join(this.officialScriptsDir, `c${row.alias}.lua`);
+        if (fs.existsSync(aliasPath)) {
+          return aliasPath;
+        }
+      }
+    } catch {
+      // Ignore database errors
+    }
+    return null;
   }
 
   public readScript(name: string): string | null {
@@ -57,6 +100,21 @@ export class ScriptReaderService {
           console.warn(`[ScriptReaderService] Failed reading script ${name}:`, err);
         }
       }
+
+      // Check alias script fallback if direct script is missing
+      const cardId = parseInt(name.slice(1, -4), 10);
+      if (!isNaN(cardId)) {
+        const aliasPath = this.resolveAliasScriptPath(cardId);
+        if (aliasPath && fs.existsSync(aliasPath)) {
+          try {
+            const content = fs.readFileSync(aliasPath, 'utf-8');
+            this.scriptCache.set(name, content);
+            return content;
+          } catch (err) {
+            console.warn(`[ScriptReaderService] Failed reading alias script for ${name}:`, err);
+          }
+        }
+      }
     }
 
     // Base runtime scripts (constant.lua, utility.lua, proc_*.lua)
@@ -81,5 +139,16 @@ export class ScriptReaderService {
 
   public getScriptsDirectory(): string {
     return this.scriptsDir;
+  }
+
+  public close(): void {
+    if (this.db) {
+      try {
+        this.db.close();
+      } catch {
+        // Ignore close error
+      }
+      this.db = null;
+    }
   }
 }
