@@ -16,19 +16,15 @@
       </span>
     </div>
 
-    <!-- Horizontal Cards Container with Dynamic Resolution-Independent FLIP Motion -->
+    <!-- Horizontal Cards Container with Smooth CSS FLIP Motion -->
     <TransitionGroup
       name="hand-card-anim"
       tag="div"
       class="hand-cards-container"
-      :css="false"
-      @before-enter="onCardBeforeEnter"
-      @enter="onCardEnter"
-      @leave="onCardLeave"
     >
       <div
         v-for="(card, idx) in cards"
-        :key="card.id || `${player}-${card.code}-${idx}`"
+        :key="card.id || `hand-${player}-${card.code}-${card.sequence ?? idx}`"
         class="hand-card-slot"
         :data-hand-card-id="`hand-${player}-${card.sequence ?? idx}`"
         :class="{
@@ -187,73 +183,6 @@ function getSlotStyle(index: number, total: number): CSSProperties {
   };
 }
 
-/**
- * 100% Resolution-Independent FLIP Motion:
- * Dynamically queries the exact screen bounding box of the Main Deck at runtime,
- * and sets the initial entrance transform exactly at the Deck's coordinates.
- */
-function onCardBeforeEnter(el: Element): void {
-  const slotEl = el as HTMLElement;
-  const deckSelector = props.player === 'user' ? '.deck-stack--user-deck' : '.deck-stack--ai-deck';
-  const deckEl = document.querySelector(deckSelector) as HTMLElement | null;
-
-  if (deckEl) {
-    const deckRect = deckEl.getBoundingClientRect();
-    const slotRect = slotEl.getBoundingClientRect();
-
-    // Exact delta in screen viewport coordinates (resolution & letterbox agnostic)
-    const deltaX = deckRect.left + deckRect.width / 2 - (slotRect.left + slotRect.width / 2);
-    const deltaY = deckRect.top + deckRect.height / 2 - (slotRect.top + slotRect.height / 2);
-
-    slotEl.style.opacity = '0';
-    slotEl.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) scale(0.65) rotate(${props.player === 'user' ? -12 : 12}deg)`;
-  } else {
-    slotEl.style.opacity = '0';
-    slotEl.style.transform = 'scale(0.6)';
-  }
-}
-
-function onCardEnter(el: Element, done: () => void): void {
-  const slotEl = el as HTMLElement;
-  // Force browser layout reflow
-  void slotEl.offsetWidth;
-
-  slotEl.style.transition =
-    'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
-  slotEl.style.opacity = '1';
-  slotEl.style.transform = 'translate3d(0, 0, 0) scale(1) rotate(0deg)';
-
-  let cleaned = false;
-  const finish = (): void => {
-    if (cleaned) return;
-    cleaned = true;
-    slotEl.removeEventListener('transitionend', onEnd);
-    slotEl.style.transition = '';
-    slotEl.style.transform = '';
-    slotEl.style.opacity = '';
-    done();
-  };
-
-  const onEnd = (e: Event): void => {
-    if (e.target === slotEl) {
-      finish();
-    }
-  };
-
-  slotEl.addEventListener('transitionend', onEnd);
-  setTimeout(finish, 500);
-}
-
-function onCardLeave(el: Element, done: () => void): void {
-  const slotEl = el as HTMLElement;
-  slotEl.style.position = 'absolute';
-  slotEl.style.transition =
-    'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
-  slotEl.style.opacity = '0';
-  slotEl.style.transform = `translate3d(0, ${props.player === 'user' ? -50 : 50}px, 0) scale(0.6)`;
-  setTimeout(done, 360);
-}
-
 function onCardMouseEnter(card: FieldCard): void {
   if (props.player === 'user') {
     emit('hover-card', card);
@@ -317,13 +246,38 @@ function onCardClick(card: FieldCard, event: MouseEvent, idx: number): void {
     min-height: 130px;
   }
 
+  // Smooth FLIP Card Realignment
+  .hand-card-anim-move {
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), margin 0.28s ease;
+  }
+
+  .hand-card-anim-enter-active {
+    transition: opacity 0.25s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .hand-card-anim-leave-active {
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .hand-card-anim-enter-from {
+    opacity: 0;
+    transform: scale(0.75) translateY(12px);
+  }
+
+  .hand-card-anim-leave-to {
+    opacity: 0;
+    transform: scale(0.6) translateY(-16px);
+  }
+
   .hand-card-slot {
     position: relative;
     cursor: pointer;
     flex-shrink: 0;
     transition:
       transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-      margin 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+      margin 0.35s cubic-bezier(0.22, 1, 0.36, 1),
       z-index 0s;
 
     &:hover {

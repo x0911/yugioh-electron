@@ -434,6 +434,7 @@ function onClick(event: MouseEvent): void {
     border-radius: 5px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
     cursor: pointer;
+    animation: slot-card-settle 0.22s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
     transition:
       transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 0.25s ease;
@@ -596,6 +597,17 @@ function onClick(event: MouseEvent): void {
     pointer-events: none;
     z-index: 25;
     text-shadow: 0 0 4px rgba(242, 201, 76, 0.6);
+  }
+}
+
+@keyframes slot-card-settle {
+  0% {
+    opacity: 0.85;
+    filter: brightness(1.15);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1);
   }
 }
 </style>

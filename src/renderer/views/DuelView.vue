@@ -750,8 +750,18 @@ async function setupEngineEventListener(): Promise<void> {
               ? getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner)
               : fromLoc === 1
                 ? getStackRect(domOwner, 'deck')
-                : getZoneRect(domOwner, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
+                : getZoneRect(domOwner, fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster', fromSeq);
           const toRect = getStackRect(domOwner, 'graveyard');
+
+          // Hide source card element immediately so no ghost copy remains during flight
+          if (fromLoc === 2) {
+            const el = document.querySelector(`[data-hand-card-id="hand-${domOwner}-${fromSeq}"]`) as HTMLElement | null;
+            if (el) { el.style.opacity = '0'; el.style.visibility = 'hidden'; }
+          } else if (fromLoc === 4 || fromLoc === 8) {
+            const el = document.querySelector(`[data-zone-id="slot-${domOwner}-${fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster'}-${fromSeq}"] .field-card`) as HTMLElement | null;
+            if (el) { el.style.opacity = '0'; el.style.visibility = 'hidden'; }
+          }
+
           await playCardFlight({
             code: moveEvt.code || 0,
             cardName: moveEvt.cardName,
@@ -764,6 +774,11 @@ async function setupEngineEventListener(): Promise<void> {
           // Hand -> Spell/Trap Zone (Faceup Activation or Facedown Set)
           const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
           const toRect = getZoneRect(domOwner, fromSeq === 5 ? 'field' : 'spell-trap', toSeq);
+
+          // Hide source card in hand during flight
+          const el = document.querySelector(`[data-hand-card-id="hand-${domOwner}-${fromSeq}"]`) as HTMLElement | null;
+          if (el) { el.style.opacity = '0'; el.style.visibility = 'hidden'; }
+
           await playCardFlight({
             code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
             cardName: moveEvt.cardName || 'Spell Card',
@@ -778,6 +793,11 @@ async function setupEngineEventListener(): Promise<void> {
           // Hand -> Monster Zone (Faceup Normal/Special Summon or Facedown Set)
           const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
           const toRect = getZoneRect(domOwner, 'monster', toSeq);
+
+          // Hide source card in hand during flight
+          const el = document.querySelector(`[data-hand-card-id="hand-${domOwner}-${fromSeq}"]`) as HTMLElement | null;
+          if (el) { el.style.opacity = '0'; el.style.visibility = 'hidden'; }
+
           await playCardFlight({
             code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
             cardName: moveEvt.cardName || 'Monster',
@@ -814,6 +834,15 @@ async function setupEngineEventListener(): Promise<void> {
                 ? getStackRect(domOwner, 'graveyard')
                 : getZoneRect(domOwner, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
           const toRect = getStackRect(domOwner, 'banished');
+
+          if (fromLoc === 2) {
+            const el = document.querySelector(`[data-hand-card-id="hand-${domOwner}-${fromSeq}"]`) as HTMLElement | null;
+            if (el) { el.style.opacity = '0'; el.style.visibility = 'hidden'; }
+          } else if (fromLoc === 4 || fromLoc === 8) {
+            const el = document.querySelector(`[data-zone-id="slot-${domOwner}-${fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster'}-${fromSeq}"] .field-card`) as HTMLElement | null;
+            if (el) { el.style.opacity = '0'; el.style.visibility = 'hidden'; }
+          }
+
           await playCardFlight({
             code: moveEvt.code || 0,
             cardName: moveEvt.cardName,

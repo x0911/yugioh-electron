@@ -78,6 +78,11 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
     - Fixed `undefined LP` decoding bug in `messageDecoder.ts`.
 12. **`CardSelectionModal` Variable Scoping**:
     - Fixed `ReferenceError: isMonster is not defined` when resolving `SELECT_CARD` (e.g. Sangan deck search) by properly declaring `isMonster`, `isSelected`, and `orderIdx` in candidate card mapping.
+13. **Transition Animation & Hand Card Stability**:
+    - Eliminated false "Fly from Deck" animation on neighbor hand cards by enforcing immutable unique instance IDs on all hand cards.
+    - Replaced conflicting JS hooks in `HandFan.vue` with smooth CSS FLIP layout transitions.
+    - Suppressed source card ghost duplicates during `playCardFlight` spatial flights.
+    - Added landing settle animation in `FieldZoneSlot.vue` for zero-flicker slot handoffs.
 
 ---
 
@@ -107,7 +112,7 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
 
 ## 5. Automated Test Suite Status
 
-All **19 test suites** run and pass with **100% success rate** (`npm test`):
+All **20 test suites** run and pass with **100% success rate** (`npm test`):
 
 1. `tests/guidance-targeting.test.ts` ✅
 2. `tests/hand-and-pacing.test.ts` ✅
@@ -128,3 +133,4 @@ All **19 test suites** run and pass with **100% success rate** (`npm test`):
 17. `tests/card-mechanics-and-engine-fixes.test.ts` ✅
 18. `tests/duel-logs-store.test.ts` ✅
 19. `tests/legendary-ai-executors.test.ts` ✅
+20. `tests/transition-animations-and-hand-integrity.test.ts` ✅

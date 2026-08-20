@@ -308,11 +308,23 @@ export const useDuelStore = defineStore('duel', {
 
     hydrateFieldCard(card: FieldCard | null): FieldCard | null {
       if (!card) return null;
-      if (card.code <= 0) return card;
+      const cardId = card.id || `card-${card.code}-${card.controller}-${card.sequence}-${Math.random().toString(36).slice(2, 7)}`;
+      if (card.code <= 0) {
+        return {
+          ...card,
+          id: cardId,
+        };
+      }
       const detail = this.getCardDetail(card.code);
-      if (!detail) return card;
+      if (!detail) {
+        return {
+          ...card,
+          id: cardId,
+        };
+      }
       return {
         ...card,
+        id: cardId,
         name: card.name && card.name !== 'Card' && !card.name.startsWith('[Card #') ? card.name : detail.name,
         atk: card.atk !== undefined ? card.atk : (detail.isMonster ? detail.atk : undefined),
         def: card.def !== undefined ? card.def : (detail.isMonster ? detail.def : undefined),
