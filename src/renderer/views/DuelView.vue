@@ -146,8 +146,11 @@
       @update:model-value="duelStore.isCardSelectionModalOpen = $event"
     />
 
-    <!-- Floating Target Selection Confirmation Bar (On-Field micro-dialog / Minimized state) -->
-    <div v-if="duelStore.hasActiveSelectionPrompt" class="target-confirmation-bar glass-panel">
+    <!-- Floating Target Selection Confirmation Bar (On-Field/Hand selections OR when center modal is minimized) -->
+    <div
+      v-if="duelStore.hasActiveSelectionPrompt && !duelStore.isCardSelectionModalOpen"
+      class="target-confirmation-bar glass-panel"
+    >
       <div class="target-bar-info">
         <span class="target-bar-icon">{{ actionGuideInfo?.categoryIcon || '🎯' }}</span>
         <div class="target-bar-text">
@@ -157,7 +160,7 @@
       </div>
       <div class="target-bar-actions">
         <button
-          v-if="!duelStore.isCardSelectionModalOpen"
+          v-if="hasHiddenLocationSelects"
           class="micro-btn micro-btn--browse"
           @click="duelStore.openCardSelectionModal"
         >
@@ -394,6 +397,15 @@ const actionGuideInfo = computed(() => {
     },
     duelStore.selectedTargetIndices.length,
   );
+});
+
+const hasHiddenLocationSelects = computed<boolean>(() => {
+  const payload = duelStore.activeSelectCard || duelStore.activeSelectTribute;
+  if (!payload || !payload.selects) return false;
+  return payload.selects.some((s) => {
+    const loc = s.location ?? 1;
+    return loc === 1 || loc === 16 || loc === 32 || loc === 64;
+  });
 });
 
 // Live Logs

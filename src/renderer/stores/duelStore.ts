@@ -615,8 +615,14 @@ export const useDuelStore = defineStore('duel', {
         } else if (event.promptType === 'SELECT_BATTLECMD') {
           this.activeBattleCmd = event.promptData as SelectBattleCmdPayload;
         } else if (event.promptType === 'SELECT_CARD') {
-          this.activeSelectCard = event.promptData as SelectCardPayload;
-          this.isCardSelectionModalOpen = true;
+          const cardPayload = event.promptData as SelectCardPayload;
+          this.activeSelectCard = cardPayload;
+          // Open center modal ONLY if at least one selectable card is in a hidden zone (Deck, Graveyard, Banished, Extra Deck)
+          const hasHiddenLocations = cardPayload.selects?.some((s) => {
+            const loc = s.location ?? 1;
+            return loc === 1 || loc === 16 || loc === 32 || loc === 64;
+          });
+          this.isCardSelectionModalOpen = Boolean(hasHiddenLocations);
         } else if (event.promptType === 'SELECT_CHAIN') {
           const chainPayload = event.promptData as SelectChainPayload;
           // Only show chain dialog if there are actual cards the player can chain with
@@ -640,8 +646,14 @@ export const useDuelStore = defineStore('duel', {
         } else if (event.promptType === 'SELECT_PLACE') {
           this.activeSelectPlace = event.promptData as SelectPlacePayload;
         } else if (event.promptType === 'SELECT_TRIBUTE') {
-          this.activeSelectTribute = event.promptData as SelectTributePayload;
-          this.isCardSelectionModalOpen = true;
+          const tributePayload = event.promptData as SelectTributePayload;
+          this.activeSelectTribute = tributePayload;
+          // Tributes on the field or in hand don't need center modal by default
+          const hasHiddenLocations = tributePayload.selects?.some((s) => {
+            const loc = s.location ?? 4;
+            return loc === 1 || loc === 16 || loc === 32 || loc === 64;
+          });
+          this.isCardSelectionModalOpen = Boolean(hasHiddenLocations);
         }
       } else if (!event.isPrompt) {
         if (
