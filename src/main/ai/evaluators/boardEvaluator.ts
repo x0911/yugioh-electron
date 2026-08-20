@@ -17,8 +17,8 @@ export interface BoardEvaluation {
 
 export function evaluateBoard(context: EvaluatorContext): BoardEvaluation {
   const { aiPlayerId, boardState } = context;
-  const aiField: PlayerFieldState = aiPlayerId === 0 ? boardState.userField : boardState.opponentField;
-  const oppField: PlayerFieldState = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+  const aiField: PlayerFieldState = boardState.userField.playerId === aiPlayerId ? boardState.userField : boardState.opponentField;
+  const oppField: PlayerFieldState = boardState.userField.playerId === aiPlayerId ? boardState.opponentField : boardState.userField;
 
   let aiMonsterCount = 0;
   let aiTotalAtk = 0;

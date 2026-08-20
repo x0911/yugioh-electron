@@ -101,7 +101,8 @@ const FALLBACK_DURATION_MS = 3000;
 
 const videoSrc = computed(() => {
   if (!props.video?.videoPath) return '';
-  return `app-resource://${props.video.videoPath}`;
+  const cleanPath = props.video.videoPath.replace(/^resources[\/\\]/, '');
+  return `app-resource://${cleanPath}`;
 });
 
 watch(videoElement, (el) => {

@@ -101,14 +101,21 @@ if (!gotTheLock) {
     protocol.handle('app-resource', async (request) => {
       try {
         const urlObj = new URL(request.url);
-        const subPath = path.join(urlObj.hostname, decodeURIComponent(urlObj.pathname));
+        const rawSubPath = path.join(urlObj.hostname, decodeURIComponent(urlObj.pathname));
+        const cleanSubPath = rawSubPath.replace(/^resources[\/\\]/, '');
         const basePath = app.isPackaged
           ? path.join(process.resourcesPath, 'resources')
           : path.resolve(process.cwd(), 'resources');
 
-        let targetPath = path.resolve(basePath, subPath);
+        let targetPath = path.resolve(basePath, cleanSubPath);
         if (!fs.existsSync(targetPath)) {
-          if (subPath.startsWith('cards/')) {
+          targetPath = path.resolve(basePath, rawSubPath);
+        }
+        if (!fs.existsSync(targetPath)) {
+          targetPath = path.resolve(process.cwd(), rawSubPath);
+        }
+        if (!fs.existsSync(targetPath)) {
+          if (cleanSubPath.startsWith('cards/')) {
             const fallbackPath = path.resolve(basePath, 'cards/placeholder.jpg');
             if (fs.existsSync(fallbackPath)) {
               targetPath = fallbackPath;

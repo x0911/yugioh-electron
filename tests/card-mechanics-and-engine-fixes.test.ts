@@ -388,8 +388,106 @@ async function runTestSuite() {
     );
     console.log('  ✓ AI Combat Intelligence passed!\n');
 
+    // 8. AI Summon Intelligence against Slifer the Sky Dragon
+    console.log('▶ Test 8: AI Summon Intelligence (Sets in defense instead of suicidal Normal Summon into Slifer)');
+    const sliferContext: EvaluatorContext = {
+      aiPlayerId: 0,
+      humanPlayerId: 1,
+      boardState: {
+        userField: {
+          playerId: 1,
+          name: 'Human',
+          currentLp: 8000,
+          maxLp: 8000,
+          isTurn: false,
+          monsterZones: [
+            {
+              id: 'human-slifer',
+              code: 10000020, // Slifer the Sky Dragon
+              name: 'Slifer the Sky Dragon',
+              controller: 1,
+              location: 'monster',
+              sequence: 0,
+              position: 'faceup_attack',
+              atk: 4000,
+              def: 4000,
+              level: 10,
+              description: 'Slifer 2000 ATK reduction / destruction on summon',
+              statuses: [],
+            },
+            null, null, null, null,
+          ],
+          spellTrapZones: [null, null, null, null, null],
+          fieldZone: null,
+          graveyard: [],
+          banished: [],
+          extraDeck: [],
+          deckCount: 35,
+          extraDeckCount: 0,
+          hand: [],
+        },
+        opponentField: {
+          playerId: 0,
+          name: 'AI',
+          currentLp: 8000,
+          maxLp: 8000,
+          isTurn: true,
+          monsterZones: [null, null, null, null, null],
+          spellTrapZones: [null, null, null, null, null],
+          fieldZone: null,
+          graveyard: [],
+          banished: [],
+          extraDeck: [],
+          deckCount: 35,
+          extraDeckCount: 0,
+          hand: [],
+        },
+        extraMonsterZones: [null, null],
+        turnNumber: 3,
+        currentPhase: 'M1',
+        activePrompt: null,
+        phaseGuideText: '',
+        winner: null,
+        winReason: null,
+      },
+      personality: {
+        id: 'yami-yugi',
+        name: 'Yami Yugi',
+        aggression: 0.7,
+        defensiveness: 0.5,
+        riskTolerance: 0.6,
+        comboFocus: 0.8,
+        signatureFavoritism: 0.9,
+      },
+      cardReader,
+      currentPhase: 'M1',
+      currentTurn: 3,
+      signatureCardIds: [],
+    };
+
+    const idleMsg: any = {
+      type: OcgMessageType.SELECT_IDLECMD,
+      player: 0,
+      summons: [
+        { code: 78010363, sequence: 0, controller: 0 }, // Magical Plant Mandragola (500 ATK)
+      ],
+      monster_sets: [
+        { code: 78010363, sequence: 0, controller: 0 }, // Set Magical Plant Mandragola in Defense
+      ],
+      to_bp: true,
+      to_ep: true,
+    };
+
+    const summonDecision = aiController.decideResponse(idleMsg, sliferContext);
+    assert.equal(
+      summonDecision.action,
+      SelectIdleCMDAction.SELECT_MONSTER_SET,
+      'AI must choose SELECT_MONSTER_SET instead of SELECT_SUMMON into face-up Slifer',
+    );
+    console.log('  ✓ AI Slifer Floodgate Response passed!\n');
+
     console.log('================================================================');
-    console.log('🎉 ALL 7 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 8 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();

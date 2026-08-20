@@ -159,6 +159,11 @@ export class AIController {
     const board = evaluateBoard(context);
     const adv = evaluateAdvantage(context);
 
+    const oppField = context.boardState.userField.playerId === context.aiPlayerId ? context.boardState.opponentField : context.boardState.userField;
+    const oppFaceUpMonsters = oppField.monsterZones.filter((m) => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'));
+    const hasOppSlifer = oppFaceUpMonsters.some((m) => m.code === 10000020);
+    const hasOppWanghu = oppFaceUpMonsters.some((m) => m.code === 83986578);
+
     // 1. Evaluate Activations (Spells / Traps / Monster Effects)
     if (msg.activates && msg.activates.length > 0) {
       for (let i = 0; i < msg.activates.length; i++) {
@@ -199,6 +204,14 @@ export class AIController {
 
         let score = 500 + atk * 0.8 * personality.aggression * archetypePlan.beatdownWeight;
 
+        // Suicidal summon penalty against Slifer / King Tiger Wanghu
+        if (hasOppSlifer && atk <= 2000) {
+          score -= 1800; // Will be destroyed immediately upon summon
+        }
+        if (hasOppWanghu && atk <= 1400) {
+          score -= 1800;
+        }
+
         // Tribute summon reward
         if (level >= 5) {
           score += 400 * personality.riskTolerance;
@@ -233,6 +246,12 @@ export class AIController {
         const atk = detail?.isMonster ? detail.atk : 2000;
 
         let score = 900 + atk * 0.6 * personality.comboFocus;
+        if (hasOppSlifer && atk <= 2000) {
+          score -= 1800;
+        }
+        if (hasOppWanghu && atk <= 1400) {
+          score -= 1800;
+        }
         if (signatureCardIds.includes(code)) {
           score += 800 * personality.signatureFavoritism;
         }
@@ -263,6 +282,14 @@ export class AIController {
 
         // Favorable to set if DEF > ATK, or when defensive
         let score = 300 + (def - atk) * 0.4 + def * 0.5 * personality.defensiveness * archetypePlan.defenseWeight;
+
+        // Prioritize setting face-down to protect monster from Slifer / Wanghu destruction
+        if (hasOppSlifer && atk <= 2000) {
+          score += 1000;
+        }
+        if (hasOppWanghu && atk <= 1400) {
+          score += 1000;
+        }
 
         if (detail?.isFlip) {
           score += 450; // Flip monsters love being set
@@ -313,8 +340,13 @@ export class AIController {
         const detail = code > 0 ? cardReader.getCardDetail(code) : null;
         const atk = detail?.isMonster ? detail.atk : 1500;
 
-        // Flip summon / change to attack
-        const score = 400 + atk * 0.3 * personality.aggression;
+        let score = 400 + atk * 0.3 * personality.aggression;
+        if (hasOppSlifer && atk <= 2000) {
+          score -= 1500; // Don't Flip Summon into Slifer destruction
+        }
+        if (board.oppVisibleMaxAtk > atk) {
+          score -= 300 * personality.defensiveness;
+        }
 
         candidates.push({
           action: {

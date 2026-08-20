@@ -14,7 +14,7 @@ export function evaluateAttackOption(
   context: EvaluatorContext,
 ): ScoredAction {
   const { aiPlayerId, boardState, personality } = context;
-  const oppField: PlayerFieldState = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+  const oppField: PlayerFieldState = boardState.userField.playerId === aiPlayerId ? boardState.opponentField : boardState.userField;
   const oppLp = oppField.currentLp;
 
   const oppMonsters = oppField.monsterZones.filter((m): m is FieldCard => m !== null);
