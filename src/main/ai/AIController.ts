@@ -1,0 +1,730 @@
+import {
+  OcgMessageType,
+  OcgResponseType,
+  OcgLocation,
+  OcgPosition,
+  OcgRace,
+  OcgAttribute,
+  SelectIdleCMDAction,
+  SelectBattleCMDAction,
+  ocgPositionParse,
+  type OcgMessage,
+  type OcgResponse,
+} from 'ocgcore-wasm';
+import type { EvaluatorContext, ScoredAction } from './types.js';
+import type { CharacterPersonality } from '../../shared/types/character.js';
+import type { FieldCard, PlayerFieldState } from '../../shared/types/field.js';
+import { parseFieldMask } from '../engine/messageDecoder.js';
+import { evaluateBoard } from './evaluators/boardEvaluator.js';
+import { evaluateAdvantage } from './evaluators/advantageEvaluator.js';
+import { evaluateAttackOption, type AttackCandidate } from './evaluators/combatEvaluator.js';
+import { evaluateSpellActivation, evaluateSpellTrapSet } from './evaluators/spellTrapEvaluator.js';
+import { resolveArchetypePlan } from './strategies/archetypeStrategy.js';
+import { assertAiStateSanitized } from './antiCheatAssert.js';
+
+export class AIController {
+  /**
+   * Main entrypoint to decide an AI response for an engine prompt.
+   * Strictly expects a sanitized AI-side board state.
+   */
+  public decideResponse(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    // 1. Anti-cheat assertion verification
+    assertAiStateSanitized(context.boardState, context.aiPlayerId);
+
+    // 2. Route prompt to specialized evaluators
+    switch (msg.type) {
+      case OcgMessageType.SELECT_IDLECMD:
+        return this.decideIdleCmd(msg, context);
+
+      case OcgMessageType.SELECT_BATTLECMD:
+        return this.decideBattleCmd(msg, context);
+
+      case OcgMessageType.SELECT_CARD:
+        return this.decideSelectCard(msg, context);
+
+      case OcgMessageType.SELECT_TRIBUTE:
+        return this.decideSelectTribute(msg, context);
+
+      case OcgMessageType.SELECT_CHAIN:
+        return this.decideSelectChain(msg, context);
+
+      case OcgMessageType.SELECT_EFFECTYN:
+      case OcgMessageType.SELECT_YESNO:
+        return this.decideSelectYesNo(msg, context);
+
+      case OcgMessageType.SELECT_POSITION:
+        return this.decideSelectPosition(msg, context);
+
+      case OcgMessageType.SELECT_PLACE:
+      case OcgMessageType.SELECT_DISFIELD:
+        return this.decideSelectPlace(msg, context);
+
+      case OcgMessageType.SELECT_SUM:
+        return this.decideSelectSum(msg, context);
+
+      case OcgMessageType.SELECT_OPTION:
+        return {
+          type: OcgResponseType.SELECT_OPTION,
+          index: 0,
+        };
+
+      case OcgMessageType.SELECT_UNSELECT_CARD:
+        return {
+          type: OcgResponseType.SELECT_UNSELECT_CARD,
+          index: msg.select_cards && msg.select_cards.length > 0 ? 0 : null,
+        };
+
+      case OcgMessageType.ANNOUNCE_RACE: {
+        const archetype = resolveArchetypePlan(context.deckArchetype);
+        const race = archetype.preferredRaces[0] ?? OcgRace.WARRIOR;
+        return {
+          type: OcgResponseType.ANNOUNCE_RACE,
+          races: [race],
+        };
+      }
+
+      case OcgMessageType.ANNOUNCE_ATTRIB: {
+        const archetype = resolveArchetypePlan(context.deckArchetype);
+        const attr = archetype.preferredAttributes[0] ?? OcgAttribute.DARK;
+        return {
+          type: OcgResponseType.ANNOUNCE_ATTRIB,
+          attributes: [attr],
+        };
+      }
+
+      case OcgMessageType.ANNOUNCE_CARD: {
+        const signature = context.signatureCardIds[0] ?? 91152256;
+        return {
+          type: OcgResponseType.ANNOUNCE_CARD,
+          card: signature,
+        };
+      }
+
+      case OcgMessageType.ANNOUNCE_NUMBER: {
+        const val = msg.options && msg.options.length > 0 ? Number(msg.options[0]) : 1;
+        return {
+          type: OcgResponseType.ANNOUNCE_NUMBER,
+          value: val,
+        };
+      }
+
+      case OcgMessageType.ROCK_PAPER_SCISSORS: {
+        return {
+          type: OcgResponseType.ROCK_PAPER_SCISSORS,
+          value: Math.floor(Math.random() * 3) + 1,
+        };
+      }
+
+      case OcgMessageType.SORT_CARD: {
+        const order = msg.cards ? Array.from({ length: msg.cards.length }, (_, i) => i) : null;
+        return {
+          type: OcgResponseType.SORT_CARD,
+          order,
+        };
+      }
+
+      default:
+        return {
+          type: OcgResponseType.SELECT_CHAIN,
+          index: null,
+        };
+    }
+  }
+
+  /**
+   * Calculates an artificial think-delay in milliseconds with natural jitter.
+   */
+  public getThinkDelay(personality: CharacterPersonality, promptType?: string): number {
+    const base = personality.thinkDelayBaseMs ?? 650;
+    const jitter = personality.thinkDelayJitterMs ?? 200;
+    const randomJitter = Math.floor((Math.random() * 2 - 1) * jitter);
+
+    // Fast-pass simple yes/no or placements
+    if (promptType === 'SELECT_PLACE' || promptType === 'SELECT_DISFIELD') {
+      return Math.max(150, Math.floor(base * 0.4 + randomJitter * 0.3));
+    }
+
+    // Extended thinking for complex chain windows / idle decisions
+    return Math.max(250, base + randomJitter);
+  }
+
+  // ===========================================================================
+  // SELECT_IDLECMD
+  // ===========================================================================
+
+  private decideIdleCmd(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const candidates: ScoredAction[] = [];
+    const { personality, cardReader, signatureCardIds, deckArchetype } = context;
+    const archetypePlan = resolveArchetypePlan(deckArchetype);
+    const board = evaluateBoard(context);
+    const adv = evaluateAdvantage(context);
+
+    // 1. Evaluate Activations (Spells / Traps / Monster Effects)
+    if (msg.activates && msg.activates.length > 0) {
+      for (let i = 0; i < msg.activates.length; i++) {
+        const act = msg.activates[i];
+        const code = act.code ?? 0;
+        const name = act.cardName || (code > 0 ? cardReader.getCardName(code) : 'Effect');
+        const evalResult = evaluateSpellActivation(code, name, context);
+        let score = evalResult.score;
+
+        // Apply archetype weights
+        if (name.includes('Fusion') || code === 24094653) {
+          score *= archetypePlan.fusionWeight;
+        }
+
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.SELECT_ACTIVATE,
+            index: i,
+          },
+          score,
+          reason: evalResult.reason,
+          cardCode: code,
+          cardName: name,
+        });
+      }
+    }
+
+    // 2. Evaluate Normal Summons
+    if (msg.summons && msg.summons.length > 0) {
+      for (let i = 0; i < msg.summons.length; i++) {
+        const summon = msg.summons[i];
+        const code = summon.code ?? 0;
+        const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+        const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
+        const atk = detail?.isMonster ? detail.atk : 1000;
+        const level = detail?.isMonster ? detail.level : 4;
+
+        let score = 500 + atk * 0.8 * personality.aggression * archetypePlan.beatdownWeight;
+
+        // Tribute summon reward
+        if (level >= 5) {
+          score += 400 * personality.riskTolerance;
+        }
+
+        // Signature card boost
+        if (signatureCardIds.includes(code)) {
+          score += 600 * personality.signatureFavoritism;
+        }
+
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.SELECT_SUMMON,
+            index: i,
+          },
+          score,
+          reason: `Normal Summon ${name} (${atk} ATK, Lv ${level})`,
+          cardCode: code,
+          cardName: name,
+        });
+      }
+    }
+
+    // 3. Evaluate Special Summons (Extra deck, Ritual, effect)
+    if (msg.special_summons && msg.special_summons.length > 0) {
+      for (let i = 0; i < msg.special_summons.length; i++) {
+        const sp = msg.special_summons[i];
+        const code = sp.code ?? 0;
+        const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+        const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Special Summon Monster');
+        const atk = detail?.isMonster ? detail.atk : 2000;
+
+        let score = 900 + atk * 0.6 * personality.comboFocus;
+        if (signatureCardIds.includes(code)) {
+          score += 800 * personality.signatureFavoritism;
+        }
+
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.SELECT_SPECIAL_SUMMON,
+            index: i,
+          },
+          score,
+          reason: `Special Summon ${name} (${atk} ATK)`,
+          cardCode: code,
+          cardName: name,
+        });
+      }
+    }
+
+    // 4. Evaluate Monster Sets (Face-down defense)
+    if (msg.monster_sets && msg.monster_sets.length > 0) {
+      for (let i = 0; i < msg.monster_sets.length; i++) {
+        const mset = msg.monster_sets[i];
+        const code = mset.code ?? 0;
+        const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+        const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
+        const def = detail?.isMonster ? detail.def : 1000;
+        const atk = detail?.isMonster ? detail.atk : 1000;
+
+        // Favorable to set if DEF > ATK, or when defensive
+        let score = 300 + (def - atk) * 0.4 + def * 0.5 * personality.defensiveness * archetypePlan.defenseWeight;
+
+        if (detail?.isFlip) {
+          score += 450; // Flip monsters love being set
+        }
+
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.SELECT_MONSTER_SET,
+            index: i,
+          },
+          score,
+          reason: `Set monster ${name} face-down in defense (${def} DEF)`,
+          cardCode: code,
+          cardName: name,
+        });
+      }
+    }
+
+    // 5. Evaluate Spell / Trap Sets
+    if (msg.spell_sets && msg.spell_sets.length > 0) {
+      for (let i = 0; i < msg.spell_sets.length; i++) {
+        const sset = msg.spell_sets[i];
+        const code = sset.code ?? 0;
+        const name = sset.cardName || (code > 0 ? cardReader.getCardName(code) : 'Spell/Trap');
+        const evalResult = evaluateSpellTrapSet(code, name, context);
+
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.SELECT_SPELL_SET,
+            index: i,
+          },
+          score: evalResult.score,
+          reason: evalResult.reason,
+          cardCode: code,
+          cardName: name,
+        });
+      }
+    }
+
+    // 6. Evaluate Position Changes
+    if (msg.pos_changes && msg.pos_changes.length > 0) {
+      for (let i = 0; i < msg.pos_changes.length; i++) {
+        const pc = msg.pos_changes[i];
+        const code = pc.code ?? 0;
+        const name = pc.cardName || (code > 0 ? cardReader.getCardName(code) : 'Monster');
+        const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+        const atk = detail?.isMonster ? detail.atk : 1500;
+
+        // Flip summon / change to attack
+        const score = 400 + atk * 0.3 * personality.aggression;
+
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.SELECT_POS_CHANGE,
+            index: i,
+          },
+          score,
+          reason: `Change position / Flip Summon ${name}`,
+          cardCode: code,
+          cardName: name,
+        });
+      }
+    }
+
+    // 7. Evaluate Transition to Battle Phase
+    if (msg.to_bp) {
+      const hasAttackMonsters = board.aiTotalAtk > 0 && board.aiMonsterCount > 0;
+      let score = 0;
+
+      if (hasAttackMonsters) {
+        score = 650 + (board.aiTotalAtk - board.oppVisibleTotalAtk) * 0.2 * personality.aggression;
+      } else {
+        score = 50; // Low score if no attack monsters
+      }
+
+      candidates.push({
+        action: {
+          type: OcgResponseType.SELECT_IDLECMD,
+          action: SelectIdleCMDAction.TO_BP,
+          index: null,
+        },
+        score,
+        reason: `Enter Battle Phase with ${board.aiMonsterCount} monster(s) (${board.aiTotalAtk} total ATK)`,
+      });
+    }
+
+    // 8. Evaluate Transition to End Phase / M2
+    if (msg.to_ep) {
+      candidates.push({
+        action: {
+          type: OcgResponseType.SELECT_IDLECMD,
+          action: SelectIdleCMDAction.TO_EP,
+          index: null,
+        },
+        score: 100, // Baseline pass
+        reason: `Pass to End Phase`,
+      });
+    }
+
+    if (msg.to_m2) {
+      candidates.push({
+        action: {
+          type: OcgResponseType.SELECT_IDLECMD,
+          action: SelectIdleCMDAction.TO_M2,
+          index: null,
+        },
+        score: 200,
+        reason: `Proceed to Main Phase 2`,
+      });
+    }
+
+    return this.selectWeightedAction(candidates);
+  }
+
+  // ===========================================================================
+  // SELECT_BATTLECMD
+  // ===========================================================================
+
+  private decideBattleCmd(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const candidates: ScoredAction[] = [];
+    const { cardReader } = context;
+
+    // 1. Evaluate Monster Attacks
+    if (msg.attacks && msg.attacks.length > 0) {
+      for (let i = 0; i < msg.attacks.length; i++) {
+        const att = msg.attacks[i];
+        const code = att.code ?? 0;
+        const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+        const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
+        const atk = typeof att.atk === 'number' ? att.atk : (detail?.isMonster ? detail.atk : 1500);
+
+        const candidate: AttackCandidate = {
+          attackerIndex: i,
+          attackerSeq: att.sequence ?? 0,
+          attackerAtk: atk,
+          attackerName: name,
+        };
+
+        const scored = evaluateAttackOption(candidate, context);
+        candidates.push(scored);
+      }
+    }
+
+    // 2. Battle Step Chains
+    if (msg.chains && msg.chains.length > 0) {
+      for (let i = 0; i < msg.chains.length; i++) {
+        const ch = msg.chains[i];
+        const code = ch.code ?? 0;
+        const name = ch.cardName || (code > 0 ? cardReader.getCardName(code) : 'Battle Effect');
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_BATTLECMD,
+            action: SelectBattleCMDAction.SELECT_CHAIN,
+            index: i,
+          },
+          score: 600,
+          reason: `Activate battle response ${name}`,
+          cardCode: code,
+          cardName: name,
+        });
+      }
+    }
+
+    // 3. Move to M2 or End Phase
+    if (msg.to_m2) {
+      candidates.push({
+        action: {
+          type: OcgResponseType.SELECT_BATTLECMD,
+          action: SelectBattleCMDAction.TO_M2,
+          index: null,
+        },
+        score: 0,
+        reason: `Finish Battle Phase and enter Main Phase 2`,
+      });
+    }
+
+    if (msg.to_ep) {
+      candidates.push({
+        action: {
+          type: OcgResponseType.SELECT_BATTLECMD,
+          action: SelectBattleCMDAction.TO_EP,
+          index: null,
+        },
+        score: 0,
+        reason: `Finish Battle Phase and end turn`,
+      });
+    }
+
+    return this.selectWeightedAction(candidates);
+  }
+
+  // ===========================================================================
+  // SELECT_CARD & SELECT_TRIBUTE
+  // ===========================================================================
+
+  private decideSelectCard(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const minCount = Math.max(1, msg.min ?? 1);
+    const maxCount = Math.min(msg.max ?? minCount, msg.selects.length);
+    const { aiPlayerId, cardReader, signatureCardIds } = context;
+
+    // Score each candidate in msg.selects
+    const scoredCandidates = msg.selects.map((c: any, index: number) => {
+      const code = c.code ?? 0;
+      const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+      const atk = detail?.isMonster ? detail.atk : 1000;
+      const isAiCard = c.controller === aiPlayerId;
+
+      let score = 0;
+      if (isAiCard) {
+        // If selecting own card to keep / protect / search: prefer signature / high ATK
+        score = atk + (signatureCardIds.includes(code) ? 1000 : 0);
+      } else {
+        // If selecting opponent card to target / destroy: prefer highest ATK threat
+        score = atk + 500;
+      }
+
+      return { index, score, code, name: detail?.name };
+    });
+
+    // Sort descending by score
+    scoredCandidates.sort((a, b) => b.score - a.score);
+
+    // Pick top `minCount` indices
+    const indices = scoredCandidates.slice(0, minCount).map((c) => c.index);
+
+    return {
+      type: OcgResponseType.SELECT_CARD,
+      indicies: indices,
+    };
+  }
+
+  private decideSelectTribute(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const minCount = Math.max(1, msg.min ?? 1);
+    const { cardReader } = context;
+
+    // For tribute sacrifice: sacrifice LOWEST ATK monsters first
+    const scoredCandidates = msg.selects.map((c: any, index: number) => {
+      const code = c.code ?? 0;
+      const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+      const atk = detail?.isMonster ? detail.atk : 1000;
+      // Lower ATK gets higher priority to be sacrificed
+      return { index, sacrificePriority: 5000 - atk };
+    });
+
+    scoredCandidates.sort((a, b) => b.sacrificePriority - a.sacrificePriority);
+    const indices = scoredCandidates.slice(0, minCount).map((c) => c.index);
+
+    return {
+      type: OcgResponseType.SELECT_TRIBUTE,
+      indicies: indices,
+    };
+  }
+
+  // ===========================================================================
+  // SELECT_CHAIN, YESNO & EFFECTYN
+  // ===========================================================================
+
+  private decideSelectChain(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    if (msg.forced && msg.selects && msg.selects.length > 0) {
+      return {
+        type: OcgResponseType.SELECT_CHAIN,
+        index: 0,
+      };
+    }
+
+    if (!msg.selects || msg.selects.length === 0) {
+      return {
+        type: OcgResponseType.SELECT_CHAIN,
+        index: null,
+      };
+    }
+
+    // Score chain opportunities
+    let bestIndex: number | null = null;
+    let bestScore = 0;
+
+    for (let i = 0; i < msg.selects.length; i++) {
+      const ch = msg.selects[i];
+      const code = ch.code ?? 0;
+      const name = ch.cardName || context.cardReader.getCardName(code);
+      const evalResult = evaluateSpellActivation(code, name, context);
+      if (evalResult.score > bestScore) {
+        bestScore = evalResult.score;
+        bestIndex = i;
+      }
+    }
+
+    if (bestIndex !== null && bestScore >= 300) {
+      return {
+        type: OcgResponseType.SELECT_CHAIN,
+        index: bestIndex,
+      };
+    }
+
+    return {
+      type: OcgResponseType.SELECT_CHAIN,
+      index: null,
+    };
+  }
+
+  private decideSelectYesNo(msg: OcgMessage, _context: EvaluatorContext): OcgResponse {
+    return {
+      type: (msg.type === OcgMessageType.SELECT_EFFECTYN ? OcgResponseType.SELECT_EFFECTYN : OcgResponseType.SELECT_YESNO) as any,
+      yes: true,
+    };
+  }
+
+  // ===========================================================================
+  // SELECT_POSITION, SELECT_PLACE & SELECT_SUM
+  // ===========================================================================
+
+  private decideSelectPosition(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const positions = ocgPositionParse(msg.positions);
+    const { personality, cardReader } = context;
+
+    // Check monster stats if code is provided
+    const code = (msg as any).code ?? 0;
+    const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+    const atk = detail?.isMonster ? detail.atk : 1500;
+    const def = detail?.isMonster ? detail.def : 1000;
+
+    if (atk >= 1400 || personality.aggression >= 0.7) {
+      if (positions.includes(OcgPosition.FACEUP_ATTACK)) {
+        return {
+          type: OcgResponseType.SELECT_POSITION,
+          position: OcgPosition.FACEUP_ATTACK,
+        };
+      }
+    } else if (def > atk || personality.defensiveness >= 0.7) {
+      if (positions.includes(OcgPosition.FACEDOWN_DEFENSE)) {
+        return {
+          type: OcgResponseType.SELECT_POSITION,
+          position: OcgPosition.FACEDOWN_DEFENSE,
+        };
+      }
+      if (positions.includes(OcgPosition.FACEUP_DEFENSE)) {
+        return {
+          type: OcgResponseType.SELECT_POSITION,
+          position: OcgPosition.FACEUP_DEFENSE,
+        };
+      }
+    }
+
+    return {
+      type: OcgResponseType.SELECT_POSITION,
+      position: positions[0] ?? OcgPosition.FACEUP_ATTACK,
+    };
+  }
+
+  private decideSelectPlace(msg: OcgMessage, _context: EvaluatorContext): OcgResponse {
+    const places = parseFieldMask(msg.player, msg.field_mask, msg.count);
+    return {
+      type: OcgResponseType.SELECT_PLACE,
+      places,
+    };
+  }
+
+  private decideSelectSum(msg: OcgMessage, _context: EvaluatorContext): OcgResponse {
+    const candidates = [...(msg.selects_must || []), ...(msg.selects || [])];
+    if (candidates.length === 0) {
+      return {
+        type: OcgResponseType.SELECT_SUM,
+        indicies: [],
+      };
+    }
+
+    const targetSum = msg.amount ?? 0;
+    const minCount = Math.max(1, msg.min || 1);
+    const maxCount = msg.max && msg.max > 0 ? msg.max : candidates.length;
+    const isEqualMode = msg.select_max === 0;
+
+    const getCardValues = (c: any): number[] => {
+      const rawAmt = c.amount ?? 0;
+      const v1 = rawAmt & 0xffff;
+      const v2 = (rawAmt >> 16) & 0xffff;
+      const values: number[] = [];
+      if (v1 > 0) values.push(v1);
+      if (v2 > 0 && v2 !== v1) values.push(v2);
+      if (values.length === 0) values.push(1);
+      return values;
+    };
+
+    let bestIndices: number[] | null = null;
+    let bestSum = Infinity;
+
+    const search = (idx: number, currentIndices: number[], currentSum: number) => {
+      if (currentIndices.length >= minCount && currentIndices.length <= maxCount) {
+        if (isEqualMode && currentSum === targetSum) {
+          bestIndices = [...currentIndices];
+          return true;
+        } else if (!isEqualMode && currentSum >= targetSum) {
+          if (currentSum < bestSum) {
+            bestSum = currentSum;
+            bestIndices = [...currentIndices];
+          }
+          return;
+        }
+      }
+
+      if (idx >= candidates.length || currentIndices.length >= maxCount) return;
+
+      const vals = getCardValues(candidates[idx]);
+      for (const v of vals) {
+        currentIndices.push(idx);
+        const foundExact = search(idx + 1, currentIndices, currentSum + v);
+        currentIndices.pop();
+        if (foundExact) return true;
+      }
+
+      const found = search(idx + 1, currentIndices, currentSum);
+      if (found) return true;
+
+      return false;
+    };
+
+    search(0, [], 0);
+
+    const indicies = bestIndices ?? Array.from({ length: Math.min(minCount, candidates.length) }, (_, i) => i);
+    return {
+      type: OcgResponseType.SELECT_SUM,
+      indicies,
+    };
+  }
+
+  // ===========================================================================
+  // Weighted Random Selection (Non-Deterministic Softmax)
+  // ===========================================================================
+
+  private selectWeightedAction(candidates: ScoredAction[]): OcgResponse {
+    if (candidates.length === 0) {
+      return {
+        type: OcgResponseType.SELECT_CHAIN,
+        index: null,
+      };
+    }
+
+    if (candidates.length === 1) {
+      return candidates[0].action;
+    }
+
+    // Softmax temperature (higher = more uniform, lower = more deterministic)
+    const temperature = 250;
+    const maxScore = Math.max(...candidates.map((c) => c.score));
+
+    // Exponentiate shifted scores to prevent numerical overflow
+    const expScores = candidates.map((c) => Math.exp((c.score - maxScore) / (temperature / 100)));
+    const sumExp = expScores.reduce((sum, val) => sum + val, 0);
+
+    // Sample from categorical distribution
+    let randomSample = Math.random() * sumExp;
+    for (let i = 0; i < candidates.length; i++) {
+      randomSample -= expScores[i];
+      if (randomSample <= 0) {
+        return candidates[i].action;
+      }
+    }
+
+    return candidates[0].action;
+  }
+}
+
+export const aiController = new AIController();
