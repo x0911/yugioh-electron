@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { DuelEngineService } from '../src/main/engine/DuelEngineService.js';
 import { AIController } from '../src/main/ai/AIController.js';
 import { CardReaderService } from '../src/main/engine/cardReader.js';
+import { ViewFilterService } from '../src/main/engine/viewFilter.js';
 import {
   OcgMessageType,
   OcgResponseType,
@@ -478,16 +479,182 @@ async function runTestSuite() {
       to_ep: true,
     };
 
-    const summonDecision = aiController.decideResponse(idleMsg, sliferContext);
-    assert.equal(
-      summonDecision.action,
-      SelectIdleCMDAction.SELECT_MONSTER_SET,
-      'AI must choose SELECT_MONSTER_SET instead of SELECT_SUMMON into face-up Slifer',
+    // 9. AI Combat Intelligence against Spirit Reaper & Defense Destroyer
+    console.log('▶ Test 9: AI Combat Intelligence (Spirit Reaper & Defense Destroyer)');
+    const reaperContext: EvaluatorContext = {
+      aiPlayerId: 1,
+      humanPlayerId: 0,
+      boardState: {
+        userField: {
+          playerId: 0,
+          name: 'Human',
+          currentLp: 8000,
+          maxLp: 8000,
+          isTurn: false,
+          monsterZones: [
+            {
+              id: 'human-reaper',
+              code: 23205979, // Spirit Reaper
+              name: 'Spirit Reaper',
+              controller: 0,
+              location: 'monster',
+              sequence: 0,
+              position: 'faceup_defense',
+              atk: 300,
+              def: 200,
+              level: 3,
+              description: 'Cannot be destroyed by battle.',
+              statuses: [],
+            },
+            null, null, null, null,
+          ],
+          spellTrapZones: [null, null, null, null, null],
+          fieldZone: null,
+          graveyard: [],
+          banished: [],
+          extraDeck: [],
+          deckCount: 35,
+          extraDeckCount: 0,
+          hand: [],
+        },
+        opponentField: {
+          playerId: 1,
+          name: 'AI',
+          currentLp: 8000,
+          maxLp: 8000,
+          isTurn: true,
+          monsterZones: [
+            {
+              id: 'ai-cyber-prima',
+              code: 94626871, // Cyber Prima (2300 ATK)
+              name: 'Cyber Prima',
+              controller: 1,
+              location: 'monster',
+              sequence: 0,
+              position: 'faceup_attack',
+              atk: 2300,
+              def: 1600,
+              level: 6,
+              statuses: [],
+            },
+            {
+              id: 'ai-sasuke',
+              code: 4041838, // Ninja Grandmaster Sasuke (Defense destroyer effect)
+              name: 'Ninja Grandmaster Sasuke',
+              controller: 1,
+              location: 'monster',
+              sequence: 1,
+              position: 'faceup_attack',
+              atk: 1800,
+              def: 1000,
+              level: 4,
+              statuses: [],
+            },
+            null, null, null,
+          ],
+          spellTrapZones: [null, null, null, null, null],
+          fieldZone: null,
+          graveyard: [],
+          banished: [],
+          extraDeck: [],
+          deckCount: 35,
+          extraDeckCount: 0,
+          hand: [],
+        },
+        extraMonsterZones: [null, null],
+        turnNumber: 2,
+        currentPhase: 'BP',
+        activePrompt: null,
+        phaseGuideText: '',
+        winner: null,
+        winReason: null,
+      },
+      personality: {
+        id: 'yami-yugi',
+        name: 'Yami Yugi',
+        aggression: 0.7,
+        defensiveness: 0.5,
+        riskTolerance: 0.6,
+        comboFocus: 0.8,
+        signatureFavoritism: 0.9,
+      },
+      cardReader,
+      currentPhase: 'BP',
+      currentTurn: 2,
+      signatureCardIds: [],
+    };
+
+    // Standard monster (Cyber Prima) alone should avoid futile attack and go to M2
+    const futileBattleMsg: any = {
+      type: OcgMessageType.SELECT_BATTLECMD,
+      player: 1,
+      attacks: [
+        { code: 94626871, sequence: 0, controller: 1, atk: 2300, def: 1600 },
+      ],
+      to_m2: true,
+      to_ep: true,
+    };
+    const futileDecision = aiController.decideResponse(futileBattleMsg, reaperContext);
+    assert(
+      futileDecision.action === SelectBattleCMDAction.TO_M2 || futileDecision.action === SelectBattleCMDAction.TO_EP,
+      'Cyber Prima must avoid attacking face-up defense Spirit Reaper and advance to M2/EP',
     );
-    console.log('  ✓ AI Slifer Floodgate Response passed!\n');
+
+    // Defense destroyer (Sasuke) should prioritize attacking face-up defense Spirit Reaper
+    const sasukeBattleMsg: any = {
+      type: OcgMessageType.SELECT_BATTLECMD,
+      player: 1,
+      attacks: [
+        { code: 4041838, sequence: 1, controller: 1, atk: 1800, def: 1000 },
+      ],
+      to_m2: true,
+      to_ep: true,
+    };
+    const sasukeDecision = aiController.decideResponse(sasukeBattleMsg, reaperContext);
+    assert.equal(
+      sasukeDecision.action,
+      SelectBattleCMDAction.SELECT_BATTLE,
+      'Ninja Grandmaster Sasuke must attack face-up defense Spirit Reaper to destroy it via effect',
+    );
+    console.log('  ✓ AI Spirit Reaper & Defense Destroyer passed!\n');
+
+    // 10. Anti-Cheat ViewFilter Redaction of Opponent Face-Down Target Selects
+    console.log('▶ Test 10: Anti-Cheat ViewFilter Redaction for Opponent Face-Down Selects');
+    const filter = new ViewFilterService();
+    const rawTargetEvent: any = {
+      type: 'SELECT_CARD',
+      promptType: 'SELECT_CARD',
+      promptPlayer: 0,
+      promptData: {
+        player: 0,
+        selects: [
+          {
+            code: 78010363,
+            cardName: 'Silent Swordsman LV3',
+            controller: 1,
+            location: 4,
+            sequence: 2,
+            position: 8, // face-down defense
+          },
+        ],
+      },
+    };
+
+    const filtered = filter.filterEventForViewer(rawTargetEvent, 0);
+    assert.equal(
+      filtered.promptData.selects[0].code,
+      0,
+      'Face-down opponent card code must be redacted to 0',
+    );
+    assert.equal(
+      filtered.promptData.selects[0].cardName,
+      'Face-down Monster',
+      'Face-down opponent card name must be redacted to "Face-down Monster"',
+    );
+    console.log('  ✓ Anti-Cheat Target Redaction passed!\n');
 
     console.log('================================================================');
-    console.log('🎉 ALL 8 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 10 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();

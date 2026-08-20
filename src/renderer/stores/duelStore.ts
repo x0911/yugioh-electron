@@ -1271,6 +1271,40 @@ export const useDuelStore = defineStore('duel', {
      * Resolves target metadata for a card or stack in any of the 6 locations.
      */
     getTargetInfo(controller: number, location: number, sequence: number): TargetInfo | null {
+      const getSafeCardName = (
+        item: any,
+        owner: 'user' | 'ai',
+        loc: number,
+        seq: number,
+      ): string => {
+        if (owner === 'user') return item.cardName || 'Card';
+
+        // If owner is AI (opponent): check if card is face-down / hidden
+        const isFacedownMonster =
+          loc === 4 &&
+          (item.position === 8 ||
+            (item.position !== undefined && (item.position & 0x8) !== 0) ||
+            this.boardState.opponentField.monsterZones[seq]?.position === 'facedown_defense' ||
+            item.code === 0);
+
+        const isFacedownSpell =
+          loc === 8 &&
+          (item.position === 8 ||
+            (item.position !== undefined && (item.position & 0x8) !== 0) ||
+            this.boardState.opponentField.spellTrapZones[seq]?.position === 'facedown_spell' ||
+            this.boardState.opponentField.spellTrapZones[seq]?.position === 'facedown_defense' ||
+            item.code === 0);
+
+        if (isFacedownMonster) return 'Face-down Monster';
+        if (isFacedownSpell) return 'Face-down Card';
+        if (loc === 2) return 'Card in Hand';
+        if (loc === 1) return "Opponent's Deck";
+        if (loc === 64) return "Opponent's Extra Deck";
+        if (item.code === 0) return 'Face-down Card';
+
+        return item.cardName || 'Card';
+      };
+
       // 1. Check active Tribute prompt
       if (this.activeSelectTribute && this.activeSelectTribute.selects) {
         const selectIndex = this.activeSelectTribute.selects.findIndex(
@@ -1280,14 +1314,14 @@ export const useDuelStore = defineStore('duel', {
           const item = this.activeSelectTribute.selects[selectIndex];
           const isSelected = this.selectedTargetIndices.includes(selectIndex);
           const owner = controller === this.userPlayerId ? 'user' : 'ai';
-          const cardName = item.cardName || 'Monster';
+          const cardName = getSafeCardName(item, owner, location, sequence);
           return {
             isSelectable: true,
             selectIndex,
             isSelected,
             owner,
             locationType: 'field',
-            tooltipText: owner === 'user' ? `Selectable Tribute: Player's Monster (${cardName})` : `Selectable Tribute: Opponent's Monster (${cardName})`,
+            tooltipText: owner === 'user' ? `Selectable Tribute: Player's Monster (${cardName})` : `Selectable Tribute: Opponent's (${cardName})`,
             isCost: true,
             isTribute: true,
           };
@@ -1303,7 +1337,7 @@ export const useDuelStore = defineStore('duel', {
           const item = this.activeSelectCard.selects[selectIndex];
           const isSelected = this.selectedTargetIndices.includes(selectIndex);
           const owner = controller === this.userPlayerId ? 'user' : 'ai';
-          const cardName = item.cardName || 'Card';
+          const cardName = getSafeCardName(item, owner, location, sequence);
 
           let locType: TargetInfo['locationType'] = 'field';
           if (location === 2) locType = 'hand';
@@ -1323,7 +1357,7 @@ export const useDuelStore = defineStore('duel', {
           } else if (isCost) {
             tooltipText = `Selectable Cost: Player's Hand Card (${cardName})`;
           } else if (locType === 'field') {
-            tooltipText = owner === 'user' ? `Selectable Target: Player's Card (${cardName})` : `Selectable Target: Opponent's Card (${cardName})`;
+            tooltipText = owner === 'user' ? `Selectable Target: Player's Card (${cardName})` : `Selectable Target: Opponent's (${cardName})`;
           } else if (locType === 'graveyard') {
             tooltipText = owner === 'user' ? `Selectable Target: Player's Graveyard (${cardName})` : `Selectable Target: Opponent's Graveyard (${cardName})`;
           } else if (locType === 'banished') {
@@ -1358,7 +1392,7 @@ export const useDuelStore = defineStore('duel', {
           const item = this.activeSelectUnselectCard.selects[selectIndex];
           const isSelected = this.selectedTargetIndices.includes(selectIndex);
           const owner = controller === this.userPlayerId ? 'user' : 'ai';
-          const cardName = item.cardName || 'Card';
+          const cardName = getSafeCardName(item, owner, location, sequence);
 
           let locType: TargetInfo['locationType'] = 'field';
           if (location === 2) locType = 'hand';
@@ -1373,8 +1407,8 @@ export const useDuelStore = defineStore('duel', {
             isSelected,
             owner,
             locationType: locType,
-            tooltipText: `Selectable Cost/Target: ${cardName}`,
-            isCost: true,
+            tooltipText: `Selectable Target: ${cardName}`,
+            isCost: false,
             isTribute: false,
           };
         }

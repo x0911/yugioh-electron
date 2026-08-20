@@ -21,9 +21,20 @@
       <!-- ================================================================= -->
       <template v-if="selectPosition">
         <div class="prompt-header">
-          <div class="prompt-header__badge prompt-header__badge--battle">
-            <span class="badge-icon">⚔️</span>
-            <span class="badge-label">BATTLE STANCE</span>
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--battle">
+              <span class="badge-icon">⚔️</span>
+              <span class="badge-label">BATTLE STANCE</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
           </div>
           <h3 class="prompt-header__title">Select Battle Position</h3>
           <p class="prompt-header__subtitle">
@@ -37,6 +48,8 @@
             v-if="selectPosition.positions.includes(1)"
             type="button"
             class="stance-card stance-card--atk"
+            @mouseenter="onCardHoverByCode(selectPosition.code)"
+            @mouseleave="onCardHoverByCode(null)"
             @click="$emit('select-position', 1)"
           >
             <div class="stance-card__preview">
@@ -66,6 +79,8 @@
             v-if="selectPosition.positions.includes(2)"
             type="button"
             class="stance-card stance-card--def"
+            @mouseenter="onCardHoverByCode(selectPosition.code)"
+            @mouseleave="onCardHoverByCode(null)"
             @click="$emit('select-position', 2)"
           >
             <div class="stance-card__preview">
@@ -125,9 +140,20 @@
       <!-- ================================================================= -->
       <template v-else-if="selectChain">
         <div class="prompt-header" :class="{ 'prompt-header--forced': selectChain.forced }">
-          <div class="prompt-header__badge prompt-header__badge--chain">
-            <span class="badge-icon">⛓️</span>
-            <span class="badge-label">{{ selectChain.forced ? 'MANDATORY CHAIN TRIGGER' : 'CHAIN OPPORTUNITY' }}</span>
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--chain">
+              <span class="badge-icon">⛓️</span>
+              <span class="badge-label">{{ selectChain.forced ? 'MANDATORY CHAIN TRIGGER' : 'CHAIN OPPORTUNITY' }}</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
           </div>
           <h3 class="prompt-header__title">
             {{ selectChain.forced ? 'Mandatory Effect Activation' : 'Chain Window Opportunity' }}
@@ -148,6 +174,8 @@
             v-for="(chain, idx) in selectChain.selects"
             :key="`chain-${idx}-${chain.code}`"
             class="chain-card-entry"
+            @mouseenter="onCardHoverByCode(chain.code)"
+            @mouseleave="onCardHoverByCode(null)"
             @click="$emit('select-chain', idx)"
           >
             <!-- Card Thumbnail with Rarity Frame -->
@@ -200,9 +228,20 @@
       <!-- ================================================================= -->
       <template v-else-if="selectEffectYn">
         <div class="prompt-header">
-          <div class="prompt-header__badge prompt-header__badge--effect">
-            <span class="badge-icon">✨</span>
-            <span class="badge-label">CARD EFFECT TRIGGER</span>
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--effect">
+              <span class="badge-icon">✨</span>
+              <span class="badge-label">CARD EFFECT TRIGGER</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
           </div>
           <h3 class="prompt-header__title">Optional Card Effect</h3>
           <p class="prompt-header__subtitle">
@@ -211,7 +250,11 @@
         </div>
 
         <!-- Spotlight Card Presentation -->
-        <div class="effect-spotlight">
+        <div
+          class="effect-spotlight"
+          @mouseenter="onCardHoverByCode(selectEffectYn.code)"
+          @mouseleave="onCardHoverByCode(null)"
+        >
           <div class="effect-spotlight__card">
             <img
               :src="getCardImageUrl(selectEffectYn.code, 'mini')"
@@ -221,9 +264,9 @@
             />
             <div class="spotlight-sheen" />
           </div>
-          <div v-if="selectEffectYn.description" class="effect-spotlight__desc">
+          <div v-if="resolvedEffectDescription" class="effect-spotlight__desc">
             <span class="desc-quote-icon">💬</span>
-            <p class="desc-text">{{ selectEffectYn.description }}</p>
+            <p class="desc-text">{{ resolvedEffectDescription }}</p>
           </div>
         </div>
 
@@ -244,9 +287,20 @@
       <!-- ================================================================= -->
       <template v-else-if="selectOption">
         <div class="prompt-header">
-          <div class="prompt-header__badge prompt-header__badge--option">
-            <span class="badge-icon">📋</span>
-            <span class="badge-label">TACTICAL CHOICE</span>
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--option">
+              <span class="badge-icon">📋</span>
+              <span class="badge-label">TACTICAL CHOICE</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
           </div>
           <h3 class="prompt-header__title">Choose an Effect Option</h3>
           <p class="prompt-header__subtitle">Select one of the following activation modes to resolve this card.</p>
@@ -272,9 +326,20 @@
       <!-- ================================================================= -->
       <template v-else-if="announceCard">
         <div class="prompt-header">
-          <div class="prompt-header__badge prompt-header__badge--announce">
-            <span class="badge-icon">👁️</span>
-            <span class="badge-label">CARD DECLARATION</span>
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--announce">
+              <span class="badge-icon">👁️</span>
+              <span class="badge-label">CARD DECLARATION</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
           </div>
           <h3 class="prompt-header__title">Declare a Card Name</h3>
           <p class="prompt-header__subtitle">
@@ -312,6 +377,8 @@
               type="button"
               class="staple-chip"
               :class="{ 'staple-chip--selected': selectedDeclaredCode === staple.code }"
+              @mouseenter="onCardHoverByCode(staple.code)"
+              @mouseleave="onCardHoverByCode(null)"
               @click="selectDeclaredCard(staple.code)"
             >
               {{ staple.name }}
@@ -325,6 +392,8 @@
               :key="`dec-${card.id}`"
               class="declare-card-item"
               :class="{ 'declare-card-item--selected': selectedDeclaredCode === (card.code || card.id) }"
+              @mouseenter="onCardHoverByCode(card.code || card.id)"
+              @mouseleave="onCardHoverByCode(null)"
               @click="selectDeclaredCard(card.code || card.id)"
             >
               <div class="declare-card-item__art">
@@ -368,9 +437,20 @@
       <!-- ================================================================= -->
       <template v-else-if="announceAttrib">
         <div class="prompt-header">
-          <div class="prompt-header__badge prompt-header__badge--announce">
-            <span class="badge-icon">🔮</span>
-            <span class="badge-label">ATTRIBUTE DECLARATION</span>
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--announce">
+              <span class="badge-icon">🔮</span>
+              <span class="badge-label">ATTRIBUTE DECLARATION</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
           </div>
           <h3 class="prompt-header__title">Declare {{ announceAttrib.count }} Attribute(s)</h3>
           <p class="prompt-header__subtitle">Choose from the available elemental attributes.</p>
@@ -396,9 +476,20 @@
       <!-- ================================================================= -->
       <template v-else-if="announceNumber">
         <div class="prompt-header">
-          <div class="prompt-header__badge prompt-header__badge--announce">
-            <span class="badge-icon">🔢</span>
-            <span class="badge-label">NUMBER DECLARATION</span>
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--announce">
+              <span class="badge-icon">🔢</span>
+              <span class="badge-label">NUMBER DECLARATION</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
           </div>
           <h3 class="prompt-header__title">Declare a Number</h3>
           <p class="prompt-header__subtitle">Choose one of the specified numbers for this effect.</p>
@@ -433,6 +524,8 @@ import type {
   AnnounceNumberPayload,
 } from '../../../shared/types/duel.js';
 import type { CardDetail } from '../../../shared/types/card.js';
+import type { FieldCard } from '../../../shared/types/field.js';
+import { useDuelStore } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl } from '../../utils/media.js';
 
 interface Props {
@@ -468,7 +561,46 @@ const emit = defineEmits<{
   (e: 'announce-race', races: bigint[]): void;
   (e: 'announce-attrib', attributes: number[]): void;
   (e: 'announce-number', value: number): void;
+  (e: 'observe-field'): void;
+  (e: 'hover-card', card: FieldCard | null): void;
 }>();
+
+const duelStore = useDuelStore();
+
+const resolvedEffectDescription = computed(() => {
+  if (!props.selectEffectYn) return '';
+  const d = props.selectEffectYn.description;
+  if (d && d !== '0' && isNaN(Number(d))) return d;
+  const detail = duelStore.getCardDetail(props.selectEffectYn.code);
+  return detail?.desc || 'Activate the effect of this card.';
+});
+
+function onCardHoverByCode(code?: number | null): void {
+  if (!code || code <= 0) {
+    emit('hover-card', null);
+    return;
+  }
+  const detail = duelStore.getCardDetail(code);
+  if (detail) {
+    emit('hover-card', {
+      id: `prompt-preview-${code}`,
+      code,
+      name: detail.name,
+      controller: duelStore.userPlayerId,
+      location: 'hand',
+      sequence: 0,
+      position: 'faceup_attack',
+      atk: detail.atk,
+      def: detail.def,
+      level: detail.level,
+      attribute: detail.attributeName,
+      race: detail.raceName,
+      description: detail.desc,
+    });
+  } else {
+    emit('hover-card', null);
+  }
+}
 
 const hasActivePrompt = computed(() => {
   return (
@@ -690,6 +822,37 @@ function toRomanNumeral(num: number): string {
   display: flex;
   flex-direction: column;
   gap: 6px;
+
+  &__top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+  }
+
+  &__observe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #cbd5e1;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 160ms ease;
+
+    &:hover {
+      background: rgba(201, 162, 39, 0.25);
+      border-color: #e5c158;
+      color: #fff;
+      transform: translateY(-1px);
+    }
+  }
 
   &__badge {
     align-self: flex-start;

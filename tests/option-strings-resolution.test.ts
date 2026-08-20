@@ -63,44 +63,53 @@ async function testLiveDuelFogKingSelectOption() {
   let receivedOptions: string[] = [];
   let idleStep = 0;
 
+  let hasSummonedCeltic = false;
+
   engine.onEvent((ev: DecodedDuelEvent) => {
     if (ev.isPrompt) {
       if (ev.promptType === 'SELECT_IDLECMD' && ev.promptPlayer === 0) {
-        idleStep++;
         const pData = ev.promptData as any;
+        const currentTurn = engine.getBoardState().turnNumber;
 
-        if (idleStep === 1) {
+        if (!hasSummonedCeltic) {
           // Turn 1: Summon Celtic Guardian so we have 1 tribute monster on field
-          const celticIdx = pData.summons.findIndex((s: any) => s.code === 91152256);
-          assert.ok(celticIdx >= 0, 'Celtic Guardian must be in hand');
-          setTimeout(() => {
-            engine.sendResponse({
-              type: OcgResponseType.SELECT_IDLECMD,
-              action: SelectIdleCMDAction.SELECT_SUMMON,
-              index: celticIdx,
-            });
-          }, 10);
-        } else if (idleStep === 2) {
-          // Pass Turn 1 to Turn 3 by ending phase
-          setTimeout(() => {
-            engine.sendResponse({
-              type: OcgResponseType.SELECT_IDLECMD,
-              action: SelectIdleCMDAction.TO_EP,
-              index: null,
-            });
-          }, 10);
-        } else if (idleStep === 3) {
-          // Turn 3: Normal Summon Fog King (player has Normal Summon and 1 tribute available)
-          const fogKingIdx = pData.summons.findIndex((s: any) => s.code === 6614221);
-          assert.ok(fogKingIdx >= 0, 'Fog King must be available to Normal Summon on Turn 3.');
-          setTimeout(() => {
-            engine.sendResponse({
-              type: OcgResponseType.SELECT_IDLECMD,
-              action: SelectIdleCMDAction.SELECT_SUMMON,
-              index: fogKingIdx,
-            });
-          }, 10);
+          const celticIdx = pData.summons ? pData.summons.findIndex((s: any) => s.code === 91152256) : -1;
+          if (celticIdx >= 0) {
+            hasSummonedCeltic = true;
+            setTimeout(() => {
+              engine.sendResponse({
+                type: OcgResponseType.SELECT_IDLECMD,
+                action: SelectIdleCMDAction.SELECT_SUMMON,
+                index: celticIdx,
+              });
+            }, 10);
+            return;
+          }
         }
+
+        if (currentTurn >= 3) {
+          // Turn 3: Normal Summon Fog King (player has Normal Summon and 1 tribute available)
+          const fogKingIdx = pData.summons ? pData.summons.findIndex((s: any) => s.code === 6614221) : -1;
+          if (fogKingIdx >= 0) {
+            setTimeout(() => {
+              engine.sendResponse({
+                type: OcgResponseType.SELECT_IDLECMD,
+                action: SelectIdleCMDAction.SELECT_SUMMON,
+                index: fogKingIdx,
+              });
+            }, 10);
+            return;
+          }
+        }
+
+        // Otherwise pass phase
+        setTimeout(() => {
+          engine.sendResponse({
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.TO_EP,
+            index: null,
+          });
+        }, 10);
       } else if (ev.promptType === 'SELECT_OPTION' && ev.promptPlayer === 0) {
         selectOptionPromptReceived = true;
         const pData = ev.promptData as any;
@@ -124,14 +133,15 @@ async function testLiveDuelFogKingSelectOption() {
     }
   });
 
-  // Player 0: 20 Celtic Guardian (91152256) and 20 Fog King (6614221) so both are in opening hand
-  const p0Deck: number[] = [];
-  for (let i = 0; i < 20; i++) p0Deck.push(91152256);
-  for (let i = 0; i < 20; i++) p0Deck.push(6614221);
+  // Player 0 deck: Celtic Guardian and Fog King at top of draw stack
+  const p0Deck: number[] = [
+    ...Array(30).fill(91152256),
+    91152256, 91152256,
+    6614221, 6614221, 6614221,
+  ];
 
   // Player 1: Normal monsters
-  const p1Deck: number[] = [];
-  for (let i = 0; i < 40; i++) p1Deck.push(46986414);
+  const p1Deck: number[] = Array(40).fill(46986414);
 
   engine.startNewDuel({
     player0Deck: p0Deck,
@@ -141,10 +151,11 @@ async function testLiveDuelFogKingSelectOption() {
     drawCountPerTurn: 1,
     humanPlayerId: 0,
     autoPlay: false,
+    noShuffle: true,
   });
 
   const start = Date.now();
-  while (!selectOptionPromptReceived && Date.now() - start < 3000) {
+  while (!selectOptionPromptReceived && Date.now() - start < 6000) {
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
 

@@ -313,29 +313,51 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
     const loc = item.location || 1;
     const locName = getLocationName(loc);
     const owner = item.controller === duelStore.userPlayerId ? 'user' : 'ai';
-    const isMonster = detail?.isMonster ?? (detail?.atk !== undefined || (detail?.level ?? 0) > 0);
+    const isFacedownMonster =
+      loc === 4 &&
+      (item.position === 8 ||
+        (item.position !== undefined && (item.position & 0x8) !== 0) ||
+        duelStore.boardState.opponentField.monsterZones[item.sequence]?.position === 'facedown_defense' ||
+        item.code === 0);
 
-    const isSelected = props.selectedIndices.includes(originalIndex);
-    const orderIdx = props.selectedIndices.indexOf(originalIndex);
+    const isFacedownSpell =
+      loc === 8 &&
+      (item.position === 8 ||
+        (item.position !== undefined && (item.position & 0x8) !== 0) ||
+        duelStore.boardState.opponentField.spellTrapZones[item.sequence]?.position === 'facedown_spell' ||
+        duelStore.boardState.opponentField.spellTrapZones[item.sequence]?.position === 'facedown_defense' ||
+        item.code === 0);
+
+    const isHiddenOpponentCard =
+      owner === 'ai' &&
+      (isFacedownMonster || isFacedownSpell || loc === 2 || loc === 1 || loc === 64 || item.code === 0);
+
+    const cardName = isHiddenOpponentCard
+      ? isFacedownMonster
+        ? 'Face-down Monster'
+        : 'Face-down Card'
+      : item.cardName && item.cardName !== 'Card'
+        ? item.cardName
+        : detail?.name || `Card #${item.code}`;
 
     result.push({
       selectIndex: originalIndex,
-      code: item.code,
-      name: item.cardName && item.cardName !== 'Card' ? item.cardName : detail?.name || `Card #${item.code}`,
+      code: isHiddenOpponentCard ? 0 : item.code,
+      name: cardName,
       location: loc,
       locationName: locName,
       sequence: item.sequence,
       position: 'position' in item ? (item as any).position : 1,
       controller: item.controller,
       owner,
-      isMonster,
-      atk: detail?.atk,
-      def: detail?.def,
-      level: detail?.level,
-      attribute: detail?.attributeName,
-      race: detail?.raceName,
-      type: detail?.type,
-      desc: detail?.desc,
+      isMonster: isHiddenOpponentCard ? false : isMonster,
+      atk: isHiddenOpponentCard ? undefined : detail?.atk,
+      def: isHiddenOpponentCard ? undefined : detail?.def,
+      level: isHiddenOpponentCard ? undefined : detail?.level,
+      attribute: isHiddenOpponentCard ? undefined : detail?.attributeName,
+      race: isHiddenOpponentCard ? undefined : detail?.raceName,
+      type: isHiddenOpponentCard ? undefined : detail?.type,
+      desc: isHiddenOpponentCard ? undefined : detail?.desc,
       isSelected,
       selectionOrder: orderIdx >= 0 ? unselectCards.length + orderIdx + 1 : 0,
     });

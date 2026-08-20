@@ -13,6 +13,7 @@ export interface EvaluatorContext {
   currentTurn: number;
   signatureCardIds: number[];
   deckArchetype: string;
+  aiDeckCards?: number[];
 }
 
 export interface ScoredAction<T = OcgResponse> {

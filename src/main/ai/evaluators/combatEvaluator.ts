@@ -7,6 +7,7 @@ export interface AttackCandidate {
   attackerSeq: number;
   attackerAtk: number;
   attackerName: string;
+  attackerCode?: number;
 }
 
 export function evaluateAttackOption(
@@ -58,6 +59,14 @@ export function evaluateAttackOption(
   let bestTargetScore = -Infinity;
   let bestTargetReason = '';
 
+  const attackerCode = attacker.attackerCode ?? 0;
+  const isDefenseDestroyer =
+    attackerCode === 4041838 || // Ninja Grandmaster Sasuke
+    attackerCode === 4445745 || // Drillroid
+    attackerCode === 40048328 || // Ehren, Lightsworn Monk
+    attackerCode === 80344569 || // Neo-Spacian Grand Mole
+    attackerCode === 78759558;  // Bull Blader
+
   for (const target of oppMonsters) {
     let targetScore = 0;
     let targetReason = '';
@@ -71,6 +80,7 @@ export function evaluateAttackOption(
       target.code === 78371393 || // Yubel
       target.code === 4779091 ||  // Yubel - Terror Incarnate
       target.code === 31764782 || // Yubel - The Ultimate Nightmare
+      target.code === 3657444 ||  // Cyber Valley
       (target.description &&
         (target.description.toLowerCase().includes('cannot be destroyed by battle') ||
           target.description.toLowerCase().includes('not destroyed by battle')));
@@ -91,34 +101,42 @@ export function evaluateAttackOption(
         }
       } else if (attacker.attackerAtk === targetAtk) {
         // Mutual destruction
-        targetScore = 150 * personality.riskTolerance - 80 * personality.defensiveness + (targetAtk > 1800 ? 200 : 0);
-        targetReason = `Mutual destruction trade with ${target.name} (${targetAtk} ATK)`;
+        targetScore = isBattleImmune ? -800 : (150 * personality.riskTolerance - 80 * personality.defensiveness + (targetAtk > 1800 ? 200 : 0));
+        targetReason = isBattleImmune ? `[AVOID] Attack battle-immune ${target.name} with equal ATK` : `Mutual destruction trade with ${target.name} (${targetAtk} ATK)`;
       } else {
         // Attacker is weaker: suicide
         const selfDamage = targetAtk - attacker.attackerAtk;
-        targetScore = -1500 - selfDamage * 2;
+        targetScore = -2500 - selfDamage * 2;
         targetReason = `[AVOID] Suicide attack into stronger ${target.name} (${targetAtk} ATK)`;
       }
     } else if (target.position === 'faceup_defense') {
       const targetDef = target.def ?? 0;
       if (isBattleImmune) {
-        // Futile attack: Deals 0 damage and does not destroy the monster
-        targetScore = -800;
-        targetReason = `[AVOID] Futile attack against battle-immune ${target.name} in Defense Position`;
-      } else if (attacker.attackerAtk > targetDef) {
-        targetScore = 300 + targetDef * 0.2;
+        if (isDefenseDestroyer) {
+          targetScore = 1500;
+          targetReason = `Effect destroys face-up defense battle-immune ${target.name} before damage calculation!`;
+        } else {
+          // Futile attack: Deals 0 damage and does not destroy the monster
+          targetScore = -3000;
+          targetReason = `[AVOID] Futile attack against battle-immune ${target.name} in Defense Position`;
+        }
+      } else if (attacker.attackerAtk > targetDef || isDefenseDestroyer) {
+        targetScore = 400 + targetDef * 0.2;
         targetReason = `Destroy defensive wall ${target.name} (${targetDef} DEF)`;
       } else if (attacker.attackerAtk === targetDef) {
-        targetScore = -50;
+        targetScore = -200;
         targetReason = `Stalemate clash with ${target.name} (${targetDef} DEF)`;
       } else {
         const recoil = targetDef - attacker.attackerAtk;
-        targetScore = -800 - recoil * 1.5;
+        targetScore = -1500 - recoil * 1.5;
         targetReason = `[AVOID] Recoil against higher DEF ${target.name} (${targetDef} DEF)`;
       }
     } else {
       // Face-down defense monster (hidden identity)
-      if (attacker.attackerAtk >= 2000) {
+      if (isDefenseDestroyer) {
+        targetScore = 800;
+        targetReason = `Attack face-down monster with defense-destroying effect (${attacker.attackerName})`;
+      } else if (attacker.attackerAtk >= 2000) {
         targetScore = 350 * personality.aggression;
         targetReason = `Attack face-down monster with overwhelming power (${attacker.attackerAtk} ATK)`;
       } else if (attacker.attackerAtk >= 1600) {
@@ -128,7 +146,7 @@ export function evaluateAttackOption(
         targetScore = 50 * personality.riskTolerance - 100 * personality.defensiveness;
         targetReason = `Cautious strike on face-down monster (${attacker.attackerAtk} ATK)`;
       } else {
-        targetScore = -300 * (1 - personality.riskTolerance);
+        targetScore = -800 * (1 - personality.riskTolerance);
         targetReason = `Hold back low ATK monster (${attacker.attackerAtk} ATK) from unknown face-down defense`;
       }
     }
@@ -140,7 +158,7 @@ export function evaluateAttackOption(
   }
 
   // Weight final score by character personality aggression
-  const finalScore = bestTargetScore * (0.5 + personality.aggression * 0.8);
+  const finalScore = bestTargetScore < 0 ? bestTargetScore : bestTargetScore * (0.5 + personality.aggression * 0.8);
 
   return {
     action: {

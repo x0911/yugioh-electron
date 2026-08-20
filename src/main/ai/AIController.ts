@@ -21,6 +21,7 @@ import { evaluateAttackOption, type AttackCandidate } from './evaluators/combatE
 import { evaluateSpellActivation, evaluateSpellTrapSet } from './evaluators/spellTrapEvaluator.js';
 import { resolveArchetypePlan } from './strategies/archetypeStrategy.js';
 import { assertAiStateSanitized } from './antiCheatAssert.js';
+import { getExecutorForDeck } from './executors/index.js';
 
 export class AIController {
   /**
@@ -153,6 +154,12 @@ export class AIController {
   // ===========================================================================
 
   private decideIdleCmd(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const executor = getExecutorForDeck(context, context.aiDeckCards);
+    const executorActions = executor.onIdleCmd ? executor.onIdleCmd(msg, context) : null;
+    if (executorActions && executorActions.length > 0) {
+      return this.selectWeightedAction(executorActions);
+    }
+
     const candidates: ScoredAction[] = [];
     const { personality, cardReader, signatureCardIds, deckArchetype } = context;
     const archetypePlan = resolveArchetypePlan(deckArchetype);
@@ -417,6 +424,12 @@ export class AIController {
   // ===========================================================================
 
   private decideBattleCmd(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const executor = getExecutorForDeck(context, context.aiDeckCards);
+    const executorActions = executor.onBattleCmd ? executor.onBattleCmd(msg, context) : null;
+    if (executorActions && executorActions.length > 0) {
+      return this.selectWeightedAction(executorActions);
+    }
+
     const candidates: ScoredAction[] = [];
     const { cardReader } = context;
 
@@ -434,6 +447,7 @@ export class AIController {
           attackerSeq: att.sequence ?? 0,
           attackerAtk: atk,
           attackerName: name,
+          attackerCode: code,
         };
 
         const scored = evaluateAttackOption(candidate, context);
@@ -494,6 +508,15 @@ export class AIController {
   // ===========================================================================
 
   private decideSelectCard(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const executor = getExecutorForDeck(context, context.aiDeckCards);
+    const customCards = executor.onSelectCard ? executor.onSelectCard(msg, context) : null;
+    if (customCards && customCards.length > 0) {
+      return {
+        type: OcgResponseType.SELECT_CARD,
+        indicies: customCards,
+      };
+    }
+
     const minCount = Math.max(1, msg.min ?? 1);
     const maxCount = Math.min(msg.max ?? minCount, msg.selects.length);
     const { aiPlayerId, cardReader, signatureCardIds } = context;
@@ -510,8 +533,16 @@ export class AIController {
         // If selecting own card to keep / protect / search: prefer signature / high ATK
         score = atk + (signatureCardIds.includes(code) ? 1000 : 0);
       } else {
-        // If selecting opponent card to target / destroy: prefer highest ATK threat
-        score = atk + 500;
+        // If selecting opponent card to target / destroy / attack:
+        const isBattleImmuneDef =
+          (code === 23205979 || code === 31305911 || code === 11662742 || code === 37412656 || code === 78371393) &&
+          (c.position === 8 || (c.position !== undefined && (c.position & 0x8) !== 0));
+
+        if (isBattleImmuneDef) {
+          score = -1000;
+        } else {
+          score = atk + 500;
+        }
       }
 
       return { index, score, code, name: detail?.name };
@@ -530,6 +561,15 @@ export class AIController {
   }
 
   private decideSelectTribute(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const executor = getExecutorForDeck(context, context.aiDeckCards);
+    const customTributes = executor.onSelectTribute ? executor.onSelectTribute(msg, context) : null;
+    if (customTributes && customTributes.length > 0) {
+      return {
+        type: OcgResponseType.SELECT_TRIBUTE,
+        indicies: customTributes,
+      };
+    }
+
     const minCount = Math.max(1, msg.min ?? 1);
     const { cardReader } = context;
 
@@ -556,6 +596,12 @@ export class AIController {
   // ===========================================================================
 
   private decideSelectChain(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const executor = getExecutorForDeck(context, context.aiDeckCards);
+    const executorActions = executor.onSelectChain ? executor.onSelectChain(msg, context) : null;
+    if (executorActions && executorActions.length > 0) {
+      return this.selectWeightedAction(executorActions);
+    }
+
     if (msg.forced && msg.selects && msg.selects.length > 0) {
       return {
         type: OcgResponseType.SELECT_CHAIN,
@@ -738,24 +784,39 @@ export class AIController {
       return candidates[0].action;
     }
 
-    // Softmax temperature (higher = more uniform, lower = more deterministic)
-    const temperature = 250;
     const maxScore = Math.max(...candidates.map((c) => c.score));
 
+    // When neutral/positive actions (score >= 0) exist, prune heavily negative futile/suicidal actions (< -500)
+    let eligibleCandidates = candidates;
+    if (maxScore >= 0) {
+      const filtered = candidates.filter((c) => c.score >= -500);
+      if (filtered.length > 0) {
+        eligibleCandidates = filtered;
+      }
+    }
+
+    if (eligibleCandidates.length === 1) {
+      return eligibleCandidates[0].action;
+    }
+
+    // Softmax temperature (higher = more uniform, lower = more deterministic)
+    const temperature = 250;
+    const eligibleMaxScore = Math.max(...eligibleCandidates.map((c) => c.score));
+
     // Exponentiate shifted scores to prevent numerical overflow
-    const expScores = candidates.map((c) => Math.exp((c.score - maxScore) / (temperature / 100)));
+    const expScores = eligibleCandidates.map((c) => Math.exp((c.score - eligibleMaxScore) / (temperature / 100)));
     const sumExp = expScores.reduce((sum, val) => sum + val, 0);
 
     // Sample from categorical distribution
     let randomSample = Math.random() * sumExp;
-    for (let i = 0; i < candidates.length; i++) {
+    for (let i = 0; i < eligibleCandidates.length; i++) {
       randomSample -= expScores[i];
       if (randomSample <= 0) {
-        return candidates[i].action;
+        return eligibleCandidates[i].action;
       }
     }
 
-    return candidates[0].action;
+    return eligibleCandidates[0].action;
   }
 }
 

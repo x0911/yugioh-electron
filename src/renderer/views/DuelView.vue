@@ -119,6 +119,7 @@
 
     <!-- Interactive Prompt Modal (Position, Chain, Effect Yes/No, Options, Announcements) -->
     <PromptModal
+      v-if="!isObservingPrompt"
       :select-chain="duelStore.activeSelectChain"
       :select-position="duelStore.activeSelectPosition"
       :select-effect-yn="duelStore.activeSelectEffectYn"
@@ -128,15 +129,43 @@
       :announce-attrib="duelStore.activeAnnounceAttrib"
       :announce-number="duelStore.activeAnnounceNumber"
       :all-cards="allCardsList"
-      @select-position="duelStore.executeSelectPosition"
-      @select-chain="duelStore.executeSelectChain"
-      @select-effect-yn="duelStore.executeSelectEffectYn"
-      @select-option="duelStore.executeSelectOption"
-      @announce-card="duelStore.executeAnnounceCard"
-      @announce-race="duelStore.executeAnnounceRace"
-      @announce-attrib="duelStore.executeAnnounceAttrib"
-      @announce-number="duelStore.executeAnnounceNumber"
+      @select-position="(p) => { isObservingPrompt = false; duelStore.executeSelectPosition(p); }"
+      @select-chain="(idx) => { isObservingPrompt = false; duelStore.executeSelectChain(idx); }"
+      @select-effect-yn="(yn) => { isObservingPrompt = false; duelStore.executeSelectEffectYn(yn); }"
+      @select-option="(idx) => { isObservingPrompt = false; duelStore.executeSelectOption(idx); }"
+      @announce-card="(c) => { isObservingPrompt = false; duelStore.executeAnnounceCard(c); }"
+      @announce-race="(r) => { isObservingPrompt = false; duelStore.executeAnnounceRace(r); }"
+      @announce-attrib="(a) => { isObservingPrompt = false; duelStore.executeAnnounceAttrib(a); }"
+      @announce-number="(n) => { isObservingPrompt = false; duelStore.executeAnnounceNumber(n); }"
+      @observe-field="isObservingPrompt = true"
+      @hover-card="onCardHover"
     />
+
+    <!-- Floating Prompt Observation Mode Banner -->
+    <div
+      v-if="isObservingPrompt && hasAnyActivePrompt"
+      class="prompt-observation-bar target-confirmation-bar glass-panel"
+    >
+      <div class="target-bar-info">
+        <span class="target-bar-icon">👁️</span>
+        <div class="target-bar-text">
+          <span class="target-bar-title">FIELD OBSERVATION MODE</span>
+          <span class="target-bar-detail">
+            Decision is paused. You can inspect card details, Graveyard, and Extra Deck.
+          </span>
+        </div>
+      </div>
+      <div class="target-bar-actions">
+        <button
+          type="button"
+          class="micro-btn micro-btn--confirm observe-return-btn"
+          @click="isObservingPrompt = false"
+        >
+          <span class="btn-icon">🔙</span>
+          <span>Return to Decision</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Dedicated Card Selection Modal (Deck, Graveyard, Extra Deck, Banished, Hand Search/Targeting) -->
     <CardSelectionModal
@@ -335,6 +364,20 @@ const isMenuOpen = ref(false);
 const isDuelLogOpen = ref(false);
 const isInspectModalOpen = ref(false);
 const activeInspectStack = ref<InspectStackState | null>(null);
+const isObservingPrompt = ref(false);
+
+const hasAnyActivePrompt = computed(() => {
+  return (
+    !!duelStore.activeSelectChain ||
+    !!duelStore.activeSelectPosition ||
+    !!duelStore.activeSelectEffectYn ||
+    !!duelStore.activeSelectOption ||
+    !!duelStore.activeAnnounceCard ||
+    !!duelStore.activeAnnounceRace ||
+    !!duelStore.activeAnnounceAttrib ||
+    !!duelStore.activeAnnounceNumber
+  );
+});
 
 function onInspectStack(stackType: string, controller: number): void {
   const isUser = controller === duelStore.userPlayerId;
@@ -456,6 +499,9 @@ function onHandCardClick(card: FieldCard, event: MouseEvent): void {
   if (duelStore.isVideoPlaying) return;
   onCardHover(card);
 
+  // If observing prompt, only inspect without opening turn action menu
+  if (isObservingPrompt.value) return;
+
   // If there is an active selection prompt (e.g. Cost discard or hand cleanup)
   if (duelStore.hasActiveSelectionPrompt) {
     const target = duelStore.getTargetInfo(card.controller, 2, card.sequence ?? 0);
@@ -513,6 +559,9 @@ function onFieldCardClick(card: FieldCard | null, event?: MouseEvent, targetInfo
   }
 
   onCardHover(card);
+
+  // If observing prompt, do not open turn action menu
+  if (isObservingPrompt.value) return;
 
   // Only allow actions on player's own cards
   if (card.controller === duelStore.userPlayerId) {

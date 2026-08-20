@@ -95,6 +95,7 @@ export class DuelEngineService {
   private aiDeckArchetype = '';
   private aiPersonality: CharacterPersonality = DEFAULT_PERSONALITY;
   private aiSignatureCards: number[] = [];
+  private aiDeckCards: number[] = [];
   private cardVideos: Record<string, CardVideoEntry> = {};
 
   // Tracked Board States for Player 0 and Player 1
@@ -264,6 +265,8 @@ export class DuelEngineService {
     this.aiDeckArchetype = options.aiDeckArchetype ?? '';
     this.aiPersonality = getPersonalityForCharacter(this.aiCharacterId);
     this.aiSignatureCards = [];
+    const aiDeck = this.humanPlayerId === 0 ? options.player1Deck : options.player0Deck;
+    this.aiDeckCards = [...(aiDeck || [])];
 
     try {
       const jsonPath = path.resolve(process.cwd(), 'data/characters.json');
@@ -1095,6 +1098,7 @@ export class DuelEngineService {
       currentTurn: this.state.currentTurn,
       signatureCardIds: this.aiSignatureCards,
       deckArchetype: this.aiDeckArchetype,
+      aiDeckCards: this.aiDeckCards,
     };
 
     const response = this.aiController.decideResponse(msg, context);

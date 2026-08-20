@@ -107,6 +107,44 @@ export class ViewFilterService {
       }
     }
 
+    // Redact opponent face-down / hidden cards in selection prompt targets
+    if (event.promptData && (event.promptData as any).selects && Array.isArray((event.promptData as any).selects)) {
+      const sanitizedSelects = (event.promptData as any).selects.map((s: any) => {
+        const isOwner = s.controller === viewerPlayerId;
+        const isFacedown =
+          s.position === 8 ||
+          (s.position !== undefined && (s.position & 0x8) !== 0) ||
+          s.location === 1 || // deck
+          s.location === 2 || // hand
+          s.location === 64; // extra-deck
+
+        if (!isOwner && isFacedown) {
+          const loc = s.location;
+          return {
+            ...s,
+            code: 0,
+            cardName:
+              loc === 4
+                ? 'Face-down Monster'
+                : loc === 8
+                  ? 'Face-down Card'
+                  : loc === 2
+                    ? 'Card Back'
+                    : 'Face-down Card',
+          };
+        }
+        return { ...s };
+      });
+
+      return {
+        ...event,
+        promptData: {
+          ...event.promptData,
+          selects: sanitizedSelects,
+        },
+      };
+    }
+
     return event;
   }
 }

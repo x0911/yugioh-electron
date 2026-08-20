@@ -976,8 +976,12 @@ export class MessageDecoder {
         promptType = 'SELECT_EFFECTYN';
         promptPlayer = msg.player;
         const name = this.cardReader.getCardName(msg.code);
-        const resolvedEffectDesc = this.cardReader.resolveString(msg.description);
-        description = resolvedEffectDesc || `Activate effect of "${name}"?`;
+        const cardDetail = this.cardReader.getCardDetail(msg.code);
+        let resolvedEffectDesc = this.cardReader.resolveString(msg.description);
+        if (!resolvedEffectDesc || resolvedEffectDesc === '0' || !isNaN(Number(resolvedEffectDesc))) {
+          resolvedEffectDesc = cardDetail?.desc || `Activate effect of "${name}"?`;
+        }
+        description = resolvedEffectDesc;
 
         promptData = {
           player: msg.player,
