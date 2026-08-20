@@ -4,7 +4,7 @@ import { MessageDecoder } from '../src/main/engine/messageDecoder.js';
 import { CardReaderService } from '../src/main/engine/cardReader.js';
 import { getActionGuideInfo } from '../src/renderer/utils/guidanceHelper.js';
 import type { DuelBoardState, PlayerFieldState } from '../src/shared/types/field.js';
-import type { SelectCardPayload } from '../src/shared/types/duel.js';
+import { type SelectCardPayload, WIN_REASONS, getGameOverSubtitle } from '../src/shared/types/duel.js';
 import videoRegistry from '../data/card-videos.json' with { type: 'json' };
 
 function createDummyField(playerId: 0 | 1): PlayerFieldState {
@@ -132,44 +132,45 @@ const decoder = new MessageDecoder(cardReader);
   assert.equal(exodiaEntry.victory, 'resources/videos/cards/victory_33396948.mp4');
 
   // Validate win reason subtitles
-  const WIN_REASON_EXODIA = 0x10;
-  const WIN_REASON_FINAL_COUNTDOWN = 0x11;
-  const WIN_REASON_DESTINY_BOARD = 0x15;
-  const WIN_REASON_DECK_OUT = 0x1;
-
-  function getTestSubtitle(isWinner: boolean, reason: number | null): string {
-    if (reason === WIN_REASON_EXODIA) {
-      return isWinner
-        ? 'You have achieved victory by assembling all 5 pieces of Exodia the Forbidden One!'
-        : 'Your opponent achieved victory by assembling all 5 pieces of Exodia the Forbidden One!';
-    }
-    if (reason === WIN_REASON_FINAL_COUNTDOWN) {
-      return isWinner
-        ? 'Victory achieved by the effect of Final Countdown!'
-        : 'Your opponent won by the effect of Final Countdown!';
-    }
-    if (reason === WIN_REASON_DESTINY_BOARD) {
-      return isWinner
-        ? 'Victory achieved by the effect of Destiny Board (FINAL)!'
-        : 'Your opponent won by the effect of Destiny Board (FINAL)!';
-    }
-    if (reason === WIN_REASON_DECK_OUT) {
-      return isWinner
-        ? 'Your opponent was unable to draw a card (Deck Out)!'
-        : 'You were unable to draw a card (Deck Out)!';
-    }
-    return isWinner
-      ? "You have reduced your opponent's Life Points to 0!"
-      : 'Your Life Points reached 0.';
-  }
-
   assert.equal(
-    getTestSubtitle(true, WIN_REASON_EXODIA),
+    getGameOverSubtitle(true, WIN_REASONS.EXODIA),
     'You have achieved victory by assembling all 5 pieces of Exodia the Forbidden One!',
   );
   assert.equal(
-    getTestSubtitle(true, WIN_REASON_DECK_OUT),
+    getGameOverSubtitle(false, WIN_REASONS.EXODIA),
+    'Your opponent achieved victory by assembling all 5 pieces of Exodia the Forbidden One!',
+  );
+  assert.equal(
+    getGameOverSubtitle(true, WIN_REASONS.LP_ZERO),
+    "You have reduced your opponent's Life Points to 0!",
+  );
+  assert.equal(
+    getGameOverSubtitle(false, WIN_REASONS.LP_ZERO),
+    'Your Life Points reached 0.',
+  );
+  assert.equal(
+    getGameOverSubtitle(true, WIN_REASONS.DECK_OUT),
     'Your opponent was unable to draw a card (Deck Out)!',
+  );
+  assert.equal(
+    getGameOverSubtitle(false, WIN_REASONS.DECK_OUT),
+    'You were unable to draw a card (Deck Out)!',
+  );
+  assert.equal(
+    getGameOverSubtitle(true, WIN_REASONS.FINAL_COUNTDOWN),
+    'Victory achieved by the effect of Final Countdown!',
+  );
+  assert.equal(
+    getGameOverSubtitle(true, WIN_REASONS.DESTINY_BOARD),
+    'Victory achieved by the effect of Destiny Board (FINAL)!',
+  );
+  assert.equal(
+    getGameOverSubtitle(true, WIN_REASONS.SURRENDER),
+    'Your opponent surrendered the duel.',
+  );
+  assert.equal(
+    getGameOverSubtitle(false, WIN_REASONS.SURRENDER),
+    'You surrendered the duel.',
   );
   console.log('  ✓ Exodia video registry and context-aware win reason subtitles verified.');
 }

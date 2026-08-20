@@ -278,7 +278,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { FieldCard, DuelBoardState } from '../../shared/types/field.js';
-import type { DuelEventPayload } from '../../shared/types/duel.js';
+import { type DuelEventPayload, getGameOverSubtitle } from '../../shared/types/duel.js';
 import { getBackgroundUrl } from '../utils/media.js';
 import { useDuelStore, type CardActionOption, type TargetInfo } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
@@ -395,36 +395,7 @@ const isUserWinner = computed(() => {
 });
 
 const gameOverSubtitle = computed(() => {
-  const isWinner = isUserWinner.value;
-  const reason = duelStore.boardState.winReason;
-  if (reason === 0x10) {
-    return isWinner
-      ? 'You have achieved victory by assembling all 5 pieces of Exodia the Forbidden One!'
-      : 'Your opponent achieved victory by assembling all 5 pieces of Exodia the Forbidden One!';
-  }
-  if (reason === 0x11) {
-    return isWinner
-      ? 'Victory achieved by the effect of Final Countdown!'
-      : 'Your opponent won by the effect of Final Countdown!';
-  }
-  if (reason === 0x15) {
-    return isWinner
-      ? 'Victory achieved by the effect of Destiny Board (FINAL)!'
-      : 'Your opponent won by the effect of Destiny Board (FINAL)!';
-  }
-  if (reason === 0x1) {
-    return isWinner
-      ? 'Your opponent was unable to draw a card (Deck Out)!'
-      : 'You were unable to draw a card (Deck Out)!';
-  }
-  if (reason === 0x2) {
-    return isWinner
-      ? 'Your opponent surrendered the duel.'
-      : 'You surrendered the duel.';
-  }
-  return isWinner
-    ? "You have reduced your opponent's Life Points to 0!"
-    : 'Your Life Points reached 0.';
+  return getGameOverSubtitle(isUserWinner.value, duelStore.boardState.winReason ?? null);
 });
 
 const allCardsList = computed(() => {

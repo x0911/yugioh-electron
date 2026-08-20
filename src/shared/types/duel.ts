@@ -27,6 +27,72 @@ export const CARD_POSITIONS = {
   DEFENSE: 0xc,
 } as const;
 
+export const WIN_REASONS = {
+  UNKNOWN: 0x0,
+  LP_ZERO: 0x1,
+  DECK_OUT: 0x2,
+  SURRENDER: 0x3,
+  TIME_LIMIT: 0x4,
+  EXODIA: 0x10,
+  FINAL_COUNTDOWN: 0x11,
+  VENNOMINAGA: 0x12,
+  CREATORGOD: 0x13,
+  EXODIUS: 0x14,
+  DESTINY_BOARD: 0x15,
+  LAST_TURN: 0x16,
+  PUPPET_LEO: 0x17,
+  DISASTER_LEO: 0x18,
+  JACKPOT7: 0x19,
+  RELAY_SOUL: 0x1a,
+  GHOSTRICK_MISCHIEF: 0x1b,
+  PHANTASM_SPIRAL: 0x1c,
+  FA_WINNERS: 0x1d,
+  FLYING_ELEPHANT: 0x1e,
+  EXODIA_DEFENDER: 0x1f,
+} as const;
+
+export function getGameOverSubtitle(isWinner: boolean, reason: number | null): string {
+  switch (reason) {
+    case WIN_REASONS.EXODIA:
+      return isWinner
+        ? 'You have achieved victory by assembling all 5 pieces of Exodia the Forbidden One!'
+        : 'Your opponent achieved victory by assembling all 5 pieces of Exodia the Forbidden One!';
+    case WIN_REASONS.FINAL_COUNTDOWN:
+      return isWinner
+        ? 'Victory achieved by the effect of Final Countdown!'
+        : 'Your opponent won by the effect of Final Countdown!';
+    case WIN_REASONS.VENNOMINAGA:
+      return isWinner
+        ? 'Victory achieved by Vennominaga the Deity of Poisonous Snakes (Hyper-Venom Counters)!'
+        : 'Your opponent won by the effect of Vennominaga the Deity of Poisonous Snakes!';
+    case WIN_REASONS.CREATORGOD:
+      return isWinner
+        ? 'Victory achieved by the automatic win effect of Holactie the Creator of Light!'
+        : 'Your opponent achieved victory by Special Summoning Holactie the Creator of Light!';
+    case WIN_REASONS.DESTINY_BOARD:
+      return isWinner
+        ? 'Victory achieved by the effect of Destiny Board (FINAL)!'
+        : 'Your opponent won by the effect of Destiny Board (FINAL)!';
+    case WIN_REASONS.LAST_TURN:
+      return isWinner
+        ? 'Victory achieved by the resolution of Last Turn!'
+        : 'Your opponent achieved victory by the resolution of Last Turn!';
+    case WIN_REASONS.DECK_OUT:
+      return isWinner
+        ? 'Your opponent was unable to draw a card (Deck Out)!'
+        : 'You were unable to draw a card (Deck Out)!';
+    case WIN_REASONS.SURRENDER:
+      return isWinner
+        ? 'Your opponent surrendered the duel.'
+        : 'You surrendered the duel.';
+    case WIN_REASONS.LP_ZERO:
+    default:
+      return isWinner
+        ? "You have reduced your opponent's Life Points to 0!"
+        : 'Your Life Points reached 0.';
+  }
+}
+
 export interface DuelCardSummary {
   code: number;
   location: number;
