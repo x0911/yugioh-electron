@@ -8,6 +8,7 @@ import {
   RACE_NAME_MAP,
   type CardDetail,
 } from '../../shared/types/card.js';
+import { SYSTEM_STRINGS } from './stringResolver.js';
 
 export interface CardRecord {
   id: number;
@@ -25,12 +26,37 @@ export interface CardRecord {
   desc: string;
 }
 
+export interface CardTextsRecord {
+  id: number;
+  name: string;
+  desc: string;
+  str1?: string;
+  str2?: string;
+  str3?: string;
+  str4?: string;
+  str5?: string;
+  str6?: string;
+  str7?: string;
+  str8?: string;
+  str9?: string;
+  str10?: string;
+  str11?: string;
+  str12?: string;
+  str13?: string;
+  str14?: string;
+  str15?: string;
+  str16?: string;
+}
+
 export class CardReaderService {
   private db: DatabaseType | null = null;
   private stmtGetCardData: Statement<[number], CardRecord> | null = null;
   private stmtGetCardName: Statement<[number], { name: string }> | null = null;
+  private stmtGetCardTexts: Statement<[number], CardTextsRecord> | null = null;
+  private stmtGetAlias: Statement<[number], { alias: number }> | null = null;
   private cardCache = new Map<number, OcgCardData | null>();
   private nameCache = new Map<number, string>();
+  private textsCache = new Map<number, CardTextsRecord | null>();
 
   constructor(customDbPath?: string) {
     this.initDatabase(customDbPath);
@@ -67,6 +93,12 @@ export class CardReaderService {
     );
     this.stmtGetCardName = this.db.prepare<[number], { name: string }>(
       'SELECT name FROM texts WHERE id = ?',
+    );
+    this.stmtGetCardTexts = this.db.prepare<[number], CardTextsRecord>(
+      'SELECT * FROM texts WHERE id = ?',
+    );
+    this.stmtGetAlias = this.db.prepare<[number], { alias: number }>(
+      'SELECT alias FROM datas WHERE id = ?',
     );
   }
 
@@ -142,6 +174,93 @@ export class CardReaderService {
     } catch {
       return null;
     }
+  }
+
+  public getCardTextsRow(code: number): CardTextsRecord | null {
+    if (this.textsCache.has(code)) {
+      return this.textsCache.get(code) ?? null;
+    }
+
+    if (!this.stmtGetCardTexts) return null;
+
+    try {
+      let row = this.stmtGetCardTexts.get(code) ?? null;
+      if (!row && this.stmtGetAlias) {
+        const aliasRow = this.stmtGetAlias.get(code);
+        if (aliasRow && aliasRow.alias > 0) {
+          row = this.stmtGetCardTexts.get(aliasRow.alias) ?? null;
+        }
+      }
+      this.textsCache.set(code, row);
+      return row;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Resolves a raw numeric string ID, system ID, or card string ID into human-readable text.
+   * e.g. 1 -> "Normal Summon"
+   * e.g. 6935513399296 -> "Tribute Summon with 1 tribute" (Fog King str1)
+   * e.g. 6935513399297 -> "Summon without tribute" (Fog King str2)
+   */
+  public resolveString(rawVal: number | bigint | string): string {
+    if (rawVal === null || rawVal === undefined) return '';
+
+    let val: bigint;
+    if (typeof rawVal === 'bigint') {
+      val = rawVal;
+    } else if (typeof rawVal === 'number') {
+      val = BigInt(rawVal);
+    } else {
+      const trimmed = String(rawVal).trim();
+      if (!trimmed) return '';
+      try {
+        val = BigInt(trimmed);
+      } catch {
+        return trimmed;
+      }
+    }
+
+    // 1. Check system string dictionary
+    const num = Number(val);
+    if (SYSTEM_STRINGS[num]) {
+      return SYSTEM_STRINGS[num];
+    }
+
+    // 2. Decode card string ID (64-bit ocgcore format: (code << 20) | (strIndex & 0xfffff))
+    let code = Number(val >> 20n);
+    let strIdx = Number(val & 0xfffffn);
+
+    let row = this.getCardTextsRow(code);
+
+    // Fallback for 32-bit shift ((code << 4) | (strIndex & 0xf))
+    if (!row && (code === 0 || val < 0x10000000n)) {
+      const altCode = Number(val >> 4n);
+      const altIdx = Number(val & 0xfn);
+      const altRow = this.getCardTextsRow(altCode);
+      if (altRow) {
+        code = altCode;
+        strIdx = altIdx;
+        row = altRow;
+      }
+    }
+
+    if (row) {
+      const strKey = `str${strIdx + 1}` as keyof CardTextsRecord;
+      const strVal = row[strKey];
+      if (typeof strVal === 'string' && strVal.trim().length > 0) {
+        return strVal.trim();
+      }
+      return `${row.name || `Card #${code}`} (Effect #${strIdx + 1})`;
+    }
+
+    // 3. Fallback for low numeric system codes without custom entries
+    if (num > 0 && num < 2048) {
+      return `Option #${num}`;
+    }
+
+    return String(rawVal);
   }
 
   public getCardCount(): number {

@@ -73,11 +73,13 @@ async function testMonsterRebornActivationFlow() {
         );
 
         // Summon Celtic Guardian to field
+        const celticIdx = pData.summons.findIndex((s: any) => s.code === 91152256);
+        assert.ok(celticIdx >= 0, 'Celtic Guardian must be available to summon in opening hand');
         setTimeout(() => {
           engine.sendResponse({
             type: OcgResponseType.SELECT_IDLECMD,
             action: SelectIdleCMDAction.SELECT_SUMMON,
-            index: 0,
+            index: celticIdx,
           });
         }, 10);
       } else if (idleCount === 2) {
@@ -144,7 +146,10 @@ async function testMonsterRebornActivationFlow() {
     autoPlay: false,
   });
 
-  await new Promise((resolve) => setTimeout(resolve, 600));
+  const start = Date.now();
+  while (!targetPromptReceived && Date.now() - start < 3000) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
 
   assert.ok(rebornWasActivated, 'Monster Reborn should have been successfully activated.');
   assert.ok(targetPromptReceived, 'Monster Reborn should prompt for target Graveyard selection.');

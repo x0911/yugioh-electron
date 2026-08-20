@@ -133,10 +133,12 @@
           <button
             v-for="(opt, idx) in selectOption.options"
             :key="`opt-${idx}`"
-            class="action-btn action-btn--option"
+            class="option-choice-row"
             @click="$emit('select-option', idx)"
           >
-            {{ opt }}
+            <span class="option-idx-badge">{{ idx + 1 }}</span>
+            <span class="option-text">{{ opt }}</span>
+            <span class="option-arrow">➔</span>
           </button>
         </div>
       </template>
@@ -449,6 +451,80 @@ function handleArtFallback(event: Event): void {
     background: rgba(201, 162, 39, 0.25);
     border-color: $color-gold-300;
     transform: translateX(4px);
+  }
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 48vh;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+
+.option-choice-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: rgba(22, 28, 38, 0.85);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  color: #f5f1e6;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  .option-idx-badge {
+    font-family: $font-mono;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: $color-gold-300;
+    background: rgba(201, 162, 39, 0.18);
+    border: 1px solid rgba(201, 162, 39, 0.4);
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .option-text {
+    flex: 1;
+    font-family: $font-body;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #f5f1e6;
+  }
+
+  .option-arrow {
+    font-size: 0.9rem;
+    color: $color-gold-500;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: rgba(36, 44, 58, 0.95);
+    border-color: $color-gold-300;
+    transform: translateX(4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(201, 162, 39, 0.3);
+
+    .option-idx-badge {
+      background: $color-gold-500;
+      color: #0d1117;
+    }
+
+    .option-arrow {
+      opacity: 1;
+      transform: translateX(4px);
+    }
   }
 }
 

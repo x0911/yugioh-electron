@@ -691,7 +691,7 @@ export class MessageDecoder {
           activates: msg.activates.map((s) => ({
             ...s,
             cardName: this.cardReader.getCardName(s.code),
-            description: s.description.toString(),
+            description: this.cardReader.resolveString(s.description),
           })),
           to_bp: msg.to_bp,
           to_ep: msg.to_ep,
@@ -722,7 +722,7 @@ export class MessageDecoder {
           chains: msg.chains.map((c) => ({
             ...c,
             cardName: this.cardReader.getCardName(c.code),
-            description: c.description.toString(),
+            description: this.cardReader.resolveString(c.description),
           })),
           attacks: msg.attacks.map((a) => ({
             ...a,
@@ -794,7 +794,7 @@ export class MessageDecoder {
           selects: msg.selects.map((s) => ({
             ...s,
             cardName: this.cardReader.getCardName(s.code),
-            description: s.description.toString(),
+            description: this.cardReader.resolveString(s.description),
           })),
         };
 
@@ -843,13 +843,14 @@ export class MessageDecoder {
         promptType = 'SELECT_EFFECTYN';
         promptPlayer = msg.player;
         const name = this.cardReader.getCardName(msg.code);
-        description = `Activate effect of "${name}"?`;
+        const resolvedEffectDesc = this.cardReader.resolveString(msg.description);
+        description = resolvedEffectDesc || `Activate effect of "${name}"?`;
 
         promptData = {
           player: msg.player,
           code: msg.code,
           cardName: name,
-          description: msg.description.toString(),
+          description: resolvedEffectDesc,
         };
 
         return {
@@ -896,7 +897,7 @@ export class MessageDecoder {
 
         promptData = {
           player: msg.player,
-          options: msg.options.map((o) => o.toString()),
+          options: msg.options.map((o) => this.cardReader.resolveString(o)),
         };
 
         return {
