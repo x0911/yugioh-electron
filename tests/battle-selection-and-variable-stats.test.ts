@@ -277,12 +277,91 @@ async function testFogKingTributeSummonDynamicStats() {
   engine.close();
 }
 
+async function testApprenticeMagicianCounterPlacement() {
+  console.log('\nTest 6: Apprentice Magician counter placement & Magical Marionette ATK boost...');
+
+  const engine = new DuelEngineService();
+  await engine.init();
+
+  let targetPromptReceived = false;
+
+  engine.onEvent((ev: DecodedDuelEvent) => {
+    console.log(`[Event] type=${ev.type} isPrompt=${ev.isPrompt} promptType=${ev.promptType} desc=${ev.description}`);
+    if (ev.isPrompt && ev.promptType === 'SELECT_IDLECMD') {
+      const pData = ev.promptData as any;
+      const apprenticeIdx = pData.summons?.findIndex((s: any) => s.code === 9156135);
+      if (apprenticeIdx !== undefined && apprenticeIdx >= 0) {
+        setTimeout(() => {
+          engine.sendResponse({
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.SELECT_SUMMON,
+            index: apprenticeIdx,
+          });
+        }, 10);
+      }
+    } else if (ev.isPrompt && ev.promptType === 'SELECT_CARD') {
+      targetPromptReceived = true;
+      const pData = ev.promptData as any;
+      console.log('SELECT_CARD promptData:', JSON.stringify(pData));
+      setTimeout(() => {
+        // Target Magical Marionette (Sequence 0 on MZONE)
+        engine.sendResponse({
+          type: OcgResponseType.SELECT_CARD,
+          indicies: [0],
+          cards: [0],
+        } as any);
+      }, 10);
+    } else if (ev.isPrompt && ev.promptType === 'SELECT_CHAIN') {
+      setTimeout(() => {
+        engine.sendResponse({
+          type: OcgResponseType.SELECT_CHAIN,
+          index: -1,
+        });
+      }, 10);
+    }
+  });
+
+  const p0Deck = Array(40).fill(9156135); // Apprentice Magician (9156135)
+  const p1Deck = Array(40).fill(91152256);
+
+  // Player 0 starts with Magical Marionette (8034697) on Monster Zone 0
+  engine.startNewDuel({
+    player0Deck: p0Deck,
+    player1Deck: p1Deck,
+    player0Monsters: [{ code: 8034697, sequence: 0, position: 1 }], // Faceup Attack Magical Marionette
+    startingLP: 8000,
+    startingDrawCount: 5,
+    drawCountPerTurn: 1,
+    humanPlayerId: 0,
+    autoPlay: false,
+    noShuffle: true,
+  });
+
+  const start = Date.now();
+  while (!targetPromptReceived && Date.now() - start < 3000) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  await new Promise((r) => setTimeout(r, 300));
+
+  const board = engine.getBoardState();
+  const m1 = board.userField.monsterZones[0];
+  const m2 = board.userField.monsterZones[1];
+  console.log('M1 (Magical Marionette):', m1 ? `${m1.name} (ATK: ${m1.atk}, DEF: ${m1.def})` : 'null');
+  console.log('M2 (Apprentice Magician):', m2 ? `${m2.name} (ATK: ${m2.atk}, DEF: ${m2.def})` : 'null');
+
+  assert.ok(m1, 'Magical Marionette must be in zone 0');
+  assert.strictEqual(m1.atk, 2200, 'Magical Marionette ATK must be 2000 + 200 = 2200 after receiving 1 Spell Counter');
+  console.log('✓ Magical Marionette ATK dynamically boosted to 2200 via Spell Counter.');
+  engine.close();
+}
+
 async function runAll() {
   testCombatStatFormatter();
   await testSliferDynamicOnFieldStats();
   await testChaosSorcererMultiStepSelection();
   await testLocationVisibilityClassification();
   await testFogKingTributeSummonDynamicStats();
+  await testApprenticeMagicianCounterPlacement();
   console.log('\n🎉 ALL BATTLE SELECTION, COST & VARIABLE STATS TESTS PASSED SUCCESSFULLY!');
 }
 

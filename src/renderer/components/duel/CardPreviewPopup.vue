@@ -77,6 +77,7 @@
           </div>
 
           <!-- ATK / DEF Scores (Only for revealed Monsters) -->
+          <!-- ATK / DEF Scores (Only for revealed Monsters) -->
           <div
             v-if="
               effectiveCard.code > 0 &&
@@ -86,12 +87,28 @@
           >
             <div class="stat-col">
               <span class="stat-lbl">ATK</span>
-              <span class="stat-val stat-val--atk">{{ formatCombatStat(effectiveCard.atk) }}</span>
+              <span
+                class="stat-val stat-val--atk"
+                :class="{
+                  'stat-val--boosted': isAtkBoosted,
+                  'stat-val--reduced': isAtkReduced,
+                }"
+              >
+                {{ formatCombatStat(effectiveCard.atk) }}
+              </span>
             </div>
             <div class="stat-divider">/</div>
             <div class="stat-col">
               <span class="stat-lbl">DEF</span>
-              <span class="stat-val stat-val--def">{{ formatCombatStat(effectiveCard.def) }}</span>
+              <span
+                class="stat-val stat-val--def"
+                :class="{
+                  'stat-val--boosted': isDefBoosted,
+                  'stat-val--reduced': isDefReduced,
+                }"
+              >
+                {{ formatCombatStat(effectiveCard.def) }}
+              </span>
             </div>
           </div>
 
@@ -178,6 +195,8 @@ const effectiveCard = computed<FieldCard | null>(() => {
         : detail.name,
     atk: props.card.atk !== undefined ? props.card.atk : detail.isMonster ? detail.atk : undefined,
     def: props.card.def !== undefined ? props.card.def : detail.isMonster ? detail.def : undefined,
+    baseAtk: props.card.baseAtk !== undefined ? props.card.baseAtk : detail.isMonster ? detail.atk : undefined,
+    baseDef: props.card.baseDef !== undefined ? props.card.baseDef : detail.isMonster ? detail.def : undefined,
     level:
       props.card.level !== undefined
         ? props.card.level
@@ -188,6 +207,30 @@ const effectiveCard = computed<FieldCard | null>(() => {
     race: props.card.race || detail.raceName,
     description: props.card.description || detail.desc,
   };
+});
+
+const isAtkBoosted = computed(() => {
+  if (!effectiveCard.value) return false;
+  const c = effectiveCard.value;
+  return typeof c.atk === 'number' && typeof c.baseAtk === 'number' && c.atk > c.baseAtk;
+});
+
+const isAtkReduced = computed(() => {
+  if (!effectiveCard.value) return false;
+  const c = effectiveCard.value;
+  return typeof c.atk === 'number' && typeof c.baseAtk === 'number' && c.atk < c.baseAtk;
+});
+
+const isDefBoosted = computed(() => {
+  if (!effectiveCard.value) return false;
+  const c = effectiveCard.value;
+  return typeof c.def === 'number' && typeof c.baseDef === 'number' && c.def > c.baseDef;
+});
+
+const isDefReduced = computed(() => {
+  if (!effectiveCard.value) return false;
+  const c = effectiveCard.value;
+  return typeof c.def === 'number' && typeof c.baseDef === 'number' && c.def < c.baseDef;
 });
 
 const activeStatuses = computed<CardStatusType[]>(() => {
@@ -506,6 +549,14 @@ const typeBracketText = computed(() => {
         }
         &--def {
           color: #b8b2a0;
+        }
+        &--boosted {
+          color: #00ff88 !important;
+          text-shadow: 0 0 8px rgba(0, 255, 136, 0.7);
+        }
+        &--reduced {
+          color: #ff4d4f !important;
+          text-shadow: 0 0 8px rgba(255, 77, 79, 0.7);
         }
       }
     }

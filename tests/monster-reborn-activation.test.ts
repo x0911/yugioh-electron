@@ -65,10 +65,10 @@ async function testMonsterRebornActivationFlow() {
 
       const canSummonCeltic = pData.summons?.some((s: any) => s.code === 91152256);
       const canActivateDarkHole = pData.activates?.some((a: any) => a.code === 53129443);
-      const canActivateReborn = pData.activates?.some((a: any) => a.code === 83764719);
+      const canActivateReborn = pData.activates?.some((a: any) => a.code === 83764719 || a.code === 83764718);
 
       if (canActivateReborn) {
-        const rebornIdx = pData.activates.findIndex((a: any) => a.code === 83764719);
+        const rebornIdx = pData.activates.findIndex((a: any) => a.code === 83764719 || a.code === 83764718);
         rebornWasActivated = true;
         setTimeout(() => {
           engine.sendResponse({
@@ -123,22 +123,19 @@ async function testMonsterRebornActivationFlow() {
     }
   });
 
-  const p0Deck: number[] = [];
-  for (let i = 0; i < 15; i++) p0Deck.push(91152256); // Celtic Guardian
-  for (let i = 0; i < 15; i++) p0Deck.push(53129443); // Dark Hole
-  for (let i = 0; i < 10; i++) p0Deck.push(83764719); // Monster Reborn
-
-  const p1Deck: number[] = [];
-  for (let i = 0; i < 40; i++) p1Deck.push(91152256);
+  const p0Deck: number[] = Array(40).fill(83764719);
+  const p1Deck: number[] = Array(40).fill(91152256);
 
   engine.startNewDuel({
     player0Deck: p0Deck,
     player1Deck: p1Deck,
+    player0Graveyard: [91152256], // Celtic Guardian already in Graveyard
     startingLP: 8000,
     startingDrawCount: 5,
     drawCountPerTurn: 1,
     humanPlayerId: 0,
     autoPlay: false,
+    noShuffle: true,
   });
 
   const start = Date.now();

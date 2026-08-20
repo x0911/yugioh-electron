@@ -92,10 +92,16 @@
         <div
           v-if="card && showCombatStatBadge"
           class="slot-stat-badge"
-          :class="`slot-stat-badge--${activeStatMode}`"
+          :class="[
+            `slot-stat-badge--${activeStatMode}`,
+            {
+              'slot-stat-badge--boosted': isStatBoosted,
+              'slot-stat-badge--reduced': isStatReduced,
+            },
+          ]"
         >
           <span class="stat-prefix">{{ activeStatMode === 'atk' ? 'ATK' : 'DEF' }}</span>
-          <span class="stat-value">{{ activeStatValue }}</span>
+          <span class="stat-value" :class="statDeltaClass">{{ activeStatValue }}</span>
         </div>
 
         <!-- 2. Level / Rank Stars Badge (Always 0° Straight at Top-Right) -->
@@ -189,6 +195,34 @@ const activeStatValue = computed<string>(() => {
   if (!props.card) return '';
   const raw = props.card.position === 'faceup_defense' ? props.card.def : props.card.atk;
   return formatCombatStat(raw);
+});
+
+const isStatBoosted = computed(() => {
+  if (!props.card) return false;
+  if (activeStatMode.value === 'atk') {
+    const base = props.card.baseAtk;
+    return typeof props.card.atk === 'number' && typeof base === 'number' && props.card.atk > base;
+  } else {
+    const base = props.card.baseDef;
+    return typeof props.card.def === 'number' && typeof base === 'number' && props.card.def > base;
+  }
+});
+
+const isStatReduced = computed(() => {
+  if (!props.card) return false;
+  if (activeStatMode.value === 'atk') {
+    const base = props.card.baseAtk;
+    return typeof props.card.atk === 'number' && typeof base === 'number' && props.card.atk < base;
+  } else {
+    const base = props.card.baseDef;
+    return typeof props.card.def === 'number' && typeof base === 'number' && props.card.def < base;
+  }
+});
+
+const statDeltaClass = computed(() => {
+  if (isStatBoosted.value) return 'stat-value--boosted';
+  if (isStatReduced.value) return 'stat-value--reduced';
+  return '';
 });
 
 const tooltipText = computed(() => {
@@ -520,7 +554,29 @@ function onClick(event: MouseEvent): void {
         color: #56ccf2;
       }
       .stat-value {
-        color: #e0f2fe;
+        color: #ffffff;
+      }
+    }
+
+    &--boosted {
+      border-color: rgba(0, 255, 136, 0.8) !important;
+      box-shadow:
+        0 0 10px rgba(0, 255, 136, 0.4),
+        0 3px 8px rgba(0, 0, 0, 0.85);
+      .stat-value--boosted {
+        color: #00ff88 !important;
+        text-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+      }
+    }
+
+    &--reduced {
+      border-color: rgba(255, 77, 79, 0.8) !important;
+      box-shadow:
+        0 0 10px rgba(255, 77, 79, 0.4),
+        0 3px 8px rgba(0, 0, 0, 0.85);
+      .stat-value--reduced {
+        color: #ff4d4f !important;
+        text-shadow: 0 0 6px rgba(255, 77, 79, 0.6);
       }
     }
   }

@@ -72,16 +72,16 @@ async function testSanganBattleDestructionSearch() {
     }
   });
 
-  // Player 0 Deck: Guaranteed Sangan in opening hand + Kuriboh and Celtic Guardian to search
+  // Player 0 Deck: Kuriboh and Celtic Guardian in deck + Guaranteed Sangan in opening hand
   const p0Deck: number[] = [];
-  for (let i = 0; i < 20; i++) p0Deck.push(26202165); // Sangan (ATK 1000)
-  for (let i = 0; i < 10; i++) p0Deck.push(40640057); // Kuriboh (ATK 300)
-  for (let i = 0; i < 10; i++) p0Deck.push(91152256); // Celtic Guardian (ATK 1400)
+  for (let i = 0; i < 15; i++) p0Deck.push(40640057); // Kuriboh (ATK 300)
+  for (let i = 0; i < 15; i++) p0Deck.push(91152256); // Celtic Guardian (ATK 1400)
+  for (let i = 0; i < 10; i++) p0Deck.push(26202165); // Sangan (ATK 1000)
 
-  // Player 1 Deck: Dark Hole (53129443) to destroy Sangan
+  // Player 1 Deck: Dark Magician in deck + Guaranteed Dark Hole in opening hand
   const p1Deck: number[] = [];
-  for (let i = 0; i < 20; i++) p1Deck.push(53129443); // Dark Hole
   for (let i = 0; i < 20; i++) p1Deck.push(46986414); // Dark Magician
+  for (let i = 0; i < 20; i++) p1Deck.push(53129443); // Dark Hole
 
   engine.startNewDuel({
     player0Deck: p0Deck,
@@ -91,6 +91,7 @@ async function testSanganBattleDestructionSearch() {
     drawCountPerTurn: 1,
     humanPlayerId: 0,
     autoPlay: false,
+    noShuffle: true,
   });
 
   // Wait for Turn 1 setup
