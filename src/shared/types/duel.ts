@@ -58,6 +58,8 @@ export interface DuelInitOptions {
   drawCountPerTurn?: number;
   autoPlay?: boolean;
   humanPlayerId?: number; // 0 if user is Player 0, 1 if user is Player 1
+  aiCharacterId?: string;
+  aiDeckArchetype?: string;
 }
 
 export type CoinChoice = 'heads' | 'tails';
