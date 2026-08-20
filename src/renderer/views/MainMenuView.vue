@@ -53,24 +53,13 @@
           <span class="main-menu-view__card-header">DUEL ARENA</span>
         </template>
         <template #art>
-          <div class="main-menu-view__card-art">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
-              <line x1="13" y1="19" x2="19" y2="13" />
-              <line x1="16" y1="16" x2="20" y2="20" />
-              <line x1="19" y1="21" x2="21" y2="19" />
-              <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" />
-              <line x1="5" y1="14" x2="9" y2="18" />
-              <line x1="7" y1="17" x2="4" y2="20" />
-              <line x1="3" y1="19" x2="5" y2="21" />
-            </svg>
+          <div class="main-menu-view__card-art-frame">
+            <img
+              :src="getMenuCardImageUrl('duel')"
+              alt="Start Duel"
+              class="main-menu-view__card-img"
+            />
+            <div class="main-menu-view__card-shine" />
           </div>
         </template>
         <template #footer>
@@ -92,20 +81,13 @@
           <span class="main-menu-view__card-header">DECK BUILDER</span>
         </template>
         <template #art>
-          <div class="main-menu-view__card-art">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <rect x="3" y="5" width="13" height="17" rx="2" />
-              <path d="M7 2h11a2 2 0 0 1 2 2v14" />
-              <line x1="7" y1="9" x2="12" y2="9" />
-              <line x1="7" y1="13" x2="12" y2="13" />
-            </svg>
+          <div class="main-menu-view__card-art-frame">
+            <img
+              :src="getMenuCardImageUrl('deck')"
+              alt="Deck Edit"
+              class="main-menu-view__card-img"
+            />
+            <div class="main-menu-view__card-shine" />
           </div>
         </template>
         <template #footer>
@@ -127,20 +109,13 @@
           <span class="main-menu-view__card-header">CONFIG & RIVALS</span>
         </template>
         <template #art>
-          <div class="main-menu-view__card-art">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
-              />
-            </svg>
+          <div class="main-menu-view__card-art-frame">
+            <img
+              :src="getMenuCardImageUrl('settings')"
+              alt="Settings"
+              class="main-menu-view__card-img"
+            />
+            <div class="main-menu-view__card-shine" />
           </div>
         </template>
         <template #footer>
@@ -162,18 +137,13 @@
           <span class="main-menu-view__card-header">DESKTOP</span>
         </template>
         <template #art>
-          <div class="main-menu-view__card-art">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-              <line x1="12" y1="2" x2="12" y2="12" />
-            </svg>
+          <div class="main-menu-view__card-art-frame main-menu-view__card-art-frame--danger">
+            <img
+              :src="getMenuCardImageUrl('exit')"
+              alt="Exit Game"
+              class="main-menu-view__card-img"
+            />
+            <div class="main-menu-view__card-shine" />
           </div>
         </template>
         <template #footer>
@@ -225,6 +195,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useUIStore } from '../stores/uiStore.js';
+import { getMenuCardImageUrl } from '../utils/media.js';
 import YugiButton from '../components/common/YugiButton.vue';
 import YugiModal from '../components/common/YugiModal.vue';
 

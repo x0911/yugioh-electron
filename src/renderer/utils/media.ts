@@ -72,6 +72,13 @@ export function getBackgroundUrl(name: string): string {
 }
 
 /**
+ * Returns menu card image URL by name ('duel' | 'deck' | 'settings' | 'exit').
+ */
+export function getMenuCardImageUrl(name: string): string {
+  return `app-resource://ui/menu-${name}.jpg`;
+}
+
+/**
  * Returns the URL for a HUD/UI icon asset.
  */
 export function getUiIconUrl(name: string): string {
