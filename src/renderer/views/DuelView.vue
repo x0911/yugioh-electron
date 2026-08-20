@@ -40,6 +40,7 @@
             :get-target-info="(card, idx) => duelStore.getTargetInfo(duelStore.opponentPlayerId, 2, card.sequence ?? idx)"
             :is-prompt-active="duelStore.hasActiveSelectionPrompt"
             @hover-card="onCardHover"
+            @click-target="onTargetClick"
           />
         </div>
 
@@ -100,6 +101,7 @@
             :is-prompt-active="duelStore.hasActiveSelectionPrompt"
             @hover-card="onCardHover"
             @click-card="onHandCardClick"
+            @click-target="onTargetClick"
           />
         </div>
       </section>

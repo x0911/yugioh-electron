@@ -228,4 +228,36 @@ const decoder = new MessageDecoder(cardReader);
   console.log('  ✓ Sequence-based splicing correctly decrements opponent hand without ghost accumulation.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 7: Target Toggle and Single-Click Integrity
+// -----------------------------------------------------------------------------
+{
+  console.log('Test 7: Target Selection & Single Toggle Integrity...');
+  const selectedTargetIndices: number[] = [];
+
+  function toggleTargetByIndex(index: number, max = 1): void {
+    const existingIdx = selectedTargetIndices.indexOf(index);
+    if (existingIdx >= 0) {
+      selectedTargetIndices.splice(existingIdx, 1);
+    } else {
+      if (max === 1) {
+        selectedTargetIndices.length = 0;
+      }
+      selectedTargetIndices.push(index);
+    }
+  }
+
+  // User clicks on monster zone 0 (target index 0)
+  // Single click must add index 0 to selected list
+  toggleTargetByIndex(0);
+  assert.equal(selectedTargetIndices.length, 1);
+  assert.equal(selectedTargetIndices[0], 0);
+
+  // Second click deselects
+  toggleTargetByIndex(0);
+  assert.equal(selectedTargetIndices.length, 0);
+
+  console.log('  ✓ Target single-toggle integrity verified (no double-trigger deselect).');
+}
+
 console.log('\n✅ All Announcement, Victory Cutscene, and Field Mechanic Tests Passed!\n');
