@@ -17,6 +17,15 @@ import { CardReaderService } from './cardReader.js';
 import { ScriptReaderService } from './scriptReader.js';
 import { MessageDecoder, getAutoResponse, type DecodedDuelEvent } from './messageDecoder.js';
 import { ViewFilterService } from './viewFilter.js';
+import {
+  AIController,
+  aiController,
+  assertAiStateSanitized,
+  getPersonalityForCharacter,
+  DEFAULT_PERSONALITY,
+  type EvaluatorContext,
+} from '../ai/index.js';
+import type { CharacterPersonality } from '../../shared/types/character.js';
 
 import type {
   CardPositionState,
@@ -51,6 +60,8 @@ export interface DuelOptions {
   drawCountPerTurn?: number;
   autoPlay?: boolean;
   humanPlayerId?: number; // 0 or 1, default 0
+  aiCharacterId?: string;
+  aiDeckArchetype?: string;
 }
 
 export interface DuelState {
@@ -75,8 +86,13 @@ export class DuelEngineService {
   private scriptReader: ScriptReaderService;
   private messageDecoder: MessageDecoder;
   private viewFilter: ViewFilterService;
+  private aiController: AIController;
   private lastPromptMessage: OcgMessage | null = null;
   private humanPlayerId = 0;
+  private aiCharacterId = 'yugi-muto';
+  private aiDeckArchetype = '';
+  private aiPersonality: CharacterPersonality = DEFAULT_PERSONALITY;
+  private aiSignatureCards: number[] = [];
   private cardVideos: Record<string, CardVideoEntry> = {};
 
   // Tracked Board States for Player 0 and Player 1
@@ -103,13 +119,13 @@ export class DuelEngineService {
   private eventListeners: ((event: DecodedDuelEvent) => void)[] = [];
   private videoEventListeners: ((payload: CardVideoPayload) => void)[] = [];
   private aiStepTimer: NodeJS.Timeout | null = null;
-  private readonly AI_STEP_DELAY_MS = 650;
 
   constructor() {
     this.cardReader = new CardReaderService();
     this.scriptReader = new ScriptReaderService();
     this.messageDecoder = new MessageDecoder(this.cardReader);
     this.viewFilter = new ViewFilterService();
+    this.aiController = aiController;
     this.loadCardVideos();
   }
 
@@ -242,6 +258,23 @@ export class DuelEngineService {
     this.humanPlayerId = options.humanPlayerId ?? 0;
     this.lastPromptMessage = null;
     this.isVideoPlaying = false;
+    this.aiCharacterId = options.aiCharacterId ?? 'yugi-muto';
+    this.aiDeckArchetype = options.aiDeckArchetype ?? '';
+    this.aiPersonality = getPersonalityForCharacter(this.aiCharacterId);
+    this.aiSignatureCards = [];
+
+    try {
+      const jsonPath = path.resolve(process.cwd(), 'data/characters.json');
+      if (fs.existsSync(jsonPath)) {
+        const chars = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+        const found = chars.find((c: any) => c.id === this.aiCharacterId);
+        if (found && Array.isArray(found.signatureCards)) {
+          this.aiSignatureCards = found.signatureCards;
+        }
+      }
+    } catch {
+      this.aiSignatureCards = [];
+    }
 
     const startingLP = options.startingLP ?? 8000;
     this.player0Field = this.createEmptyPlayerState(0, this.humanPlayerId === 0 ? 'You' : 'Opponent');
@@ -972,13 +1005,14 @@ export class DuelEngineService {
     this.lastPromptMessage = null;
   }
 
-  private scheduleAiResponse(handle: OcgDuelHandle, response: OcgResponse): void {
+  private scheduleAiResponse(handle: OcgDuelHandle, response: OcgResponse, delayMs?: number): void {
     if (this.aiStepTimer) {
       clearTimeout(this.aiStepTimer);
     }
     if (this.isVideoPlaying) {
       return;
     }
+    const delay = delayMs ?? this.aiController.getThinkDelay(this.aiPersonality);
     this.aiStepTimer = setTimeout(() => {
       if (!this.lib || !this.currentDuel || !this.state.isActive || this.isVideoPlaying) return;
       try {
@@ -990,7 +1024,51 @@ export class DuelEngineService {
       } catch (err) {
         console.error('[DuelEngineService] AI Step Execution Error:', err);
       }
-    }, this.AI_STEP_DELAY_MS);
+    }, delay);
+  }
+
+  private getAiResponse(msg: OcgMessage, promptPlayer: number): { response: OcgResponse; delayMs: number } {
+    const aiPlayerId = promptPlayer;
+    const humanPlayerId = 1 - aiPlayerId;
+
+    // Enriched stats & statuses
+    this.enrichStatusesForField(this.player0Field);
+    this.enrichStatusesForField(this.player1Field);
+    this.syncFieldCardStats();
+    this.enrichDynamicStatsForField(this.player0Field, this.player1Field);
+    this.enrichDynamicStatsForField(this.player1Field, this.player0Field);
+
+    // Build strictly redacted AI-side board state
+    const aiBoardState: DuelBoardState = {
+      userField: this.viewFilter.filterPlayerFieldForViewer(this.player0Field, aiPlayerId),
+      opponentField: this.viewFilter.filterPlayerFieldForViewer(this.player1Field, aiPlayerId),
+      extraMonsterZones: [null, null],
+      turnNumber: this.state.currentTurn,
+      currentPhase: this.state.currentPhase,
+      activePrompt: null,
+      phaseGuideText: '',
+      winner: this.state.winner,
+      winReason: this.state.winReason,
+    };
+
+    // Assert anti-cheat verification: throws loudly if unrevealed human cards leaked
+    assertAiStateSanitized(aiBoardState, aiPlayerId);
+
+    const context: EvaluatorContext = {
+      aiPlayerId,
+      humanPlayerId,
+      boardState: aiBoardState,
+      personality: this.aiPersonality,
+      cardReader: this.cardReader,
+      currentPhase: this.state.currentPhase,
+      currentTurn: this.state.currentTurn,
+      signatureCardIds: this.aiSignatureCards,
+      deckArchetype: this.aiDeckArchetype,
+    };
+
+    const response = this.aiController.decideResponse(msg, context);
+    const delayMs = this.aiController.getThinkDelay(this.aiPersonality, OcgMessageType[msg.type]);
+    return { response, delayMs };
   }
 
   private convertPosition(position: number, isMonster: boolean): CardPositionState {
@@ -1033,8 +1111,10 @@ export class DuelEngineService {
 
     // If we are currently waiting for a response, check if we need to auto-respond
     if (this.state.isWaitingResponse && this.lastPromptMessage) {
-      const response = getAutoResponse(this.lastPromptMessage);
-      if (response) {
+      const promptPlayer = 'player' in this.lastPromptMessage ? (this.lastPromptMessage.player as number) : 0;
+      const isOpponent = promptPlayer !== this.humanPlayerId;
+      if (isOpponent || this.autoPlay) {
+        const { response } = this.getAiResponse(this.lastPromptMessage, promptPlayer);
         this.lib.duelSetResponse(handle, response);
         this.state.isWaitingResponse = false;
         this.state.waitingPlayer = null;
@@ -1170,13 +1250,11 @@ export class DuelEngineService {
           }
 
           const isOpponent = promptPlayer !== this.humanPlayerId;
-          // If opponent player (AI) or autoPlay is active: schedule paced auto-response
+          // If opponent player (AI) or autoPlay is active: schedule evaluated AI response
           if (isOpponent || this.autoPlay) {
-            const response = getAutoResponse(lastMsg);
-            if (response) {
-              this.scheduleAiResponse(handle, response);
-              break;
-            }
+            const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
+            this.scheduleAiResponse(handle, response, delayMs);
+            break;
           }
         }
         // If it's a prompt for human and autoPlay is false: emit the prompt event and wait
@@ -1214,7 +1292,8 @@ export class DuelEngineService {
   public setAutoPlay(autoPlay: boolean): void {
     this.autoPlay = autoPlay;
     if (autoPlay && this.state.isActive && this.state.isWaitingResponse && this.lastPromptMessage && !this.isVideoPlaying) {
-      const response = getAutoResponse(this.lastPromptMessage);
+      const promptPlayer = 'player' in this.lastPromptMessage ? (this.lastPromptMessage.player as number) : 0;
+      const { response } = this.getAiResponse(this.lastPromptMessage, promptPlayer);
       if (response) {
         this.sendResponse(response);
       }

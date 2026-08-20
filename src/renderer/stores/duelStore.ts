@@ -513,6 +513,8 @@ export const useDuelStore = defineStore('duel', {
             drawCountPerTurn: 1,
             autoPlay: false,
             humanPlayerId: Number(humanPlayerId),
+            aiCharacterId: this.selectedOpponent?.id,
+            aiDeckArchetype: this.selectedOpponentDeck?.archetype,
           });
           this.isDuelActive = success;
           return success;
