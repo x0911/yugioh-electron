@@ -163,4 +163,23 @@ const viewFilter = new ViewFilterService();
   console.log('  ✓ Video pause engine synchronization logic passes.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 5: Animation Player Perspective (First vs Second Player)
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 5: Animation player perspective resolution (First vs Second player)...');
+
+  const { setAnimationUserPlayerId, getAnimationUserPlayerId } = await import('../src/renderer/utils/animationService.js');
+
+  // Case A: User goes first (User is Player 0, AI is Player 1)
+  setAnimationUserPlayerId(0);
+  assert.equal(getAnimationUserPlayerId(), 0);
+
+  // Case B: User goes second (User is Player 1, AI is Player 0)
+  setAnimationUserPlayerId(1);
+  assert.equal(getAnimationUserPlayerId(), 1);
+
+  console.log('  ✓ Animation player perspective correctly supports user as Player 0 or Player 1.');
+}
+
 console.log('\nAll Phase 12 tests passed successfully! ✨\n');

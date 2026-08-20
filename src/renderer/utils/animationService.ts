@@ -47,8 +47,20 @@ export interface AnimationOptions {
 
 export const activeAnimations = ref<FlyingCard[]>([]);
 
+let activeUserPlayerId: 0 | 1 = 0;
+
+export function setAnimationUserPlayerId(id: 0 | 1): void {
+  activeUserPlayerId = id;
+}
+
+export function getAnimationUserPlayerId(): 0 | 1 {
+  return activeUserPlayerId;
+}
+
 function toPlayerDomId(player: 'user' | 'opponent' | 'ai' | 0 | 1): 'user' | 'ai' {
-  return player === 0 || player === 'user' ? 'user' : 'ai';
+  if (player === 'user') return 'user';
+  if (player === 'opponent' || player === 'ai') return 'ai';
+  return player === activeUserPlayerId ? 'user' : 'ai';
 }
 
 /**

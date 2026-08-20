@@ -264,6 +264,7 @@ import {
   getHandFanRect,
   getStackRect,
   getAvatarRect,
+  setAnimationUserPlayerId,
 } from '../utils/animationService.js';
 
 interface LogItem {
@@ -524,16 +525,23 @@ let unsubscribeVideo: (() => void) | null = null;
 
 async function setupEngineEventListener(): Promise<void> {
   if (!window.duelAPI) return;
+  setAnimationUserPlayerId(duelStore.userPlayerId);
+
+  const toDomOwner = (p: 0 | 1 | number): 'user' | 'ai' =>
+    p === duelStore.userPlayerId ? 'user' : 'ai';
 
   unsubscribeEvents = window.duelAPI.onEvent(async (event: DuelEventPayload) => {
     appendLog(event.type, event.description);
 
     await duelAnimationQueue.enqueue(async () => {
+      setAnimationUserPlayerId(duelStore.userPlayerId);
+
       // 1. Draw from Deck -> Hand
       if (event.type === 'DRAW' && event.player !== undefined) {
         const isHuman = event.player === duelStore.userPlayerId;
-        const fromRect = getStackRect(event.player as 0 | 1, 'deck');
-        const toRect = getHandFanRect(event.player as 0 | 1);
+        const domOwner = toDomOwner(event.player);
+        const fromRect = getStackRect(domOwner, 'deck');
+        const toRect = getHandFanRect(domOwner);
         const drawnCode = (event as any).drawn?.[0]?.code || event.code || 0;
         await playCardFlight({
           code: isHuman ? drawnCode : 0,
@@ -548,9 +556,10 @@ async function setupEngineEventListener(): Promise<void> {
       // 2. Normal or Special Summon
       else if ((event.type === 'SUMMONING' || event.type === 'SPSUMMONING') && event.controller !== undefined) {
         const p = event.controller as 0 | 1;
+        const domOwner = toDomOwner(p);
         const seq = event.sequence ?? 0;
-        const fromRect = getHandCardRect(p, seq) || getHandFanRect(p);
-        const toRect = getZoneRect(p, 'monster', seq);
+        const fromRect = getHandCardRect(domOwner, seq) || getHandFanRect(domOwner);
+        const toRect = getZoneRect(domOwner, 'monster', seq);
         await playCardFlight({
           code: event.code || 0,
           cardName: event.cardName,
@@ -565,10 +574,11 @@ async function setupEngineEventListener(): Promise<void> {
       // 3. Set Card (Facedown)
       else if (event.type === 'SET' && event.controller !== undefined) {
         const p = event.controller as 0 | 1;
+        const domOwner = toDomOwner(p);
         const seq = event.sequence ?? 0;
         const isSpell = event.location === 8;
-        const fromRect = getHandCardRect(p, seq) || getHandFanRect(p);
-        const toRect = getZoneRect(p, isSpell ? 'spell-trap' : 'monster', seq);
+        const fromRect = getHandCardRect(domOwner, seq) || getHandFanRect(domOwner);
+        const toRect = getZoneRect(domOwner, isSpell ? 'spell-trap' : 'monster', seq);
         await playCardFlight({
           code: p === duelStore.userPlayerId ? (event.code || 0) : 0,
           cardName: event.cardName,
@@ -584,6 +594,7 @@ async function setupEngineEventListener(): Promise<void> {
       else if (event.type === 'MOVE') {
         const moveEvt = event as any;
         const p = moveEvt.controller as 0 | 1;
+        const domOwner = toDomOwner(p);
         const fromLoc = moveEvt.fromLocation;
         const fromSeq = moveEvt.fromSequence ?? 0;
         const toLoc = moveEvt.toLocation;
@@ -594,9 +605,9 @@ async function setupEngineEventListener(): Promise<void> {
           // Graveyard
           const fromRect =
             fromLoc === 2
-              ? getHandCardRect(p, fromSeq) || getHandFanRect(p)
-              : getZoneRect(p, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
-          const toRect = getStackRect(p, 'graveyard');
+              ? getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner)
+              : getZoneRect(domOwner, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
+          const toRect = getStackRect(domOwner, 'graveyard');
           await playCardFlight({
             code: moveEvt.code || 0,
             cardName: moveEvt.cardName,
@@ -607,8 +618,8 @@ async function setupEngineEventListener(): Promise<void> {
           });
         } else if (toLoc === 8 && fromLoc === 2 && isFaceup) {
           // Spell / Trap activation from Hand -> Spell/Trap Zone (Only when Face-up)
-          const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
-          const toRect = getZoneRect(p, 'spell-trap', toSeq);
+          const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
+          const toRect = getZoneRect(domOwner, 'spell-trap', toSeq);
           await playCardFlight({
             code: moveEvt.code || 0,
             cardName: moveEvt.cardName || 'Spell Card',
@@ -621,8 +632,8 @@ async function setupEngineEventListener(): Promise<void> {
           });
         } else if (toLoc === 4 && fromLoc === 2 && isFaceup) {
           // Monster from Hand -> Monster Zone (Only when Face-up)
-          const fromRect = getHandCardRect(p, fromSeq) || getHandFanRect(p);
-          const toRect = getZoneRect(p, 'monster', toSeq);
+          const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
+          const toRect = getZoneRect(domOwner, 'monster', toSeq);
           await playCardFlight({
             code: moveEvt.code || 0,
             cardName: moveEvt.cardName || 'Monster',
@@ -637,9 +648,9 @@ async function setupEngineEventListener(): Promise<void> {
           // Banished
           const fromRect =
             fromLoc === 2
-              ? getHandCardRect(p, fromSeq) || getHandFanRect(p)
-              : getZoneRect(p, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
-          const toRect = getStackRect(p, 'banished');
+              ? getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner)
+              : getZoneRect(domOwner, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
+          const toRect = getStackRect(domOwner, 'banished');
           await playCardFlight({
             code: moveEvt.code || 0,
             cardName: moveEvt.cardName,
@@ -660,11 +671,13 @@ async function setupEngineEventListener(): Promise<void> {
         const atkEvt = event as any;
         const p = (atkEvt.controller ?? (duelStore.boardState.userField.isTurn ? duelStore.userPlayerId : duelStore.opponentPlayerId)) as 0 | 1;
         const opp = (p === duelStore.userPlayerId ? duelStore.opponentPlayerId : duelStore.userPlayerId) as 0 | 1;
+        const pDomOwner = toDomOwner(p);
+        const oppDomOwner = toDomOwner(opp);
         const seq = atkEvt.sequence ?? (atkEvt.card?.sequence ?? 0);
-        const fromRect = getZoneRect(p, 'monster', seq);
+        const fromRect = getZoneRect(pDomOwner, 'monster', seq);
         const toRect = atkEvt.target
-          ? getZoneRect(atkEvt.target.controller, 'monster', atkEvt.target.sequence)
-          : (getHandFanRect(opp) || getAvatarRect(opp));
+          ? getZoneRect(toDomOwner(atkEvt.target.controller), 'monster', atkEvt.target.sequence)
+          : (getHandFanRect(oppDomOwner) || getAvatarRect(oppDomOwner));
         await playCardFlight({
           code: 0,
           cardName: 'Battle Attack',
@@ -677,8 +690,9 @@ async function setupEngineEventListener(): Promise<void> {
       // 7. Monster Position Change / Flip Summon
       else if (event.type === 'POS_CHANGE' || event.type === 'FLIPSUMMONING') {
         const p = (event.controller ?? duelStore.userPlayerId) as 0 | 1;
+        const domOwner = toDomOwner(p);
         const seq = event.sequence ?? 0;
-        const fromRect = getZoneRect(p, 'monster', seq);
+        const fromRect = getZoneRect(domOwner, 'monster', seq);
         await playCardFlight({
           code: event.code || 0,
           cardName: event.cardName || 'Position Change',
