@@ -740,13 +740,14 @@ export class MessageDecoder {
 
       case OcgMessageType.PAY_LPCOST: {
         type = 'PAY_LPCOST';
-        description = `Player ${msg.player} paid ${msg.cost} LP as cost.`;
+        const costVal = (msg as any).cost ?? (msg as any).amount ?? (msg as any).val ?? (msg as any).value ?? (msg as any).lp ?? 0;
+        description = `Player ${msg.player} paid ${costVal} LP as cost.`;
         return {
           type,
           rawType,
           player: msg.player,
-          cost: msg.cost,
-          amount: msg.cost,
+          cost: costVal,
+          amount: costVal,
           isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),

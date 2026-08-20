@@ -54,6 +54,19 @@ export function evaluateSpellActivation(
 
   // 4. Monster Reborn (83764719) / Special Summon Spells
   if (code === 83764719 || cardName.includes('Monster Reborn') || cardName.includes('Call of the Haunted') || cardName.includes('Premature Burial')) {
+    const hasOppSlifer = oppField.monsterZones.some(
+      (m) => m && m.code === 10000020 && (m.position === 'faceup_attack' || m.position === 'faceup_defense'),
+    );
+    const hasSurvivingGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
+      (c) => c && c.atk && c.atk > 2000,
+    );
+    if (hasOppSlifer && !hasSurvivingGraveTarget) {
+      return {
+        score: -2000,
+        reason: `Hold ${cardName} (opponent has active Slifer that would instantly destroy revived monster)`,
+      };
+    }
+
     const hasGoodGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
       (c) => c && c.atk && c.atk >= 1800,
     );

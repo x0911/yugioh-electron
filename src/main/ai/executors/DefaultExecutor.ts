@@ -98,11 +98,19 @@ export class DefaultExecutor implements DeckExecutor {
         }
         // 1.5 Special Summons & Graveyard Revivals (Monster Reborn, Premature Burial, Call of the Haunted)
         else if (code === 83764719 || code === 70828912 || code === 97077563) {
-          const powerfulGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
-            (c) => c && c.atk && c.atk >= 1800,
+          const hasSurvivingGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
+            (c) => c && c.atk && c.atk > 2000,
           );
-          score = powerfulGraveTarget ? 1900 : 800;
-          reason = `Activate ${name} to revive monster from GY`;
+          if (hasOppSlifer && !hasSurvivingGraveTarget) {
+            score = -2000;
+            reason = `Hold ${name} (opponent has active Slifer that would instantly destroy revived monster)`;
+          } else {
+            const powerfulGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
+              (c) => c && c.atk && c.atk >= 1800,
+            );
+            score = powerfulGraveTarget ? 1900 : 800;
+            reason = `Activate ${name} to revive monster from GY`;
+          }
         }
         // 1.6 Fusion & Ritual Spells (Polymerization, Power Bond, Miracle Fusion, Black Luster Ritual)
         else if (code === 24094653 || code === 37630732 || code === 45906428 || code === 55761792) {
