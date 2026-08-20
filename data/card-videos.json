@@ -4,7 +4,7 @@
     "series": "DM",
     "summon": "resources/videos/cards/summon_46986414.mp4",
     "attack": "resources/videos/cards/attack_46986414.mp4",
-    "isPlaceholder": true
+    "isPlaceholder": false
   },
   "89631139": {
     "cardName": "Blue-Eyes White Dragon",
