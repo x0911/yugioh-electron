@@ -340,6 +340,10 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
         ? item.cardName
         : detail?.name || `Card #${item.code}`;
 
+    const isSelected = props.selectedIndices.includes(originalIndex);
+    const orderIdx = props.selectedIndices.indexOf(originalIndex);
+    const isMonster = detail?.isMonster ?? (detail?.atk !== undefined || (detail?.level ?? 0) > 0);
+
     result.push({
       selectIndex: originalIndex,
       code: isHiddenOpponentCard ? 0 : item.code,

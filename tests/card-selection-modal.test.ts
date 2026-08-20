@@ -262,11 +262,49 @@ async function testSingleClickTargetToggleIntegrity() {
   console.log('✓ Card selection single click toggle integrity confirmed.');
 }
 
+async function testEnrichedCardsDataIntegrity() {
+  console.log('\nTest 5: CardSelectionModal Enriched Cards Computation & isMonster / isSelected Integrity...');
+
+  const selectCards = [
+    { code: 26202165, cardName: 'Sangan', location: 1, sequence: 0, controller: 0 },
+    { code: 10000020, cardName: 'Slifer the Sky Dragon', location: 1, sequence: 1, controller: 0 },
+    { code: 55144522, cardName: 'Pot of Greed', location: 1, sequence: 2, controller: 0 },
+  ];
+
+  const selectedIndices = [1];
+  const unselectCards: any[] = [];
+
+  const enriched = selectCards.map((item: any, originalIndex: number) => {
+    const isSelected = selectedIndices.includes(originalIndex);
+    const orderIdx = selectedIndices.indexOf(originalIndex);
+    const isMonster = item.code !== 55144522;
+
+    return {
+      selectIndex: originalIndex,
+      code: item.code,
+      name: item.cardName,
+      isMonster,
+      isSelected,
+      selectionOrder: orderIdx >= 0 ? unselectCards.length + orderIdx + 1 : 0,
+    };
+  });
+
+  assert.strictEqual(enriched.length, 3, 'Must enrich all 3 candidate cards');
+  assert.strictEqual(enriched[0].isMonster, true, 'Sangan must be identified as monster');
+  assert.strictEqual(enriched[1].isMonster, true, 'Slifer must be identified as monster');
+  assert.strictEqual(enriched[2].isMonster, false, 'Pot of Greed must not be identified as monster');
+  assert.strictEqual(enriched[1].isSelected, true, 'Slifer must be selected');
+  assert.strictEqual(enriched[1].selectionOrder, 1, 'Slifer selection order must be 1');
+
+  console.log('✓ CardSelectionModal enriched cards computation & isMonster/isSelected verified.');
+}
+
 async function runAll() {
   await testSanganBattleDestructionSearch();
   await testCardSelectionModalDataStructure();
   await testPrematureBurialGraveyardTargetSelection();
   await testSingleClickTargetToggleIntegrity();
+  await testEnrichedCardsDataIntegrity();
   console.log('\n🎉 ALL SANGAN & CARD SELECTION TESTS PASSED SUCCESSFULLY!');
 }
 

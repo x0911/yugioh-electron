@@ -76,6 +76,8 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
     - Built Dev Nav `/logs` page tracking last 10 completed duels with full copyable Markdown reports.
 11. **`PAY_LPCOST` Log Formatting**:
     - Fixed `undefined LP` decoding bug in `messageDecoder.ts`.
+12. **`CardSelectionModal` Variable Scoping**:
+    - Fixed `ReferenceError: isMonster is not defined` when resolving `SELECT_CARD` (e.g. Sangan deck search) by properly declaring `isMonster`, `isSelected`, and `orderIdx` in candidate card mapping.
 
 ---
 
