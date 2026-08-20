@@ -51,15 +51,39 @@
         </transition>
       </router-view>
     </main>
+
+    <!-- Global Error Boundary Recovery Modal -->
+    <ErrorBoundary />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue';
+import { onMounted, onBeforeUnmount, onErrorCaptured } from 'vue';
 import { useDevToolsStore } from './stores/devToolsStore.js';
+import { useUIStore } from './stores/uiStore.js';
+import ErrorBoundary from './components/common/ErrorBoundary.vue';
 
 const isDev = import.meta.env.DEV;
 const devToolsStore = useDevToolsStore();
+const uiStore = useUIStore();
+
+onErrorCaptured((err: Error, _instance, info: string) => {
+  console.error('[App] Vue Component Error Captured:', err, info);
+  uiStore.triggerCrashError(err, 'Duel Application Error');
+  return false; // Prevent unhandled propagation
+});
+
+function handleGlobalError(event: ErrorEvent): void {
+  console.error('[App] Uncaught Global Error:', event.error || event.message);
+  uiStore.triggerCrashError(event.error || new Error(event.message));
+}
+
+function handleUnhandledRejection(event: PromiseRejectionEvent): void {
+  console.error('[App] Unhandled Promise Rejection:', event.reason);
+  uiStore.triggerCrashError(
+    event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
+  );
+}
 
 function handleKeyDown(event: KeyboardEvent): void {
   // Shortcut: Ctrl+Shift+D or Cmd+Shift+D to toggle Dev Nav in dev mode
@@ -76,10 +100,14 @@ function handleKeyDown(event: KeyboardEvent): void {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('error', handleGlobalError);
+  window.addEventListener('unhandledrejection', handleUnhandledRejection);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('error', handleGlobalError);
+  window.removeEventListener('unhandledrejection', handleUnhandledRejection);
 });
 </script>
 

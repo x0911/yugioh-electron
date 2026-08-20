@@ -42,15 +42,26 @@ export const DECK_LIMITS = {
 } as const;
 
 /**
- * Computes validity for a given main and extra deck list.
+ * Computes validity for a given main and extra deck list or CustomDeck object.
  */
 export function validateDeck(
-  main: number[],
-  extra: number[],
+  mainOrDeck: number[] | CustomDeck,
+  extraCards?: number[],
   getCardName?: (id: number) => string,
 ): DeckValidity {
   const errors: string[] = [];
   const warnings: string[] = [];
+
+  let main: number[] = [];
+  let extra: number[] = [];
+
+  if (Array.isArray(mainOrDeck)) {
+    main = mainOrDeck;
+    extra = Array.isArray(extraCards) ? extraCards : [];
+  } else if (mainOrDeck && typeof mainOrDeck === 'object') {
+    main = Array.isArray(mainOrDeck.main) ? mainOrDeck.main : [];
+    extra = Array.isArray(mainOrDeck.extra) ? mainOrDeck.extra : [];
+  }
 
   const mainCount = main.length;
   const extraCount = extra.length;

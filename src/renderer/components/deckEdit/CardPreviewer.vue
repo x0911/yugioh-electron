@@ -112,14 +112,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import type { CardDetail } from '../../../shared/types/card.js';
-import { getCardImageUrl, handleImageError } from '../../utils/media.js';
+import { getCardImageUrl, handleImageError, preloadCardImage } from '../../utils/media.js';
 import { useDeckEditStore } from '../../stores/deckEditStore.js';
 
 const store = useDeckEditStore();
 
 const card = computed<CardDetail | null>(() => store.hoveredCard);
+
+watch(
+  () => card.value?.id,
+  (newId) => {
+    if (newId && newId > 0) {
+      preloadCardImage(newId, 'full');
+    }
+  },
+  { immediate: true },
+);
 
 const fullImageUrl = computed(() => {
   if (!card.value) return '';

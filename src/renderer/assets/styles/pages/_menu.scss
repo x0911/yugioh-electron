@@ -80,6 +80,35 @@
     gap: $space-3;
   }
 
+  &__about-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px $space-3;
+    border-radius: 20px;
+    background: rgba(18, 22, 30, 0.75);
+    border: 1px solid rgba(201, 162, 39, 0.4);
+    font-family: $font-display;
+    font-size: $fs-xs;
+    font-weight: 700;
+    color: $color-gold-300;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 180ms ease;
+
+    .about-icon {
+      font-size: 0.85rem;
+    }
+
+    &:hover {
+      background: rgba(201, 162, 39, 0.2);
+      border-color: $color-gold-300;
+      color: $color-gold-100;
+      box-shadow: 0 0 12px rgba(201, 162, 39, 0.4);
+      transform: translateY(-1px);
+    }
+  }
+
   &__status-badge {
     display: inline-flex;
     align-items: center;

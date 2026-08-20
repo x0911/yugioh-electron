@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia';
 import type { EngineInitStatus } from '../../shared/types/ipc.js';
 
+export interface CrashErrorInfo {
+  title: string;
+  message: string;
+  stack?: string;
+}
+
 export interface UIState {
   isLoading: boolean;
   loadingMessage: string;
@@ -9,6 +15,7 @@ export interface UIState {
   selectedCardCode: number | null;
   hoveredCardCode: number | null;
   engineStatus: EngineInitStatus | null;
+  crashError: CrashErrorInfo | null;
 }
 
 export const useUIStore = defineStore('ui', {
@@ -20,6 +27,7 @@ export const useUIStore = defineStore('ui', {
     selectedCardCode: null,
     hoveredCardCode: null,
     engineStatus: null,
+    crashError: null,
   }),
   actions: {
     setEngineStatus(status: EngineInitStatus): void {
@@ -37,6 +45,24 @@ export const useUIStore = defineStore('ui', {
     },
     closeModal(): void {
       this.activeModal = null;
+    },
+    triggerCrashError(error: Error | string, customTitle = 'Duel Engine Disruption'): void {
+      console.error('[UIStore] Crash Error Caught:', error);
+      if (error instanceof Error) {
+        this.crashError = {
+          title: customTitle,
+          message: error.message || 'An unexpected error occurred during execution.',
+          stack: error.stack,
+        };
+      } else {
+        this.crashError = {
+          title: customTitle,
+          message: String(error),
+        };
+      }
+    },
+    clearCrashError(): void {
+      this.crashError = null;
     },
   },
 });

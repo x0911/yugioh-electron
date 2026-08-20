@@ -156,10 +156,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import type { FieldCard, CardStatusType } from '../../../shared/types/field.js';
 import { useDuelStore } from '../../stores/duelStore.js';
-import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
+import { getCardImageUrl, getCardBackUrl, handleImageError, preloadCardImage } from '../../utils/media.js';
 import { formatCombatStat } from '../../utils/format.js';
 import IconIndicator from '../common/IconIndicator.vue';
 
@@ -218,6 +218,16 @@ const effectiveCard = computed<FieldCard | null>(() => {
     description: props.card.description || detail.desc,
   };
 });
+
+watch(
+  () => effectiveCard.value?.code,
+  (newCode) => {
+    if (newCode && newCode > 0) {
+      preloadCardImage(newCode, 'full');
+    }
+  },
+  { immediate: true },
+);
 
 const isAtkBoosted = computed(() => {
   if (!effectiveCard.value) return false;

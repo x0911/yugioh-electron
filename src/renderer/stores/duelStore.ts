@@ -520,6 +520,10 @@ export const useDuelStore = defineStore('duel', {
           return success;
         } catch (err) {
           console.error('[DuelStore] Failed starting prepared duel:', err);
+          useUIStore().triggerCrashError(
+            err instanceof Error ? err : new Error(String(err)),
+            'Duel Initialization Error',
+          );
           return false;
         }
       }
@@ -555,6 +559,10 @@ export const useDuelStore = defineStore('duel', {
           }
         } catch (err) {
           console.error('[DuelStore] Failed fetching board state:', err);
+          useUIStore().triggerCrashError(
+            err instanceof Error ? err : new Error(String(err)),
+            'Board State Synchronization Error',
+          );
         }
       }
     },

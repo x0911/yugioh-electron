@@ -13,10 +13,17 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "tsx tests/guidance-targeting.test.ts && tsx tests/hand-and-pacing.test.ts && tsx tests/stack-inspection.test.ts && tsx tests/random-draw-and-deck.test.ts && tsx tests/status-animation-video.test.ts && tsx tests/prebuilt-decks-and-selector.test.ts && tsx tests/monster-reborn-activation.test.ts && tsx tests/card-selection-modal.test.ts && tsx tests/option-strings-resolution.test.ts && tsx tests/special-summon-monsters.test.ts && tsx tests/animation-order-and-deduplication.test.ts && tsx tests/battle-selection-and-variable-stats.test.ts && tsx tests/ritual-summon-ai.test.ts && tsx tests/announcements-and-field-mechanics.test.ts && tsx tests/ai-opponent-personality.test.ts",
+    "test": "tsx tests/guidance-targeting.test.ts && tsx tests/hand-and-pacing.test.ts && tsx tests/stack-inspection.test.ts && tsx tests/random-draw-and-deck.test.ts && tsx tests/status-animation-video.test.ts && tsx tests/prebuilt-decks-and-selector.test.ts && tsx tests/monster-reborn-activation.test.ts && tsx tests/card-selection-modal.test.ts && tsx tests/option-strings-resolution.test.ts && tsx tests/special-summon-monsters.test.ts && tsx tests/animation-order-and-deduplication.test.ts && tsx tests/battle-selection-and-variable-stats.test.ts && tsx tests/ritual-summon-ai.test.ts && tsx tests/announcements-and-field-mechanics.test.ts && tsx tests/ai-opponent-personality.test.ts && tsx tests/phase14-qa-and-packaging.test.ts",
     "build:cards": "tsx scripts/build-card-pool.ts",
     "download:cards": "tsx scripts/download-card-images.ts",
     "generate:videos": "tsx scripts/generate-character-videos.ts",
+    "generate:icons": "tsx scripts/generate-icons.ts",
+    "package": "npm run build && electron-builder --dir",
+    "package:mac": "npm run build && electron-builder --mac --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux",
     "rebuild:native": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {

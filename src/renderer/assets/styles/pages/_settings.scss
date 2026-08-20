@@ -52,6 +52,12 @@
     gap: 4px;
   }
 
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
   &__title {
     font-family: $font-display;
     font-size: 2.2rem;

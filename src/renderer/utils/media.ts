@@ -100,6 +100,50 @@ export function getStatusIconUrl(status: string): string {
 }
 
 /**
+ * In-Memory LRU Image Cache (architecture.md §9)
+ * Preloads and retains decoded image objects in memory to prevent refetches / layout shifts on hover.
+ */
+const MAX_CACHE_SIZE = 150;
+const imageLruCache = new Map<string, HTMLImageElement>();
+
+/**
+ * Preloads a card image into the in-memory LRU cache.
+ */
+export function preloadCardImage(cardId: number, variant: CardImageVariant = 'full'): void {
+  if (!cardId || cardId <= 0 || typeof window === 'undefined' || typeof Image === 'undefined') {
+    return;
+  }
+  const url = getCardImageUrl(cardId, variant);
+  if (imageLruCache.has(url)) {
+    // Refresh position in LRU cache
+    const img = imageLruCache.get(url)!;
+    imageLruCache.delete(url);
+    imageLruCache.set(url, img);
+    return;
+  }
+
+  // Evict oldest item if at capacity
+  if (imageLruCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = imageLruCache.keys().next().value;
+    if (oldestKey) {
+      imageLruCache.delete(oldestKey);
+    }
+  }
+
+  const img = new Image();
+  img.src = url;
+  imageLruCache.set(url, img);
+}
+
+/**
+ * Checks if a card image is currently retained in the in-memory cache.
+ */
+export function isCardImageCached(cardId: number, variant: CardImageVariant = 'full'): boolean {
+  const url = getCardImageUrl(cardId, variant);
+  return imageLruCache.has(url);
+}
+
+/**
  * Handles image error events by swapping to placeholder.
  */
 export function handleImageError(event: Event): void {

@@ -130,7 +130,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useDeckEditStore } from '../../stores/deckEditStore.js';
 import type { CardDetail } from '../../../shared/types/card.js';
-import { getCardImageUrl, handleImageError } from '../../utils/media.js';
+import { getCardImageUrl, handleImageError, preloadCardImage } from '../../utils/media.js';
 
 const store = useDeckEditStore();
 
@@ -238,6 +238,7 @@ watch(
 );
 
 function onCardHover(card: CardDetail): void {
+  preloadCardImage(card.id, 'full');
   store.setHoveredCard(card);
 }
 

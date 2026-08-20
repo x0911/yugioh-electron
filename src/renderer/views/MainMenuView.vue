@@ -25,6 +25,16 @@
       </div>
 
       <div class="main-menu-view__header-status">
+        <button
+          type="button"
+          class="main-menu-view__about-btn"
+          title="About Duel Arena & Version Info"
+          @click="showAboutModal = true"
+        >
+          <span class="about-icon">ℹ️</span>
+          <span>About</span>
+        </button>
+
         <div class="main-menu-view__status-badge">
           <span class="main-menu-view__status-dot" />
           <span>{{ engineBadgeText }}</span>
@@ -189,6 +199,9 @@
         </div>
       </template>
     </YugiModal>
+
+    <!-- About & Version Information Modal -->
+    <AboutModal :is-open="showAboutModal" @close="showAboutModal = false" />
   </div>
 </template>
 
@@ -198,9 +211,11 @@ import { useUIStore } from '../stores/uiStore.js';
 import { getMenuCardImageUrl } from '../utils/media.js';
 import YugiButton from '../components/common/YugiButton.vue';
 import YugiModal from '../components/common/YugiModal.vue';
+import AboutModal from '../components/common/AboutModal.vue';
 
 const uiStore = useUIStore();
 const showExitModal = ref(false);
+const showAboutModal = ref(false);
 
 const engineBadgeText = computed(() => {
   if (uiStore.engineStatus?.ready) {

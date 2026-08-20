@@ -9,9 +9,15 @@
           duel preferences.
         </p>
       </div>
-      <YugiButton variant="secondary" size="md" icon="←" to="/main-menu">
-        Return to Main Menu
-      </YugiButton>
+
+      <div class="settings-view__header-actions">
+        <YugiButton variant="ghost" size="md" icon="ℹ️" @click="showAboutModal = true">
+          About Arena
+        </YugiButton>
+        <YugiButton variant="secondary" size="md" icon="←" to="/main-menu">
+          Return to Main Menu
+        </YugiButton>
+      </div>
     </header>
 
     <!-- Loading State -->
@@ -277,6 +283,9 @@
         </YugiButton>
       </footer>
     </template>
+
+    <!-- About & Version Information Modal -->
+    <AboutModal :is-open="showAboutModal" @close="showAboutModal = false" />
   </div>
 </template>
 
@@ -286,10 +295,12 @@ import { useSettingsStore } from '../stores/settingsStore.js';
 import GlassPanel from '../components/common/GlassPanel.vue';
 import YugiButton from '../components/common/YugiButton.vue';
 import LoadingSpinner from '../components/common/LoadingSpinner.vue';
+import AboutModal from '../components/common/AboutModal.vue';
 import OpponentCarousel from '../components/settings/OpponentCarousel.vue';
 
 const settingsStore = useSettingsStore();
 const avatarFailed = ref(false);
+const showAboutModal = ref(false);
 
 const selectedChar = computed(() => settingsStore.selectedCharacter);
 
