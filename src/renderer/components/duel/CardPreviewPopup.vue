@@ -195,8 +195,18 @@ const effectiveCard = computed<FieldCard | null>(() => {
         : detail.name,
     atk: props.card.atk !== undefined ? props.card.atk : detail.isMonster ? detail.atk : undefined,
     def: props.card.def !== undefined ? props.card.def : detail.isMonster ? detail.def : undefined,
-    baseAtk: props.card.baseAtk !== undefined ? props.card.baseAtk : detail.isMonster ? detail.atk : undefined,
-    baseDef: props.card.baseDef !== undefined ? props.card.baseDef : detail.isMonster ? detail.def : undefined,
+    baseAtk:
+      props.card.baseAtk !== undefined
+        ? props.card.baseAtk
+        : detail.isMonster
+          ? detail.atk
+          : undefined,
+    baseDef:
+      props.card.baseDef !== undefined
+        ? props.card.baseDef
+        : detail.isMonster
+          ? detail.def
+          : undefined,
     level:
       props.card.level !== undefined
         ? props.card.level
@@ -353,7 +363,7 @@ const typeBracketText = computed(() => {
   .card-art-box {
     position: relative;
     width: 100%;
-    height: 240px;
+    height: auto;
     border-radius: 6px;
     overflow: hidden;
     background: #0a0c10;
