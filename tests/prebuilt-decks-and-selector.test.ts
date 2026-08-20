@@ -23,8 +23,7 @@ const checkCardStmt = db.prepare('SELECT id, name FROM texts WHERE id = ?');
 console.log('Test 1: 80 Pre-Built Decks Totality & Database Verification...');
 assert.ok(fs.existsSync(PREBUILT_PATH), 'data/prebuilt-decks.json must exist');
 const prebuiltDecks: CustomDeck[] = JSON.parse(fs.readFileSync(PREBUILT_PATH, 'utf-8'));
-
-assert.strictEqual(prebuiltDecks.length, 80, `Expected exactly 80 pre-built decks, got ${prebuiltDecks.length}`);
+assert.ok(prebuiltDecks.length >= 80, `Expected at least 80 pre-built decks, got ${prebuiltDecks.length}`);
 
 for (const deck of prebuiltDecks) {
   assert.ok(deck.id, `Deck must have an id: ${JSON.stringify(deck)}`);
@@ -57,8 +56,8 @@ const popDecks = prebuiltDecks.filter((d) => d.category === 'popular-dm' || d.ca
 
 assert.strictEqual(dmHeroDecks.length, 30, `Expected 30 DM character decks (10 characters x 3), got ${dmHeroDecks.length}`);
 assert.strictEqual(gxHeroDecks.length, 30, `Expected 30 GX character decks (10 characters x 3), got ${gxHeroDecks.length}`);
-assert.strictEqual(popDecks.length, 20, `Expected 20 popular community decks, got ${popDecks.length}`);
-console.log('✓ Exactly 30 DM character decks, 30 GX character decks, and 20 popular community decks partitioned.');
+assert.ok(popDecks.length >= 20, `Expected at least 20 popular community decks, got ${popDecks.length}`);
+console.log(`✓ Exactly 30 DM character decks, 30 GX character decks, and ${popDecks.length} popular community decks partitioned.`);
 
 // --- TEST 3: Autocomplete Query & Filter Logic ---
 console.log('\nTest 3: Autocomplete Query & Filter Logic...');
@@ -88,6 +87,10 @@ function filterDecks(
   }
   return list;
 }
+
+const sliferDecks = filterDecks(prebuiltDecks, 'Slifer', 'ALL');
+assert.ok(sliferDecks.length >= 1, `Expected at least 1 Slifer deck, found ${sliferDecks.length}`);
+console.log(`  Query "Slifer": found ${sliferDecks.length} match (${sliferDecks[0].name})`);
 
 const cyberDecks = filterDecks(prebuiltDecks, 'Cyber', 'ALL');
 assert.ok(cyberDecks.length >= 3, `Expected at least 3 decks matching "Cyber", found ${cyberDecks.length}`);

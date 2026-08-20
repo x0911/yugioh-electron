@@ -621,6 +621,46 @@ const POPULAR_DECKS_RAW: Array<{
       'D.3.S. Frog', 'D.3.S. Frog', 'D.3.S. Frog',
     ],
   },
+  // 21. Slifer the Sky Dragon — Divine Overflow (DM)
+  {
+    id: 'pop-slifer-sky-dragon',
+    name: 'Slifer the Sky Dragon — Divine Overflow',
+    series: 'DM',
+    archetype: 'Egyptian God / Hand Overflow',
+    main: [
+      'Slifer the Sky Dragon', 'Slifer the Sky Dragon', 'Slifer the Sky Dragon',
+      'Gorz the Emissary of Darkness',
+      'Cyber Valley', 'Cyber Valley',
+      'Treeborn Frog', 'Treeborn Frog',
+      'Marshmallon', 'Marshmallon',
+      'Spirit Reaper', 'Spirit Reaper',
+      'Sangan', 'Sangan',
+      'Witch of the Black Forest', 'Witch of the Black Forest',
+      'Gellenduo', 'Gellenduo',
+      'Morphing Jar',
+      'Infinite Cards', 'Infinite Cards',
+      'Card of Safe Return', 'Card of Safe Return',
+      'Soul Exchange', 'Soul Exchange',
+      'Brain Control', 'Brain Control',
+      'Double Summon', 'Double Summon',
+      'Swords of Revealing Light', 'Swords of Revealing Light',
+      'Pot of Greed', 'Pot of Greed',
+      'Graceful Charity', 'Graceful Charity',
+      'Monster Reborn', 'Monster Reborn',
+      'Premature Burial',
+      'Snatch Steal',
+      'Change of Heart',
+      'Card Destruction',
+      'Raigeki',
+      'Harpie\'s Feather Duster',
+      'Mystical Space Typhoon', 'Mystical Space Typhoon',
+      'Mirror Force', 'Mirror Force',
+      'Call of the Haunted',
+      'Ultimate Offering',
+      'Solemn Judgment', 'Solemn Judgment',
+    ],
+    extra: [],
+  },
 ];
 
 for (const pDeck of POPULAR_DECKS_RAW) {
@@ -642,6 +682,26 @@ for (const pDeck of POPULAR_DECKS_RAW) {
     category: pDeck.series === 'DM' ? 'popular-dm' : 'popular-gx',
   };
   allDecks.push(customDeck);
+}
+
+// Generate .ydk file helper
+const DECKS_DIR = path.resolve(ROOT_DIR, 'resources/decks');
+if (!fs.existsSync(DECKS_DIR)) {
+  fs.mkdirSync(DECKS_DIR, { recursive: true });
+}
+
+for (const deck of allDecks) {
+  const ydkPath = path.resolve(DECKS_DIR, `${deck.id}.ydk`);
+  const lines: string[] = ['#created by yugioh-desktop-app', '#main'];
+  for (const id of deck.main) {
+    lines.push(String(id));
+  }
+  lines.push('#extra');
+  for (const id of deck.extra) {
+    lines.push(String(id));
+  }
+  lines.push('!side');
+  fs.writeFileSync(ydkPath, lines.join('\n') + '\n', 'utf-8');
 }
 
 console.log(`Total decks assembled: ${allDecks.length}`);
