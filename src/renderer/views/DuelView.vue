@@ -337,7 +337,6 @@ import {
   getStackRect,
   getAvatarRect,
   setAnimationUserPlayerId,
-  resetElementVisibility,
 } from '../utils/animationService.js';
 
 interface LogItem {
@@ -765,7 +764,10 @@ async function setupEngineEventListener(): Promise<void> {
                 : getZoneRect(domOwner, fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster', fromSeq);
           const toRect = getStackRect(domOwner, 'graveyard');
 
-          // Hide source so it doesn't ghost while the clone is in flight
+          // Hide source so it doesn't ghost while the clone is in flight.
+          // We do NOT reset this style after the animation — the element will be
+          // removed from the DOM by Vue after handleEngineEvent, taking the inline
+          // style with it. Resetting it before removal causes the ghost-card flash.
           let hiddenEl: HTMLElement | null = null;
           if (fromLoc === 2) {
             hiddenEl = document.querySelector(`[data-hand-card-id="hand-${domOwner}-${fromSeq}"]`) as HTMLElement | null;
@@ -782,10 +784,6 @@ async function setupEngineEventListener(): Promise<void> {
             type: fromLoc === 2 ? 'discard' : 'destroy-gy',
             durationMs: 440,
           });
-
-          // Always reset inline styles — element may still be in DOM during
-          // the TransitionGroup leave transition
-          resetElementVisibility(hiddenEl);
 
         } else if (toLoc === 8 && fromLoc === 2) {
           // ── Hand → Spell/Trap Zone (Activation or Set) ────────────────────
@@ -806,8 +804,6 @@ async function setupEngineEventListener(): Promise<void> {
             durationMs: 480,
           });
 
-          resetElementVisibility(hiddenEl);
-
         } else if (toLoc === 4 && fromLoc === 2) {
           // ── Hand → Monster Zone (Normal/Special Summon or Set) ────────────
           const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
@@ -826,8 +822,6 @@ async function setupEngineEventListener(): Promise<void> {
             isDefense,
             durationMs: 480,
           });
-
-          resetElementVisibility(hiddenEl);
 
         } else if (toLoc === 4 && (fromLoc === 16 || fromLoc === 32 || fromLoc === 64)) {
           // ── GY / Banished / Extra Deck → Monster Zone ─────────────────────
@@ -873,8 +867,6 @@ async function setupEngineEventListener(): Promise<void> {
             type: 'banish',
             durationMs: 440,
           });
-
-          resetElementVisibility(hiddenEl);
         }
       }
 
