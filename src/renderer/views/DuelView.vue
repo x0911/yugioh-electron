@@ -304,7 +304,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import type { FieldCard, DuelBoardState } from '../../shared/types/field.js';
 import { type DuelEventPayload, getGameOverSubtitle } from '../../shared/types/duel.js';
@@ -713,34 +713,60 @@ async function setupEngineEventListener(): Promise<void> {
     await duelAnimationQueue.enqueue(async () => {
       setAnimationUserPlayerId(duelStore.userPlayerId);
 
+      // When true, we've already called handleEngineEvent inside a branch and
+      // the bottom catch-all call should be skipped to avoid double-application.
+      let eventHandled = false;
+
       // -----------------------------------------------------------------------
       // 1. Draw from Deck → Hand
-      //    Animation plays FIRST (card not yet in hand array), then
-      //    handleEngineEvent adds it to the hand so it appears after landing.
+      //    Loops per-card so a multi-card draw (e.g. Pot of Greed) animates
+      //    each card individually rather than all at once.
+      //    addSingleDrawnCard places each card in hand immediately after its
+      //    flight lands, so the hand grows one-by-one.
       // -----------------------------------------------------------------------
       if (event.type === 'DRAW' && event.player !== undefined) {
         const isHuman = event.player === duelStore.userPlayerId;
         const domOwner = toDomOwner(event.player);
-        const fromRect = getStackRect(domOwner, 'deck');
-        const toRect = getHandFanRect(domOwner);
-        const drawnCode = (event as any).drawn?.[0]?.code || (event as any).drawnCards?.[0]?.code || event.code || 0;
-        await playCardFlight({
-          code: isHuman ? drawnCode : 0,
-          cardName: event.cardName || 'Card Drawn',
-          fromRect,
-          toRect,
-          type: 'draw',
-          isFacedown: !isHuman,
-          durationMs: 420,
-        });
-        // State updated AFTER animation so the card appears in hand post-flight
+        const drawnCards: any[] = (event as any).drawnCards || (event as any).drawn || [];
+        // count = number of cards drawn; fall back to 1 for events without card list
+        const count = drawnCards.length || 1;
+
+        for (let i = 0; i < count; i++) {
+          const d = drawnCards[i];
+          const cardCode = (d?.code ?? (i === 0 ? ((event as any).code ?? 0) : 0)) || 0;
+          const cardName =
+            d?.cardName || d?.name || (i === 0 ? event.cardName : null) || 'Card Drawn';
+
+          await playCardFlight({
+            code: isHuman ? cardCode : 0,
+            cardName: isHuman ? cardName : 'Card Drawn',
+            fromRect: getStackRect(domOwner, 'deck'),
+            toRect: getHandFanRect(domOwner),
+            type: 'draw',
+            isFacedown: !isHuman,
+            durationMs: 380,
+          });
+
+          // Card lands → add it to hand. Next iteration starts from an updated hand.
+          duelStore.addSingleDrawnCard(event, i);
+        }
+        eventHandled = true;
       }
 
       // -----------------------------------------------------------------------
       // 2. Canonical Card Movement (MOVE events)
-      //    Rects are captured BEFORE handleEngineEvent mutates state,
-      //    so we always animate from/to the correct DOM positions.
-      //    Inline visibility hacks are reset after flight to prevent style leaks.
+      //
+      //    FROM HAND (FLIP technique):
+      //      Capture rects → call handleEngineEvent IMMEDIATELY (removes card
+      //      from hand so the gap starts closing via TransitionGroup MOVE right
+      //      away) → nextTick (Vue flushes, destination card renders) → hide
+      //      destination card → animate flight → reveal destination card.
+      //      Result: gap closes smoothly while the card is in the air, and there
+      //      is no ghost-card flash at the end.
+      //
+      //    FROM FIELD / GY / DECK (traditional):
+      //      Hide source element → animate → handleEngineEvent at bottom removes
+      //      the source card from its zone after the flight.
       // -----------------------------------------------------------------------
       else if (event.type === 'MOVE') {
         const moveEvt = event as any;
@@ -754,143 +780,183 @@ async function setupEngineEventListener(): Promise<void> {
         const isFacedown = !isFaceup;
         const isDefense = (moveEvt.position & 0xc) !== 0;
 
-        if (toLoc === 16) {
-          // ── Sent / Destroyed → Graveyard ──────────────────────────────────
-          const fromRect =
-            fromLoc === 2
-              ? getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner)
-              : fromLoc === 1
+        if (fromLoc === 2) {
+          // ── FLIP: Card leaving the hand ─────────────────────────────────
+          // Capture both rects BEFORE any state change.
+          //   fromRect: hand card (exists in DOM now)
+          //   toRect: destination zone/stack (zone slot always exists, card not yet there)
+          const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
+          const toRect =
+            toLoc === 16 ? getStackRect(domOwner, 'graveyard') :
+            // FIX: use toSeq (destination slot index) to detect field zone,
+            //      NOT fromSeq (hand card index) — previous bug caused wrong zone type.
+            toLoc === 8  ? getZoneRect(domOwner, toSeq === 5 ? 'field' : 'spell-trap', toSeq) :
+            toLoc === 4  ? getZoneRect(domOwner, 'monster', toSeq) :
+            toLoc === 32 ? getStackRect(domOwner, 'banished') :
+            null;
+
+          // Apply state change NOW: removes card from hand array.
+          // Vue's TransitionGroup MOVE transition starts closing the gap immediately
+          // (0.28 s smooth slide) in parallel with the card flying away.
+          await duelStore.handleEngineEvent(event);
+          eventHandled = true;
+
+          // Flush DOM so Vue renders the new hand layout AND renders the card
+          // that just appeared in its destination zone.
+          await nextTick();
+
+          // Hide the destination zone card that handleEngineEvent just placed
+          // there, so the flying overlay is the only visible copy during flight.
+          // (GY / banished are counter-stacks, no individual card to hide.)
+          let destEl: HTMLElement | null = null;
+          if (toLoc === 8) {
+            const zoneType = toSeq === 5 ? 'field' : 'spell-trap';
+            destEl = document.querySelector(
+              `[data-zone-id="slot-${domOwner}-${zoneType}-${toSeq}"] .field-card`,
+            ) as HTMLElement | null;
+          } else if (toLoc === 4) {
+            destEl = document.querySelector(
+              `[data-zone-id="slot-${domOwner}-monster-${toSeq}"] .field-card`,
+            ) as HTMLElement | null;
+          }
+          if (destEl) { destEl.style.opacity = '0'; destEl.style.visibility = 'hidden'; }
+
+          // Fly the overlay clone from captured hand position to destination.
+          if (fromRect && toRect) {
+            const animType =
+              toLoc === 16 ? 'discard' :
+              toLoc === 8  ? (isFaceup ? 'spell-activate' : 'set-spell') :
+              toLoc === 4  ? (isFaceup ? 'summon' : 'set-monster') :
+              'banish';
+
+            await playCardFlight({
+              code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
+              cardName: moveEvt.cardName || 'Card',
+              fromRect,
+              toRect,
+              type: animType,
+              isFacedown,
+              isDefense,
+              durationMs: toLoc === 16 || toLoc === 32 ? 440 : 480,
+            });
+          }
+
+          // Flying overlay has landed — reveal the real card in the zone.
+          if (destEl) { destEl.style.opacity = ''; destEl.style.visibility = ''; }
+
+        } else {
+          // ── Traditional: card leaving a field zone, GY, or deck ─────────
+
+          if (toLoc === 16) {
+            // → Graveyard
+            const fromRect =
+              fromLoc === 1
                 ? getStackRect(domOwner, 'deck')
-                : getZoneRect(domOwner, fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster', fromSeq);
-          const toRect = getStackRect(domOwner, 'graveyard');
+                : getZoneRect(
+                    domOwner,
+                    fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster',
+                    fromSeq,
+                  );
+            const toRect = getStackRect(domOwner, 'graveyard');
 
-          // Hide source so it doesn't ghost while the clone is in flight.
-          // We do NOT reset this style after the animation — the element will be
-          // removed from the DOM by Vue after handleEngineEvent, taking the inline
-          // style with it. Resetting it before removal causes the ghost-card flash.
-          let hiddenEl: HTMLElement | null = null;
-          if (fromLoc === 2) {
-            hiddenEl = document.querySelector(`[data-hand-card-id="hand-${domOwner}-${fromSeq}"]`) as HTMLElement | null;
-          } else if (fromLoc === 4 || fromLoc === 8) {
-            hiddenEl = document.querySelector(`[data-zone-id="slot-${domOwner}-${fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster'}-${fromSeq}"] .field-card`) as HTMLElement | null;
-          }
-          if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
+            // Hide the field card so it doesn't double-render alongside the overlay.
+            // The inline style is removed when Vue destroys the element after
+            // handleEngineEvent clears the zone — no manual reset needed.
+            let hiddenEl: HTMLElement | null = null;
+            if (fromLoc === 4 || fromLoc === 8) {
+              hiddenEl = document.querySelector(
+                `[data-zone-id="slot-${domOwner}-${fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster'}-${fromSeq}"] .field-card`,
+              ) as HTMLElement | null;
+            }
+            if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
 
-          await playCardFlight({
-            code: moveEvt.code || 0,
-            cardName: moveEvt.cardName,
-            fromRect,
-            toRect,
-            type: fromLoc === 2 ? 'discard' : 'destroy-gy',
-            durationMs: 440,
-          });
+            await playCardFlight({
+              code: moveEvt.code || 0,
+              cardName: moveEvt.cardName,
+              fromRect,
+              toRect,
+              type: 'destroy-gy',
+              durationMs: 440,
+            });
 
-        } else if (toLoc === 8 && fromLoc === 2) {
-          // ── Hand → Spell/Trap Zone (Activation or Set) ────────────────────
-          const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
-          const toRect = getZoneRect(domOwner, fromSeq === 5 ? 'field' : 'spell-trap', toSeq);
+          } else if (toLoc === 4 && (fromLoc === 16 || fromLoc === 32 || fromLoc === 64)) {
+            // GY / Banished / Extra Deck → Monster Zone (special summon from pile)
+            const fromRect = getStackRect(
+              domOwner,
+              fromLoc === 16 ? 'graveyard' : fromLoc === 32 ? 'banished' : 'extra',
+            );
+            const toRect = getZoneRect(domOwner, 'monster', toSeq);
+            await playCardFlight({
+              code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
+              cardName: moveEvt.cardName || 'Monster',
+              fromRect,
+              toRect,
+              type: 'summon',
+              isFacedown,
+              isDefense,
+              durationMs: 480,
+            });
 
-          const hiddenEl = document.querySelector(`[data-hand-card-id="hand-${domOwner}-${fromSeq}"]`) as HTMLElement | null;
-          if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
-
-          await playCardFlight({
-            code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
-            cardName: moveEvt.cardName || 'Spell Card',
-            fromRect,
-            toRect,
-            type: isFaceup ? 'spell-activate' : 'set-spell',
-            isFacedown,
-            isDefense: false,
-            durationMs: 480,
-          });
-
-        } else if (toLoc === 4 && fromLoc === 2) {
-          // ── Hand → Monster Zone (Normal/Special Summon or Set) ────────────
-          const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
-          const toRect = getZoneRect(domOwner, 'monster', toSeq);
-
-          const hiddenEl = document.querySelector(`[data-hand-card-id="hand-${domOwner}-${fromSeq}"]`) as HTMLElement | null;
-          if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
-
-          await playCardFlight({
-            code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
-            cardName: moveEvt.cardName || 'Monster',
-            fromRect,
-            toRect,
-            type: isFaceup ? 'summon' : 'set-monster',
-            isFacedown,
-            isDefense,
-            durationMs: 480,
-          });
-
-        } else if (toLoc === 4 && (fromLoc === 16 || fromLoc === 32 || fromLoc === 64)) {
-          // ── GY / Banished / Extra Deck → Monster Zone ─────────────────────
-          const fromRect = getStackRect(
-            domOwner,
-            fromLoc === 16 ? 'graveyard' : fromLoc === 32 ? 'banished' : 'extra',
-          );
-          const toRect = getZoneRect(domOwner, 'monster', toSeq);
-          await playCardFlight({
-            code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
-            cardName: moveEvt.cardName || 'Monster',
-            fromRect,
-            toRect,
-            type: 'summon',
-            isFacedown,
-            isDefense,
-            durationMs: 480,
-          });
-
-        } else if (toLoc === 32) {
-          // ── Banished ──────────────────────────────────────────────────────
-          const fromRect =
-            fromLoc === 2
-              ? getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner)
-              : fromLoc === 16
+          } else if (toLoc === 32) {
+            // → Banished (from field or GY)
+            const fromRect =
+              fromLoc === 16
                 ? getStackRect(domOwner, 'graveyard')
-                : getZoneRect(domOwner, fromLoc === 8 ? 'spell-trap' : 'monster', fromSeq);
-          const toRect = getStackRect(domOwner, 'banished');
+                : getZoneRect(
+                    domOwner,
+                    fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster',
+                    fromSeq,
+                  );
+            const toRect = getStackRect(domOwner, 'banished');
 
-          let hiddenEl: HTMLElement | null = null;
-          if (fromLoc === 2) {
-            hiddenEl = document.querySelector(`[data-hand-card-id="hand-${domOwner}-${fromSeq}"]`) as HTMLElement | null;
-          } else if (fromLoc === 4 || fromLoc === 8) {
-            hiddenEl = document.querySelector(`[data-zone-id="slot-${domOwner}-${fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster'}-${fromSeq}"] .field-card`) as HTMLElement | null;
+            let hiddenEl: HTMLElement | null = null;
+            if (fromLoc === 4 || fromLoc === 8) {
+              hiddenEl = document.querySelector(
+                `[data-zone-id="slot-${domOwner}-${fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster'}-${fromSeq}"] .field-card`,
+              ) as HTMLElement | null;
+            }
+            if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
+
+            await playCardFlight({
+              code: moveEvt.code || 0,
+              cardName: moveEvt.cardName,
+              fromRect,
+              toRect,
+              type: 'banish',
+              durationMs: 440,
+            });
           }
-          if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
-
-          await playCardFlight({
-            code: moveEvt.code || 0,
-            cardName: moveEvt.cardName,
-            fromRect,
-            toRect,
-            type: 'banish',
-            durationMs: 440,
-          });
+          // Other field→field moves (e.g. position shifts, bounce back to hand)
+          // have no flight animation — handleEngineEvent at the bottom applies
+          // the state change and Vue re-renders silently.
         }
       }
 
       // -----------------------------------------------------------------------
-      // 3. Chaining / Spell Activation Visual Glow Pause
+      // 3. Chaining / Spell Activation Visual Pause
       // -----------------------------------------------------------------------
       else if (event.type === 'CHAINING') {
         await new Promise((resolve) => setTimeout(resolve, 400));
       }
 
       // -----------------------------------------------------------------------
-      // 4. Attack Declaration & Surge
+      // 4. Attack Declaration
       // -----------------------------------------------------------------------
       else if (event.type === 'ATTACK') {
         const atkEvt = event as any;
-        const p = (atkEvt.controller ?? (duelStore.boardState.userField.isTurn ? duelStore.userPlayerId : duelStore.opponentPlayerId)) as 0 | 1;
-        const opp = (p === duelStore.userPlayerId ? duelStore.opponentPlayerId : duelStore.userPlayerId) as 0 | 1;
-        const pDomOwner = toDomOwner(p);
+        const p = (atkEvt.controller ??
+          (duelStore.boardState.userField.isTurn
+            ? duelStore.userPlayerId
+            : duelStore.opponentPlayerId)) as 0 | 1;
+        const opp = (p === duelStore.userPlayerId
+          ? duelStore.opponentPlayerId
+          : duelStore.userPlayerId) as 0 | 1;
         const oppDomOwner = toDomOwner(opp);
         const seq = atkEvt.sequence ?? (atkEvt.card?.sequence ?? 0);
-        const fromRect = getZoneRect(pDomOwner, 'monster', seq);
+        const fromRect = getZoneRect(toDomOwner(p), 'monster', seq);
         const toRect = atkEvt.target
           ? getZoneRect(toDomOwner(atkEvt.target.controller), 'monster', atkEvt.target.sequence)
-          : (getHandFanRect(oppDomOwner) || getAvatarRect(oppDomOwner));
+          : getHandFanRect(oppDomOwner) || getAvatarRect(oppDomOwner);
         await playCardFlight({
           code: 0,
           cardName: 'Battle Attack',
@@ -922,15 +988,14 @@ async function setupEngineEventListener(): Promise<void> {
       }
 
       // -----------------------------------------------------------------------
-      // Update store state AFTER animation so the DOM reflects the new position
-      // only once the flying card has arrived.
+      // Apply store state change AFTER animation (for events not handled early).
       // -----------------------------------------------------------------------
-      await duelStore.handleEngineEvent(event);
+      if (!eventHandled) {
+        await duelStore.handleEngineEvent(event);
+      }
 
-      // For WIN events the store's handleEngineEvent already calls fetchBoardState.
-      // For prompt events we do an explicit deferred board sync here — this is the
-      // ONLY remaining fetchBoardState call and it's safe because, by this point in
-      // the queue, ALL prior animation tasks have fully completed.
+      // Prompt events: deferred full board sync, safe because all prior queue
+      // tasks (and thus all animations) have already completed.
       if (
         event.isPrompt &&
         event.promptPlayer === duelStore.userPlayerId &&

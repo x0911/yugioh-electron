@@ -652,6 +652,46 @@ export const useDuelStore = defineStore('duel', {
       matchByCode(existing.extraDeck, incoming.extraDeck);
     },
 
+    /**
+     * Adds exactly one card from a DRAW event to the player's hand.
+     * Used by DuelView to animate multi-card draws one at a time, with each
+     * card landing in hand before the next one starts flying.
+     * Mirrors the handleEngineEvent DRAW branch, but for a single card index.
+     */
+    addSingleDrawnCard(event: DuelEventPayload, cardIndex: number): void {
+      const p = (event as any).player as 0 | 1;
+      const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+      const drawnCards: any[] = (event as any).drawnCards || (event as any).drawn || [];
+
+      // Decrement deck count by 1 for this single card
+      pf.deckCount = Math.max(0, pf.deckCount - 1);
+
+      if (drawnCards.length > 0 && cardIndex < drawnCards.length) {
+        const d = drawnCards[cardIndex];
+        const code = p === this.userPlayerId ? (d?.code || 0) : 0;
+        const detail = code > 0 ? this.cardMap.get(code) : null;
+        const card: FieldCard = {
+          id: `hand-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          code,
+          name: detail?.name || d?.cardName || d?.name || 'Card',
+          controller: p,
+          location: 'hand',
+          sequence: pf.hand.length,
+          position: p === this.userPlayerId ? 'faceup_spell' : 'facedown_spell',
+          atk: detail?.isMonster ? detail.atk : undefined,
+          def: detail?.isMonster ? detail.def : undefined,
+          level: detail?.isMonster ? detail.level : undefined,
+          attribute: detail?.attributeName,
+          race: detail?.raceName,
+          description: detail?.desc,
+          statuses: [],
+        };
+        pf.hand.push(card);
+      }
+      // If drawnCards is empty (AI draw without card details), only deckCount
+      // was decremented above — matches original handleEngineEvent behavior.
+    },
+
     enrichDynamicStatsOnBoard(): void {
       const uPf = this.boardState.userField;
       const oPf = this.boardState.opponentField;
