@@ -246,29 +246,23 @@ function onCardClick(card: FieldCard, event: MouseEvent, idx: number): void {
     min-height: 130px;
   }
 
-  // Smooth FLIP Card Realignment
+  // Smooth FLIP Card Re-layout (when hand count changes after a card lands or leaves)
   .hand-card-anim-move {
     transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), margin 0.28s ease;
   }
 
-  .hand-card-anim-enter-active {
-    transition: opacity 0.25s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
+  // Cards entering/leaving hand have no separate CSS transition — the flight
+  // animation in CardAnimationOverlay is the visual "enter" experience.
+  // A separate enter/leave transition here would conflict with the flying clone
+  // and cause double-animation artifacts (card flies in, then pops from scale 0.75).
+  .hand-card-anim-enter-active,
   .hand-card-anim-leave-active {
-    transition: opacity 0.18s ease, transform 0.18s ease;
-    position: absolute;
-    pointer-events: none;
+    transition: none;
   }
 
-  .hand-card-anim-enter-from {
-    opacity: 0;
-    transform: scale(0.75) translateY(12px);
-  }
-
+  .hand-card-anim-enter-from,
   .hand-card-anim-leave-to {
-    opacity: 0;
-    transform: scale(0.6) translateY(-16px);
+    // intentionally empty — no enter/leave animation, only re-layout moves
   }
 
   .hand-card-slot {

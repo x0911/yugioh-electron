@@ -223,7 +223,7 @@ export class AnimationQueue {
         console.error('[AnimationQueue] Error in animation task:', err);
       }
     }
-    this.processNext();
+    await this.processNext();
   }
 
   public clear(): void {
@@ -233,3 +233,14 @@ export class AnimationQueue {
 }
 
 export const duelAnimationQueue = new AnimationQueue();
+
+/**
+ * Resets inline opacity/visibility styles that were manually applied to a DOM element
+ * during a card-flight animation to prevent them leaking onto newly rendered cards
+ * at the same slot index after Vue re-renders.
+ */
+export function resetElementVisibility(el: HTMLElement | null): void {
+  if (!el) return;
+  el.style.opacity = '';
+  el.style.visibility = '';
+}

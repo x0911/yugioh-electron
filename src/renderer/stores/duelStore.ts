@@ -550,6 +550,9 @@ export const useDuelStore = defineStore('duel', {
 
     /**
      * Fetches fresh board state snapshot from main process.
+     * Preserves existing card IDs where possible so Vue's TransitionGroup
+     * does not treat unchanged cards as brand-new DOM elements (which would
+     * trigger simultaneous enter animations for every card on screen).
      */
     async fetchBoardState(): Promise<void> {
       if (window.duelAPI) {
@@ -557,8 +560,17 @@ export const useDuelStore = defineStore('duel', {
         try {
           const snapshot = await window.duelAPI.getBoardState();
           if (snapshot) {
-            this.boardState.userField = this.hydratePlayerField(snapshot.userField);
-            this.boardState.opponentField = this.hydratePlayerField(snapshot.opponentField);
+            const newUserField = this.hydratePlayerField(snapshot.userField);
+            const newOpponentField = this.hydratePlayerField(snapshot.opponentField);
+
+            // Transfer stable card IDs from current state → new state for matching cards
+            // so Vue's v-for :key doesn't see them as new elements (prevents unwanted
+            // enter-animations on re-sync).
+            this.mergePreservingCardIds(this.boardState.userField, newUserField);
+            this.mergePreservingCardIds(this.boardState.opponentField, newOpponentField);
+
+            this.boardState.userField = newUserField;
+            this.boardState.opponentField = newOpponentField;
             this.boardState.turnNumber = snapshot.turnNumber;
             this.boardState.currentPhase = snapshot.currentPhase;
             this.boardState.winner = snapshot.winner;
@@ -581,6 +593,63 @@ export const useDuelStore = defineStore('duel', {
           );
         }
       }
+    },
+
+    /**
+     * Transfers card IDs from an existing player field onto a freshly-hydrated one.
+     *
+     * Matching rules (by zone):
+     *   - monsterZones / spellTrapZones / fieldZone → matched by sequence index
+     *   - hand  → user hand matched by card code; AI hand matched by index (all code=0)
+     *   - graveyard / banished / extraDeck → matched by code
+     */
+    mergePreservingCardIds(existing: PlayerFieldState, incoming: PlayerFieldState): void {
+      // Zone arrays: stable 1-to-1 by index
+      for (let i = 0; i < 5; i++) {
+        const ex = existing.monsterZones[i];
+        const inc = incoming.monsterZones[i];
+        if (ex && inc) inc.id = ex.id;
+      }
+      for (let i = 0; i < 5; i++) {
+        const ex = existing.spellTrapZones[i];
+        const inc = incoming.spellTrapZones[i];
+        if (ex && inc) inc.id = ex.id;
+      }
+      if (existing.fieldZone && incoming.fieldZone) {
+        incoming.fieldZone.id = existing.fieldZone.id;
+      }
+
+      // Hand: match by code where revealed; fall back to index position
+      const exHand = [...existing.hand];
+      for (const inc of incoming.hand) {
+        let idx = -1;
+        if (inc.code > 0) {
+          idx = exHand.findIndex((c) => c && c.code === inc.code);
+        }
+        if (idx < 0) {
+          // code=0 (AI hand) or no code match → match by position
+          idx = exHand.findIndex((c) => c != null);
+        }
+        if (idx >= 0) {
+          inc.id = exHand[idx].id;
+          exHand[idx] = null as any; // consumed
+        }
+      }
+
+      // GY / banished / extra: match by code
+      const matchByCode = (exArr: FieldCard[], incArr: FieldCard[]) => {
+        const pool = [...exArr];
+        for (const inc of incArr) {
+          const idx = inc.code > 0 ? pool.findIndex((c) => c && c.code === inc.code) : -1;
+          if (idx >= 0) {
+            inc.id = pool[idx].id;
+            pool[idx] = null as any;
+          }
+        }
+      };
+      matchByCode(existing.graveyard, incoming.graveyard);
+      matchByCode(existing.banished, incoming.banished);
+      matchByCode(existing.extraDeck, incoming.extraDeck);
     },
 
     enrichDynamicStatsOnBoard(): void {
@@ -1097,8 +1166,9 @@ export const useDuelStore = defineStore('duel', {
           this.activeAnnounceNumber = event.promptData as AnnounceNumberPayload;
         }
 
-        // Snapshot synchronization when waiting for player response
-        await this.fetchBoardState();
+        // Snapshot synchronization is intentionally NOT called here.
+        // DuelView's animation queue calls fetchBoardState() explicitly after this
+        // task resolves, ensuring it only runs AFTER all preceding animations finish.
       } else if (!event.isPrompt) {
         if (
           event.type === 'NEW_TURN' ||
@@ -1731,7 +1801,10 @@ export const useDuelStore = defineStore('duel', {
         try {
           const plainCommand = JSON.parse(JSON.stringify(command));
           const res = await window.duelAPI.sendCommand(plainCommand);
-          await this.fetchBoardState();
+          // NOTE: Do NOT call fetchBoardState() here. The engine will emit incremental
+          // events (MOVE, DRAW, etc.) that update the board state through the animation
+          // queue. A full board sync happens after the prompt task in DuelView's queue,
+          // ensuring it only runs AFTER all preceding animations have completed.
           return res;
         } catch (err) {
           console.error('[DuelStore] Failed sending command:', err);
