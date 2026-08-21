@@ -254,14 +254,29 @@ export class DefaultExecutor implements DeckExecutor {
       const aiAttackers = aiField.monsterZones.filter(
         (m) => !!m && m.position === 'faceup_attack' && (m.atk ?? 0) > 0,
       );
-      const bpScore = aiAttackers.length > 0 ? 350 + aiAttackers.length * 150 : -200;
+      const aiMaxAtk = Math.max(0, ...aiAttackers.map((m) => m?.atk ?? 0));
+      const oppFaceUpAttack = oppField.monsterZones.filter(
+        (m) => !!m && m.position === 'faceup_attack' && (m.atk ?? 0) > 0,
+      );
+      const oppStrongerCount = oppFaceUpAttack.filter((m) => (m?.atk ?? 0) > aiMaxAtk).length;
+
+      let bpScore = 0;
+      if (aiAttackers.length === 0) {
+        bpScore = -500;
+      } else if (oppFaceUpAttack.length > 0 && oppStrongerCount === oppFaceUpAttack.length) {
+        // Opponent has only stronger face-up attack monsters; entering BP would lead to suicide
+        bpScore = -2500;
+      } else {
+        bpScore = 350 + aiAttackers.length * 150;
+      }
+
       candidates.push({
         action: {
           type: OcgResponseType.SELECT_IDLECMD,
           action: SelectIdleCMDAction.TO_BP,
         },
         score: bpScore,
-        reason: `Advance to Battle Phase (${aiAttackers.length} ready attackers)`,
+        reason: bpScore < 0 ? 'Hold in Main Phase (opposing field is superior)' : `Advance to Battle Phase (${aiAttackers.length} ready attackers)`,
       });
     }
 
@@ -359,8 +374,9 @@ export class DefaultExecutor implements DeckExecutor {
   public onSelectChain(msg: OcgMessage, context: EvaluatorContext): ScoredAction[] | null {
     if (!msg.chains || msg.chains.length === 0) return null;
     const candidates: ScoredAction[] = [];
-    const { cardReader, personality } = context;
+    const { cardReader, personality, boardState } = context;
     const defensiveness = personality?.defensiveness ?? 0.5;
+    const isBattlePhase = boardState.currentPhase === 'BP' || boardState.currentPhase === 'BATTLE_START' || boardState.currentPhase === 'BATTLE_STEP';
 
     for (let i = 0; i < msg.chains.length; i++) {
       const c = msg.chains[i];
@@ -368,11 +384,31 @@ export class DefaultExecutor implements DeckExecutor {
       const detail = code > 0 ? cardReader.getCardDetail(code) : null;
       const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Chain Trigger');
 
-      let score = 600;
+      let score = 400;
       let reason = `Chain effect of ${name}`;
 
+      // Quick-play stat modifiers (Shrink: 55713623, Rush Recklessly: 70046172)
+      if (code === 55713623 || code === 70046172 || name.includes('Shrink') || name.includes('Rush Recklessly')) {
+        if (!isBattlePhase) {
+          score = -3000;
+          reason = `[HOLD] Hold ${name} for battle damage calculation (do not waste on phase exit)`;
+        } else {
+          score = 1200;
+          reason = `[COMBAT] Activate ${name} during battle clash`;
+        }
+      }
+      // Limiter Removal (2317163)
+      else if (code === 2317163 || name.includes('Limiter Removal')) {
+        if (!isBattlePhase) {
+          score = -4000;
+          reason = `[HOLD] Hold Limiter Removal for Battle Phase to avoid destroying machines at End Phase`;
+        } else {
+          score = 2500;
+          reason = `[COMBAT] Activate Limiter Removal in Battle Phase`;
+        }
+      }
       // Counter Traps & Omni-negates (Solemn Judgment, Solemn Strike, Dark Bribe, Magic Jammer)
-      if (code === 41420027 || code === 84749824 || code === 77414722 || code === 77414722) {
+      else if (code === 41420027 || code === 84749824 || code === 77414722 || code === 77414722) {
         score = 2500 * defensiveness;
         reason = `[COUNTER NEGATE] Activate counter trap ${name} to negate opponent action`;
       }
@@ -399,14 +435,14 @@ export class DefaultExecutor implements DeckExecutor {
       });
     }
 
-    // Pass priority option
+    // Pass priority option (default safely to 800 when no critical chain triggers exist)
     if (!msg.forced) {
       candidates.push({
         action: {
           type: OcgResponseType.SELECT_CHAIN,
           index: null,
         },
-        score: 200,
+        score: 800,
         reason: 'Pass chain priority (save resources)',
       });
     }

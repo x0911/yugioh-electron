@@ -83,6 +83,11 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
     - Replaced conflicting JS hooks in `HandFan.vue` with smooth CSS FLIP layout transitions.
     - Suppressed source card ghost duplicates during `playCardFlight` spatial flights.
     - Added landing settle animation in `FieldZoneSlot.vue` for zero-flicker slot handoffs.
+14. **AI Combat Decision Polish & Quick-Play Timing Fixes**:
+    - Restricted *Limiter Removal* and *Shrink* from firing prematurely in Main Phase 1 or on phase transitions, holding them strictly for Battle Phase damage calculation or lethal OTK math.
+    - Prevented suicidal Battle Phase transitions when all AI attackers are weaker than opponent's face-up monsters.
+    - Fixed `Option #221` text fallback in `SELECT_EFFECTYN` to display human-readable effect descriptions (*Card of Safe Return*).
+    - Added explicit descriptive decoding for `CONFIRM_CARDS`, `SHUFFLE_DECK`, `EQUIP`, `BECOME_TARGET`, `CARD_TARGET`, `DAMAGE_STEP_START`, and `DAMAGE_STEP_END`.
 
 ---
 

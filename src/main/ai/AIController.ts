@@ -375,9 +375,21 @@ export class AIController {
       let score = 0;
 
       if (hasAttackMonsters) {
-        score = 650 + (board.aiTotalAtk - board.oppVisibleTotalAtk) * 0.2 * personality.aggression;
+        const oppFaceUpAttack = oppField.monsterZones.filter(
+          (m) => m && m.position === 'faceup_attack' && (m.atk ?? 0) > 0,
+        );
+        const oppStrongerCount = oppFaceUpAttack.filter(
+          (m) => (m?.atk ?? 0) > board.aiMaxAtk,
+        ).length;
+
+        // If opponent has only stronger face-up attack monsters, do not enter BP to commit suicide
+        if (oppFaceUpAttack.length > 0 && oppStrongerCount === oppFaceUpAttack.length) {
+          score = -2500;
+        } else {
+          score = 650 + (board.aiTotalAtk - board.oppVisibleTotalAtk) * 0.2 * personality.aggression;
+        }
       } else {
-        score = 50; // Low score if no attack monsters
+        score = -500; // Low score if no attack monsters
       }
 
       candidates.push({
@@ -387,7 +399,9 @@ export class AIController {
           index: null,
         },
         score,
-        reason: `Enter Battle Phase with ${board.aiMonsterCount} monster(s) (${board.aiTotalAtk} total ATK)`,
+        reason: score < 0
+          ? 'Hold in Main Phase (opposing field is superior)'
+          : `Enter Battle Phase with ${board.aiMonsterCount} monster(s) (${board.aiTotalAtk} total ATK)`,
       });
     }
 
@@ -786,10 +800,10 @@ export class AIController {
 
     const maxScore = Math.max(...candidates.map((c) => c.score));
 
-    // When neutral/positive actions (score >= 0) exist, prune heavily negative futile/suicidal actions (< -500)
+    // When neutral/positive actions (score >= 0) exist, prune heavily negative futile/suicidal actions (< -100)
     let eligibleCandidates = candidates;
     if (maxScore >= 0) {
-      const filtered = candidates.filter((c) => c.score >= -500);
+      const filtered = candidates.filter((c) => c.score >= -100);
       if (filtered.length > 0) {
         eligibleCandidates = filtered;
       }

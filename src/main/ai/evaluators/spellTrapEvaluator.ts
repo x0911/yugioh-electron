@@ -110,7 +110,54 @@ export function evaluateSpellActivation(
     };
   }
 
-  // 7. Signature Card Priority
+  // 7. Combat Stat Doubler / Quick-Play: Limiter Removal (2317163)
+  if (code === 2317163 || cardName.includes('Limiter Removal')) {
+    const isBattlePhase = boardState.currentPhase === 'BP' || boardState.currentPhase === 'BATTLE_START' || boardState.currentPhase === 'BATTLE_STEP';
+    const machineMonsters = aiField.monsterZones.filter((m) => m && (m.race === 'Machine' || m.race === 'MACHINE' || m.position === 'faceup_attack'));
+    const totalMachineAtk = machineMonsters.reduce((sum, m) => sum + (m?.atk ?? 0), 0);
+    const doubledTotalAtk = totalMachineAtk * 2;
+    const isLethal = doubledTotalAtk >= oppLp && totalMachineAtk > 0;
+
+    if (isLethal) {
+      return {
+        score: 16000,
+        reason: `[LETHAL OTK] Activate Limiter Removal to double Machine ATK (${totalMachineAtk} -> ${doubledTotalAtk}) for game!`,
+      };
+    }
+    if (!isBattlePhase) {
+      return {
+        score: -4000,
+        reason: `Hold Limiter Removal until Battle Phase / Damage Step to avoid destroying machines at End Phase for no reason`,
+      };
+    }
+    if (machineMonsters.length > 0) {
+      return {
+        score: 1200 * (personality.aggression + 0.5),
+        reason: `Activate Limiter Removal in battle to double Machine monster ATK`,
+      };
+    }
+    return {
+      score: -2000,
+      reason: `Hold Limiter Removal (no machine monsters on field)`,
+    };
+  }
+
+  // 8. Combat Stat Modifiers / Quick-Plays (Shrink: 55713623, Rush Recklessly: 70046172)
+  if (code === 55713623 || cardName.includes('Shrink') || code === 70046172 || cardName.includes('Rush Recklessly')) {
+    const isBattlePhase = boardState.currentPhase === 'BP' || boardState.currentPhase === 'BATTLE_START' || boardState.currentPhase === 'BATTLE_STEP';
+    if (!isBattlePhase) {
+      return {
+        score: -3000,
+        reason: `Hold ${cardName} for battle damage calculation (do not waste in Main Phase)`,
+      };
+    }
+    return {
+      score: 800,
+      reason: `Activate ${cardName} during combat to alter ATK in battle clash`,
+    };
+  }
+
+  // 9. Signature Card Priority
   if (signatureCardIds.includes(code)) {
     return {
       score: 1000 * personality.signatureFavoritism,

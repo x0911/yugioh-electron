@@ -106,7 +106,7 @@ export function evaluateAttackOption(
       } else {
         // Attacker is weaker: suicide
         const selfDamage = targetAtk - attacker.attackerAtk;
-        targetScore = -2500 - selfDamage * 2;
+        targetScore = -6000 - selfDamage * 5;
         targetReason = `[AVOID] Suicide attack into stronger ${target.name} (${targetAtk} ATK)`;
       }
     } else if (target.position === 'faceup_defense') {
@@ -117,18 +117,18 @@ export function evaluateAttackOption(
           targetReason = `Effect destroys face-up defense battle-immune ${target.name} before damage calculation!`;
         } else {
           // Futile attack: Deals 0 damage and does not destroy the monster
-          targetScore = -3000;
+          targetScore = -6000;
           targetReason = `[AVOID] Futile attack against battle-immune ${target.name} in Defense Position`;
         }
       } else if (attacker.attackerAtk > targetDef || isDefenseDestroyer) {
         targetScore = 400 + targetDef * 0.2;
         targetReason = `Destroy defensive wall ${target.name} (${targetDef} DEF)`;
       } else if (attacker.attackerAtk === targetDef) {
-        targetScore = -200;
+        targetScore = -500;
         targetReason = `Stalemate clash with ${target.name} (${targetDef} DEF)`;
       } else {
         const recoil = targetDef - attacker.attackerAtk;
-        targetScore = -1500 - recoil * 1.5;
+        targetScore = -3000 - recoil * 2;
         targetReason = `[AVOID] Recoil against higher DEF ${target.name} (${targetDef} DEF)`;
       }
     } else {

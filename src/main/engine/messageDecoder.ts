@@ -979,7 +979,12 @@ export class MessageDecoder {
         const name = this.cardReader.getCardName(msg.code);
         const cardDetail = this.cardReader.getCardDetail(msg.code);
         let resolvedEffectDesc = this.cardReader.resolveString(msg.description);
-        if (!resolvedEffectDesc || resolvedEffectDesc === '0' || !isNaN(Number(resolvedEffectDesc))) {
+        if (
+          !resolvedEffectDesc ||
+          resolvedEffectDesc === '0' ||
+          resolvedEffectDesc.startsWith('Option #') ||
+          !isNaN(Number(resolvedEffectDesc))
+        ) {
           resolvedEffectDesc = cardDetail?.desc || `Activate effect of "${name}"?`;
         }
         description = resolvedEffectDesc;
@@ -1259,6 +1264,64 @@ export class MessageDecoder {
           description,
           raw: sanitizeBigInts(msg),
         };
+      }
+
+      case OcgMessageType.CONFIRM_CARDS: {
+        type = 'CONFIRM_CARDS';
+        const p = msg.player ?? 0;
+        description = `Player ${p} revealed card(s).`;
+        return { type, rawType, player: p, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.CONFIRM_DECKTOP: {
+        type = 'CONFIRM_DECKTOP';
+        const p = msg.player ?? 0;
+        const count = msg.count ?? 1;
+        description = `Player ${p} revealed top ${count} card(s) of Deck.`;
+        return { type, rawType, player: p, count, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.SHUFFLE_DECK: {
+        type = 'SHUFFLE_DECK';
+        const p = msg.player ?? 0;
+        description = `Player ${p} shuffled Deck.`;
+        return { type, rawType, player: p, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.EQUIP: {
+        type = 'EQUIP';
+        description = `Card equipped.`;
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.BECOME_TARGET: {
+        type = 'BECOME_TARGET';
+        description = `Card targeted by effect.`;
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.CARD_TARGET: {
+        type = 'CARD_TARGET';
+        description = `Target acquired.`;
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.DAMAGE_STEP_START: {
+        type = 'DAMAGE_STEP_START';
+        description = `Damage Step begins.`;
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.DAMAGE_STEP_END: {
+        type = 'DAMAGE_STEP_END';
+        description = `Damage Step ended.`;
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.CARD_HINT: {
+        type = 'CARD_HINT';
+        description = `Card update / hint.`;
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
       }
 
       default: {
