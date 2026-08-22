@@ -10,6 +10,7 @@ import {
   SelectBattleCMDAction,
   OcgPosition,
 } from 'ocgcore-wasm';
+import { createEmptyPlayerField } from '../src/shared/types/field.js';
 import type { EvaluatorContext } from '../src/main/ai/types.js';
 
 async function runTestSuite() {
@@ -682,8 +683,106 @@ async function runTestSuite() {
     service.destroyCurrentDuel();
     console.log('  ✓ The Hunter with 7 Weapons & ANNOUNCE_RACE passed!\n');
 
+    // 12. Comprehensive Announcement & Prompt Response Normalization
+    console.log('▶ Test 12: Comprehensive Prompt Normalization & AI Responses');
+    
+    const mockBoard = {
+      userField: createEmptyPlayerField(0, 'You'),
+      opponentField: createEmptyPlayerField(1, 'AI'),
+      extraMonsterZones: [null, null],
+      turnNumber: 2,
+      currentPhase: 'MAIN1',
+      activePrompt: null,
+      phaseGuideText: '',
+      winner: null,
+      winReason: null,
+    };
+    mockBoard.userField.monsterZones[0] = {
+      code: 95956346,
+      name: 'Shining Angel',
+      position: 'faceup_attack',
+      atk: 1400,
+      def: 800,
+      level: 4,
+      canAttack: true,
+      canChangePosition: true,
+      equippedCards: [],
+      counters: 0,
+      hasDirectAttackEffect: false,
+      turnPlayed: 1,
+    } as any;
+
+    // ANNOUNCE_ATTRIB
+    const attribResp = aiController.decideResponse(
+      { type: OcgMessageType.ANNOUNCE_ATTRIB, player: 1, count: 1, available: 63 } as any,
+      {
+        aiPlayerId: 1,
+        humanPlayerId: 0,
+        boardState: mockBoard,
+        personality: {} as any,
+        cardReader,
+        currentPhase: 'MAIN1',
+        currentTurn: 2,
+        signatureCardIds: [],
+        deckArchetype: 'cyber_dragon',
+        aiDeckCards: [],
+      }
+    );
+    assert.equal(attribResp.type, OcgResponseType.ANNOUNCE_ATTRIB, 'Must return ANNOUNCE_ATTRIB');
+    assert(Array.isArray((attribResp as any).attributes), 'Attributes must be an array');
+
+    // SELECT_COUNTER
+    const counterResp = aiController.decideResponse(
+      {
+        type: OcgMessageType.SELECT_COUNTER,
+        player: 1,
+        counter_type: 1,
+        count: 2,
+        cards: [{ code: 12345, count: 3 }],
+      } as any,
+      {
+        aiPlayerId: 1,
+        humanPlayerId: 0,
+        boardState: mockBoard,
+        personality: {} as any,
+        cardReader,
+        currentPhase: 'MAIN1',
+        currentTurn: 2,
+        signatureCardIds: [],
+        deckArchetype: 'cyber_dragon',
+        aiDeckCards: [],
+      }
+    );
+    assert.equal(counterResp.type, OcgResponseType.SELECT_COUNTER, 'Must return SELECT_COUNTER');
+    assert.deepEqual((counterResp as any).counters, [2], 'Must remove 2 counters');
+
+    // SORT_CHAIN
+    const sortChainResp = aiController.decideResponse(
+      {
+        type: OcgMessageType.SORT_CHAIN,
+        player: 1,
+        cards: [{ code: 111 }, { code: 222 }],
+      } as any,
+      {
+        aiPlayerId: 1,
+        humanPlayerId: 0,
+        boardState: mockBoard,
+        personality: {} as any,
+        cardReader,
+        currentPhase: 'MAIN1',
+        currentTurn: 2,
+        signatureCardIds: [],
+        deckArchetype: 'cyber_dragon',
+        aiDeckCards: [],
+      }
+    );
+    assert.equal(sortChainResp.type, OcgResponseType.SORT_CARD, 'Must return SORT_CARD for SORT_CHAIN');
+    assert.deepEqual((sortChainResp as any).order, [0, 1], 'Must return valid order array');
+
+    console.log('  ✓ Comprehensive Prompt Normalization & AI Responses passed!\n');
+
     console.log('================================================================');
-    console.log('🎉 ALL 11 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 12 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();

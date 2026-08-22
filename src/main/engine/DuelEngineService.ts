@@ -1044,12 +1044,81 @@ export class DuelEngineService {
 
   private normalizeResponse(response: OcgResponse): OcgResponse {
     if (!response) return response;
-    // Normalize BigInts for ANNOUNCE_RACE
-    if (response.type === OcgResponseType.ANNOUNCE_RACE && (response as any).races) {
-      return {
-        ...response,
-        races: (response as any).races.map((r: any) => (typeof r === 'bigint' ? r : BigInt(r))),
-      };
+    switch (response.type) {
+      case OcgResponseType.ANNOUNCE_RACE:
+        if ((response as any).races) {
+          return {
+            ...response,
+            races: (response as any).races.map((r: any) => (typeof r === 'bigint' ? r : BigInt(r))),
+          };
+        }
+        break;
+      case OcgResponseType.ANNOUNCE_ATTRIB:
+        if ((response as any).attributes) {
+          return {
+            ...response,
+            attributes: (response as any).attributes.map((a: any) => (typeof a === 'number' ? a : Number(a))),
+          };
+        }
+        break;
+      case OcgResponseType.ANNOUNCE_CARD:
+        return {
+          ...response,
+          card: typeof (response as any).card === 'number' ? (response as any).card : Number((response as any).card),
+        };
+      case OcgResponseType.ANNOUNCE_NUMBER:
+        return {
+          ...response,
+          value: typeof (response as any).value === 'number' ? (response as any).value : Number((response as any).value),
+        };
+      case OcgResponseType.SELECT_CARD:
+      case OcgResponseType.SELECT_TRIBUTE:
+        if ((response as any).indicies) {
+          return {
+            ...response,
+            indicies: (response as any).indicies.map((i: any) => Number(i)),
+          };
+        }
+        break;
+      case OcgResponseType.SELECT_SUM:
+        if ((response as any).indicies) {
+          return {
+            ...response,
+            indicies: (response as any).indicies.map((i: any) => Number(i)),
+          };
+        }
+        break;
+      case OcgResponseType.SELECT_COUNTER:
+        if ((response as any).counters) {
+          return {
+            ...response,
+            counters: (response as any).counters.map((c: any) => Number(c)),
+          };
+        }
+        break;
+      case OcgResponseType.SORT_CARD:
+        if ((response as any).order) {
+          return {
+            ...response,
+            order: (response as any).order.map((o: any) => Number(o)),
+          };
+        }
+        break;
+      case OcgResponseType.SELECT_OPTION:
+        return {
+          ...response,
+          index: Number((response as any).index),
+        };
+      case OcgResponseType.SELECT_POSITION:
+        return {
+          ...response,
+          position: Number((response as any).position),
+        };
+      case OcgResponseType.ROCK_PAPER_SCISSORS:
+        return {
+          ...response,
+          value: (Number((response as any).value) || 1) as 1 | 2 | 3,
+        };
     }
     return response;
   }

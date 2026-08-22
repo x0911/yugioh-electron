@@ -1281,6 +1281,116 @@ export class MessageDecoder {
         };
       }
 
+      case OcgMessageType.SORT_CARD: {
+        isPrompt = true;
+        type = 'SORT_CARD';
+        promptType = 'SORT_CARD';
+        promptPlayer = msg.player;
+        description = `Select the order for the cards.`;
+
+        promptData = {
+          player: msg.player,
+          cards: (msg.cards || []).map((c: any) => ({
+            ...c,
+            cardName: this.cardReader.getCardName(c.code),
+          })),
+        };
+
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SORT_CHAIN: {
+        isPrompt = true;
+        type = 'SORT_CHAIN';
+        promptType = 'SORT_CHAIN';
+        promptPlayer = msg.player;
+        description = `Select chain resolution order.`;
+
+        promptData = {
+          player: msg.player,
+          cards: (msg.cards || []).map((c: any) => ({
+            ...c,
+            cardName: this.cardReader.getCardName(c.code),
+          })),
+        };
+
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_COUNTER: {
+        isPrompt = true;
+        type = 'SELECT_COUNTER';
+        promptType = 'SELECT_COUNTER';
+        promptPlayer = msg.player;
+        description = `Select ${msg.count} counter(s) to remove.`;
+
+        promptData = {
+          player: msg.player,
+          counter_type: msg.counter_type,
+          count: msg.count,
+          cards: (msg.cards || []).map((c: any) => ({
+            ...c,
+            cardName: this.cardReader.getCardName(c.code),
+          })),
+        };
+
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.ROCK_PAPER_SCISSORS: {
+        isPrompt = true;
+        type = 'ROCK_PAPER_SCISSORS';
+        promptType = 'ROCK_PAPER_SCISSORS';
+        promptPlayer = msg.player;
+        description = `Choose Rock, Paper, or Scissors.`;
+
+        promptData = {
+          player: msg.player,
+        };
+
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
       case OcgMessageType.CONFIRM_CARDS: {
         type = 'CONFIRM_CARDS';
         const p = msg.player ?? 0;

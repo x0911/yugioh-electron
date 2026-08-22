@@ -76,6 +76,25 @@ export interface PlayerFieldState {
   hand: FieldCard[]; // Cards in hand
 }
 
+export function createEmptyPlayerField(playerId: 0 | 1, name: string): PlayerFieldState {
+  return {
+    playerId,
+    name,
+    currentLp: 8000,
+    maxLp: 8000,
+    isTurn: false,
+    monsterZones: [null, null, null, null, null],
+    spellTrapZones: [null, null, null, null, null],
+    fieldZone: null,
+    graveyard: [],
+    banished: [],
+    extraDeck: [],
+    deckCount: 40,
+    extraDeckCount: 0,
+    hand: [],
+  };
+}
+
 export interface DuelBoardState {
   userField: PlayerFieldState;
   opponentField: PlayerFieldState;
@@ -87,3 +106,5 @@ export interface DuelBoardState {
   winner: 0 | 1 | 'draw' | null;
   winReason?: number | null;
 }
+
+
