@@ -72,6 +72,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { getCharacterPortraitUrl } from '../../utils/media.js';
+import { audioManager } from '../../audio/index.js';
 
 const props = withDefaults(
   defineProps<{
@@ -101,6 +102,7 @@ const isDamagedFlash = ref(false);
 
 let damageFlashTimeout: ReturnType<typeof setTimeout> | null = null;
 let tweenAnimFrame: number | null = null;
+let lastTickTime = 0;
 
 function handleAvatarError(): void {
   avatarFailed.value = true;
@@ -116,6 +118,16 @@ watch(
       damageFlashTimeout = setTimeout(() => {
         isDamagedFlash.value = false;
       }, 550);
+
+      if (oldVal - newVal >= 1000) {
+        audioManager.playSfx('lp-damage-heavy');
+      }
+
+      if (newVal <= 2000 && newVal > 0) {
+        audioManager.playSfx('lp-low-alarm', 0.6);
+      }
+    } else if (oldVal !== undefined && newVal > oldVal) {
+      audioManager.playSfx('lp-heal');
     }
 
     // Tween LP counter
@@ -126,13 +138,22 @@ watch(
     const targetLp = Math.max(0, newVal);
     const duration = 460;
     const startTime = performance.now();
+    lastTickTime = startTime;
 
     function step(currentTime: number): void {
       const elapsed = currentTime - startTime;
       const progress = Math.min(1, elapsed / duration);
       // Ease out cubic
       const ease = 1 - Math.pow(1 - progress, 3);
-      displayLp.value = Math.round(startLp + (targetLp - startLp) * ease);
+      const nextLp = Math.round(startLp + (targetLp - startLp) * ease);
+
+      // Play tick sound when LP counter changes
+      if (nextLp !== displayLp.value && currentTime - lastTickTime >= 40) {
+        audioManager.playLpTick();
+        lastTickTime = currentTime;
+      }
+
+      displayLp.value = nextLp;
 
       if (progress < 1) {
         tweenAnimFrame = requestAnimationFrame(step);

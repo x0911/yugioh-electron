@@ -11,8 +11,14 @@ export interface AppStoreSchema {
 }
 
 export const defaultSettings: SettingsConfig = {
+  selectedBgmTheme: 'passionate',
+  masterVolume: 100,
   bgmVolume: 80,
   sfxVolume: 100,
+  isMasterMuted: false,
+  isBgmMuted: false,
+  isSfxMuted: false,
+  duckingIntensity: 'normal',
   selectedOpponentId: 'yugi-muto',
   selectedSeriesFilter: 'ALL',
   devMode: true,

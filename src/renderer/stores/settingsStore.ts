@@ -4,6 +4,7 @@ import type {
   CharacterDeckData,
   SettingsConfig,
 } from '../../shared/types/character.js';
+import { audioManager, type DuckingIntensity } from '../audio/index.js';
 
 export interface SettingsState extends SettingsConfig {
   characters: CharacterData[];
@@ -12,8 +13,14 @@ export interface SettingsState extends SettingsConfig {
 }
 
 export const defaultSettings: SettingsConfig = {
+  selectedBgmTheme: 'passionate',
+  masterVolume: 100,
   bgmVolume: 80,
   sfxVolume: 100,
+  isMasterMuted: false,
+  isBgmMuted: false,
+  isSfxMuted: false,
+  duckingIntensity: 'normal',
   selectedOpponentId: 'yugi-muto',
   selectedSeriesFilter: 'ALL',
   devMode: true,
@@ -49,8 +56,14 @@ export const useSettingsStore = defineStore('settings', {
           // Load settings from electron-store
           const saved = await window.settingsAPI.getSettings();
           if (saved) {
+            this.selectedBgmTheme = saved.selectedBgmTheme || defaultSettings.selectedBgmTheme;
+            this.masterVolume = saved.masterVolume ?? defaultSettings.masterVolume;
             this.bgmVolume = saved.bgmVolume ?? defaultSettings.bgmVolume;
             this.sfxVolume = saved.sfxVolume ?? defaultSettings.sfxVolume;
+            this.isMasterMuted = saved.isMasterMuted ?? defaultSettings.isMasterMuted;
+            this.isBgmMuted = saved.isBgmMuted ?? defaultSettings.isBgmMuted;
+            this.isSfxMuted = saved.isSfxMuted ?? defaultSettings.isSfxMuted;
+            this.duckingIntensity = saved.duckingIntensity || defaultSettings.duckingIntensity;
             this.selectedOpponentId =
               saved.selectedOpponentId || defaultSettings.selectedOpponentId;
             this.selectedSeriesFilter =
@@ -58,6 +71,15 @@ export const useSettingsStore = defineStore('settings', {
             this.devMode = saved.devMode ?? defaultSettings.devMode;
             this.skipPreDuelVideo = saved.skipPreDuelVideo ?? defaultSettings.skipPreDuelVideo;
           }
+
+          // Apply saved volume settings to audioManager
+          audioManager.setMasterVolume(this.masterVolume);
+          audioManager.setBgmVolume(this.bgmVolume);
+          audioManager.setSfxVolume(this.sfxVolume);
+          audioManager.setMasterMute(this.isMasterMuted);
+          audioManager.setBgmMute(this.isBgmMuted);
+          audioManager.setSfxMute(this.isSfxMuted);
+          audioManager.setDuckingIntensity(this.duckingIntensity);
 
           // Load characters list
           const chars = await window.settingsAPI.getCharacters();
@@ -73,13 +95,51 @@ export const useSettingsStore = defineStore('settings', {
       }
     },
 
+    async setSelectedBgmTheme(themeId: string): Promise<void> {
+      this.selectedBgmTheme = themeId;
+      audioManager.playBgm(themeId);
+      await this.persist();
+    },
+
+    async setMasterVolume(volume: number): Promise<void> {
+      this.masterVolume = Math.max(0, Math.min(100, volume));
+      audioManager.setMasterVolume(this.masterVolume);
+      await this.persist();
+    },
+
     async setBgmVolume(volume: number): Promise<void> {
       this.bgmVolume = Math.max(0, Math.min(100, volume));
+      audioManager.setBgmVolume(this.bgmVolume);
       await this.persist();
     },
 
     async setSfxVolume(volume: number): Promise<void> {
       this.sfxVolume = Math.max(0, Math.min(100, volume));
+      audioManager.setSfxVolume(this.sfxVolume);
+      await this.persist();
+    },
+
+    async toggleMasterMute(): Promise<void> {
+      this.isMasterMuted = !this.isMasterMuted;
+      audioManager.setMasterMute(this.isMasterMuted);
+      await this.persist();
+    },
+
+    async toggleBgmMute(): Promise<void> {
+      this.isBgmMuted = !this.isBgmMuted;
+      audioManager.setBgmMute(this.isBgmMuted);
+      await this.persist();
+    },
+
+    async toggleSfxMute(): Promise<void> {
+      this.isSfxMuted = !this.isSfxMuted;
+      audioManager.setSfxMute(this.isSfxMuted);
+      await this.persist();
+    },
+
+    async setDuckingIntensity(intensity: DuckingIntensity): Promise<void> {
+      this.duckingIntensity = intensity;
+      audioManager.setDuckingIntensity(intensity);
       await this.persist();
     },
 
@@ -104,12 +164,28 @@ export const useSettingsStore = defineStore('settings', {
     },
 
     async resetToDefaults(): Promise<void> {
+      this.selectedBgmTheme = defaultSettings.selectedBgmTheme;
+      this.masterVolume = defaultSettings.masterVolume;
       this.bgmVolume = defaultSettings.bgmVolume;
       this.sfxVolume = defaultSettings.sfxVolume;
+      this.isMasterMuted = defaultSettings.isMasterMuted;
+      this.isBgmMuted = defaultSettings.isBgmMuted;
+      this.isSfxMuted = defaultSettings.isSfxMuted;
+      this.duckingIntensity = defaultSettings.duckingIntensity;
       this.selectedOpponentId = defaultSettings.selectedOpponentId;
       this.selectedSeriesFilter = defaultSettings.selectedSeriesFilter;
       this.devMode = defaultSettings.devMode;
       this.skipPreDuelVideo = defaultSettings.skipPreDuelVideo;
+
+      audioManager.setMasterVolume(this.masterVolume);
+      audioManager.setBgmVolume(this.bgmVolume);
+      audioManager.setSfxVolume(this.sfxVolume);
+      audioManager.setMasterMute(false);
+      audioManager.setBgmMute(false);
+      audioManager.setSfxMute(false);
+      audioManager.setDuckingIntensity('normal');
+      audioManager.playBgm(this.selectedBgmTheme);
+
       await this.persist();
     },
 
@@ -117,8 +193,14 @@ export const useSettingsStore = defineStore('settings', {
       if (window.settingsAPI) {
         try {
           await window.settingsAPI.saveSettings({
+            selectedBgmTheme: this.selectedBgmTheme,
+            masterVolume: this.masterVolume,
             bgmVolume: this.bgmVolume,
             sfxVolume: this.sfxVolume,
+            isMasterMuted: this.isMasterMuted,
+            isBgmMuted: this.isBgmMuted,
+            isSfxMuted: this.isSfxMuted,
+            duckingIntensity: this.duckingIntensity,
             selectedOpponentId: this.selectedOpponentId,
             selectedSeriesFilter: this.selectedSeriesFilter,
             devMode: this.devMode,

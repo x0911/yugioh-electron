@@ -106,6 +106,7 @@ import { useRouter } from 'vue-router';
 import { useDuelStore } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
 import { getCharacterVideoUrl, getCharacterPortraitUrl } from '../utils/media.js';
+import { audioManager } from '../audio/index.js';
 
 const router = useRouter();
 const duelStore = useDuelStore();
@@ -144,6 +145,9 @@ onMounted(async () => {
     return;
   }
 
+  // Duck BGM during pre-duel cutscene
+  audioManager.duckBgm('pre-duel-video', 250);
+
   // Ensure match data is configured
   if (!duelStore.isMatchPrepared) {
     await duelStore.setupMatch();
@@ -162,6 +166,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   clearProgressTimer();
+  audioManager.restoreBgm('pre-duel-video', 350);
 });
 
 function startProgressTimer(): void {

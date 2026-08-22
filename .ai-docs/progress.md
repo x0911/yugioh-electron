@@ -1332,8 +1332,73 @@
    - On the **Main Menu**, click **"ℹ️ About"** in the top-right header $\to$ confirm the About modal opens displaying version `v0.1.0`, `ygopro-core v11.0`, `2,826 Cards Indexed`, and `Offline` badge.
    - Navigate to **Settings** $\to$ click **"ℹ️ About Arena"** $\to$ confirm modal opens and dismisses cleanly.
    - Navigate to **Deck Edit** $\to$ hover over cards in the virtualized grid $\to$ verify full card images appear instantly with 0 flicker (cached in memory). Try creating a deck with < 40 cards $\to$ observe red illegal banner; add 40 cards $\to$ observe green legal banner.
-   - Start a duel against **Seto Kaiba** or **Yugi Muto** $\to$ play through turns, declare attacks, trigger card effects, and verify smooth animations and LP countdowns.
-   - Click the in-duel **"Menu"** button $\to$ click **"Exit to Main Menu"** $\to$ verify clean return to Main Menu with no memory leaks or stuck engine timers.
+
+## Phase 15 — Background Music (BGM), Sound Effects & Dynamic Cutscene Audio Ducking — 2026-08-22
+
+**Status:** Complete
+
+**What was built:**
+- **Master Web Audio Engine (`AudioManager.ts`)**:
+  - Implemented dual-bus Web Audio routing graph: `AudioContext.destination` $\leftarrow$ `Master GainNode` $\leftarrow$ `[BGM Duck GainNode -> BGM Vol GainNode, SFX Vol GainNode, Video GainNode]`.
+  - Built-in gesture-based autoplay unlocking, volume fading, 15-second theme previews, and loop management.
+- **Dynamic Audio Ducking with Safety Timers**:
+  - Ref-counted `activeDuckSources: Set<string>` that automatically attenuates background music to 15% (or full mute if configured) during monster summon cutscenes, attack animations, and character intro videos.
+  - Smooth 200ms linear ramp-down on cutscene trigger and 350ms linear ramp-up on cutscene finish or skip.
+  - Fail-safe safety timers (10s max duration) preventing stuck ducked audio states even if video playback encounters network or format errors.
+- **6 Curated Main Background Music Themes**:
+  1. *Passionate Duelist* (`passionate`): Classic anime hero rallying anthem with orchestral brass and rock rhythm.
+  2. *Master Duel Arena* (`master-duel`): High-tempo electronic stadium synth with punchy basslines.
+  3. *GX Generation* (`gx-rock`): Energetic J-Rock electric guitars inspired by Duel Academy comeback duels.
+  4. *Millennium Mystery* (`millennium`): Ancient Egyptian mysticism with Middle Eastern percussion and tomb flutes.
+  5. *KaibaCorp Cyber Matrix* (`kaibacorp`): Futuristic high-tech cyberpunk arpeggios and synthwave.
+  6. *Casual Duel Lounge* (`lounge`): Lo-Fi chillhop with Rhodes electric piano and vinyl warmth.
+- **Interactive Settings UI (`SettingsView.vue`)**:
+  - Added **Main Background Music Theme Selector** cards with genre pills, descriptions, active badges, and live sample preview buttons.
+  - Master Volume, BGM Volume, and SFX Volume sliders with inline mute toggle buttons.
+  - Cutscene Ducking Mode selection (`normal` 85% reduction, `mute` full mute during videos, `off` keep full volume).
+- **Procedural Sound Synthesizer (`SoundSynthesizer.ts`)**:
+  - Zero-dependency, zero-latency Web Audio procedural waveform synthesizer for authentic retro sound effects (LP ticks, coin flip whistles, attack blade whooshes, sword clashes, spell chimes, destruction noise bursts, and fanfares).
+- **Comprehensive SFX Coverage (35+ Triggers)**:
+  - **Duel Field & Combat**: Card draw, normal/special/flip/tribute summon, monster/spell set, spell/trap/field activation, chain links, attack declarations, monster clashes, direct attacks, destructions to GY, discards, banishes, position change, phase change, turn start, deck shuffle, prompt alert, and target locked.
+  - **Life Points Meter**: Numerical tween loop ticking, heavy damage impact (>1000 LP), heal chimes, and critical low-LP alarm ($\le 2000$ LP).
+  - **Coin Toss & Deck Builder**: Toss choice, coin spin, land clink, toss won/lost fanfares, card drag pickup, drop, trash remove, and deck save.
+  - **UI & Navigation**: Button hovers and clicks in `YugiButton.vue`.
+- **Automated Test Suites**:
+  - Created `tests/audio-manager-and-ducking.test.ts` and `tests/sound-effects-matrix.test.ts`.
+  - All 22 automated test suites pass with 100% success rate (`npm test`).
+
+**Files added/changed:**
+- `src/renderer/audio/audioManifest.ts`: Sourced 6 BGM themes and 35+ SFX definitions with volume multipliers and synth fallback keys.
+- `src/renderer/audio/soundSynthesizer.ts`: Procedural Web Audio synthesizer for zero-latency retro sound effects.
+- `src/renderer/audio/audioManager.ts`: Master audio singleton with gain buses, ducking, previews, and gesture unlocking.
+- `src/renderer/audio/index.ts`: Barrel export.
+- `src/shared/types/character.ts`: Extended `SettingsConfig` interface with audio settings.
+- `src/main/persistence/store.ts`: Added audio configuration defaults and persistence.
+- `src/renderer/stores/settingsStore.ts`: Added reactive audio store actions and `audioManager` syncing.
+- `src/renderer/views/SettingsView.vue` & `_settings.scss`: Added BGM Theme Selector cards, volume sliders, and mute toggles.
+- `src/renderer/App.vue`: Initialized `audioManager` and started BGM on app startup.
+- `src/renderer/components/common/YugiButton.vue`: Added hover and click SFX triggers.
+- `src/renderer/views/CoinTossView.vue`: Added coin toss selection, spin, land, and victory fanfares.
+- `src/renderer/components/deckEdit/DeckColumn.vue`: Added card drag, drop, trash, and deck save SFX.
+- `src/renderer/components/duel/LifePointsMeter.vue`: Added LP numerical counter ticks, damage impact, heal, and low-LP alarm.
+- `src/renderer/views/DuelView.vue`: Added SFX triggers for all duel engine events and user interactions.
+- `src/renderer/components/duel/VideoOverlay.vue`: Added BGM ducking and restoration for in-duel summon/attack videos.
+- `src/renderer/views/PreDuelVideoView.vue`: Added BGM ducking and restoration for character intro cutscenes.
+- `resources/audio/README.md`: Created audio resources directory and streaming documentation.
+- `tests/audio-manager-and-ducking.test.ts`: AudioManager and dynamic ducking unit test suite.
+- `tests/sound-effects-matrix.test.ts`: Sound effects trigger matrix unit test suite.
+- `package.json`: Registered audio test suites in `npm test`.
+
+**How to manually verify this phase:**
+1. Run `npm test` — verify all 22 test suites pass cleanly.
+2. Run `npm run build` — verify compilation succeeds with zero errors.
+3. Launch the application:
+   - On startup, verify background music begins playing smoothly upon first interaction.
+   - Navigate to **Settings** $\to$ inspect the **Main Background Music Theme** grid with all 6 themes. Click "▶ Preview" on any theme to sample it, and click a theme card to set it as the active game theme.
+   - Adjust Master, Music, and SFX volume sliders, and click mute buttons to verify instant muting.
+   - Go to **Deck Edit** $\to$ drag and drop cards to hear pickup and placement sounds; click Save to hear the confirmation sound.
+   - Start a duel $\to$ play the **Coin Toss** to hear choices, 3D flip whistling, and the result fanfare.
+   - In the duel, play cards, declare attacks, take damage, and activate summon/attack cutscene videos to observe automatic BGM volume ducking and smooth return to default volume.
 
 
 

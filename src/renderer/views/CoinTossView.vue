@@ -187,6 +187,7 @@ import { useDuelStore } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
 import type { CoinChoice } from '../../shared/types/duel.js';
 import { getCoinHeadsUrl, getCoinTailsUrl } from '../utils/media.js';
+import { audioManager } from '../audio/index.js';
 import YugiButton from '../components/common/YugiButton.vue';
 import LoadingSpinner from '../components/common/LoadingSpinner.vue';
 
@@ -235,6 +236,15 @@ function handlePickChoice(choice: CoinChoice): void {
   isFlipping.value = true;
   hasLanded.value = false;
 
+  audioManager.playSfx('coin-choice');
+
+  // Play coin spinning sound
+  setTimeout(() => {
+    if (isFlipping.value) {
+      audioManager.playSfx('coin-flip');
+    }
+  }, 120);
+
   // Random 50/50 outcome
   const outcome: CoinChoice = Math.random() < 0.5 ? 'heads' : 'tails';
   pendingOutcome.value = outcome;
@@ -246,6 +256,17 @@ function handlePickChoice(choice: CoinChoice): void {
   setTimeout(() => {
     isFlipping.value = false;
     hasLanded.value = true;
+
+    audioManager.playSfx('coin-land');
+
+    // Play fanfare based on outcome
+    setTimeout(() => {
+      if (duelStore.userWonCoinToss) {
+        audioManager.playSfx('toss-won');
+      } else {
+        audioManager.playSfx('toss-lost');
+      }
+    }, 180);
 
     // If auto-advance is preferred, set a generous timer
     autoAdvanceTimer = setTimeout(() => {
@@ -259,6 +280,7 @@ function handleResetCoinToss(): void {
     clearTimeout(autoAdvanceTimer);
     autoAdvanceTimer = null;
   }
+  audioManager.playSfx('ui-click');
   selectedChoice.value = null;
   pendingOutcome.value = null;
   isFlipping.value = false;

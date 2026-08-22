@@ -62,11 +62,14 @@
 import { onMounted, onBeforeUnmount, onErrorCaptured } from 'vue';
 import { useDevToolsStore } from './stores/devToolsStore.js';
 import { useUIStore } from './stores/uiStore.js';
+import { useSettingsStore } from './stores/settingsStore.js';
+import { audioManager } from './audio/index.js';
 import ErrorBoundary from './components/common/ErrorBoundary.vue';
 
 const isDev = import.meta.env.DEV;
 const devToolsStore = useDevToolsStore();
 const uiStore = useUIStore();
+const settingsStore = useSettingsStore();
 
 onErrorCaptured((err: Error, _instance, info: string) => {
   console.error('[App] Vue Component Error Captured:', err, info);
@@ -99,10 +102,14 @@ function handleKeyDown(event: KeyboardEvent): void {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('error', handleGlobalError);
   window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+  // Initialize settings from electron-store and start BGM theme
+  await settingsStore.initializeSettings();
+  audioManager.playBgm(settingsStore.selectedBgmTheme);
 });
 
 onBeforeUnmount(() => {

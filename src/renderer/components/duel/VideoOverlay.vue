@@ -80,6 +80,7 @@ import { ref, computed, watch, onUnmounted } from 'vue';
 import type { CardVideoPayload } from '../../../shared/types/duel.js';
 import { useSettingsStore } from '../../stores/settingsStore.js';
 import { getCardImageUrl, handleImageError } from '../../utils/media.js';
+import { audioManager } from '../../audio/index.js';
 
 const props = defineProps<{
   video: CardVideoPayload | null;
@@ -115,6 +116,9 @@ watch(
   () => props.visible,
   (isVis) => {
     if (isVis && props.video) {
+      // Duck BGM immediately when cutscene starts
+      audioManager.duckBgm('duel-video-overlay', 200);
+
       videoError.value = !!props.video.isPlaceholder;
       progressPercent.value = 0;
       if (videoError.value) {
@@ -122,6 +126,7 @@ watch(
       }
     } else {
       clearProgressTimer();
+      audioManager.restoreBgm('duel-video-overlay', 350);
     }
   },
   { immediate: true },
@@ -155,11 +160,13 @@ function handleVideoError(): void {
 
 function handleVideoEnded(): void {
   clearProgressTimer();
+  audioManager.restoreBgm('duel-video-overlay', 350);
   emit('finish');
 }
 
 function handleSkip(): void {
   clearProgressTimer();
+  audioManager.restoreBgm('duel-video-overlay', 350);
   emit('finish');
 }
 
@@ -172,6 +179,7 @@ function handleKeydown(e: KeyboardEvent): void {
 
 onUnmounted(() => {
   clearProgressTimer();
+  audioManager.restoreBgm('duel-video-overlay', 350);
 });
 </script>
 

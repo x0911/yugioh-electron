@@ -180,7 +180,59 @@
         </GlassPanel>
       </section>
 
-      <!-- SECTION 2: AUDIO & GAMEPLAY CONFIG -->
+      <!-- SECTION 2: BACKGROUND MUSIC THEMES -->
+      <section class="settings-view__section">
+        <div class="settings-view__section-header">
+          <h2 class="settings-view__section-title">Main Background Music Theme</h2>
+          <span class="settings-view__section-tag">
+            {{ BGM_THEMES.length }} Themes Available
+          </span>
+        </div>
+
+        <GlassPanel class="settings-view__setting-group settings-view__setting-group--full" accent="gold">
+          <div class="settings-view__themes-grid">
+            <div
+              v-for="theme in BGM_THEMES"
+              :key="theme.id"
+              class="settings-view__theme-card"
+              :class="{ 'settings-view__theme-card--selected': settingsStore.selectedBgmTheme === theme.id }"
+              @click="handleSelectBgmTheme(theme.id)"
+            >
+              <div class="settings-view__theme-top">
+                <span class="settings-view__theme-icon">{{ theme.icon }}</span>
+                <span class="settings-view__theme-genre">{{ theme.genre }}</span>
+              </div>
+
+              <div class="settings-view__theme-body">
+                <h4 class="settings-view__theme-name">{{ theme.name }}</h4>
+                <span class="settings-view__theme-subtitle">{{ theme.subtitle }}</span>
+                <p class="settings-view__theme-desc">{{ theme.description }}</p>
+              </div>
+
+              <div class="settings-view__theme-actions">
+                <span
+                  v-if="settingsStore.selectedBgmTheme === theme.id"
+                  class="settings-view__theme-badge"
+                >
+                  ✓ ACTIVE THEME
+                </span>
+                <span v-else class="text-xs text-muted">Click to Select</span>
+
+                <button
+                  type="button"
+                  class="settings-view__preview-btn"
+                  :class="{ 'settings-view__preview-btn--playing': isPlayingPreview(theme.id) }"
+                  @click.stop="togglePreview(theme.id)"
+                >
+                  {{ isPlayingPreview(theme.id) ? '⏹ Stop' : '▶ Preview' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </GlassPanel>
+      </section>
+
+      <!-- SECTION 3: AUDIO & GAMEPLAY CONFIG -->
       <section class="settings-view__section">
         <div class="settings-view__section-header">
           <h2 class="settings-view__section-title">Sound & Gameplay Settings</h2>
@@ -189,15 +241,57 @@
         <div class="settings-view__settings-grid">
           <!-- Audio Group -->
           <GlassPanel class="settings-view__setting-group" accent="none">
-            <h3 class="settings-view__setting-group-title">Audio Volume</h3>
+            <h3 class="settings-view__setting-group-title">Audio Volume & Ducking</h3>
+
+            <!-- Master Volume -->
+            <div class="settings-view__slider-row">
+              <div class="settings-view__slider-header">
+                <div class="settings-view__slider-header-left">
+                  <button
+                    type="button"
+                    class="settings-view__mute-btn"
+                    :class="{ 'settings-view__mute-btn--muted': settingsStore.isMasterMuted }"
+                    :title="settingsStore.isMasterMuted ? 'Unmute Master' : 'Mute Master'"
+                    @click="settingsStore.toggleMasterMute"
+                  >
+                    {{ settingsStore.isMasterMuted ? '🔇' : '🔊' }}
+                  </button>
+                  <label for="master-slider" class="settings-view__slider-label">Master Volume</label>
+                </div>
+                <span class="settings-view__slider-val">
+                  {{ settingsStore.isMasterMuted ? 'MUTED' : `${settingsStore.masterVolume}%` }}
+                </span>
+              </div>
+              <input
+                id="master-slider"
+                type="range"
+                min="0"
+                max="100"
+                :value="settingsStore.masterVolume"
+                :disabled="settingsStore.isMasterMuted"
+                class="settings-view__range-input"
+                @input="handleMasterInput"
+              />
+            </div>
 
             <!-- BGM Slider -->
             <div class="settings-view__slider-row">
               <div class="settings-view__slider-header">
-                <label for="bgm-slider" class="settings-view__slider-label"
-                  >Music Volume (BGM)</label
-                >
-                <span class="settings-view__slider-val">{{ settingsStore.bgmVolume }}%</span>
+                <div class="settings-view__slider-header-left">
+                  <button
+                    type="button"
+                    class="settings-view__mute-btn"
+                    :class="{ 'settings-view__mute-btn--muted': settingsStore.isBgmMuted }"
+                    :title="settingsStore.isBgmMuted ? 'Unmute Music' : 'Mute Music'"
+                    @click="settingsStore.toggleBgmMute"
+                  >
+                    {{ settingsStore.isBgmMuted ? '🔇' : '🎵' }}
+                  </button>
+                  <label for="bgm-slider" class="settings-view__slider-label">Music Volume (BGM)</label>
+                </div>
+                <span class="settings-view__slider-val">
+                  {{ settingsStore.isBgmMuted ? 'MUTED' : `${settingsStore.bgmVolume}%` }}
+                </span>
               </div>
               <input
                 id="bgm-slider"
@@ -205,6 +299,7 @@
                 min="0"
                 max="100"
                 :value="settingsStore.bgmVolume"
+                :disabled="settingsStore.isBgmMuted"
                 class="settings-view__range-input"
                 @input="handleBgmInput"
               />
@@ -213,10 +308,21 @@
             <!-- SFX Slider -->
             <div class="settings-view__slider-row">
               <div class="settings-view__slider-header">
-                <label for="sfx-slider" class="settings-view__slider-label"
-                  >Sound Effects (SFX)</label
-                >
-                <span class="settings-view__slider-val">{{ settingsStore.sfxVolume }}%</span>
+                <div class="settings-view__slider-header-left">
+                  <button
+                    type="button"
+                    class="settings-view__mute-btn"
+                    :class="{ 'settings-view__mute-btn--muted': settingsStore.isSfxMuted }"
+                    :title="settingsStore.isSfxMuted ? 'Unmute SFX' : 'Mute SFX'"
+                    @click="settingsStore.toggleSfxMute"
+                  >
+                    {{ settingsStore.isSfxMuted ? '🔇' : '🔔' }}
+                  </button>
+                  <label for="sfx-slider" class="settings-view__slider-label">Sound Effects (SFX)</label>
+                </div>
+                <span class="settings-view__slider-val">
+                  {{ settingsStore.isSfxMuted ? 'MUTED' : `${settingsStore.sfxVolume}%` }}
+                </span>
               </div>
               <input
                 id="sfx-slider"
@@ -224,9 +330,29 @@
                 min="0"
                 max="100"
                 :value="settingsStore.sfxVolume"
+                :disabled="settingsStore.isSfxMuted"
                 class="settings-view__range-input"
                 @input="handleSfxInput"
               />
+            </div>
+
+            <!-- Cutscene Ducking Intensity -->
+            <div class="settings-view__toggle-row">
+              <div class="settings-view__toggle-info">
+                <span class="settings-view__toggle-label">Cutscene Music Ducking</span>
+                <span class="settings-view__toggle-desc">
+                  Automatically attenuate background music during summon/attack videos.
+                </span>
+              </div>
+              <select
+                class="settings-view__select-input"
+                :value="settingsStore.duckingIntensity"
+                @change="handleDuckingChange"
+              >
+                <option value="normal">Normal (85% reduction)</option>
+                <option value="mute">Full Mute during videos</option>
+                <option value="off">Off (Keep full volume)</option>
+              </select>
             </div>
           </GlassPanel>
 
@@ -290,8 +416,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useSettingsStore } from '../stores/settingsStore.js';
+import { BGM_THEMES, audioManager, type DuckingIntensity } from '../audio/index.js';
 import GlassPanel from '../components/common/GlassPanel.vue';
 import YugiButton from '../components/common/YugiButton.vue';
 import LoadingSpinner from '../components/common/LoadingSpinner.vue';
@@ -301,6 +428,7 @@ import OpponentCarousel from '../components/settings/OpponentCarousel.vue';
 const settingsStore = useSettingsStore();
 const avatarFailed = ref(false);
 const showAboutModal = ref(false);
+const activePreviewId = ref<string | null>(null);
 
 const selectedChar = computed(() => settingsStore.selectedCharacter);
 
@@ -313,6 +441,32 @@ function handleFilterChange(filter: 'ALL' | 'DM' | 'GX'): void {
   settingsStore.setSelectedSeriesFilter(filter);
 }
 
+function handleSelectBgmTheme(themeId: string): void {
+  audioManager.stopPreview();
+  activePreviewId.value = null;
+  settingsStore.setSelectedBgmTheme(themeId);
+}
+
+function togglePreview(themeId: string): void {
+  if (activePreviewId.value === themeId) {
+    audioManager.stopPreview();
+    activePreviewId.value = null;
+    audioManager.playBgm(settingsStore.selectedBgmTheme);
+  } else {
+    activePreviewId.value = themeId;
+    audioManager.previewTheme(themeId, 15);
+  }
+}
+
+function isPlayingPreview(themeId: string): boolean {
+  return activePreviewId.value === themeId;
+}
+
+function handleMasterInput(e: Event): void {
+  const val = parseInt((e.target as HTMLInputElement).value, 10);
+  settingsStore.setMasterVolume(val);
+}
+
 function handleBgmInput(e: Event): void {
   const val = parseInt((e.target as HTMLInputElement).value, 10);
   settingsStore.setBgmVolume(val);
@@ -323,11 +477,22 @@ function handleSfxInput(e: Event): void {
   settingsStore.setSfxVolume(val);
 }
 
+function handleDuckingChange(e: Event): void {
+  const val = (e.target as HTMLSelectElement).value as DuckingIntensity;
+  settingsStore.setDuckingIntensity(val);
+}
+
 async function handleReset(): Promise<void> {
+  audioManager.stopPreview();
+  activePreviewId.value = null;
   await settingsStore.resetToDefaults();
 }
 
 onMounted(async () => {
   await settingsStore.initializeSettings();
+});
+
+onUnmounted(() => {
+  audioManager.stopPreview();
 });
 </script>

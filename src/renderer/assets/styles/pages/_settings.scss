@@ -333,6 +333,10 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+
+    &--full {
+      grid-column: 1 / -1;
+    }
   }
 
   &__setting-group-title {
@@ -342,6 +346,157 @@
     color: $color-gold-300;
     margin: 0;
     letter-spacing: 0.03em;
+  }
+
+  // BGM Themes Grid
+  &__themes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__theme-card {
+    position: relative;
+    background: rgba($color-bg-void, 0.7);
+    border: 1.5px solid rgba($color-border-glass, 0.4);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+    &:hover {
+      border-color: rgba($color-gold-300, 0.8);
+      background: rgba(20, 26, 36, 0.85);
+      transform: translateY(-3px);
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.6),
+        0 0 16px rgba($color-gold-500, 0.25);
+    }
+
+    &--selected {
+      border-color: $color-gold-300;
+      background: radial-gradient(circle at top left, rgba(201, 162, 39, 0.18) 0%, rgba(10, 14, 20, 0.9) 100%);
+      box-shadow:
+        0 0 20px rgba(201, 162, 39, 0.35),
+        0 8px 24px rgba(0, 0, 0, 0.7);
+
+      .settings-view__theme-name {
+        color: $color-gold-100;
+        text-shadow: 0 0 10px rgba(201, 162, 39, 0.6);
+      }
+    }
+  }
+
+  &__theme-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__theme-icon {
+    font-size: 1.4rem;
+  }
+
+  &__theme-genre {
+    font-family: $font-body;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $color-gold-500;
+    background: rgba($color-gold-500, 0.15);
+    border: 1px solid rgba($color-gold-500, 0.35);
+    border-radius: 12px;
+    padding: 2px 8px;
+  }
+
+  &__theme-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+
+  &__theme-name {
+    font-family: $font-display;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: $color-text-primary;
+    margin: 0;
+  }
+
+  &__theme-subtitle {
+    font-family: $font-body;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $color-text-secondary;
+    margin: 0;
+  }
+
+  &__theme-desc {
+    font-family: $font-body;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: $color-text-muted;
+    margin: 0;
+    margin-top: 4px;
+  }
+
+  &__theme-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: auto;
+  }
+
+  &__theme-badge {
+    font-family: $font-display;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: $color-success;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__preview-btn {
+    font-family: $font-display;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: $color-gold-300;
+    background: rgba($color-gold-500, 0.15);
+    border: 1px solid rgba($color-gold-500, 0.4);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: rgba($color-gold-500, 0.35);
+      border-color: $color-gold-300;
+      color: #ffffff;
+      transform: scale(1.04);
+    }
+
+    &--playing {
+      background: rgba($color-danger, 0.25);
+      border-color: $color-danger;
+      color: #ffcccc;
+      animation: pulse-glow 1.5s infinite;
+    }
   }
 
   &__slider-row {
@@ -354,6 +509,35 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
+
+  &__slider-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__mute-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: $color-text-secondary;
+    padding: 2px 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: $color-gold-500;
+      color: $color-gold-300;
+    }
+
+    &--muted {
+      background: rgba($color-danger, 0.25);
+      border-color: $color-danger;
+      color: #ff9999;
+    }
   }
 
   &__slider-label {
@@ -369,6 +553,24 @@
     font-weight: 700;
     color: $color-gold-300;
     font-variant-numeric: tabular-nums;
+  }
+
+  &__select-input {
+    background: rgba(14, 18, 26, 0.85);
+    border: 1px solid rgba($color-gold-500, 0.4);
+    border-radius: 8px;
+    color: $color-gold-100;
+    font-family: $font-body;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    outline: none;
+    cursor: pointer;
+
+    option {
+      background: #0a0c10;
+      color: #ffffff;
+    }
   }
 
   &__range-input {

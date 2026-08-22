@@ -11,6 +11,7 @@
     class="yugi-btn"
     :class="[`yugi-btn--${variant}`, `yugi-btn--${size}`, disabled && 'yugi-btn--disabled']"
     @click="handleClick"
+    @mouseenter="handleMouseEnter"
   >
     <!-- Card Variant Structure (design-system.md §5.1) -->
     <template v-if="variant === 'card'">
@@ -72,6 +73,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { RouteLocationRaw } from 'vue-router';
+import { audioManager } from '../../audio/index.js';
 
 interface Props {
   variant?: 'primary' | 'secondary' | 'card' | 'danger' | 'ghost';
@@ -83,6 +85,7 @@ interface Props {
   href?: string;
   type?: 'button' | 'submit' | 'reset';
   ariaLabel?: string;
+  sound?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -95,6 +98,7 @@ const props = withDefaults(defineProps<Props>(), {
   href: '',
   type: 'button',
   ariaLabel: undefined,
+  sound: true,
 });
 
 const emit = defineEmits<{
@@ -109,11 +113,20 @@ const tagComponent = computed(() => {
 
 const isButton = computed(() => tagComponent.value === 'button');
 
+function handleMouseEnter(): void {
+  if (!props.disabled && props.sound) {
+    audioManager.playSfx('ui-hover');
+  }
+}
+
 function handleClick(event: MouseEvent): void {
   if (props.disabled) {
     event.preventDefault();
     event.stopPropagation();
     return;
+  }
+  if (props.sound) {
+    audioManager.playSfx('ui-click');
   }
   emit('click', event);
 }

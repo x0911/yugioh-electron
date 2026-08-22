@@ -34,17 +34,19 @@
           <button
             type="button"
             class="tool-btn tool-btn--save"
-            :disabled="!store.isDirty || !validity.isValid || store.mainDeckCount < 40"
+            :disabled="!store.isDirty || !validity.isValid"
             :title="
-              store.mainDeckCount < 40
-                ? `Cannot save: Main deck has ${store.mainDeckCount}/40 cards minimum`
-                : !validity.isValid
+              !validity.isValid
+                ? store.mainDeckCount < 40
+                  ? `Cannot save: Main deck has ${store.mainDeckCount}/40 cards minimum`
+                  : store.errors.length > 0
                   ? 'Cannot save: Deck contains illegal cards'
-                  : !store.isDirty
-                    ? 'Deck already saved'
-                    : 'Save deck changes'
+                  : 'Cannot save: Deck is invalid'
+                : !store.isDirty
+                ? 'Deck already saved'
+                : 'Save deck changes'
             "
-            @click="store.saveCurrentDeck"
+            @click="handleSaveDeck"
           >
             <span class="tool-icon">💾</span> Save
           </button>
@@ -406,6 +408,7 @@ import { getCardImageUrl, handleImageError } from '../../utils/media.js';
 import YugiModal from '../common/YugiModal.vue';
 import YugiButton from '../common/YugiButton.vue';
 import DeckSelectorAutocomplete from './DeckSelectorAutocomplete.vue';
+import { audioManager } from '../../audio/index.js';
 
 const store = useDeckEditStore();
 
@@ -532,12 +535,19 @@ function onCardHover(card: CardDetail | null): void {
 
 function onConfirmClear(): void {
   store.clearCurrentDeck();
+  audioManager.playSfx('deck-card-trash');
   showClearModal.value = false;
 }
 
 function onConfirmDelete(): void {
   store.deleteCurrentDeck();
+  audioManager.playSfx('deck-card-trash');
   showDeleteModal.value = false;
+}
+
+function handleSaveDeck(): void {
+  store.saveCurrentDeck();
+  audioManager.playSfx('deck-save');
 }
 
 function getCardKindClass(card: CardDetail | null): string {
@@ -559,6 +569,7 @@ function onDeckCardDragStart(e: DragEvent, item: EnrichedDeckCard, isExtra: bool
     e.dataTransfer.effectAllowed = 'copyMove';
   }
   if (item.card) {
+    audioManager.playSfx('deck-drag-start');
     store.startDrag(item.card, isExtra ? 'extra-deck' : 'main-deck');
   }
 }
@@ -592,6 +603,7 @@ function onMainDrop(e: DragEvent): void {
   isMainDragOver.value = false;
   if (store.isDragging && (store.dragSource === 'pool' || store.dragSource === 'previewer')) {
     e.preventDefault();
+    audioManager.playSfx('deck-card-drop');
     store.dropOnMainDeck();
     store.endDrag();
   }
@@ -619,6 +631,7 @@ function onExtraDrop(e: DragEvent): void {
   isExtraDragOver.value = false;
   if (store.isDragging && (store.dragSource === 'pool' || store.dragSource === 'previewer')) {
     e.preventDefault();
+    audioManager.playSfx('deck-card-drop');
     store.dropOnExtraDeck();
     store.endDrag();
   }
@@ -639,6 +652,7 @@ function onTrashDrop(e: DragEvent): void {
   isTrashDragOver.value = false;
   if (store.isDragging && (store.dragSource === 'main-deck' || store.dragSource === 'extra-deck')) {
     e.preventDefault();
+    audioManager.playSfx('deck-card-trash');
     store.dropOnRemove();
     store.endDrag();
   }

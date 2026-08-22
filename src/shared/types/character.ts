@@ -42,10 +42,17 @@ export interface CharacterData {
 }
 
 export interface SettingsConfig {
+  selectedBgmTheme: string;
+  masterVolume: number;
   bgmVolume: number;
   sfxVolume: number;
+  isMasterMuted: boolean;
+  isBgmMuted: boolean;
+  isSfxMuted: boolean;
+  duckingIntensity: 'normal' | 'mute' | 'off';
   selectedOpponentId: string;
   selectedSeriesFilter: 'ALL' | 'DM' | 'GX';
   devMode: boolean;
   skipPreDuelVideo: boolean;
 }
+

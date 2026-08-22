@@ -338,6 +338,8 @@ import {
   getAvatarRect,
   setAnimationUserPlayerId,
 } from '../utils/animationService.js';
+import { audioManager } from '../audio/index.js';
+
 
 interface LogItem {
   time: string;
@@ -581,6 +583,7 @@ function onFieldCardClick(card: FieldCard | null, event?: MouseEvent, targetInfo
 function onTargetClick(targetInfo: TargetInfo): void {
   if (duelStore.isVideoPlaying) return;
   if (targetInfo.isSelectable) {
+    audioManager.playSfx('target-locked');
     duelStore.toggleTargetByIndex(targetInfo.selectIndex);
   }
 }
@@ -680,6 +683,7 @@ async function onRestartMatch(): Promise<void> {
   closeCardActionMenu();
   hasSavedCurrentDuel = false;
   duelLogs.value = [];
+  audioManager.playSfx('duel-start');
   appendLog('RESTART', 'Restarting live duel...');
   await duelStore.startPreparedDuel();
 }
@@ -687,6 +691,7 @@ async function onRestartMatch(): Promise<void> {
 function onSurrender(): void {
   isMenuOpen.value = false;
   closeCardActionMenu();
+  audioManager.playSfx('match-defeat');
   appendLog('SURRENDER', 'Player surrendered the match.');
   saveCurrentDuelLog('surrender');
   router.push('/main-menu');
@@ -737,6 +742,8 @@ async function setupEngineEventListener(): Promise<void> {
           const cardName =
             d?.cardName || d?.name || (i === 0 ? event.cardName : null) || 'Card Drawn';
 
+          audioManager.playSfx('card-draw');
+
           await playCardFlight({
             code: isHuman ? cardCode : 0,
             cardName: isHuman ? cardName : 'Card Drawn',
@@ -783,21 +790,25 @@ async function setupEngineEventListener(): Promise<void> {
         if (fromLoc === 2) {
           // ── FLIP: Card leaving the hand ─────────────────────────────────
           // Capture both rects BEFORE any state change.
-          //   fromRect: hand card (exists in DOM now)
-          //   toRect: destination zone/stack (zone slot always exists, card not yet there)
           const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
           const toRect =
             toLoc === 16 ? getStackRect(domOwner, 'graveyard') :
-            // FIX: use toSeq (destination slot index) to detect field zone,
-            //      NOT fromSeq (hand card index) — previous bug caused wrong zone type.
             toLoc === 8  ? getZoneRect(domOwner, toSeq === 5 ? 'field' : 'spell-trap', toSeq) :
             toLoc === 4  ? getZoneRect(domOwner, 'monster', toSeq) :
             toLoc === 32 ? getStackRect(domOwner, 'banished') :
             null;
 
+          if (toLoc === 16) {
+            audioManager.playSfx('card-to-gy');
+          } else if (toLoc === 8) {
+            audioManager.playSfx(isFaceup ? (toSeq === 5 ? 'field-activate' : 'spell-activate') : 'card-set-spell');
+          } else if (toLoc === 4) {
+            audioManager.playSfx(isFaceup ? 'summon-normal' : 'card-set-monster');
+          } else if (toLoc === 32) {
+            audioManager.playSfx('card-banish');
+          }
+
           // Apply state change NOW: removes card from hand array.
-          // Vue's TransitionGroup MOVE transition starts closing the gap immediately
-          // (0.28 s smooth slide) in parallel with the card flying away.
           await duelStore.handleEngineEvent(event);
           eventHandled = true;
 
@@ -807,7 +818,6 @@ async function setupEngineEventListener(): Promise<void> {
 
           // Hide the destination zone card that handleEngineEvent just placed
           // there, so the flying overlay is the only visible copy during flight.
-          // (GY / banished are counter-stacks, no individual card to hide.)
           let destEl: HTMLElement | null = null;
           if (toLoc === 8) {
             const zoneType = toSeq === 5 ? 'field' : 'spell-trap';
@@ -849,6 +859,14 @@ async function setupEngineEventListener(): Promise<void> {
 
           if (toLoc === 16) {
             // → Graveyard
+            if (fromLoc === 4) {
+              audioManager.playSfx('card-destroy-monster');
+            } else if (fromLoc === 8) {
+              audioManager.playSfx('card-destroy-spell');
+            } else {
+              audioManager.playSfx('card-to-gy');
+            }
+
             const fromRect =
               fromLoc === 1
                 ? getStackRect(domOwner, 'deck')
@@ -859,9 +877,6 @@ async function setupEngineEventListener(): Promise<void> {
                   );
             const toRect = getStackRect(domOwner, 'graveyard');
 
-            // Hide the field card so it doesn't double-render alongside the overlay.
-            // The inline style is removed when Vue destroys the element after
-            // handleEngineEvent clears the zone — no manual reset needed.
             let hiddenEl: HTMLElement | null = null;
             if (fromLoc === 4 || fromLoc === 8) {
               hiddenEl = document.querySelector(
@@ -881,6 +896,8 @@ async function setupEngineEventListener(): Promise<void> {
 
           } else if (toLoc === 4 && (fromLoc === 16 || fromLoc === 32 || fromLoc === 64)) {
             // GY / Banished / Extra Deck → Monster Zone (special summon from pile)
+            audioManager.playSfx('summon-special');
+
             const fromRect = getStackRect(
               domOwner,
               fromLoc === 16 ? 'graveyard' : fromLoc === 32 ? 'banished' : 'extra',
@@ -899,6 +916,8 @@ async function setupEngineEventListener(): Promise<void> {
 
           } else if (toLoc === 32) {
             // → Banished (from field or GY)
+            audioManager.playSfx('card-banish');
+
             const fromRect =
               fromLoc === 16
                 ? getStackRect(domOwner, 'graveyard')
@@ -926,9 +945,6 @@ async function setupEngineEventListener(): Promise<void> {
               durationMs: 440,
             });
           }
-          // Other field→field moves (e.g. position shifts, bounce back to hand)
-          // have no flight animation — handleEngineEvent at the bottom applies
-          // the state change and Vue re-renders silently.
         }
       }
 
@@ -936,6 +952,7 @@ async function setupEngineEventListener(): Promise<void> {
       // 3. Chaining / Spell Activation Visual Pause
       // -----------------------------------------------------------------------
       else if (event.type === 'CHAINING') {
+        audioManager.playSfx('chain-link');
         await new Promise((resolve) => setTimeout(resolve, 400));
       }
 
@@ -957,6 +974,16 @@ async function setupEngineEventListener(): Promise<void> {
         const toRect = atkEvt.target
           ? getZoneRect(toDomOwner(atkEvt.target.controller), 'monster', atkEvt.target.sequence)
           : getHandFanRect(oppDomOwner) || getAvatarRect(oppDomOwner);
+
+        audioManager.playSfx('attack-declare');
+        setTimeout(() => {
+          if (atkEvt.target) {
+            audioManager.playSfx('attack-clash');
+          } else {
+            audioManager.playSfx('attack-direct');
+          }
+        }, 180);
+
         await playCardFlight({
           code: 0,
           cardName: 'Battle Attack',
@@ -975,6 +1002,13 @@ async function setupEngineEventListener(): Promise<void> {
         const domOwner = toDomOwner(p);
         const seq = event.sequence ?? 0;
         const fromRect = getZoneRect(domOwner, 'monster', seq);
+
+        if (event.type === 'FLIPSUMMONING') {
+          audioManager.playSfx('summon-flip');
+        } else {
+          audioManager.playSfx('position-change');
+        }
+
         await playCardFlight({
           code: event.code || 0,
           cardName: event.cardName || 'Position Change',
@@ -985,6 +1019,18 @@ async function setupEngineEventListener(): Promise<void> {
           isDefense: event.position === 4 || event.position === 8,
           durationMs: 360,
         });
+      }
+
+      else if (event.type === 'NEW_PHASE') {
+        audioManager.playSfx('phase-change');
+      }
+
+      else if (event.type === 'NEW_TURN') {
+        audioManager.playSfx('turn-start');
+      }
+
+      else if (event.type === 'SHUFFLE_DECK' || event.type === 'SHUFFLE_HAND') {
+        audioManager.playSfx('deck-shuffle');
       }
 
       // -----------------------------------------------------------------------
@@ -1001,10 +1047,19 @@ async function setupEngineEventListener(): Promise<void> {
         event.promptPlayer === duelStore.userPlayerId &&
         event.type !== 'WIN'
       ) {
+        audioManager.playSfx('prompt-alert');
         await duelStore.fetchBoardState();
       }
 
       if (event.type === 'WIN') {
+        const isWin = duelStore.boardState.winner === duelStore.userPlayerId ||
+          event.player === duelStore.userPlayerId ||
+          (event as any).winner === duelStore.userPlayerId;
+        if (isWin) {
+          audioManager.playSfx('match-victory');
+        } else {
+          audioManager.playSfx('match-defeat');
+        }
         saveCurrentDuelLog();
       }
     });
