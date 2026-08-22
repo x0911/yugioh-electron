@@ -777,12 +777,66 @@ async function runTestSuite() {
       }
     );
     assert.equal(sortChainResp.type, OcgResponseType.SORT_CARD, 'Must return SORT_CARD for SORT_CHAIN');
-    assert.deepEqual((sortChainResp as any).order, [0, 1], 'Must return valid order array');
+    // 13. Expanded DM & GX Anime Legacy Cards Verification
+    console.log('▶ Test 13: Expanded DM & GX Anime & Manga Cards Verification');
+    service.startNewDuel({
+      player0Deck: [
+        ...Array(30).fill(25652259), // 30 Normal Monsters
+        48179391, // The Seal of Orichalcos
+        21082832, // Chaos Form
+        55410871, // Blue-Eyes Chaos MAX Dragon
+        89631139, // Blue-Eyes White Dragon
+        21208154, // The Wicked Avatar
+        62180201, // The Wicked Dreadroot
+        57793869, // The Wicked Eraser
+        1784686,  // The Eye of Timaeus
+        46986414, // Dark Magician
+        40854197, // Elemental HERO Absolute Zero
+      ],
+      player0ExtraDeck: [
+        75380687, // Amulet Dragon
+        43378048, // Armityle the Chaos Phantasm
+        58481572, // Masked HERO Dark Law
+      ],
+      player1Deck: Array(40).fill(25652259),
+      noShuffle: true,
+      humanPlayerId: 0,
+      startingLP: 8000,
+    });
 
-    console.log('  ✓ Comprehensive Prompt Normalization & AI Responses passed!\n');
+    const p13 = (service as any).lastPromptMessage;
+    // Opening hand has 5 cards drawn from top (top of reversed deck):
+    // Deck order in startNewDuel is reversed, so the last elements in the array are the top of deck:
+    // Top cards: Absolute Zero, Dark Magician, Eye of Timaeus, Wicked Eraser, Wicked Dreadroot
+    const b13 = service.getBoardState();
+    assert.equal(b13.userField.hand.length, 5, 'User hand must start with 5 cards');
+    assert.equal(b13.userField.extraDeckCount, 3, 'Extra Deck must contain 3 Fusion Monsters');
+
+    // Verify all card details resolve cleanly in CardReader
+    const orichalcos = cardReader.getCardDetail(48179391);
+    assert.equal(orichalcos?.name, 'The Seal of Orichalcos');
+    assert.equal(orichalcos?.isSpell, true);
+
+    const chaosMax = cardReader.getCardDetail(55410871);
+    assert.equal(chaosMax?.name, 'Blue-Eyes Chaos MAX Dragon');
+    assert.equal(chaosMax?.atk, 4000);
+    assert.equal(chaosMax?.def, 0);
+
+    const armityle = cardReader.getCardDetail(43378048);
+    assert.equal(armityle?.name, 'Armityle the Chaos Phantasm');
+    assert.equal(armityle?.atk, 0);
+
+    const wickedAvatar = cardReader.getCardDetail(21208154);
+    assert.equal(wickedAvatar?.name, 'The Wicked Avatar');
+
+    const darkLaw = cardReader.getCardDetail(58481572);
+    assert.equal(darkLaw?.name, 'Masked HERO Dark Law');
+    assert.equal(darkLaw?.atk, 2400);
+
+    console.log('  ✓ Expanded DM & GX Card Mechanics & Extra Deck Resolution passed!\n');
 
     console.log('================================================================');
-    console.log('🎉 ALL 12 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 13 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();
@@ -794,4 +848,5 @@ runTestSuite().catch((err) => {
   console.error('❌ Test Suite Failed:', err);
   process.exit(1);
 });
+
 

@@ -15,10 +15,136 @@ const RESOURCES_OFFICIAL_SCRIPTS_DIR = path.join(rootDir, 'resources/scripts/off
 const SPIKE_SCRIPTS_DIR = path.join(rootDir, 'tools/engine-spike/scripts');
 
 // Iconic anime staples that might not have standard 2002-2008 set codes or are special releases
-const ICONIC_ALLOWLIST_IDS = new Set<number>([
-  10000000, // Obelisk the Tormentor (Legal)
-  10000010, // The Winged Dragon of Ra (Legal)
-  10000020, // Slifer the Sky Dragon (Legal)
+const ICONIC_ALLOWLIST_MAP = new Map<number, 'DM' | 'GX'>([
+  // Egyptian Gods & Divine Support (DM)
+  [10000000, 'DM'], // Obelisk the Tormentor
+  [10000010, 'DM'], // The Winged Dragon of Ra
+  [10000020, 'DM'], // Slifer the Sky Dragon
+  [10000040, 'DM'], // Holactie the Creator of Light
+  [10000080, 'DM'], // The Winged Dragon of Ra - Sphere Mode
+  [10000090, 'DM'], // The Winged Dragon of Ra - Immortal Phoenix
+  [269012, 'DM'],   // Mound of the Bound Creator
+  [39913299, 'DM'], // The True Name
+  [5253985, 'DM'],  // Soul Crossing
+  [42469671, 'DM'], // Thunderforce Attack
+  [79868386, 'DM'], // Fist of Fate
+  [4059313, 'DM'],  // Blaze Cannon
+  [69456283, 'DM'], // Millennium Revelation
+  [95286165, 'DM'], // Ancient Chant
+  [71703785, 'DM'], // Palladium Oracle Mahad
+  [42006475, 'DM'], // Palladium Oracle Mana
+
+  // Waking the Dragons (DM Season 4)
+  [1784686, 'DM'],  // The Eye of Timaeus
+  [11082056, 'DM'], // The Fang of Critias
+  [46232525, 'DM'], // The Claw of Hermos
+  [89397517, 'DM'], // Legend of Heart
+  [75380687, 'DM'], // Amulet Dragon
+  [43892408, 'DM'], // Dark Magician Girl the Dragon Knight
+  [84687358, 'DM'], // Mirror Force Dragon
+  [22804644, 'DM'], // Doom Virus Dragon
+  [58293343, 'DM'], // Tyrant Burst Dragon
+  [19747827, 'DM'], // Red-Eyes Black Dragon Sword
+  [46354113, 'DM'], // Rocket Hermos Cannon
+  [83743222, 'DM'], // Goddess Bow
+  [10960419, 'DM'], // Time Magic Hammer
+  [48179391, 'DM'], // The Seal of Orichalcos
+  [7634581, 'DM'],  // Orichalcos Shunoros
+  [34022290, 'DM'], // Guardian Eatos
+  [18175965, 'DM'], // Guardian Dreadscythe
+  [54447022, 'DM'], // Soul Charge
+  [16404809, 'DM'], // Kuribandit
+  [26439287, 'DM'], // Kuribabylon
+
+  // The Dark Side of Dimensions (DSOD Movie Pack - DM Sequel)
+  [55410871, 'DM'], // Blue-Eyes Chaos MAX Dragon
+  [56532353, 'DM'], // Neo Blue-Eyes Ultimate Dragon
+  [38517737, 'DM'], // Blue-Eyes Alternative White Dragon
+  [21082832, 'DM'], // Chaos Form
+  [22804410, 'DM'], // Deep-Eyes White Dragon
+  [71525232, 'DM'], // Gandora-X the Dragon of Demolition
+  [3428069, 'DM'],  // Buster Blader, the Destruction Swordmaster
+  [45531624, 'DM'], // Celtic Guard of Noble Arms
+  [47222536, 'DM'], // Dark Magical Circle
+  [48680970, 'DM'], // Eternal Soul
+  [7922915, 'DM'],  // Magician Navigation
+  [30603688, 'DM'], // Magicians' Defense
+  [15256925, 'DM'], // Magician's Robe
+  [36414436, 'DM'], // Magician's Rod
+  [23995346, 'DM'], // Blue-Eyes Alternative Ultimate Dragon
+  [728264, 'DM'],   // Blue-Eyes Abyss Dragon
+  [93717133, 'DM'], // Dragonic Tactics
+  [87025074, 'DM'], // Dragon Revival Rhapsody
+  [8240199, 'DM'],  // The Bingo Machine, Go!!!
+  [66970002, 'DM'], // Dragon Shrine
+  [39284521, 'DM'], // Silver's Cry
+  [71039903, 'DM'], // Return of the Dragon Lords
+
+  // Yu-Gi-Oh! R Manga (The Wicked Gods)
+  [62180201, 'DM'], // The Wicked Dreadroot
+  [21208154, 'DM'], // The Wicked Avatar
+  [57793869, 'DM'], // The Wicked Eraser
+  [50321796, 'DM'], // Divine Evolution
+
+  // GX Anime & Special Edition Bosses
+  [43378048, 'GX'], // Armityle the Chaos Phantasm
+  [5861892, 'GX'],  // Arcana Force EX - The Light Ruler
+  [50287060, 'GX'], // Arcana Force EX - The Dark Ruler
+  [88264978, 'GX'], // Red-Eyes Darkness Metal Dragon
+  [60417395, 'GX'], // Darkness Neosphere
+  [97811903, 'GX'], // Clear Vice Dragon
+  [33900648, 'GX'], // Clear World
+  [76547525, 'GX'], // Cyber Larva
+  [94886282, 'GX'], // Charge of the Light Brigade
+  [63941215, 'GX'], // Dimension Fusion
+
+  // GX Manga HERO & Cyber Lines
+  [40854197, 'GX'], // Elemental HERO Absolute Zero
+  [22061412, 'GX'], // Elemental HERO The Shining
+  [3642509, 'GX'],  // Elemental HERO Great Tornado
+  [16304628, 'GX'], // Elemental HERO Gaia
+  [1945387, 'GX'],  // Elemental HERO Nova Master
+  [33574806, 'GX'], // Elemental HERO Escuridao
+  [25366484, 'GX'], // Elemental HERO Core
+  [58481572, 'GX'], // Masked HERO Dark Law
+  [29095552, 'GX'], // Masked HERO Acid
+  [62624486, 'GX'], // Masked HERO Dian
+  [10920352, 'GX'], // Masked HERO Vapor
+  [58147549, 'GX'], // Masked HERO Goka
+  [50608164, 'GX'], // Masked HERO Koga
+  [59642500, 'GX'], // Masked HERO Anki
+  [22093838, 'GX'], // Masked HERO Blast
+  [21143940, 'GX'], // Mask Change
+  [45898858, 'GX'], // Mask Change II
+  [18094166, 'GX'], // Vision HERO Faris
+  [22865492, 'GX'], // Vision HERO Increase
+  [27780618, 'GX'], // Vision HERO Vyon
+  [46759931, 'GX'], // Vision HERO Trinity
+  [45170821, 'GX'], // Vision HERO Adoration
+  [82697428, 'GX'], // Vision HERO Witch Raider
+  [93600443, 'GX'], // Vision HERO Gravito
+  [69610326, 'GX'], // Vision HERO Poisoner
+  [3580032, 'GX'],  // Vision HERO Minimum Ray
+  [60082869, 'GX'], // Destiny HERO - Dystopia
+  [90579153, 'GX'], // Destiny HERO - Dangerous
+  [74117290, 'GX'], // Destiny HERO - Dominance
+  [41302052, 'GX'], // Destiny HERO - Celestial
+  [78057208, 'GX'], // Destiny HERO - Decider
+  [17124316, 'GX'], // Destiny HERO - Dynatag
+  [51405049, 'GX'], // Cyber Repair Plant
+  [29934351, 'GX'], // Cyber Emergency
+  [58494728, 'GX'], // Cyberload Fusion
+  [70243695, 'GX'], // Cyber Dragon Nachster
+  [46724542, 'GX'], // Cyber Dragon Herz
+  [30427699, 'GX'], // Cyber Dragon Core
+  [56364287, 'GX'], // Cyber Dragon Drei
+  [63224564, 'GX'], // Cyber Dragon Vier
+  [3510565, 'GX'],  // Chimeratech Rampage Dragon
+  [74157028, 'GX'], // Chimeratech Megafleet Dragon
+  [10028593, 'GX'], // Cyber Eternal
+  [43791861, 'GX'], // Cybernetic Overflow
+  [29491031, 'GX'], // Cybernetic Revolution
+  [40227329, 'GX'], // Super Strident Blaze
 ]);
 
 interface SetInfo {
@@ -277,9 +403,9 @@ export async function buildCardPool(): Promise<void> {
     let isMatched = false;
     let era: 'DM' | 'GX' = 'DM';
 
-    if (ICONIC_ALLOWLIST_IDS.has(cardId)) {
+    if (ICONIC_ALLOWLIST_MAP.has(cardId)) {
       isMatched = true;
-      era = 'DM';
+      era = ICONIC_ALLOWLIST_MAP.get(cardId)!;
     } else if (ygoCard && ygoCard.card_sets && ygoCard.card_sets.length > 0) {
       // Check if any set code belongs to DM or GX
       let isDM = false;

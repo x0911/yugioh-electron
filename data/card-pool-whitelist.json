@@ -50,6 +50,15 @@
     "race": "Fiend",
     "attribute": "FIRE"
   },
+  "111280": {
+    "id": 111280,
+    "name": "Dark Magic Expanded",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "114932": {
     "id": 114932,
     "name": "Seismic Crasher",
@@ -119,6 +128,15 @@
     "def": 0,
     "race": "Equip"
   },
+  "269012": {
+    "id": 269012,
+    "name": "Mound of the Bound Creator",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Field"
+  },
   "295517": {
     "id": 295517,
     "name": "A Legendary Ocean",
@@ -164,6 +182,28 @@
     "def": 0,
     "race": "Continuous"
   },
+  "410904": {
+    "id": 410904,
+    "name": "Awakening of the Possessed - Rasenryu",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 200,
+    "level": 5,
+    "race": "Dragon",
+    "attribute": "WIND"
+  },
+  "423585": {
+    "id": 423585,
+    "name": "Summoner Monk",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 800,
+    "def": 1600,
+    "level": 4,
+    "race": "Spellcaster",
+    "attribute": "DARK"
+  },
   "423705": {
     "id": 423705,
     "name": "Gearfried the Iron Knight",
@@ -185,6 +225,17 @@
     "level": 4,
     "race": "Fiend",
     "attribute": "EARTH"
+  },
+  "464362": {
+    "id": 464362,
+    "name": "Frightfur Tiger",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 1900,
+    "def": 1200,
+    "level": 6,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "473469": {
     "id": 473469,
@@ -436,7 +487,7 @@
   "1546123": {
     "id": 1546123,
     "name": "Cyber End Dragon",
-    "era": "GX",
+    "era": "DM",
     "type": "Fusion Monster",
     "atk": 4000,
     "def": 2800,
@@ -524,6 +575,15 @@
     "race": "Dinosaur",
     "attribute": "EARTH"
   },
+  "1784686": {
+    "id": 1784686,
+    "name": "The Eye of Timaeus",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "1801154": {
     "id": 1801154,
     "name": "Centrifugal Field",
@@ -569,6 +629,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "1945387": {
+    "id": 1945387,
+    "name": "Elemental HERO Nova Master",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2600,
+    "def": 2100,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "FIRE"
+  },
   "1953925": {
     "id": 1953925,
     "name": "Ancient Gear Engineer",
@@ -599,6 +670,17 @@
     "level": 3,
     "race": "Warrior",
     "attribute": "LIGHT"
+  },
+  "2067935": {
+    "id": 2067935,
+    "name": "Gladiator Beast Lanista",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1800,
+    "def": 1200,
+    "level": 4,
+    "race": "Winged Beast",
+    "attribute": "WIND"
   },
   "2084239": {
     "id": 2084239,
@@ -695,6 +777,15 @@
     "id": 2295440,
     "name": "One for One",
     "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "2295831": {
+    "id": 2295831,
+    "name": "Symbol of Friendship",
+    "era": "DM",
     "type": "Spell Card",
     "atk": 0,
     "def": 0,
@@ -814,6 +905,17 @@
     "level": 7,
     "race": "Spellcaster",
     "attribute": "DARK"
+  },
+  "2519690": {
+    "id": 2519690,
+    "name": "Sky Galloping Gaia the Dragon Champion",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2600,
+    "def": 2100,
+    "level": 7,
+    "race": "Dragon",
+    "attribute": "WIND"
   },
   "2561846": {
     "id": 2561846,
@@ -1064,13 +1166,24 @@
   "3370104": {
     "id": 3370104,
     "name": "Cyber Phoenix",
-    "era": "GX",
+    "era": "DM",
     "type": "Effect Monster",
     "atk": 1200,
     "def": 1600,
     "level": 4,
     "race": "Machine",
     "attribute": "FIRE"
+  },
+  "3428069": {
+    "id": 3428069,
+    "name": "Buster Blader, the Destruction Swordmaster",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2600,
+    "def": 2300,
+    "level": 7,
+    "race": "Warrior",
+    "attribute": "EARTH"
   },
   "3493978": {
     "id": 3493978,
@@ -1086,7 +1199,7 @@
   "3510565": {
     "id": 3510565,
     "name": "Stealth Bird",
-    "era": "DM",
+    "era": "GX",
     "type": "Effect Monster",
     "atk": 700,
     "def": 1700,
@@ -1116,6 +1229,17 @@
     "race": "Warrior",
     "attribute": "EARTH"
   },
+  "3580032": {
+    "id": 3580032,
+    "name": "Merlin",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1400,
+    "def": 500,
+    "level": 3,
+    "race": "Spellcaster",
+    "attribute": "DARK"
+  },
   "3627449": {
     "id": 3627449,
     "name": "Skull Guardian",
@@ -1126,6 +1250,28 @@
     "level": 7,
     "race": "Warrior",
     "attribute": "LIGHT"
+  },
+  "3629090": {
+    "id": 3629090,
+    "name": "Cyber Angel Idaten",
+    "era": "DM",
+    "type": "Ritual Effect Monster",
+    "atk": 1600,
+    "def": 2000,
+    "level": 6,
+    "race": "Fairy",
+    "attribute": "LIGHT"
+  },
+  "3642509": {
+    "id": 3642509,
+    "name": "Elemental HERO Great Tornado",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2800,
+    "def": 2200,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "WIND"
   },
   "3643300": {
     "id": 3643300,
@@ -1141,7 +1287,7 @@
   "3657444": {
     "id": 3657444,
     "name": "Cyber Valley",
-    "era": "GX",
+    "era": "DM",
     "type": "Effect Monster",
     "atk": 0,
     "def": 0,
@@ -1152,7 +1298,7 @@
   "3659803": {
     "id": 3659803,
     "name": "Overload Fusion",
-    "era": "GX",
+    "era": "DM",
     "type": "Spell Card",
     "atk": 0,
     "def": 0,
@@ -1186,6 +1332,17 @@
     "level": 2,
     "race": "Machine",
     "attribute": "DARK"
+  },
+  "3775068": {
+    "id": 3775068,
+    "name": "Indiora Doom Volt the Cubic Emperor",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 4,
+    "race": "Fairy",
+    "attribute": "LIGHT"
   },
   "3784434": {
     "id": 3784434,
@@ -1239,6 +1396,17 @@
     "level": 9,
     "race": "Machine",
     "attribute": "EARTH"
+  },
+  "3912064": {
+    "id": 3912064,
+    "name": "The Tripper Mercury",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 2000,
+    "level": 8,
+    "race": "Aqua",
+    "attribute": "WATER"
   },
   "3918345": {
     "id": 3918345,
@@ -1303,6 +1471,15 @@
     "level": 4,
     "race": "Aqua",
     "attribute": "WATER"
+  },
+  "4059313": {
+    "id": 4059313,
+    "name": "Blaze Cannon",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
   },
   "4081094": {
     "id": 4081094,
@@ -1460,6 +1637,28 @@
     "def": 0,
     "race": "Continuous"
   },
+  "4545683": {
+    "id": 4545683,
+    "name": "Meklord Emperor Granel",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Machine",
+    "attribute": "EARTH"
+  },
+  "4611269": {
+    "id": 4611269,
+    "name": "Lion Alligator",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1900,
+    "def": 200,
+    "level": 4,
+    "race": "Reptile",
+    "attribute": "WATER"
+  },
   "4614116": {
     "id": 4614116,
     "name": "Dark Energy",
@@ -1573,6 +1772,28 @@
     "race": "Aqua",
     "attribute": "WATER"
   },
+  "4998619": {
+    "id": 4998619,
+    "name": "Buster Gundil the Cubic Behemoth",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 4,
+    "race": "Beast",
+    "attribute": "LIGHT"
+  },
+  "5010422": {
+    "id": 5010422,
+    "name": "Prediction Princess Astromorrigan",
+    "era": "DM",
+    "type": "Flip Effect Monster",
+    "atk": 1300,
+    "def": 0,
+    "level": 3,
+    "race": "Fairy",
+    "attribute": "DARK"
+  },
   "5053103": {
     "id": 5053103,
     "name": "Battle Ox",
@@ -1583,6 +1804,17 @@
     "level": 4,
     "race": "Beast-Warrior",
     "attribute": "EARTH"
+  },
+  "5126490": {
+    "id": 5126490,
+    "name": "Neos Wiseman",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 3000,
+    "level": 10,
+    "race": "Spellcaster",
+    "attribute": "LIGHT"
   },
   "5128859": {
     "id": 5128859,
@@ -1603,6 +1835,15 @@
     "atk": 0,
     "def": 0,
     "race": "Equip"
+  },
+  "5253985": {
+    "id": 5253985,
+    "name": "Soul Crossing",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
   },
   "5257687": {
     "id": 5257687,
@@ -1665,6 +1906,17 @@
     "atk": 0,
     "def": 0,
     "race": "Equip"
+  },
+  "5373478": {
+    "id": 5373478,
+    "name": "Cyber Dragon Zwei",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1500,
+    "def": 1000,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "LIGHT"
   },
   "5388481": {
     "id": 5388481,
@@ -1740,6 +1992,17 @@
     "level": 2,
     "race": "Fiend",
     "attribute": "DARK"
+  },
+  "5556499": {
+    "id": 5556499,
+    "name": "Machina Fortress",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 1600,
+    "level": 7,
+    "race": "Machine",
+    "attribute": "EARTH"
   },
   "5556668": {
     "id": 5556668,
@@ -1821,6 +2084,15 @@
     "race": "Spellcaster",
     "attribute": "DARK"
   },
+  "5650082": {
+    "id": 5650082,
+    "name": "Storming Mirror Force",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "5703682": {
     "id": 5703682,
     "name": "Thousand Energy",
@@ -1858,6 +2130,26 @@
     "level": 4,
     "race": "Beast",
     "attribute": "EARTH"
+  },
+  "5832914": {
+    "id": 5832914,
+    "name": "Toon Briefcase",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "5861892": {
+    "id": 5861892,
+    "name": "Arcana Force EX - The Light Ruler",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 4000,
+    "def": 4000,
+    "level": 10,
+    "race": "Fairy",
+    "attribute": "LIGHT"
   },
   "5901497": {
     "id": 5901497,
@@ -1913,7 +2205,7 @@
   "6061630": {
     "id": 6061630,
     "name": "Magical Exemplar",
-    "era": "GX",
+    "era": "DM",
     "type": "Effect Monster",
     "atk": 1700,
     "def": 1400,
@@ -2138,6 +2430,15 @@
     "race": "Dragon",
     "attribute": "WIND"
   },
+  "6958551": {
+    "id": 6958551,
+    "name": "Shadow Toon",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "6967870": {
     "id": 6967870,
     "name": "Dark Scorpion - Cliff the Trap Remover",
@@ -2180,6 +2481,28 @@
     "def": 0,
     "race": "Normal"
   },
+  "7080743": {
+    "id": 7080743,
+    "name": "Express Train Trolley Olley",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1800,
+    "def": 1000,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "EARTH"
+  },
+  "7084129": {
+    "id": 7084129,
+    "name": "Magician's Rod",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1600,
+    "def": 100,
+    "level": 3,
+    "race": "Spellcaster",
+    "attribute": "DARK"
+  },
   "7089711": {
     "id": 7089711,
     "name": "Hane-Hane",
@@ -2220,6 +2543,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "7171149": {
+    "id": 7171149,
+    "name": "Toon Ancient Gear Golem",
+    "era": "DM",
+    "type": "Toon Monster",
+    "atk": 3000,
+    "def": 3000,
+    "level": 8,
+    "race": "Machine",
+    "attribute": "EARTH"
+  },
   "7180418": {
     "id": 7180418,
     "name": "Armor Exe",
@@ -2242,6 +2576,17 @@
     "race": "Beast-Warrior",
     "attribute": "LIGHT"
   },
+  "7198399": {
+    "id": 7198399,
+    "name": "Chocolate Magician Girl",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1600,
+    "def": 1000,
+    "level": 4,
+    "race": "Spellcaster",
+    "attribute": "WATER"
+  },
   "7200041": {
     "id": 7200041,
     "name": "Metal Shooter",
@@ -2252,6 +2597,17 @@
     "level": 5,
     "race": "Machine",
     "attribute": "LIGHT"
+  },
+  "7241272": {
+    "id": 7241272,
+    "name": "Curse of Dragonfire",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 1500,
+    "level": 5,
+    "race": "Dragon",
+    "attribute": "DARK"
   },
   "7359741": {
     "id": 7359741,
@@ -2377,6 +2733,16 @@
     "def": 0,
     "race": "Equip"
   },
+  "7634581": {
+    "id": 7634581,
+    "name": "Orichalcos Shunoros",
+    "era": "DM",
+    "type": "Effect Monster",
+    "def": 0,
+    "level": 10,
+    "race": "Machine",
+    "attribute": "DARK"
+  },
   "7672244": {
     "id": 7672244,
     "name": "Shien's Spy",
@@ -2385,6 +2751,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "7714344": {
+    "id": 7714344,
+    "name": "Performapal Uni",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 800,
+    "def": 1500,
+    "level": 4,
+    "race": "Beast-Warrior",
+    "attribute": "LIGHT"
   },
   "7736719": {
     "id": 7736719,
@@ -2419,6 +2796,16 @@
     "race": "Winged Beast",
     "attribute": "EARTH"
   },
+  "7845138": {
+    "id": 7845138,
+    "name": "Endless Decay",
+    "era": "DM",
+    "type": "Effect Monster",
+    "def": 0,
+    "level": 5,
+    "race": "Zombie",
+    "attribute": "DARK"
+  },
   "7892180": {
     "id": 7892180,
     "name": "Psychic Kappa",
@@ -2441,6 +2828,15 @@
     "race": "Spellcaster",
     "attribute": "DARK"
   },
+  "7922915": {
+    "id": 7922915,
+    "name": "Magician Navigation",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "8034697": {
     "id": 8034697,
     "name": "Magical Marionette",
@@ -2462,6 +2858,17 @@
     "level": 10,
     "race": "Reptile",
     "attribute": "DARK"
+  },
+  "8102334": {
+    "id": 8102334,
+    "name": "Gate Blocker",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 100,
+    "def": 2000,
+    "level": 4,
+    "race": "Rock",
+    "attribute": "EARTH"
   },
   "8124921": {
     "id": 8124921,
@@ -2504,6 +2911,17 @@
     "level": 2,
     "race": "Aqua",
     "attribute": "WATER"
+  },
+  "8240199": {
+    "id": 8240199,
+    "name": "Sage with Eyes of Blue",
+    "era": "DM",
+    "type": "Tuner Monster",
+    "atk": 0,
+    "def": 1500,
+    "level": 1,
+    "race": "Spellcaster",
+    "attribute": "LIGHT"
   },
   "8251996": {
     "id": 8251996,
@@ -2666,6 +3084,15 @@
     "race": "Warrior",
     "attribute": "WIND"
   },
+  "8837932": {
+    "id": 8837932,
+    "name": "Cubic Mandala",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "8842266": {
     "id": 8842266,
     "name": "Poison of the Old Man",
@@ -2674,6 +3101,26 @@
     "atk": 0,
     "def": 0,
     "race": "Quick-Play"
+  },
+  "8910971": {
+    "id": 8910971,
+    "name": "Lord Gaia the Fierce Knight",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2300,
+    "def": 2100,
+    "level": 7,
+    "race": "Warrior",
+    "attribute": "EARTH"
+  },
+  "8949584": {
+    "id": 8949584,
+    "name": "A Hero Lives",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "8951260": {
     "id": 8951260,
@@ -2692,6 +3139,28 @@
     "atk": 0,
     "def": 0,
     "race": "Quick-Play"
+  },
+  "8967776": {
+    "id": 8967776,
+    "name": "Sephylon, the Ultimate Timelord",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 4000,
+    "def": 4000,
+    "level": 10,
+    "race": "Fairy",
+    "attribute": "LIGHT"
+  },
+  "9047460": {
+    "id": 9047460,
+    "name": "Blackwing - Steam the Cloak",
+    "era": "DM",
+    "type": "Tuner Monster",
+    "atk": 800,
+    "def": 1200,
+    "level": 3,
+    "race": "Winged Beast",
+    "attribute": "DARK"
   },
   "9074847": {
     "id": 9074847,
@@ -2784,6 +3253,15 @@
     "race": "Reptile",
     "attribute": "EARTH"
   },
+  "9287078": {
+    "id": 9287078,
+    "name": "Dark Renewal",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "9293977": {
     "id": 9293977,
     "name": "Metal Dragon",
@@ -2857,6 +3335,17 @@
     "def": 1400,
     "level": 3,
     "race": "Machine",
+    "attribute": "DARK"
+  },
+  "9433350": {
+    "id": 9433350,
+    "name": "Malefic Blue-Eyes White Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 2500,
+    "level": 8,
+    "race": "Dragon",
     "attribute": "DARK"
   },
   "9596126": {
@@ -2934,6 +3423,26 @@
     "race": "Thunder",
     "attribute": "WIND"
   },
+  "9659580": {
+    "id": 9659580,
+    "name": "Cubic Karma",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
+  "9666558": {
+    "id": 9666558,
+    "name": "Golem Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 200,
+    "def": 2000,
+    "level": 4,
+    "race": "Dragon",
+    "attribute": "EARTH"
+  },
   "9720537": {
     "id": 9720537,
     "name": "Owner's Seal",
@@ -3003,6 +3512,15 @@
     "race": "Aqua",
     "attribute": "WATER"
   },
+  "9925982": {
+    "id": 9925982,
+    "name": "Black Wing Revenge",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "9952083": {
     "id": 9952083,
     "name": "Chain Summoning",
@@ -3041,6 +3559,35 @@
     "race": "Divine-Beast",
     "attribute": "DIVINE"
   },
+  "10000040": {
+    "id": 10000040,
+    "name": "Holactie the Creator of Light",
+    "era": "DM",
+    "type": "Effect Monster",
+    "level": 12,
+    "race": "Creator God",
+    "attribute": "DIVINE"
+  },
+  "10000080": {
+    "id": 10000080,
+    "name": "The Winged Dragon of Ra - Sphere Mode",
+    "era": "DM",
+    "type": "Effect Monster",
+    "level": 10,
+    "race": "Divine-Beast",
+    "attribute": "DIVINE"
+  },
+  "10000090": {
+    "id": 10000090,
+    "name": "The Winged Dragon of Ra - Immortal Phoenix",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 4000,
+    "def": 4000,
+    "level": 10,
+    "race": "Divine-Beast",
+    "attribute": "DIVINE"
+  },
   "10004783": {
     "id": 10004783,
     "name": "Crystal Release",
@@ -3058,6 +3605,17 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "10028593": {
+    "id": 10028593,
+    "name": "Reborn Tengu",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1700,
+    "def": 600,
+    "level": 4,
+    "race": "Beast-Warrior",
+    "attribute": "WIND"
   },
   "10032958": {
     "id": 10032958,
@@ -3327,6 +3885,28 @@
     "race": "Spellcaster",
     "attribute": "EARTH"
   },
+  "10920352": {
+    "id": 10920352,
+    "name": "Masked HERO Vapor",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2400,
+    "def": 2000,
+    "level": 6,
+    "race": "Warrior",
+    "attribute": "WATER"
+  },
+  "10960419": {
+    "id": 10960419,
+    "name": "Time Magic Hammer",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 500,
+    "def": 400,
+    "level": 2,
+    "race": "Spellcaster",
+    "attribute": "LIGHT"
+  },
   "10963799": {
     "id": 10963799,
     "name": "Barrier Statue of the Torrent",
@@ -3371,6 +3951,15 @@
     "race": "Beast",
     "attribute": "EARTH"
   },
+  "11082056": {
+    "id": 11082056,
+    "name": "The Fang of Critias",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "11091375": {
     "id": 11091375,
     "name": "Luster Dragon",
@@ -3410,6 +3999,17 @@
     "level": 6,
     "race": "Dragon",
     "attribute": "FIRE"
+  },
+  "11260714": {
+    "id": 11260714,
+    "name": "Darklord Superbia",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2900,
+    "def": 2400,
+    "level": 8,
+    "race": "Fairy",
+    "attribute": "DARK"
   },
   "11321183": {
     "id": 11321183,
@@ -3929,6 +4529,15 @@
     "race": "Machine",
     "attribute": "EARTH"
   },
+  "12670770": {
+    "id": 12670770,
+    "name": "Cyber Network",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "12694768": {
     "id": 12694768,
     "name": "Abaki",
@@ -4306,6 +4915,16 @@
     "race": "Plant",
     "attribute": "LIGHT"
   },
+  "13893596": {
+    "id": 13893596,
+    "name": "Exodius the Ultimate Forbidden Lord",
+    "era": "DM",
+    "type": "Effect Monster",
+    "def": 0,
+    "level": 10,
+    "race": "Spellcaster",
+    "attribute": "DARK"
+  },
   "13944422": {
     "id": 13944422,
     "name": "Granadora",
@@ -4471,6 +5090,17 @@
     "def": 0,
     "race": "Quick-Play"
   },
+  "14462257": {
+    "id": 14462257,
+    "name": "Ice Queen",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2900,
+    "def": 2100,
+    "level": 8,
+    "race": "Spellcaster",
+    "attribute": "WATER"
+  },
   "14472500": {
     "id": 14472500,
     "name": "Gokipon",
@@ -4515,6 +5145,15 @@
     "race": "Warrior",
     "attribute": "DARK"
   },
+  "14602126": {
+    "id": 14602126,
+    "name": "Xyz Import",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "14618326": {
     "id": 14618326,
     "name": "Crimson Ninja",
@@ -4558,6 +5197,15 @@
     "level": 1,
     "race": "Reptile",
     "attribute": "LIGHT"
+  },
+  "14731897": {
+    "id": 14731897,
+    "name": "Unity",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
   },
   "14772491": {
     "id": 14772491,
@@ -4656,6 +5304,17 @@
     "race": "Spellcaster",
     "attribute": "LIGHT"
   },
+  "15033525": {
+    "id": 15033525,
+    "name": "The Blazing Mars",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2600,
+    "def": 2200,
+    "level": 8,
+    "race": "Pyro",
+    "attribute": "FIRE"
+  },
   "15052462": {
     "id": 15052462,
     "name": "Violet Crystal",
@@ -4706,6 +5365,15 @@
     "level": 6,
     "race": "Warrior",
     "attribute": "EARTH"
+  },
+  "15256925": {
+    "id": 15256925,
+    "name": "Chaos Scepter Blast",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
   },
   "15259703": {
     "id": 15259703,
@@ -4767,6 +5435,17 @@
     "race": "Machine",
     "attribute": "EARTH"
   },
+  "15341821": {
+    "id": 15341821,
+    "name": "Dandylion",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 300,
+    "def": 300,
+    "level": 3,
+    "race": "Plant",
+    "attribute": "EARTH"
+  },
   "15367030": {
     "id": 15367030,
     "name": "Gokibore",
@@ -4777,6 +5456,15 @@
     "level": 4,
     "race": "Insect",
     "attribute": "EARTH"
+  },
+  "15381252": {
+    "id": 15381252,
+    "name": "Berserker Soul",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
   },
   "15383415": {
     "id": 15383415,
@@ -4833,6 +5521,15 @@
     "race": "Thunder",
     "attribute": "WIND"
   },
+  "15582767": {
+    "id": 15582767,
+    "name": "Echo Oscillation",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "15595052": {
     "id": 15595052,
     "name": "Disciple of the Forbidden Spell",
@@ -4844,6 +5541,17 @@
     "race": "Warrior",
     "attribute": "LIGHT"
   },
+  "15610297": {
+    "id": 15610297,
+    "name": "Vijam the Cubic Seed",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "15653824": {
     "id": 15653824,
     "name": "Skull Knight #2",
@@ -4854,6 +5562,17 @@
     "level": 3,
     "race": "Fiend",
     "attribute": "DARK"
+  },
+  "15661378": {
+    "id": 15661378,
+    "name": "Trishula, the Dragon of Icy Imprisonment",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2700,
+    "def": 2000,
+    "level": 9,
+    "race": "Dragon",
+    "attribute": "WATER"
   },
   "15717011": {
     "id": 15717011,
@@ -4917,6 +5636,28 @@
     "race": "Dragon",
     "attribute": "LIGHT"
   },
+  "15981690": {
+    "id": 15981690,
+    "name": "Carboneddon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 800,
+    "def": 600,
+    "level": 3,
+    "race": "Dinosaur",
+    "attribute": "EARTH"
+  },
+  "16024176": {
+    "id": 16024176,
+    "name": "Flower Cardian Pine with Crane",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 2000,
+    "level": 1,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
   "16067089": {
     "id": 16067089,
     "name": "Rise of the Snake Deity",
@@ -4925,6 +5666,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "16114248": {
+    "id": 16114248,
+    "name": "Pair Cycroid",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 1600,
+    "def": 1200,
+    "level": 5,
+    "race": "Machine",
+    "attribute": "EARTH"
   },
   "16135253": {
     "id": 16135253,
@@ -4990,6 +5742,17 @@
     "race": "Insect",
     "attribute": "FIRE"
   },
+  "16255173": {
+    "id": 16255173,
+    "name": "The Grand Jupiter",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 2000,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
   "16255442": {
     "id": 16255442,
     "name": "Beckoning Light",
@@ -5008,6 +5771,17 @@
     "def": 1200,
     "level": 4,
     "race": "Fairy",
+    "attribute": "EARTH"
+  },
+  "16304628": {
+    "id": 16304628,
+    "name": "Elemental HERO Gaia",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2200,
+    "def": 2600,
+    "level": 6,
+    "race": "Warrior",
     "attribute": "EARTH"
   },
   "16353197": {
@@ -5030,6 +5804,17 @@
     "def": 1400,
     "level": 4,
     "race": "Spellcaster",
+    "attribute": "DARK"
+  },
+  "16404809": {
+    "id": 16404809,
+    "name": "Kuribandit",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1000,
+    "def": 700,
+    "level": 3,
+    "race": "Fiend",
     "attribute": "DARK"
   },
   "16430187": {
@@ -5069,6 +5854,15 @@
     "level": 5,
     "race": "Fiend",
     "attribute": "DARK"
+  },
+  "16494704": {
+    "id": 16494704,
+    "name": "Odd-Eyes Advent",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Ritual"
   },
   "16509093": {
     "id": 16509093,
@@ -5123,6 +5917,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "16617334": {
+    "id": 16617334,
+    "name": "Performapal Rain Goat",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Beast",
+    "attribute": "WATER"
+  },
   "16762927": {
     "id": 16762927,
     "name": "Gravekeeper's Servant",
@@ -5142,6 +5947,26 @@
     "level": 4,
     "race": "Fiend",
     "attribute": "DARK"
+  },
+  "16802689": {
+    "id": 16802689,
+    "name": "Flower Cardian Paulownia with Phoenix",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 2000,
+    "level": 12,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
+  "16832845": {
+    "id": 16832845,
+    "name": "Final Geas",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "16899564": {
     "id": 16899564,
@@ -5173,6 +5998,15 @@
     "level": 4,
     "race": "Beast-Warrior",
     "attribute": "EARTH"
+  },
+  "16964437": {
+    "id": 16964437,
+    "name": "Dark Horizon",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "16970158": {
     "id": 16970158,
@@ -5216,6 +6050,15 @@
     "race": "Warrior",
     "attribute": "DARK"
   },
+  "17052477": {
+    "id": 17052477,
+    "name": "Guarded Treasure",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "17078030": {
     "id": 17078030,
     "name": "Wall of Revealing Light",
@@ -5241,6 +6084,17 @@
     "type": "Effect Monster",
     "atk": 3400,
     "def": 2400,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
+  "17141718": {
+    "id": 17141718,
+    "name": "Flower Cardian Zebra Grass",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 100,
+    "def": 100,
     "level": 8,
     "race": "Warrior",
     "attribute": "DARK"
@@ -5284,6 +6138,15 @@
     "level": 4,
     "race": "Aqua",
     "attribute": "WATER"
+  },
+  "17236839": {
+    "id": 17236839,
+    "name": "Flash Fusion",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
   },
   "17238333": {
     "id": 17238333,
@@ -5491,6 +6354,15 @@
     "race": "Plant",
     "attribute": "LIGHT"
   },
+  "17787975": {
+    "id": 17787975,
+    "name": "Dimension Sphinx",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "17810268": {
     "id": 17810268,
     "name": "Cloudian - Acid Cloud",
@@ -5566,6 +6438,17 @@
     "race": "Fairy",
     "attribute": "LIGHT"
   },
+  "18094166": {
+    "id": 18094166,
+    "name": "Vision HERO Faris",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1600,
+    "def": 1800,
+    "level": 5,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
   "18144507": {
     "id": 18144507,
     "name": "Harpie's Feather Duster",
@@ -5592,6 +6475,17 @@
     "atk": 0,
     "def": 0,
     "race": "Field"
+  },
+  "18175965": {
+    "id": 18175965,
+    "name": "Guardian Dreadscythe",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 2000,
+    "level": 8,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "18190572": {
     "id": 18190572,
@@ -5746,6 +6640,15 @@
     "race": "Aqua",
     "attribute": "WATER"
   },
+  "18803791": {
+    "id": 18803791,
+    "name": "Dark Dragon Ritual",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Ritual"
+  },
   "18807109": {
     "id": 18807109,
     "name": "Spellbinding Circle",
@@ -5754,6 +6657,15 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "18809562": {
+    "id": 18809562,
+    "name": "Magical Contract Door",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "18828179": {
     "id": 18828179,
@@ -5803,6 +6715,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "19025379": {
+    "id": 19025379,
+    "name": "Lord of the Red",
+    "era": "DM",
+    "type": "Ritual Effect Monster",
+    "atk": 2400,
+    "def": 2100,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "FIRE"
   },
   "19041767": {
     "id": 19041767,
@@ -5997,6 +6920,17 @@
     "race": "Rock",
     "attribute": "EARTH"
   },
+  "19747827": {
+    "id": 19747827,
+    "name": "Red-Eyes Black Dragon Sword",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2400,
+    "def": 2000,
+    "level": 7,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
   "19763315": {
     "id": 19763315,
     "name": "An Unfortunate Report",
@@ -6085,6 +7019,17 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "20137754": {
+    "id": 20137754,
+    "name": "Duza the Meteor Cubic Vessel",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1600,
+    "def": 1600,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "LIGHT"
   },
   "20188127": {
     "id": 20188127,
@@ -6250,6 +7195,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "20747792": {
+    "id": 20747792,
+    "name": "Berry Magician Girl",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 400,
+    "def": 400,
+    "level": 1,
+    "race": "Spellcaster",
+    "attribute": "EARTH"
+  },
   "20765952": {
     "id": 20765952,
     "name": "Mask of Dispel",
@@ -6297,6 +7253,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "20920083": {
+    "id": 20920083,
+    "name": "Scrum Force",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "20939559": {
     "id": 20939559,
     "name": "Shadowslayer",
@@ -6318,6 +7283,15 @@
     "level": 8,
     "race": "Fairy",
     "attribute": "LIGHT"
+  },
+  "20960340": {
+    "id": 20960340,
+    "name": "Krystal Avatar",
+    "era": "DM",
+    "type": "Trap Card",
+    "def": 0,
+    "level": 4,
+    "race": "Continuous"
   },
   "20985997": {
     "id": 20985997,
@@ -6379,6 +7353,35 @@
     "race": "Fairy",
     "attribute": "LIGHT"
   },
+  "21082832": {
+    "id": 21082832,
+    "name": "Chaos Form",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Ritual"
+  },
+  "21142671": {
+    "id": 21142671,
+    "name": "Red Nova",
+    "era": "DM",
+    "type": "Tuner Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fairy",
+    "attribute": "FIRE"
+  },
+  "21143940": {
+    "id": 21143940,
+    "name": "Mask Change",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "21155323": {
     "id": 21155323,
     "name": "Goggle Golem",
@@ -6400,6 +7403,15 @@
     "level": 7,
     "race": "Fairy",
     "attribute": "LIGHT"
+  },
+  "21208154": {
+    "id": 21208154,
+    "name": "The Wicked Avatar",
+    "era": "DM",
+    "type": "Effect Monster",
+    "level": 10,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "21219755": {
     "id": 21219755,
@@ -6462,6 +7474,17 @@
     "level": 2,
     "race": "Plant",
     "attribute": "EARTH"
+  },
+  "21414674": {
+    "id": 21414674,
+    "name": "Prominence Hand",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 600,
+    "def": 2000,
+    "level": 4,
+    "race": "Pyro",
+    "attribute": "FIRE"
   },
   "21417692": {
     "id": 21417692,
@@ -6699,6 +7722,28 @@
     "race": "Zombie",
     "attribute": "DARK"
   },
+  "22061412": {
+    "id": 22061412,
+    "name": "Elemental HERO The Shining",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2600,
+    "def": 2100,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "LIGHT"
+  },
+  "22093873": {
+    "id": 22093873,
+    "name": "Masked HERO Divine Wind",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2700,
+    "def": 1900,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "WIND"
+  },
   "22147147": {
     "id": 22147147,
     "name": "Cyclone Blade",
@@ -6798,6 +7843,17 @@
     "level": 7,
     "race": "Machine",
     "attribute": "EARTH"
+  },
+  "22530212": {
+    "id": 22530212,
+    "name": "Magic Hand",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 800,
+    "def": 1600,
+    "level": 4,
+    "race": "Spellcaster",
+    "attribute": "DARK"
   },
   "22537443": {
     "id": 22537443,
@@ -6899,6 +7955,39 @@
     "def": 0,
     "race": "Continuous"
   },
+  "22804410": {
+    "id": 22804410,
+    "name": "Deep-Eyes White Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 10,
+    "race": "Dragon",
+    "attribute": "LIGHT"
+  },
+  "22804644": {
+    "id": 22804644,
+    "name": "Doom Virus Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 1900,
+    "def": 1500,
+    "level": 4,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
+  "22865492": {
+    "id": 22865492,
+    "name": "Vision HERO Increase",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 900,
+    "def": 1100,
+    "level": 3,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
   "22873798": {
     "id": 22873798,
     "name": "Hyena",
@@ -6960,6 +8049,17 @@
     "atk": 0,
     "def": 0,
     "race": "Quick-Play"
+  },
+  "23204029": {
+    "id": 23204029,
+    "name": "Contrast HERO Chaos",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 3000,
+    "def": 2600,
+    "level": 9,
+    "race": "Warrior",
+    "attribute": "DARK"
   },
   "23205979": {
     "id": 23205979,
@@ -7181,6 +8281,17 @@
     "race": "Fairy",
     "attribute": "LIGHT"
   },
+  "23851033": {
+    "id": 23851033,
+    "name": "Odd-Eyes Gravity Dragon",
+    "era": "DM",
+    "type": "Ritual Effect Monster",
+    "atk": 2800,
+    "def": 2500,
+    "level": 7,
+    "race": "Dragon",
+    "attribute": "EARTH"
+  },
   "23869735": {
     "id": 23869735,
     "name": "Fossil Excavation",
@@ -7189,6 +8300,17 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "23893227": {
+    "id": 23893227,
+    "name": "Cyber Dragon Core",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 400,
+    "def": 1500,
+    "level": 2,
+    "race": "Machine",
+    "attribute": "LIGHT"
   },
   "23927567": {
     "id": 23927567,
@@ -7352,6 +8474,28 @@
     "race": "Spellcaster",
     "attribute": "DARK"
   },
+  "24413299": {
+    "id": 24413299,
+    "name": "The Suppression Pluto",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2600,
+    "def": 2000,
+    "level": 8,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "24433920": {
+    "id": 24433920,
+    "name": "Pendulum Machine",
+    "era": "DM",
+    "type": "Normal Monster",
+    "atk": 1750,
+    "def": 2000,
+    "level": 6,
+    "race": "Machine",
+    "attribute": "DARK"
+  },
   "24435369": {
     "id": 24435369,
     "name": "Mermaid Knight",
@@ -7362,6 +8506,15 @@
     "level": 4,
     "race": "Aqua",
     "attribute": "WATER"
+  },
+  "24449083": {
+    "id": 24449083,
+    "name": "Court of Justice",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
   },
   "24508238": {
     "id": 24508238,
@@ -7414,6 +8567,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "24661486": {
+    "id": 24661486,
+    "name": "Cold Enchanter",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1600,
+    "def": 1200,
+    "level": 4,
+    "race": "Aqua",
+    "attribute": "WATER"
+  },
   "24668830": {
     "id": 24668830,
     "name": "Germ Infection",
@@ -7434,6 +8598,17 @@
     "race": "Thunder",
     "attribute": "LIGHT"
   },
+  "24731453": {
+    "id": 24731453,
+    "name": "Snow Plow Hustle Rustle",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 3000,
+    "level": 10,
+    "race": "Machine",
+    "attribute": "EARTH"
+  },
   "24838456": {
     "id": 24838456,
     "name": "Vanity's Call",
@@ -7443,10 +8618,21 @@
     "def": 0,
     "race": "Counter"
   },
+  "24857466": {
+    "id": 24857466,
+    "name": "Van'Dalgyon the Dark Dragon Lord",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2800,
+    "def": 2500,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
   "24874630": {
     "id": 24874630,
     "name": "Fiend's Sanctuary",
-    "era": "GX",
+    "era": "DM",
     "type": "Spell Card",
     "atk": 0,
     "def": 0,
@@ -7822,6 +9008,17 @@
     "race": "Sea Serpent",
     "attribute": "WATER"
   },
+  "26273196": {
+    "id": 26273196,
+    "name": "Time Wizard of Tomorrow",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2000,
+    "def": 1900,
+    "level": 5,
+    "race": "Spellcaster",
+    "attribute": "LIGHT"
+  },
   "26302522": {
     "id": 26302522,
     "name": "Blast Sphere",
@@ -7867,7 +9064,7 @@
   "26439287": {
     "id": 26439287,
     "name": "Proto-Cyber Dragon",
-    "era": "GX",
+    "era": "DM",
     "type": "Effect Monster",
     "atk": 1100,
     "def": 600,
@@ -7914,6 +9111,15 @@
     "level": 2,
     "race": "Insect",
     "attribute": "EARTH"
+  },
+  "26647858": {
+    "id": 26647858,
+    "name": "Hero Ring",
+    "era": "GX",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "26669055": {
     "id": 26669055,
@@ -8127,6 +9333,17 @@
     "race": "Warrior",
     "attribute": "LIGHT"
   },
+  "27416701": {
+    "id": 27416701,
+    "name": "Shiba-Warrior Taro",
+    "era": "DM",
+    "type": "Tuner Monster",
+    "atk": 800,
+    "def": 600,
+    "level": 2,
+    "race": "Beast-Warrior",
+    "attribute": "EARTH"
+  },
   "27581098": {
     "id": 27581098,
     "name": "Non-Fusion Area",
@@ -8198,6 +9415,17 @@
     "def": 0,
     "race": "Quick-Play"
   },
+  "27780618": {
+    "id": 27780618,
+    "name": "Vision HERO Vyon",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1000,
+    "def": 1200,
+    "level": 4,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
   "27782503": {
     "id": 27782503,
     "name": "The Six Samurai - Irou",
@@ -8208,6 +9436,15 @@
     "level": 4,
     "race": "Warrior",
     "attribute": "DARK"
+  },
+  "27813661": {
+    "id": 27813661,
+    "name": "Sky Iris",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Field"
   },
   "27869883": {
     "id": 27869883,
@@ -8250,6 +9487,15 @@
     "atk": 0,
     "def": 0,
     "race": "Equip"
+  },
+  "27970830": {
+    "id": 27970830,
+    "name": "Gateway of the Six",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
   },
   "28003512": {
     "id": 28003512,
@@ -8321,6 +9567,26 @@
     "level": 4,
     "race": "Zombie",
     "attribute": "DARK"
+  },
+  "28325165": {
+    "id": 28325165,
+    "name": "Aqua Story - Urashima",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "28348537": {
+    "id": 28348537,
+    "name": "Blizzard Princess",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2800,
+    "def": 2100,
+    "level": 8,
+    "race": "Spellcaster",
+    "attribute": "WATER"
   },
   "28355718": {
     "id": 28355718,
@@ -8538,6 +9804,37 @@
     "race": "Spellcaster",
     "attribute": "WIND"
   },
+  "29021114": {
+    "id": 29021114,
+    "name": "Silver Gadget",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1500,
+    "def": 1000,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "LIGHT"
+  },
+  "29047353": {
+    "id": 29047353,
+    "name": "Aquarium Stage",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
+  "29095552": {
+    "id": 29095552,
+    "name": "Masked HERO Acid",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2600,
+    "def": 2100,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "WATER"
+  },
   "29139104": {
     "id": 29139104,
     "name": "Avalanching Aussa",
@@ -8611,6 +9908,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "29311166": {
+    "id": 29311166,
+    "name": "Assault Wyvern",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1800,
+    "def": 1000,
+    "level": 4,
+    "race": "Dragon",
+    "attribute": "LIGHT"
+  },
   "29343734": {
     "id": 29343734,
     "name": "Elemental HERO Electrum",
@@ -8671,6 +9979,17 @@
     "def": 2100,
     "level": 7,
     "race": "Spellcaster",
+    "attribute": "DARK"
+  },
+  "29491031": {
+    "id": 29491031,
+    "name": "The Snake Hair",
+    "era": "GX",
+    "type": "Normal Monster",
+    "atk": 1500,
+    "def": 1200,
+    "level": 4,
+    "race": "Zombie",
     "attribute": "DARK"
   },
   "29549364": {
@@ -8771,6 +10090,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "29934351": {
+    "id": 29934351,
+    "name": "Earthbound Wave",
+    "era": "GX",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Counter"
+  },
   "29948642": {
     "id": 29948642,
     "name": "Dig Beak",
@@ -8864,6 +10192,17 @@
     "race": "Warrior",
     "attribute": "DARK"
   },
+  "30270176": {
+    "id": 30270176,
+    "name": "Crimson Nova the Dark Cubic Lord",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 0,
+    "level": 10,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "30312361": {
     "id": 30312361,
     "name": "Phantom of Chaos",
@@ -8905,6 +10244,15 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "30392583": {
+    "id": 30392583,
+    "name": "Prediction Ritual",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Ritual"
   },
   "30435145": {
     "id": 30435145,
@@ -8983,6 +10331,17 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "30603688": {
+    "id": 30603688,
+    "name": "Apprentice Illusion Magician",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 1700,
+    "level": 6,
+    "race": "Spellcaster",
+    "attribute": "DARK"
   },
   "30606547": {
     "id": 30606547,
@@ -9084,6 +10443,17 @@
     "race": "Winged Beast",
     "attribute": "LIGHT"
   },
+  "30915572": {
+    "id": 30915572,
+    "name": "Gallis the Star Beast",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 800,
+    "def": 800,
+    "level": 3,
+    "race": "Beast",
+    "attribute": "EARTH"
+  },
   "31000575": {
     "id": 31000575,
     "name": "Conscription",
@@ -9113,6 +10483,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "31038159": {
+    "id": 31038159,
+    "name": "Genesis Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2200,
+    "def": 1800,
+    "level": 6,
+    "race": "Dragon",
+    "attribute": "LIGHT"
+  },
   "31066283": {
     "id": 31066283,
     "name": "Revival of Dokurorider",
@@ -9130,6 +10511,28 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "31111109": {
+    "id": 31111109,
+    "name": "Elemental HERO Divine Neos",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2500,
+    "def": 2500,
+    "level": 12,
+    "race": "Warrior",
+    "attribute": "LIGHT"
+  },
+  "31118030": {
+    "id": 31118030,
+    "name": "Prediction Princess Arrowsylph",
+    "era": "DM",
+    "type": "Flip Effect Monster",
+    "atk": 1000,
+    "def": 1400,
+    "level": 4,
+    "race": "Fairy",
+    "attribute": "WIND"
   },
   "31122090": {
     "id": 31122090,
@@ -9332,6 +10735,15 @@
     "race": "Rock",
     "attribute": "EARTH"
   },
+  "31828916": {
+    "id": 31828916,
+    "name": "Machina Armored Unit",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "31829185": {
     "id": 31829185,
     "name": "Dark Necrofear",
@@ -9433,6 +10845,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "32231618": {
+    "id": 32231618,
+    "name": "Prediction Princess Coinorma",
+    "era": "DM",
+    "type": "Flip Effect Monster",
+    "atk": 800,
+    "def": 1400,
+    "level": 3,
+    "race": "Fairy",
+    "attribute": "EARTH"
   },
   "32233746": {
     "id": 32233746,
@@ -9580,6 +11003,17 @@
     "race": "Pyro",
     "attribute": "FIRE"
   },
+  "32588805": {
+    "id": 32588805,
+    "name": "The Despair Uranus",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2900,
+    "def": 2300,
+    "level": 8,
+    "race": "Rock",
+    "attribute": "LIGHT"
+  },
   "32603633": {
     "id": 32603633,
     "name": "Backs to the Wall",
@@ -9641,6 +11075,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "32750510": {
+    "id": 32750510,
+    "name": "Ice Master",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 2000,
+    "level": 8,
+    "race": "Spellcaster",
+    "attribute": "WATER"
   },
   "32752319": {
     "id": 32752319,
@@ -9733,6 +11178,26 @@
     "race": "Fiend",
     "attribute": "DARK"
   },
+  "33093439": {
+    "id": 33093439,
+    "name": "Cyber Eltanin",
+    "era": "DM",
+    "type": "Effect Monster",
+    "level": 10,
+    "race": "Machine",
+    "attribute": "LIGHT"
+  },
+  "33103459": {
+    "id": 33103459,
+    "name": "Performapal Corn",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 600,
+    "def": 1000,
+    "level": 3,
+    "race": "Beast-Warrior",
+    "attribute": "LIGHT"
+  },
   "33112041": {
     "id": 33112041,
     "name": "Volcanic Rat",
@@ -9793,6 +11258,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "33252803": {
+    "id": 33252803,
+    "name": "Rank-Up-Magic Quick Chaos",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "33365932": {
     "id": 33365932,
     "name": "Volcanic Shell",
@@ -9835,6 +11309,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "33453260": {
+    "id": 33453260,
+    "name": "Comic Hand",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Equip"
+  },
   "33455338": {
     "id": 33455338,
     "name": "Maniacal Servant",
@@ -9865,6 +11348,17 @@
     "atk": 0,
     "def": 0,
     "race": "Field"
+  },
+  "33574806": {
+    "id": 33574806,
+    "name": "Elemental HERO Escuridao",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2500,
+    "def": 2000,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "DARK"
   },
   "33655493": {
     "id": 33655493,
@@ -9948,6 +11442,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "33776734": {
+    "id": 33776734,
+    "name": "Winged Kuriboh LV9",
+    "era": "GX",
+    "type": "Effect Monster",
+    "level": 9,
+    "race": "Fairy",
+    "attribute": "LIGHT"
+  },
   "33784505": {
     "id": 33784505,
     "name": "Jar Robber",
@@ -9967,6 +11470,15 @@
     "level": 4,
     "race": "Machine",
     "attribute": "EARTH"
+  },
+  "33900648": {
+    "id": 33900648,
+    "name": "Clear World",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Field"
   },
   "33950246": {
     "id": 33950246,
@@ -10016,6 +11528,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "34022290": {
+    "id": 34022290,
+    "name": "Guardian Eatos",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 2000,
+    "level": 8,
+    "race": "Fairy",
+    "attribute": "WIND"
   },
   "34029630": {
     "id": 34029630,
@@ -10121,6 +11644,26 @@
     "race": "Zombie",
     "attribute": "DARK"
   },
+  "34318086": {
+    "id": 34318086,
+    "name": "Lemon Magician Girl",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 800,
+    "def": 600,
+    "level": 2,
+    "race": "Spellcaster",
+    "attribute": "LIGHT"
+  },
+  "34325937": {
+    "id": 34325937,
+    "name": "Unification of the Cubic Lords",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "34334692": {
     "id": 34334692,
     "name": "Ritual Raven",
@@ -10181,6 +11724,17 @@
     "race": "Spellcaster",
     "attribute": "FIRE"
   },
+  "34475451": {
+    "id": 34475451,
+    "name": "Construction Train Signal Red",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1000,
+    "def": 1300,
+    "level": 3,
+    "race": "Machine",
+    "attribute": "EARTH"
+  },
   "34487429": {
     "id": 34487429,
     "name": "Ancient City - Rainbow Ruins",
@@ -10189,6 +11743,15 @@
     "atk": 0,
     "def": 0,
     "race": "Field"
+  },
+  "34507039": {
+    "id": 34507039,
+    "name": "Wiretap",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Counter"
   },
   "34541863": {
     "id": 34541863,
@@ -10328,6 +11891,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "35050257": {
+    "id": 35050257,
+    "name": "Cyber Larva",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 400,
+    "def": 600,
+    "level": 1,
+    "race": "Machine",
+    "attribute": "LIGHT"
+  },
   "35052053": {
     "id": 35052053,
     "name": "Insect Knight",
@@ -10338,6 +11912,15 @@
     "level": 4,
     "race": "Insect",
     "attribute": "EARTH"
+  },
+  "35058588": {
+    "id": 35058588,
+    "name": "Cubic Wave",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "35059553": {
     "id": 35059553,
@@ -10396,6 +11979,15 @@
     "level": 5,
     "race": "Machine",
     "attribute": "FIRE"
+  },
+  "35329581": {
+    "id": 35329581,
+    "name": "Shadow Impulse",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "35346968": {
     "id": 35346968,
@@ -10729,6 +12321,17 @@
     "race": "Machine",
     "attribute": "EARTH"
   },
+  "36442179": {
+    "id": 36442179,
+    "name": "Blackwing - Hurricane the Tornado",
+    "era": "DM",
+    "type": "Tuner Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Winged Beast",
+    "attribute": "DARK"
+  },
   "36468556": {
     "id": 36468556,
     "name": "Ceasefire",
@@ -10737,6 +12340,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "36521459": {
+    "id": 36521459,
+    "name": "Malefic Stardust Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 2000,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
   },
   "36562627": {
     "id": 36562627,
@@ -10793,6 +12407,15 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "36708764": {
+    "id": 36708764,
+    "name": "Roulette Spider",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
   },
   "36733451": {
     "id": 36733451,
@@ -10903,6 +12526,17 @@
     "race": "Spellcaster",
     "attribute": "DARK"
   },
+  "37115575": {
+    "id": 37115575,
+    "name": "Malefic Truth Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 5000,
+    "def": 5000,
+    "level": 12,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
   "37120512": {
     "id": 37120512,
     "name": "Sword of Dark Destruction",
@@ -10911,6 +12545,17 @@
     "atk": 0,
     "def": 0,
     "race": "Equip"
+  },
+  "37195861": {
+    "id": 37195861,
+    "name": "Elemental HERO Ocean",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1500,
+    "def": 1200,
+    "level": 4,
+    "race": "Warrior",
+    "attribute": "WATER"
   },
   "37231841": {
     "id": 37231841,
@@ -10981,6 +12626,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "37390589": {
+    "id": 37390589,
+    "name": "Kunai with Chain",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "37406863": {
     "id": 37406863,
     "name": "Fengsheng Mirror",
@@ -11018,6 +12672,15 @@
     "atk": 0,
     "def": 0,
     "race": "Equip"
+  },
+  "37469904": {
+    "id": 37469904,
+    "name": "Duelist Alliance",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "37507488": {
     "id": 37507488,
@@ -11078,7 +12741,7 @@
   "37630732": {
     "id": 37630732,
     "name": "Power Bond",
-    "era": "GX",
+    "era": "DM",
     "type": "Spell Card",
     "atk": 0,
     "def": 0,
@@ -11187,6 +12850,17 @@
     "level": 8,
     "race": "Winged Beast",
     "attribute": "DARK"
+  },
+  "38109772": {
+    "id": 38109772,
+    "name": "Dragonic Knight",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2800,
+    "def": 2300,
+    "level": 7,
+    "race": "Dragon",
+    "attribute": "FIRE"
   },
   "38120068": {
     "id": 38120068,
@@ -11360,6 +13034,17 @@
     "level": 4,
     "race": "Beast-Warrior",
     "attribute": "EARTH"
+  },
+  "38517737": {
+    "id": 38517737,
+    "name": "Blue-Eyes Alternative White Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 2500,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "LIGHT"
   },
   "38538445": {
     "id": 38538445,
@@ -11578,6 +13263,28 @@
     "race": "Rock",
     "attribute": "EARTH"
   },
+  "39260991": {
+    "id": 39260991,
+    "name": "Aquaactress Tetra",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 300,
+    "def": 300,
+    "level": 1,
+    "race": "Aqua",
+    "attribute": "WATER"
+  },
+  "39284521": {
+    "id": 39284521,
+    "name": "Machina Cannon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 2200,
+    "level": 8,
+    "race": "Machine",
+    "attribute": "EARTH"
+  },
   "39303359": {
     "id": 39303359,
     "name": "Ancient Gear Knight",
@@ -11599,6 +13306,17 @@
     "level": 7,
     "race": "Dragon",
     "attribute": "FIRE"
+  },
+  "39439590": {
+    "id": 39439590,
+    "name": "Cyber Dinosaur",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 1900,
+    "level": 7,
+    "race": "Machine",
+    "attribute": "LIGHT"
   },
   "39507162": {
     "id": 39507162,
@@ -11637,6 +13355,17 @@
     "atk": 500,
     "def": 500,
     "level": 2,
+    "race": "Fairy",
+    "attribute": "LIGHT"
+  },
+  "39618799": {
+    "id": 39618799,
+    "name": "Cyber Angel Dakini",
+    "era": "DM",
+    "type": "Ritual Effect Monster",
+    "atk": 2700,
+    "def": 2400,
+    "level": 8,
     "race": "Fairy",
     "attribute": "LIGHT"
   },
@@ -11731,6 +13460,15 @@
     "def": 0,
     "race": "Equip"
   },
+  "39913299": {
+    "id": 39913299,
+    "name": "The True Name",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "39956951": {
     "id": 39956951,
     "name": "Flash of the Forbidden Spell",
@@ -11760,10 +13498,30 @@
     "def": 0,
     "race": "Normal"
   },
+  "39984786": {
+    "id": 39984786,
+    "name": "Spawn Alligator",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2200,
+    "def": 1000,
+    "level": 5,
+    "race": "Reptile",
+    "attribute": "WATER"
+  },
+  "39996157": {
+    "id": 39996157,
+    "name": "Machine Angel Ritual",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Ritual"
+  },
   "40044918": {
     "id": 40044918,
     "name": "Elemental HERO Stratos",
-    "era": "GX",
+    "era": "DM",
     "type": "Effect Monster",
     "atk": 1800,
     "def": 300,
@@ -11887,6 +13645,17 @@
     "level": 5,
     "race": "Beast",
     "attribute": "LIGHT"
+  },
+  "40392714": {
+    "id": 40392714,
+    "name": "Geira Guile the Cubic King",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 2,
+    "race": "Fairy",
+    "attribute": "WIND"
   },
   "40410110": {
     "id": 40410110,
@@ -12041,6 +13810,26 @@
     "def": 0,
     "race": "Equip"
   },
+  "40838625": {
+    "id": 40838625,
+    "name": "Quaking Mirror Force",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "40854197": {
+    "id": 40854197,
+    "name": "Elemental HERO Absolute Zero",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2500,
+    "def": 2000,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "WATER"
+  },
   "40867519": {
     "id": 40867519,
     "name": "Silent Insect",
@@ -12151,6 +13940,17 @@
     "race": "Fiend",
     "attribute": "WIND"
   },
+  "41114306": {
+    "id": 41114306,
+    "name": "Dark Garnex the Cubic Beast",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 2,
+    "race": "Beast",
+    "attribute": "EARTH"
+  },
   "41142615": {
     "id": 41142615,
     "name": "The Cheerful Coffin",
@@ -12188,6 +13988,17 @@
     "atk": 0,
     "def": 0,
     "race": "Ritual"
+  },
+  "41209827": {
+    "id": 41209827,
+    "name": "Starving Venom Fusion Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2800,
+    "def": 2000,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
   },
   "41218256": {
     "id": 41218256,
@@ -12241,6 +14052,17 @@
     "level": 3,
     "race": "Winged Beast",
     "attribute": "WIND"
+  },
+  "41386308": {
+    "id": 41386308,
+    "name": "Mathematician",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1500,
+    "def": 500,
+    "level": 3,
+    "race": "Spellcaster",
+    "attribute": "EARTH"
   },
   "41392891": {
     "id": 41392891,
@@ -12375,6 +14197,26 @@
     "race": "Warrior",
     "attribute": "DARK"
   },
+  "41721210": {
+    "id": 41721210,
+    "name": "Dark Magician the Dragon Knight",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 3000,
+    "def": 2500,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
+  "41735184": {
+    "id": 41735184,
+    "name": "Dark Magic Inheritance",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "41762634": {
     "id": 41762634,
     "name": "Giant Flea",
@@ -12439,6 +14281,17 @@
     "race": "Zombie",
     "attribute": "DARK"
   },
+  "42006475": {
+    "id": 42006475,
+    "name": "Palladium Oracle Mana",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 1700,
+    "level": 6,
+    "race": "Spellcaster",
+    "attribute": "LIGHT"
+  },
   "42009836": {
     "id": 42009836,
     "name": "Fossil Dyna Pachycephalo",
@@ -12501,6 +14354,16 @@
     "def": 0,
     "race": "Normal"
   },
+  "42237854": {
+    "id": 42237854,
+    "name": "Metalhold the Moving Blockade",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "level": 4,
+    "race": "Continuous"
+  },
   "42239546": {
     "id": 42239546,
     "name": "Chrysalis Mole",
@@ -12510,6 +14373,17 @@
     "def": 100,
     "level": 2,
     "race": "Rock",
+    "attribute": "EARTH"
+  },
+  "42256406": {
+    "id": 42256406,
+    "name": "Card Blocker",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 400,
+    "def": 400,
+    "level": 3,
+    "race": "Warrior",
     "attribute": "EARTH"
   },
   "42309337": {
@@ -12552,6 +14426,15 @@
     "race": "Insect",
     "attribute": "EARTH"
   },
+  "42378577": {
+    "id": 42378577,
+    "name": "Pendulum Switch",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "42386471": {
     "id": 42386471,
     "name": "Toon Gemini Elf",
@@ -12573,6 +14456,24 @@
     "level": 3,
     "race": "Fiend",
     "attribute": "DARK"
+  },
+  "42469671": {
+    "id": 42469671,
+    "name": "Thunderforce Attack",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
+  "42502956": {
+    "id": 42502956,
+    "name": "Ayers Rock Sunrise",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "42534368": {
     "id": 42534368,
@@ -12683,6 +14584,15 @@
     "def": 0,
     "race": "Equip"
   },
+  "42776960": {
+    "id": 42776960,
+    "name": "Relay Soul",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "42829885": {
     "id": 42829885,
     "name": "The Forceful Sentry",
@@ -12763,6 +14673,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "43175858": {
+    "id": 43175858,
+    "name": "Toon Kingdom",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Field"
+  },
   "43191636": {
     "id": 43191636,
     "name": "Phantom Dragonray Bronto",
@@ -12773,6 +14692,15 @@
     "level": 4,
     "race": "Fish",
     "attribute": "WATER"
+  },
+  "43225434": {
+    "id": 43225434,
+    "name": "Battle Fusion",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
   },
   "43230671": {
     "id": 43230671,
@@ -12836,6 +14764,28 @@
     "race": "Beast-Warrior",
     "attribute": "EARTH"
   },
+  "43378048": {
+    "id": 43378048,
+    "name": "Armityle the Chaos Phantasm",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 12,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "43387895": {
+    "id": 43387895,
+    "name": "Supreme King Dragon Starving Venom",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2800,
+    "def": 2000,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
   "43405287": {
     "id": 43405287,
     "name": "D - Chain",
@@ -12844,6 +14794,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "43413875": {
+    "id": 43413875,
+    "name": "Flower Cardian Zebra Grass with Moon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 2000,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "DARK"
   },
   "43417563": {
     "id": 43417563,
@@ -12990,6 +14951,17 @@
     "race": "Zombie",
     "attribute": "EARTH"
   },
+  "43730887": {
+    "id": 43730887,
+    "name": "Holding Arms",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 500,
+    "def": 1200,
+    "level": 4,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "43751755": {
     "id": 43751755,
     "name": "Chrysalis Pantail",
@@ -13000,6 +14972,17 @@
     "level": 2,
     "race": "Beast",
     "attribute": "DARK"
+  },
+  "43791861": {
+    "id": 43791861,
+    "name": "Phoenix Beast Gairuda",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 1200,
+    "level": 6,
+    "race": "Winged Beast",
+    "attribute": "WIND"
   },
   "43793530": {
     "id": 43793530,
@@ -13022,6 +15005,27 @@
     "level": 4,
     "race": "Aqua",
     "attribute": "WATER"
+  },
+  "43892408": {
+    "id": 43892408,
+    "name": "Dark Magician Girl the Dragon Knight",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2600,
+    "def": 1700,
+    "level": 7,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
+  "43959432": {
+    "id": 43959432,
+    "name": "Metamorphortress",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 1000,
+    "def": 1000,
+    "level": 4,
+    "race": "Continuous"
   },
   "43973174": {
     "id": 43973174,
@@ -13135,6 +15139,15 @@
     "level": 7,
     "race": "Fiend",
     "attribute": "DARK"
+  },
+  "44397496": {
+    "id": 44397496,
+    "name": "Red-Eyes Spirit",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "44430454": {
     "id": 44430454,
@@ -13274,6 +15287,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "44910027": {
+    "id": 44910027,
+    "name": "Victory Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2400,
+    "def": 3000,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
   "44913552": {
     "id": 44913552,
     "name": "Timeater",
@@ -13371,6 +15395,17 @@
     "race": "Rock",
     "attribute": "EARTH"
   },
+  "45170821": {
+    "id": 45170821,
+    "name": "Vision HERO Adoration",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2800,
+    "def": 2100,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
   "45231177": {
     "id": 45231177,
     "name": "Flame Swordsman",
@@ -13400,6 +15435,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "45410988": {
+    "id": 45410988,
+    "name": "Red-Eyes Transmigration",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Ritual"
+  },
   "45425051": {
     "id": 45425051,
     "name": "Fairy King Truesdale",
@@ -13421,6 +15465,17 @@
     "level": 6,
     "race": "Spellcaster",
     "attribute": "DARK"
+  },
+  "45531624": {
+    "id": 45531624,
+    "name": "Celtic Guard of Noble Arms",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2100,
+    "def": 700,
+    "level": 4,
+    "race": "Warrior",
+    "attribute": "EARTH"
   },
   "45547649": {
     "id": 45547649,
@@ -13646,6 +15701,15 @@
     "def": 0,
     "race": "Continuous"
   },
+  "46232525": {
+    "id": 46232525,
+    "name": "The Claw of Hermos",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "46303688": {
     "id": 46303688,
     "name": "Roulette Barrel",
@@ -13655,6 +15719,17 @@
     "def": 2000,
     "level": 4,
     "race": "Machine",
+    "attribute": "LIGHT"
+  },
+  "46354113": {
+    "id": 46354113,
+    "name": "Rocket Hermos Cannon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 1500,
+    "def": 1300,
+    "level": 4,
+    "race": "Warrior",
     "attribute": "LIGHT"
   },
   "46363422": {
@@ -13754,6 +15829,17 @@
     "race": "Plant",
     "attribute": "EARTH"
   },
+  "46613515": {
+    "id": 46613515,
+    "name": "Clear Kuriboh",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 300,
+    "def": 200,
+    "level": 1,
+    "race": "Fairy",
+    "attribute": "LIGHT"
+  },
   "46652477": {
     "id": 46652477,
     "name": "The Transmigration Prophecy",
@@ -13795,6 +15881,17 @@
     "level": 6,
     "race": "Machine",
     "attribute": "EARTH"
+  },
+  "46759931": {
+    "id": 46759931,
+    "name": "Vision HERO Trinity",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2500,
+    "def": 2000,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "DARK"
   },
   "46820049": {
     "id": 46820049,
@@ -13929,6 +16026,15 @@
     "race": "Dinosaur",
     "attribute": "EARTH"
   },
+  "47222536": {
+    "id": 47222536,
+    "name": "Dark Magical Circle",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "47233801": {
     "id": 47233801,
     "name": "Dark Snake Syndrome",
@@ -13937,6 +16043,15 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "47264717": {
+    "id": 47264717,
+    "name": "Shooting Star",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "47274077": {
     "id": 47274077,
@@ -14016,6 +16131,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "47475363": {
+    "id": 47475363,
+    "name": "Drowning Mirror Force",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "47480070": {
     "id": 47480070,
     "name": "Amazoness Paladin",
@@ -14066,6 +16190,17 @@
     "level": 4,
     "race": "Rock",
     "attribute": "EARTH"
+  },
+  "47664723": {
+    "id": 47664723,
+    "name": "Darklord Edeh Arae",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2300,
+    "def": 2000,
+    "level": 5,
+    "race": "Fairy",
+    "attribute": "DARK"
   },
   "47693640": {
     "id": 47693640,
@@ -14215,6 +16350,15 @@
     "def": 0,
     "race": "Quick-Play"
   },
+  "48144509": {
+    "id": 48144509,
+    "name": "Odd-Eyes Fusion",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "48148828": {
     "id": 48148828,
     "name": "D.D. Crazy Beast",
@@ -14236,6 +16380,15 @@
     "level": 6,
     "race": "Winged Beast",
     "attribute": "DARK"
+  },
+  "48179391": {
+    "id": 48179391,
+    "name": "The Seal of Orichalcos",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Field"
   },
   "48202661": {
     "id": 48202661,
@@ -14409,6 +16562,15 @@
     "level": 4,
     "race": "Fiend",
     "attribute": "DARK"
+  },
+  "48680970": {
+    "id": 48680970,
+    "name": "Eternal Soul",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
   },
   "48686504": {
     "id": 48686504,
@@ -14762,6 +16924,17 @@
     "race": "Rock",
     "attribute": "EARTH"
   },
+  "49820233": {
+    "id": 49820233,
+    "name": "Performapal Gatlinghoul",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2900,
+    "def": 900,
+    "level": 8,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "49868263": {
     "id": 49868263,
     "name": "Ryu Senshi",
@@ -14888,6 +17061,17 @@
     "def": 0,
     "race": "Equip"
   },
+  "50185950": {
+    "id": 50185950,
+    "name": "Relinkuriboh",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 300,
+    "def": 200,
+    "level": 1,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "50259460": {
     "id": 50259460,
     "name": "Versago the Destroyer",
@@ -14913,7 +17097,7 @@
   "50287060": {
     "id": 50287060,
     "name": "Archfiend of Gilfer",
-    "era": "DM",
+    "era": "GX",
     "type": "Effect Monster",
     "atk": 2200,
     "def": 2500,
@@ -14983,6 +17167,17 @@
     "race": "Spellcaster",
     "attribute": "LIGHT"
   },
+  "50608164": {
+    "id": 50608164,
+    "name": "Masked HERO Koga",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2500,
+    "def": 1800,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "LIGHT"
+  },
   "50684552": {
     "id": 50684552,
     "name": "Wonder Garage",
@@ -15012,6 +17207,17 @@
     "def": 800,
     "level": 3,
     "race": "Spellcaster",
+    "attribute": "DARK"
+  },
+  "50720316": {
+    "id": 50720316,
+    "name": "Elemental HERO Shadow Mist",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1000,
+    "def": 1500,
+    "level": 4,
+    "race": "Warrior",
     "attribute": "DARK"
   },
   "50725996": {
@@ -15120,6 +17326,17 @@
     "def": 1000,
     "level": 3,
     "race": "Plant",
+    "attribute": "EARTH"
+  },
+  "51126152": {
+    "id": 51126152,
+    "name": "Night Express Knight",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 3000,
+    "level": 10,
+    "race": "Machine",
     "attribute": "EARTH"
   },
   "51192573": {
@@ -15248,6 +17465,26 @@
     "level": 10,
     "race": "Beast",
     "attribute": "LIGHT"
+  },
+  "51402908": {
+    "id": 51402908,
+    "name": "The Supremacy Sun",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 3000,
+    "level": 10,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "51405049": {
+    "id": 51405049,
+    "name": "Where Arf Thou?",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "51449743": {
     "id": 51449743,
@@ -15455,6 +17692,17 @@
     "race": "Warrior",
     "attribute": "EARTH"
   },
+  "52085072": {
+    "id": 52085072,
+    "name": "Dystopia the Despondent",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 5000,
+    "def": 5000,
+    "level": 12,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "52090844": {
     "id": 52090844,
     "name": "Bowganian",
@@ -15565,6 +17813,16 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "52512994": {
+    "id": 52512994,
+    "name": "Kasha",
+    "era": "GX",
+    "type": "Effect Monster",
+    "def": 1000,
+    "level": 8,
+    "race": "Zombie",
+    "attribute": "EARTH"
   },
   "52518793": {
     "id": 52518793,
@@ -15701,6 +17959,15 @@
     "race": "Fiend",
     "attribute": "DARK"
   },
+  "52875873": {
+    "id": 52875873,
+    "name": "Evolution Burst",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "53046408": {
     "id": 53046408,
     "name": "Emergency Provisions",
@@ -15779,6 +18046,17 @@
     "race": "Plant",
     "attribute": "EARTH"
   },
+  "53262004": {
+    "id": 53262004,
+    "name": "Odd-Eyes Vortex Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2500,
+    "def": 3000,
+    "level": 7,
+    "race": "Dragon",
+    "attribute": "WIND"
+  },
   "53293545": {
     "id": 53293545,
     "name": "Firegrass",
@@ -15789,6 +18067,15 @@
     "level": 2,
     "race": "Plant",
     "attribute": "EARTH"
+  },
+  "53315891": {
+    "id": 53315891,
+    "name": "Timaeus the Knight of Destiny",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "level": 10,
+    "race": "Warrior",
+    "attribute": "LIGHT"
   },
   "53341729": {
     "id": 53341729,
@@ -16018,6 +18305,26 @@
     "def": 0,
     "race": "Continuous"
   },
+  "54135423": {
+    "id": 54135423,
+    "name": "Flower Cardian Willow",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 100,
+    "def": 100,
+    "level": 11,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
+  "54175023": {
+    "id": 54175023,
+    "name": "Dimension Guardian",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "54178050": {
     "id": 54178050,
     "name": "Dragon's Rage",
@@ -16027,6 +18334,15 @@
     "def": 0,
     "race": "Continuous"
   },
+  "54283059": {
+    "id": 54283059,
+    "name": "Parallel World Fusion",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "54289683": {
     "id": 54289683,
     "name": "Power Capsule",
@@ -16035,6 +18351,14 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "54297661": {
+    "id": 54297661,
+    "name": "Dimension Reflector",
+    "era": "DM",
+    "type": "Trap Card",
+    "level": 4,
+    "race": "Continuous"
   },
   "54306223": {
     "id": 54306223,
@@ -16064,6 +18388,15 @@
     "level": 4,
     "race": "Winged Beast",
     "attribute": "WIND"
+  },
+  "54447022": {
+    "id": 54447022,
+    "name": "Soul Charge",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "54493213": {
     "id": 54493213,
@@ -16125,6 +18458,17 @@
     "def": 600,
     "level": 2,
     "race": "Insect",
+    "attribute": "EARTH"
+  },
+  "54702678": {
+    "id": 54702678,
+    "name": "Barbaroid, the Ultimate Battle Machine",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 4000,
+    "def": 4000,
+    "level": 12,
+    "race": "Machine",
     "attribute": "EARTH"
   },
   "54704216": {
@@ -16240,6 +18584,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "55010259": {
+    "id": 55010259,
+    "name": "Gold Gadget",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1700,
+    "def": 800,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "LIGHT"
+  },
   "55013285": {
     "id": 55013285,
     "name": "Troop Dragon",
@@ -16338,6 +18693,17 @@
     "race": "Thunder",
     "attribute": "LIGHT"
   },
+  "55410871": {
+    "id": 55410871,
+    "name": "Blue-Eyes Chaos MAX Dragon",
+    "era": "DM",
+    "type": "Ritual Effect Monster",
+    "atk": 4000,
+    "def": 0,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
   "55424270": {
     "id": 55424270,
     "name": "Mythical Beast Cerberus",
@@ -16380,6 +18746,15 @@
     "race": "Warrior",
     "attribute": "DARK"
   },
+  "55569674": {
+    "id": 55569674,
+    "name": "Celestial Sword - Eatos",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Equip"
+  },
   "55589254": {
     "id": 55589254,
     "name": "Frost and Flame Dragon",
@@ -16411,6 +18786,17 @@
     "race": "Warrior",
     "attribute": "EARTH"
   },
+  "55690251": {
+    "id": 55690251,
+    "name": "Darklord Desire",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 2800,
+    "level": 10,
+    "race": "Fairy",
+    "attribute": "DARK"
+  },
   "55696885": {
     "id": 55696885,
     "name": "Plague Wolf",
@@ -16425,7 +18811,7 @@
   "55713623": {
     "id": 55713623,
     "name": "Shrink",
-    "era": "GX",
+    "era": "DM",
     "type": "Spell Card",
     "atk": 0,
     "def": 0,
@@ -16515,6 +18901,15 @@
     "race": "Thunder",
     "attribute": "EARTH"
   },
+  "55948544": {
+    "id": 55948544,
+    "name": "Judgment of the Pharaoh",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "55985014": {
     "id": 55985014,
     "name": "Miracle Kids",
@@ -16543,6 +18938,17 @@
     "level": 5,
     "race": "Machine",
     "attribute": "WATER"
+  },
+  "56043447": {
+    "id": 56043447,
+    "name": "Viser Des",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 500,
+    "def": 1200,
+    "level": 4,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "56052205": {
     "id": 56052205,
@@ -16583,6 +18989,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "56132807": {
+    "id": 56132807,
+    "name": "Apple Magician Girl",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1200,
+    "def": 800,
+    "level": 3,
+    "race": "Spellcaster",
+    "attribute": "FIRE"
   },
   "56246017": {
     "id": 56246017,
@@ -16634,6 +19051,17 @@
     "level": 3,
     "race": "Warrior",
     "attribute": "EARTH"
+  },
+  "56364287": {
+    "id": 56364287,
+    "name": "Cyber Dragon Herz",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 100,
+    "def": 100,
+    "level": 1,
+    "race": "Machine",
+    "attribute": "LIGHT"
   },
   "56369281": {
     "id": 56369281,
@@ -16696,6 +19124,17 @@
     "level": 4,
     "race": "Spellcaster",
     "attribute": "WATER"
+  },
+  "56532353": {
+    "id": 56532353,
+    "name": "Neo Blue-Eyes Ultimate Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 4500,
+    "def": 3800,
+    "level": 12,
+    "race": "Dragon",
+    "attribute": "LIGHT"
   },
   "56570271": {
     "id": 56570271,
@@ -16979,6 +19418,17 @@
     "race": "Beast",
     "attribute": "EARTH"
   },
+  "57354389": {
+    "id": 57354389,
+    "name": "Sentry Soldier of Stone",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1300,
+    "def": 2000,
+    "level": 3,
+    "race": "Rock",
+    "attribute": "EARTH"
+  },
   "57384901": {
     "id": 57384901,
     "name": "Interdimensional Warp",
@@ -17020,6 +19470,15 @@
     "level": 1,
     "race": "Insect",
     "attribute": "DARK"
+  },
+  "57470761": {
+    "id": 57470761,
+    "name": "Tyrant Wing",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "57482479": {
     "id": 57482479,
@@ -17099,11 +19558,22 @@
   "57728570": {
     "id": 57728570,
     "name": "Crush Card Virus",
-    "era": "GX",
+    "era": "DM",
     "type": "Trap Card",
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "57731460": {
+    "id": 57731460,
+    "name": "Gladiator Beast Equeste",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1600,
+    "def": 1200,
+    "level": 4,
+    "race": "Winged Beast",
+    "attribute": "WIND"
   },
   "57753602": {
     "id": 57753602,
@@ -17124,6 +19594,15 @@
     "level": 8,
     "race": "Dragon",
     "attribute": "LIGHT"
+  },
+  "57793869": {
+    "id": 57793869,
+    "name": "The Wicked Eraser",
+    "era": "DM",
+    "type": "Effect Monster",
+    "level": 10,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "57827484": {
     "id": 57827484,
@@ -17238,6 +19717,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "58147549": {
+    "id": 58147549,
+    "name": "Masked HERO Goka",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2200,
+    "def": 1800,
+    "level": 6,
+    "race": "Warrior",
+    "attribute": "FIRE"
+  },
   "58185394": {
     "id": 58185394,
     "name": "Giant Kozaky",
@@ -17260,6 +19750,15 @@
     "race": "Insect",
     "attribute": "EARTH"
   },
+  "58199906": {
+    "id": 58199906,
+    "name": "Cybernetic Fusion Support",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "58206034": {
     "id": 58206034,
     "name": "Dark Lucius LV8",
@@ -17281,6 +19780,17 @@
     "level": 2,
     "race": "Beast",
     "attribute": "EARTH"
+  },
+  "58293343": {
+    "id": 58293343,
+    "name": "Tyrant Burst Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2900,
+    "def": 2500,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "LIGHT"
   },
   "58314394": {
     "id": 58314394,
@@ -17320,6 +19830,28 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "58481572": {
+    "id": 58481572,
+    "name": "Masked HERO Dark Law",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2400,
+    "def": 1800,
+    "level": 6,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
+  "58494728": {
+    "id": 58494728,
+    "name": "Steelswarm Girastag",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2600,
+    "def": 0,
+    "level": 7,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "58528964": {
     "id": 58528964,
@@ -17395,7 +19927,7 @@
   "58641905": {
     "id": 58641905,
     "name": "Ring of Defense",
-    "era": "GX",
+    "era": "DM",
     "type": "Spell Card",
     "atk": 0,
     "def": 0,
@@ -17576,6 +20108,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "59281922": {
+    "id": 59281922,
+    "name": "Cyber Dragon Drei",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1800,
+    "def": 800,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "LIGHT"
+  },
   "59290628": {
     "id": 59290628,
     "name": "Nightmare Horse",
@@ -17649,11 +20192,31 @@
     "def": 0,
     "race": "Normal"
   },
+  "59642500": {
+    "id": 59642500,
+    "name": "Masked HERO Anki",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2800,
+    "def": 1200,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
   "59744639": {
     "id": 59744639,
     "name": "Windstorm of Etaqua",
     "era": "DM",
     "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "59750328": {
+    "id": 59750328,
+    "name": "Card of Demise",
+    "era": "DM",
+    "type": "Spell Card",
     "atk": 0,
     "def": 0,
     "race": "Normal"
@@ -17732,7 +20295,7 @@
   "60082869": {
     "id": 60082869,
     "name": "Dust Tornado",
-    "era": "DM",
+    "era": "GX",
     "type": "Trap Card",
     "atk": 0,
     "def": 0,
@@ -17836,6 +20399,26 @@
     "def": 0,
     "race": "Normal"
   },
+  "60417395": {
+    "id": 60417395,
+    "name": "Darkness Neosphere",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 4000,
+    "def": 4000,
+    "level": 10,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "60434189": {
+    "id": 60434189,
+    "name": "Pendulum Impenetrable",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "60482781": {
     "id": 60482781,
     "name": "Mystic Swordsman LV6",
@@ -17857,6 +20440,17 @@
     "level": 8,
     "race": "Warrior",
     "attribute": "EARTH"
+  },
+  "60508057": {
+    "id": 60508057,
+    "name": "Raidraptor - Napalm Dragonius",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1000,
+    "def": 1000,
+    "level": 4,
+    "race": "Winged Beast",
+    "attribute": "DARK"
   },
   "60519422": {
     "id": 60519422,
@@ -17975,6 +20569,15 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "60879050": {
+    "id": 60879050,
+    "name": "Train Connection",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Equip"
   },
   "60912752": {
     "id": 60912752,
@@ -18196,6 +20799,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "61692648": {
+    "id": 61692648,
+    "name": "Lionhearted Locomotive",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2400,
+    "def": 2100,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "EARTH"
+  },
   "61705417": {
     "id": 61705417,
     "name": "Graverobber",
@@ -18323,6 +20937,17 @@
     "race": "Dragon",
     "attribute": "LIGHT"
   },
+  "62180201": {
+    "id": 62180201,
+    "name": "The Wicked Dreadroot",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 4000,
+    "def": 4000,
+    "level": 10,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "62271284": {
     "id": 62271284,
     "name": "Justi-Break",
@@ -18449,6 +21074,17 @@
     "race": "Plant",
     "attribute": "WATER"
   },
+  "62624486": {
+    "id": 62624486,
+    "name": "Masked HERO Dian",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2800,
+    "def": 3000,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "EARTH"
+  },
   "62633180": {
     "id": 62633180,
     "name": "Assault on GHQ",
@@ -18506,6 +21142,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "62873545": {
+    "id": 62873545,
+    "name": "Dragon Master Knight",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 5000,
+    "def": 5000,
+    "level": 12,
+    "race": "Dragon",
+    "attribute": "LIGHT"
   },
   "62892347": {
     "id": 62892347,
@@ -18631,6 +21278,15 @@
     "race": "Warrior",
     "attribute": "FIRE"
   },
+  "63224564": {
+    "id": 63224564,
+    "name": "Cyber Shield",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Equip"
+  },
   "63259351": {
     "id": 63259351,
     "name": "Miracle Jurassic Egg",
@@ -18697,6 +21353,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "63468625": {
+    "id": 63468625,
+    "name": "Meklord Astro Mekanikle",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 4000,
+    "def": 4000,
+    "level": 12,
+    "race": "Machine",
+    "attribute": "LIGHT"
   },
   "63477921": {
     "id": 63477921,
@@ -19012,7 +21679,7 @@
   "64599569": {
     "id": 64599569,
     "name": "Chimeratech Overdragon",
-    "era": "GX",
+    "era": "DM",
     "type": "Fusion Monster",
     "level": 9,
     "race": "Machine",
@@ -19027,6 +21694,17 @@
     "def": 0,
     "level": 1,
     "race": "Spellcaster",
+    "attribute": "DARK"
+  },
+  "64681432": {
+    "id": 64681432,
+    "name": "Gandora the Dragon of Destruction",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 8,
+    "race": "Dragon",
     "attribute": "DARK"
   },
   "64697231": {
@@ -19184,6 +21862,26 @@
     "race": "Fiend",
     "attribute": "DARK"
   },
+  "65422840": {
+    "id": 65422840,
+    "name": "Shutendoji",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1500,
+    "def": 800,
+    "level": 4,
+    "race": "Zombie",
+    "attribute": "EARTH"
+  },
+  "65446452": {
+    "id": 65446452,
+    "name": "Aquarium Set",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "65450690": {
     "id": 65450690,
     "name": "Ritual Foregone",
@@ -19328,6 +22026,17 @@
     "race": "Warrior",
     "attribute": "EARTH"
   },
+  "66094973": {
+    "id": 66094973,
+    "name": "Transforming Sphere",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 100,
+    "def": 100,
+    "level": 3,
+    "race": "Winged Beast",
+    "attribute": "WIND"
+  },
   "66100045": {
     "id": 66100045,
     "name": "Transmigration Break",
@@ -19431,6 +22140,17 @@
     "atk": 0,
     "def": 0,
     "race": "Quick-Play"
+  },
+  "66668900": {
+    "id": 66668900,
+    "name": "Aquaactress Guppy",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 600,
+    "def": 600,
+    "level": 2,
+    "race": "Aqua",
+    "attribute": "WATER"
   },
   "66672569": {
     "id": 66672569,
@@ -19552,6 +22272,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "66973070": {
+    "id": 66973070,
+    "name": "Dreadscythe Harvester",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2300,
+    "def": 1600,
+    "level": 8,
+    "race": "Insect",
+    "attribute": "WIND"
+  },
   "66989694": {
     "id": 66989694,
     "name": "The Earl of Demise",
@@ -19615,7 +22346,7 @@
   "67159705": {
     "id": 67159705,
     "name": "Armored Cybern",
-    "era": "GX",
+    "era": "DM",
     "type": "Union Effect Monster",
     "atk": 0,
     "def": 2000,
@@ -19670,6 +22401,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "67300516": {
+    "id": 67300516,
+    "name": "Red-Eyes Wyvern",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 1800,
+    "def": 1600,
+    "level": 4,
+    "race": "Dragon",
+    "attribute": "WIND"
+  },
   "67316075": {
     "id": 67316075,
     "name": "Darklord Nurse Reficule",
@@ -19691,6 +22433,15 @@
     "level": 6,
     "race": "Fish",
     "attribute": "WATER"
+  },
+  "67381587": {
+    "id": 67381587,
+    "name": "Black Cat-astrophe",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "67464807": {
     "id": 67464807,
@@ -19723,6 +22474,17 @@
     "race": "Dragon",
     "attribute": "EARTH"
   },
+  "67503139": {
+    "id": 67503139,
+    "name": "Prediction Princess Crystaldine",
+    "era": "DM",
+    "type": "Flip Effect Monster",
+    "atk": 1400,
+    "def": 2200,
+    "level": 5,
+    "race": "Fairy",
+    "attribute": "WATER"
+  },
   "67532912": {
     "id": 67532912,
     "name": "Science Soldier",
@@ -19733,6 +22495,17 @@
     "level": 3,
     "race": "Warrior",
     "attribute": "DARK"
+  },
+  "67547370": {
+    "id": 67547370,
+    "name": "Zushin the Sleeping Giant",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 10,
+    "race": "Warrior",
+    "attribute": "EARTH"
   },
   "67629977": {
     "id": 67629977,
@@ -19887,6 +22660,26 @@
     "def": 0,
     "race": "Continuous"
   },
+  "68077936": {
+    "id": 68077936,
+    "name": "Induced Explosion",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "68140974": {
+    "id": 68140974,
+    "name": "Meklord Emperor Wisel",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 2500,
+    "level": 1,
+    "race": "Machine",
+    "attribute": "DARK"
+  },
   "68170903": {
     "id": 68170903,
     "name": "A Feint Plan",
@@ -19938,6 +22731,17 @@
     "race": "Fairy",
     "attribute": "LIGHT"
   },
+  "68299524": {
+    "id": 68299524,
+    "name": "Pandemic Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 1000,
+    "level": 7,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
   "68304813": {
     "id": 68304813,
     "name": "Precious Cards from Beyond",
@@ -19964,6 +22768,17 @@
     "atk": 1150,
     "def": 2150,
     "level": 5,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "68371799": {
+    "id": 68371799,
+    "name": "Archfiend Commander",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 1200,
+    "level": 6,
     "race": "Fiend",
     "attribute": "DARK"
   },
@@ -20007,6 +22822,17 @@
     "race": "Beast",
     "attribute": "EARTH"
   },
+  "68535320": {
+    "id": 68535320,
+    "name": "Fire Hand",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1600,
+    "def": 1000,
+    "level": 4,
+    "race": "Pyro",
+    "attribute": "FIRE"
+  },
   "68540059": {
     "id": 68540059,
     "name": "Metalmorph",
@@ -20015,6 +22841,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "68625727": {
+    "id": 68625727,
+    "name": "Prediction Princess Petalelf",
+    "era": "DM",
+    "type": "Flip Effect Monster",
+    "atk": 800,
+    "def": 700,
+    "level": 3,
+    "race": "Fairy",
+    "attribute": "EARTH"
   },
   "68638985": {
     "id": 68638985,
@@ -20068,6 +22905,17 @@
     "atk": 800,
     "def": 2800,
     "level": 6,
+    "race": "Machine",
+    "attribute": "LIGHT"
+  },
+  "68812773": {
+    "id": 68812773,
+    "name": "Lillybot",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 500,
+    "def": 2000,
+    "level": 4,
     "race": "Machine",
     "attribute": "LIGHT"
   },
@@ -20465,13 +23313,24 @@
   "70095154": {
     "id": 70095154,
     "name": "Cyber Dragon",
-    "era": "GX",
+    "era": "DM",
     "type": "Effect Monster",
     "atk": 2100,
     "def": 1600,
     "level": 5,
     "race": "Machine",
     "attribute": "LIGHT"
+  },
+  "70124586": {
+    "id": 70124586,
+    "name": "Holding Legs",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 800,
+    "def": 600,
+    "level": 4,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "70138455": {
     "id": 70138455,
@@ -20554,6 +23413,15 @@
   "70368879": {
     "id": 70368879,
     "name": "Upstart Goblin",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "70560957": {
+    "id": 70560957,
+    "name": "Toon Rollback",
     "era": "DM",
     "type": "Spell Card",
     "atk": 0,
@@ -20646,6 +23514,17 @@
     "def": 0,
     "race": "Equip"
   },
+  "70832512": {
+    "id": 70832512,
+    "name": "Absolute Crusader",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1800,
+    "def": 1200,
+    "level": 4,
+    "race": "Warrior",
+    "attribute": "EARTH"
+  },
   "70861343": {
     "id": 70861343,
     "name": "Ninjitsu Art of Transformation",
@@ -20696,6 +23575,17 @@
     "level": 7,
     "race": "Beast-Warrior",
     "attribute": "DARK"
+  },
+  "71039903": {
+    "id": 71039903,
+    "name": "The White Stone of Ancients",
+    "era": "DM",
+    "type": "Tuner Monster",
+    "atk": 600,
+    "def": 500,
+    "level": 1,
+    "race": "Dragon",
+    "attribute": "LIGHT"
   },
   "71044499": {
     "id": 71044499,
@@ -20814,6 +23704,17 @@
     "race": "Pyro",
     "attribute": "FIRE"
   },
+  "71408082": {
+    "id": 71408082,
+    "name": "Paladin of Dark Dragon",
+    "era": "DM",
+    "type": "Ritual Effect Monster",
+    "atk": 1900,
+    "def": 1200,
+    "level": 4,
+    "race": "Dragon",
+    "attribute": "DARK"
+  },
   "71411377": {
     "id": 71411377,
     "name": "Queen's Bodyguard",
@@ -20835,6 +23736,15 @@
     "level": 4,
     "race": "Spellcaster",
     "attribute": "DARK"
+  },
+  "71442223": {
+    "id": 71442223,
+    "name": "Cubic Rebirth",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "71453557": {
     "id": 71453557,
@@ -20864,6 +23774,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "71525232": {
+    "id": 71525232,
+    "name": "Gandora-X the Dragon of Demolition",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
   },
   "71544954": {
     "id": 71544954,
@@ -20905,6 +23826,28 @@
     "race": "Spellcaster",
     "attribute": "LIGHT"
   },
+  "71696014": {
+    "id": 71696014,
+    "name": "Magician's Robe",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 700,
+    "def": 2000,
+    "level": 2,
+    "race": "Spellcaster",
+    "attribute": "DARK"
+  },
+  "71703785": {
+    "id": 71703785,
+    "name": "Palladium Oracle Mahad",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 2100,
+    "level": 7,
+    "race": "Spellcaster",
+    "attribute": "LIGHT"
+  },
   "71717923": {
     "id": 71717923,
     "name": "Mormolith",
@@ -20915,6 +23858,15 @@
     "level": 4,
     "race": "Rock",
     "attribute": "EARTH"
+  },
+  "71782404": {
+    "id": 71782404,
+    "name": "Red-Eyes Burn",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "71799173": {
     "id": 71799173,
@@ -21045,6 +23997,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "72378329": {
+    "id": 72378329,
+    "name": "Beast-Eyes Pendulum Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 3000,
+    "def": 2000,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "EARTH"
+  },
   "72405967": {
     "id": 72405967,
     "name": "Royal Tribute",
@@ -21074,6 +24037,15 @@
     "def": 0,
     "race": "Ritual"
   },
+  "72549351": {
+    "id": 72549351,
+    "name": "Dragonic Tactics",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "72575145": {
     "id": 72575145,
     "name": "Demotion",
@@ -21082,6 +24054,15 @@
     "atk": 0,
     "def": 0,
     "race": "Equip"
+  },
+  "72621670": {
+    "id": 72621670,
+    "name": "Double Magical Arm Bind",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "72630549": {
     "id": 72630549,
@@ -21116,6 +24097,17 @@
     "race": "Fiend",
     "attribute": "DARK"
   },
+  "72664875": {
+    "id": 72664875,
+    "name": "Crimson Nova Trinity the Dark Cubic Lord",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 4500,
+    "def": 3000,
+    "level": 10,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "72677437": {
     "id": 72677437,
     "name": "Vennominon the King of Poisonous Snakes",
@@ -21135,6 +24127,17 @@
     "atk": 0,
     "def": 0,
     "race": "Equip"
+  },
+  "72714226": {
+    "id": 72714226,
+    "name": "Assault Dog",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1200,
+    "def": 800,
+    "level": 4,
+    "race": "Beast",
+    "attribute": "EARTH"
   },
   "72842870": {
     "id": 72842870,
@@ -21186,6 +24189,15 @@
     "level": 6,
     "race": "Aqua",
     "attribute": "WATER"
+  },
+  "72930878": {
+    "id": 72930878,
+    "name": "Black Sonic",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "72989439": {
     "id": 72989439,
@@ -21424,6 +24436,15 @@
     "def": 0,
     "race": "Continuous"
   },
+  "73616671": {
+    "id": 73616671,
+    "name": "Illusion Magic",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "73628505": {
     "id": 73628505,
     "name": "Terraforming",
@@ -21443,6 +24464,17 @@
     "level": 4,
     "race": "Rock",
     "attribute": "EARTH"
+  },
+  "73652465": {
+    "id": 73652465,
+    "name": "Blackwing - Oroshi the Squall",
+    "era": "DM",
+    "type": "Tuner Monster",
+    "atk": 400,
+    "def": 600,
+    "level": 1,
+    "race": "Winged Beast",
+    "attribute": "DARK"
   },
   "73680966": {
     "id": 73680966,
@@ -21664,6 +24696,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "74426895": {
+    "id": 74426895,
+    "name": "Awakening of the Possessed - Gagigobyte",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 200,
+    "level": 5,
+    "race": "Reptile",
+    "attribute": "WATER"
+  },
   "74458486": {
     "id": 74458486,
     "name": "Covering Fire",
@@ -21814,6 +24857,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "74875003": {
+    "id": 74875003,
+    "name": "Ra's Disciple",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1100,
+    "def": 600,
+    "level": 4,
+    "race": "Fairy",
+    "attribute": "LIGHT"
   },
   "74923978": {
     "id": 74923978,
@@ -21973,6 +25027,17 @@
     "level": 3,
     "race": "Fish",
     "attribute": "WATER"
+  },
+  "75380687": {
+    "id": 75380687,
+    "name": "Amulet Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2900,
+    "def": 2500,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
   },
   "75392615": {
     "id": 75392615,
@@ -22136,6 +25201,15 @@
     "race": "Beast",
     "attribute": "EARTH"
   },
+  "75902998": {
+    "id": 75902998,
+    "name": "Trap Hole of Spikes",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "75917088": {
     "id": 75917088,
     "name": "Princess Pikeru",
@@ -22221,6 +25295,17 @@
     "level": 4,
     "race": "Warrior",
     "attribute": "EARTH"
+  },
+  "76103404": {
+    "id": 76103404,
+    "name": "Cyber Petit Angel",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 300,
+    "def": 200,
+    "level": 2,
+    "race": "Fairy",
+    "attribute": "LIGHT"
   },
   "76103675": {
     "id": 76103675,
@@ -22590,6 +25675,17 @@
     "race": "Beast-Warrior",
     "attribute": "FIRE"
   },
+  "77235086": {
+    "id": 77235086,
+    "name": "Cyber Angel Benten",
+    "era": "DM",
+    "type": "Ritual Effect Monster",
+    "atk": 1800,
+    "def": 1500,
+    "level": 6,
+    "race": "Fairy",
+    "attribute": "LIGHT"
+  },
   "77252217": {
     "id": 77252217,
     "name": "Chainsaw Insect",
@@ -22601,6 +25697,17 @@
     "race": "Insect",
     "attribute": "EARTH"
   },
+  "77363314": {
+    "id": 77363314,
+    "name": "Krystal Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2500,
+    "def": 1000,
+    "level": 6,
+    "race": "Dragon",
+    "attribute": "LIGHT"
+  },
   "77379481": {
     "id": 77379481,
     "name": "Sasuke Samurai #3",
@@ -22611,6 +25718,17 @@
     "level": 3,
     "race": "Warrior",
     "attribute": "LIGHT"
+  },
+  "77387463": {
+    "id": 77387463,
+    "name": "Vulcan Dragni the Cubic King",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 3,
+    "race": "Fairy",
+    "attribute": "FIRE"
   },
   "77414722": {
     "id": 77414722,
@@ -22640,6 +25758,17 @@
     "level": 4,
     "race": "Reptile",
     "attribute": "WATER"
+  },
+  "77498348": {
+    "id": 77498348,
+    "name": "Black Luster Soldier - Envoy of the Evening Twilight",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 2500,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "DARK"
   },
   "77527210": {
     "id": 77527210,
@@ -22673,7 +25802,7 @@
   "77565204": {
     "id": 77565204,
     "name": "Future Fusion",
-    "era": "GX",
+    "era": "DM",
     "type": "Spell Card",
     "atk": 0,
     "def": 0,
@@ -22749,6 +25878,15 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "77826734": {
+    "id": 77826734,
+    "name": "Pendulum Reborn",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "77827521": {
     "id": 77827521,
@@ -22923,6 +26061,17 @@
     "race": "Fiend",
     "attribute": "DARK"
   },
+  "78509901": {
+    "id": 78509901,
+    "name": "Blade Garoodia the Cubic Beast",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 3,
+    "race": "Beast",
+    "attribute": "FIRE"
+  },
   "78512663": {
     "id": 78512663,
     "name": "Elemental HERO Magma Neos",
@@ -22954,6 +26103,24 @@
     "race": "Beast",
     "attribute": "DARK"
   },
+  "78621186": {
+    "id": 78621186,
+    "name": "Battleguard Howling",
+    "era": "GX",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "78625592": {
+    "id": 78625592,
+    "name": "Spiritual Swords of Revealing Light",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "78636495": {
     "id": 78636495,
     "name": "Slate Warrior",
@@ -22973,6 +26140,17 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "78651105": {
+    "id": 78651105,
+    "name": "Beast King Barbaros",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 1200,
+    "level": 8,
+    "race": "Beast-Warrior",
+    "attribute": "EARTH"
   },
   "78658564": {
     "id": 78658564,
@@ -23046,6 +26224,15 @@
     "atk": 0,
     "def": 0,
     "race": "Counter"
+  },
+  "78785392": {
+    "id": 78785392,
+    "name": "Flower Gathering",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "78794994": {
     "id": 78794994,
@@ -23151,6 +26338,17 @@
     "race": "Beast",
     "attribute": "DARK"
   },
+  "79229522": {
+    "id": 79229522,
+    "name": "Chimeratech Fortress Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 8,
+    "race": "Machine",
+    "attribute": "DARK"
+  },
   "79323590": {
     "id": 79323590,
     "name": "Chain Energy",
@@ -23212,6 +26410,26 @@
     "level": 4,
     "race": "Pyro",
     "attribute": "FIRE"
+  },
+  "79447365": {
+    "id": 79447365,
+    "name": "Toon Mask",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "79473793": {
+    "id": 79473793,
+    "name": "White Night Dragon",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 2500,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "WATER"
   },
   "79569173": {
     "id": 79569173,
@@ -23293,6 +26511,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "79814787": {
+    "id": 79814787,
+    "name": "The White Stone of Legend",
+    "era": "DM",
+    "type": "Tuner Monster",
+    "atk": 300,
+    "def": 250,
+    "level": 1,
+    "race": "Dragon",
+    "attribute": "LIGHT"
+  },
   "79816536": {
     "id": 79816536,
     "name": "Summoner's Art",
@@ -23334,6 +26563,15 @@
     "race": "Dragon",
     "attribute": "LIGHT"
   },
+  "79868386": {
+    "id": 79868386,
+    "name": "Fist of Fate",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "79870141": {
     "id": 79870141,
     "name": "Mad Sword Beast",
@@ -23366,6 +26604,26 @@
     "level": 4,
     "race": "Warrior",
     "attribute": "WATER"
+  },
+  "79997591": {
+    "id": 79997591,
+    "name": "Doble Passe",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "80019195": {
+    "id": 80019195,
+    "name": "Legendary Knight Timaeus",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2800,
+    "def": 1800,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "LIGHT"
   },
   "80033124": {
     "id": 80033124,
@@ -23487,6 +26745,17 @@
     "race": "Rock",
     "attribute": "LIGHT"
   },
+  "80304126": {
+    "id": 80304126,
+    "name": "Magician's Valkyria",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1600,
+    "def": 1800,
+    "level": 4,
+    "race": "Spellcaster",
+    "attribute": "LIGHT"
+  },
   "80316585": {
     "id": 80316585,
     "name": "Cyber Harpie Lady",
@@ -23538,6 +26807,15 @@
     "def": 0,
     "race": "Continuous"
   },
+  "80560728": {
+    "id": 80560728,
+    "name": "Dimension Mirage",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "80604092": {
     "id": 80604092,
     "name": "Ultimate Offering",
@@ -23546,6 +26824,17 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "80630522": {
+    "id": 80630522,
+    "name": "Flower Cardian Paulownia",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 100,
+    "def": 100,
+    "level": 12,
+    "race": "Warrior",
+    "attribute": "DARK"
   },
   "80678380": {
     "id": 80678380,
@@ -23608,6 +26897,15 @@
     "level": 1,
     "race": "Fairy",
     "attribute": "WATER"
+  },
+  "80831721": {
+    "id": 80831721,
+    "name": "Sabatiel - The Philosopher's Stone",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "80863132": {
     "id": 80863132,
@@ -23680,6 +26978,15 @@
     "race": "Warrior",
     "attribute": "EARTH"
   },
+  "81167171": {
+    "id": 81167171,
+    "name": "Hero Spirit",
+    "era": "GX",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "81172176": {
     "id": 81172176,
     "name": "Fiend Comedian",
@@ -23732,6 +27039,15 @@
   "81325903": {
     "id": 81325903,
     "name": "Amazoness Spellcaster",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "81332143": {
+    "id": 81332143,
+    "name": "Yu-Jo Friendship",
     "era": "DM",
     "type": "Spell Card",
     "atk": 0,
@@ -23827,6 +27143,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "81752019": {
+    "id": 81752019,
+    "name": "Flower Cardian Pine",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 100,
+    "def": 100,
+    "level": 1,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
   "81755371": {
     "id": 81755371,
     "name": "Dark Effigy",
@@ -23855,6 +27182,15 @@
     "atk": 0,
     "def": 0,
     "race": "Field"
+  },
+  "81782376": {
+    "id": 81782376,
+    "name": "Dig of Destiny",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "81791932": {
     "id": 81791932,
@@ -23938,6 +27274,26 @@
     "race": "Insect",
     "attribute": "DARK"
   },
+  "81954378": {
+    "id": 81954378,
+    "name": "Reaper Scythe - Dreadscythe",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Equip"
+  },
+  "81974607": {
+    "id": 81974607,
+    "name": "Cipher Wing",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1400,
+    "def": 1200,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "LIGHT"
+  },
   "81977953": {
     "id": 81977953,
     "name": "Desert Twister",
@@ -24013,6 +27369,16 @@
     "race": "Spellcaster",
     "attribute": "WATER"
   },
+  "82103466": {
+    "id": 82103466,
+    "name": "Divine Serpent Geh",
+    "era": "DM",
+    "type": "Effect Monster",
+    "def": 0,
+    "level": 12,
+    "race": "Reptile",
+    "attribute": "DARK"
+  },
   "82108372": {
     "id": 82108372,
     "name": "Mudora",
@@ -24079,6 +27445,15 @@
     "race": "Warrior",
     "attribute": "WIND"
   },
+  "82404868": {
+    "id": 82404868,
+    "name": "Dark Magic Veil",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "82432018": {
     "id": 82432018,
     "name": "Mask of Brutality",
@@ -24126,6 +27501,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "82627406": {
+    "id": 82627406,
+    "name": "Kiwi Magician Girl",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1800,
+    "def": 1200,
+    "level": 5,
+    "race": "Spellcaster",
+    "attribute": "WIND"
+  },
   "82639107": {
     "id": 82639107,
     "name": "Convert Contact",
@@ -24144,6 +27530,17 @@
     "def": 1700,
     "level": 4,
     "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "82697428": {
+    "id": 82697428,
+    "name": "Vision HERO Witch Raider",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2700,
+    "def": 1900,
+    "level": 8,
+    "race": "Warrior",
     "attribute": "DARK"
   },
   "82705573": {
@@ -24168,6 +27565,15 @@
     "id": 82760689,
     "name": "Lucky Cloud",
     "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "82768499": {
+    "id": 82768499,
+    "name": "Spiral Flame Strike",
+    "era": "DM",
     "type": "Spell Card",
     "atk": 0,
     "def": 0,
@@ -24314,6 +27720,15 @@
     "race": "Thunder",
     "attribute": "LIGHT"
   },
+  "83461421": {
+    "id": 83461421,
+    "name": "Pendulum Storm",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "83464209": {
     "id": 83464209,
     "name": "Mystical Sheep #2",
@@ -24362,6 +27777,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "83743222": {
+    "id": 83743222,
+    "name": "Goddess Bow",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 1500,
+    "def": 1600,
+    "level": 4,
+    "race": "Warrior",
+    "attribute": "LIGHT"
   },
   "83746708": {
     "id": 83746708,
@@ -24473,6 +27899,17 @@
     "level": 3,
     "race": "Insect",
     "attribute": "WIND"
+  },
+  "84058253": {
+    "id": 84058253,
+    "name": "Chimeratech Rampage Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2100,
+    "def": 1600,
+    "level": 5,
+    "race": "Machine",
+    "attribute": "DARK"
   },
   "84080939": {
     "id": 84080939,
@@ -24640,6 +28077,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "84536654": {
+    "id": 84536654,
+    "name": "Form Change",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "84550200": {
     "id": 84550200,
     "name": "Sonic Jammer",
@@ -24650,6 +28096,17 @@
     "level": 2,
     "race": "Machine",
     "attribute": "WIND"
+  },
+  "84565800": {
+    "id": 84565800,
+    "name": "Legendary Knight Hermos",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2800,
+    "def": 1800,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "LIGHT"
   },
   "84613836": {
     "id": 84613836,
@@ -24692,6 +28149,17 @@
     "level": 3,
     "race": "Fiend",
     "attribute": "DARK"
+  },
+  "84687358": {
+    "id": 84687358,
+    "name": "Mirror Force Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2800,
+    "def": 1200,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "LIGHT"
   },
   "84696266": {
     "id": 84696266,
@@ -24998,6 +28466,28 @@
     "def": 0,
     "race": "Continuous"
   },
+  "85771019": {
+    "id": 85771019,
+    "name": "Darklord Asmodeus",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 2500,
+    "level": 8,
+    "race": "Fairy",
+    "attribute": "DARK"
+  },
+  "85800949": {
+    "id": 85800949,
+    "name": "Legendary Knight Critias",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2800,
+    "def": 1800,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "LIGHT"
+  },
   "85802526": {
     "id": 85802526,
     "name": "Cure Mermaid",
@@ -25232,6 +28722,15 @@
     "race": "Fiend",
     "attribute": "DARK"
   },
+  "86541496": {
+    "id": 86541496,
+    "name": "Left Arm Offering",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "86569121": {
     "id": 86569121,
     "name": "Melchid the Four-Face Beast",
@@ -25264,6 +28763,15 @@
     "level": 8,
     "race": "Fiend",
     "attribute": "FIRE"
+  },
+  "86686671": {
+    "id": 86686671,
+    "name": "Cyber Repair Plant",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "86742443": {
     "id": 86742443,
@@ -25337,6 +28845,17 @@
     "level": 1,
     "race": "Insect",
     "attribute": "LIGHT"
+  },
+  "87116928": {
+    "id": 87116928,
+    "name": "Chimeratech Megafleet Dragon",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 10,
+    "race": "Machine",
+    "attribute": "DARK"
   },
   "87210505": {
     "id": 87210505,
@@ -25477,6 +28996,15 @@
     "race": "Dragon",
     "attribute": "DARK"
   },
+  "87567063": {
+    "id": 87567063,
+    "name": "Rebellion",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "87621407": {
     "id": 87621407,
     "name": "Dekoichi the Battlechanted Locomotive",
@@ -25554,6 +29082,15 @@
     "race": "Warrior",
     "attribute": "EARTH"
   },
+  "87819421": {
+    "id": 87819421,
+    "name": "Mask Charge",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "87880531": {
     "id": 87880531,
     "name": "Diffusion Wave-Motion",
@@ -25591,6 +29128,26 @@
     "level": 10,
     "race": "Beast",
     "attribute": "LIGHT"
+  },
+  "88032456": {
+    "id": 88032456,
+    "name": "Mimicat",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "88071625": {
+    "id": 88071625,
+    "name": "The Tyrant Neptune",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 10,
+    "race": "Reptile",
+    "attribute": "WATER"
   },
   "88089103": {
     "id": 88089103,
@@ -25643,6 +29200,17 @@
     "def": 700,
     "level": 4,
     "race": "Spellcaster",
+    "attribute": "DARK"
+  },
+  "88264978": {
+    "id": 88264978,
+    "name": "Red-Eyes Darkness Metal Dragon",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2800,
+    "def": 2400,
+    "level": 10,
+    "race": "Dragon",
     "attribute": "DARK"
   },
   "88279736": {
@@ -25881,9 +29449,27 @@
     "race": "Warrior",
     "attribute": "LIGHT"
   },
+  "89397517": {
+    "id": 89397517,
+    "name": "Legend of Heart",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "89405199": {
     "id": 89405199,
     "name": "Greed",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
+  "89448140": {
+    "id": 89448140,
+    "name": "Magicians' Defense",
     "era": "DM",
     "type": "Trap Card",
     "atk": 0,
@@ -25965,6 +29551,15 @@
     "race": "Beast-Warrior",
     "attribute": "EARTH"
   },
+  "89719143": {
+    "id": 89719143,
+    "name": "Final Fusion",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "89731911": {
     "id": 89731911,
     "name": "Familiar Knight",
@@ -25984,6 +29579,28 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "89818984": {
+    "id": 89818984,
+    "name": "Flower Cardian Willow with Calligrapher",
+    "era": "DM",
+    "type": "Tuner Monster",
+    "atk": 2000,
+    "def": 2000,
+    "level": 11,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
+  "89870349": {
+    "id": 89870349,
+    "name": "Masked HERO Blast",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2200,
+    "def": 1800,
+    "level": 6,
+    "race": "Warrior",
+    "attribute": "WIND"
   },
   "89899996": {
     "id": 89899996,
@@ -26141,7 +29758,7 @@
   "90440725": {
     "id": 90440725,
     "name": "Cyber Shadow Gardna",
-    "era": "GX",
+    "era": "DM",
     "type": "Trap Card",
     "level": 4,
     "race": "Continuous"
@@ -26183,6 +29800,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "90579153": {
+    "id": 90579153,
+    "name": "Destiny HERO - Dystopia",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": 2800,
+    "def": 2400,
+    "level": 8,
+    "race": "Warrior",
+    "attribute": "DARK"
   },
   "90582719": {
     "id": 90582719,
@@ -26234,6 +29862,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "90788081": {
+    "id": 90788081,
+    "name": "Hundred Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1800,
+    "def": 1000,
+    "level": 4,
+    "race": "Dragon",
+    "attribute": "WIND"
   },
   "90790253": {
     "id": 90790253,
@@ -26342,7 +29981,7 @@
   "90960358": {
     "id": 90960358,
     "name": "Toon Dark Magician Girl",
-    "era": "GX",
+    "era": "DM",
     "type": "Toon Monster",
     "atk": 2000,
     "def": 1700,
@@ -26527,6 +30166,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "91831066": {
+    "id": 91831066,
+    "name": "Aquarium Lighting",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Continuous"
+  },
   "91842653": {
     "id": 91842653,
     "name": "Toon Summoned Skull",
@@ -26621,6 +30269,17 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "92053608": {
+    "id": 92053608,
+    "name": "Aquaactress Arowana",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 2000,
+    "def": 2000,
+    "level": 6,
+    "race": "Aqua",
+    "attribute": "WATER"
   },
   "92084010": {
     "id": 92084010,
@@ -26999,6 +30658,15 @@
     "def": 0,
     "race": "Normal"
   },
+  "93600443": {
+    "id": 93600443,
+    "name": "Mask Change II",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "93671934": {
     "id": 93671934,
     "name": "Morale Boost",
@@ -27007,6 +30675,28 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "93709215": {
+    "id": 93709215,
+    "name": "Darkness Destroyer",
+    "era": "GX",
+    "type": "Effect Monster",
+    "atk": 2300,
+    "def": 1800,
+    "level": 7,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "93717133": {
+    "id": 93717133,
+    "name": "Galaxy-Eyes Photon Dragon",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 3000,
+    "def": 2500,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "LIGHT"
   },
   "93730409": {
     "id": 93730409,
@@ -27022,6 +30712,26 @@
   "93747864": {
     "id": 93747864,
     "name": "Desert Sunlight",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
+  "93749093": {
+    "id": 93749093,
+    "name": "Marshmacaron",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 200,
+    "def": 200,
+    "level": 1,
+    "race": "Fairy",
+    "attribute": "LIGHT"
+  },
+  "93775296": {
+    "id": 93775296,
+    "name": "Reverse Reuse",
     "era": "DM",
     "type": "Trap Card",
     "atk": 0,
@@ -27069,6 +30779,17 @@
     "level": 2,
     "race": "Aqua",
     "attribute": "WATER"
+  },
+  "93927067": {
+    "id": 93927067,
+    "name": "Kaiser Vorse Raider",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1900,
+    "def": 1200,
+    "level": 5,
+    "race": "Beast-Warrior",
+    "attribute": "DARK"
   },
   "94004268": {
     "id": 94004268,
@@ -27206,6 +30927,26 @@
     "def": 0,
     "race": "Continuous"
   },
+  "94535485": {
+    "id": 94535485,
+    "name": "Hand-Holding Genie",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1000,
+    "def": 1600,
+    "level": 4,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "94561645": {
+    "id": 94561645,
+    "name": "Counter Gate",
+    "era": "DM",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "94566432": {
     "id": 94566432,
     "name": "Kaiser Dragon",
@@ -27317,6 +31058,15 @@
     "def": 0,
     "race": "Continuous"
   },
+  "94807487": {
+    "id": 94807487,
+    "name": "Rising Sun Slash",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Equip"
+  },
   "94820406": {
     "id": 94820406,
     "name": "Dark Fusion",
@@ -27336,6 +31086,15 @@
     "level": 3,
     "race": "Fairy",
     "attribute": "LIGHT"
+  },
+  "94886282": {
+    "id": 94886282,
+    "name": "Charge of the Light Brigade",
+    "era": "GX",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "94905343": {
     "id": 94905343,
@@ -27367,6 +31126,17 @@
     "level": 6,
     "race": "Spellcaster",
     "attribute": "DARK"
+  },
+  "94997874": {
+    "id": 94997874,
+    "name": "Prediction Princess Tarotrei",
+    "era": "DM",
+    "type": "Ritual Effect Monster",
+    "atk": 2700,
+    "def": 1200,
+    "level": 9,
+    "race": "Fairy",
+    "attribute": "LIGHT"
   },
   "95026693": {
     "id": 95026693,
@@ -27551,6 +31321,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "95486586": {
+    "id": 95486586,
+    "name": "Elemental HERO Core",
+    "era": "DM",
+    "type": "Fusion Monster",
+    "atk": 2700,
+    "def": 2200,
+    "level": 9,
+    "race": "Warrior",
+    "attribute": "EARTH"
+  },
   "95492061": {
     "id": 95492061,
     "name": "Manju of the Ten Thousand Hands",
@@ -27624,6 +31405,24 @@
     "def": 0,
     "race": "Equip"
   },
+  "95658967": {
+    "id": 95658967,
+    "name": "Ritual Sanctuary",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Field"
+  },
+  "95697223": {
+    "id": 95697223,
+    "name": "Dragon's Fighting Spirit",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Quick-Play"
+  },
   "95701283": {
     "id": 95701283,
     "name": "Majestic Mech - Goryu",
@@ -27690,6 +31489,17 @@
     "race": "Dragon",
     "attribute": "FIRE"
   },
+  "95929069": {
+    "id": 95929069,
+    "name": "Ice Hand",
+    "era": "DM",
+    "type": "Effect Monster",
+    "atk": 1400,
+    "def": 1600,
+    "level": 4,
+    "race": "Aqua",
+    "attribute": "WATER"
+  },
   "95943058": {
     "id": 95943058,
     "name": "Evil HERO Infernal Gainer",
@@ -27752,6 +31562,15 @@
     "def": 0,
     "race": "Continuous"
   },
+  "96142517": {
+    "id": 96142517,
+    "name": "Rank-Up-Magic Admiration of the Thousands",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "96148285": {
     "id": 96148285,
     "name": "Triggered Summon",
@@ -27760,6 +31579,15 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "96216229": {
+    "id": 96216229,
+    "name": "Gladiator Beast War Chariot",
+    "era": "GX",
+    "type": "Trap Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Counter"
   },
   "96218085": {
     "id": 96218085,
@@ -27869,6 +31697,15 @@
     "level": 9,
     "race": "Dragon",
     "attribute": "DARK"
+  },
+  "96598015": {
+    "id": 96598015,
+    "name": "Pot of Riches",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
   },
   "96631852": {
     "id": 96631852,
@@ -28099,6 +31936,15 @@
     "race": "Fairy",
     "attribute": "LIGHT"
   },
+  "97520701": {
+    "id": 97520701,
+    "name": "Special Schedule",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "97570038": {
     "id": 97570038,
     "name": "Kaminote Blow",
@@ -28198,6 +32044,16 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "97811903": {
+    "id": 97811903,
+    "name": "Clear Vice Dragon",
+    "era": "GX",
+    "type": "Effect Monster",
+    "def": 0,
+    "level": 8,
+    "race": "Dragon",
+    "attribute": "DARK"
   },
   "97923414": {
     "id": 97923414,
@@ -28437,6 +32293,15 @@
     "race": "Fairy",
     "attribute": "LIGHT"
   },
+  "98645731": {
+    "id": 98645731,
+    "name": "Pot of Duality",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal"
+  },
   "98666339": {
     "id": 98666339,
     "name": "Dimensional Inversion",
@@ -28467,6 +32332,15 @@
     "level": 7,
     "race": "Beast-Warrior",
     "attribute": "LIGHT"
+  },
+  "98777036": {
+    "id": 98777036,
+    "name": "Tragoedia",
+    "era": "DM",
+    "type": "Effect Monster",
+    "level": 10,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "98792570": {
     "id": 98792570,
@@ -28589,7 +32463,7 @@
   "99267150": {
     "id": 99267150,
     "name": "Five-Headed Dragon",
-    "era": "GX",
+    "era": "DM",
     "type": "Fusion Monster",
     "atk": 5000,
     "def": 5000,
@@ -28797,7 +32671,7 @@
   "99789342": {
     "id": 99789342,
     "name": "Dark Magic Curtain",
-    "era": "GX",
+    "era": "DM",
     "type": "Spell Card",
     "atk": 0,
     "def": 0,
