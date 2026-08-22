@@ -833,10 +833,60 @@ async function runTestSuite() {
     assert.equal(darkLaw?.name, 'Masked HERO Dark Law');
     assert.equal(darkLaw?.atk, 2400);
 
-    console.log('  ✓ Expanded DM & GX Card Mechanics & Extra Deck Resolution passed!\n');
+    // 14. Toon Direct Attack & Rich SELECT_YESNO Prompt Presentation
+    console.log('▶ Test 14: Toon Direct Attack & Rich SELECT_YESNO Prompt Presentation');
+    const decoder = (service as any).messageDecoder;
+    
+    // Set attacker context as Blue-Eyes Toon Dragon (53183600)
+    decoder.setLastAttackCard({
+      code: 53183600,
+      controller: 0,
+      location: 4, // MZONE
+      sequence: 0,
+    });
+
+    // Decode MSG_SELECT_YESNO with desc: 31 ("Attack Directly?")
+    const directAttackPrompt = decoder.decode({
+      type: OcgMessageType.SELECT_YESNO,
+      player: 0,
+      description: 31,
+    } as any);
+
+    assert.equal(directAttackPrompt.type, 'SELECT_YESNO');
+    assert.equal(directAttackPrompt.isPrompt, true);
+    assert.equal(directAttackPrompt.promptData.code, 53183600, 'Must extract attacker code for direct attack');
+    assert.equal(directAttackPrompt.promptData.cardName, 'Blue-Eyes Toon Dragon', 'Must resolve card name');
+    assert.equal(directAttackPrompt.promptData.isDirectAttack, true, 'Must identify as direct attack');
+    assert.equal(directAttackPrompt.promptData.promptTitle, 'Declare Direct Attack');
+    assert.equal(directAttackPrompt.promptData.yesText, 'Attack Directly');
+    assert.equal(directAttackPrompt.promptData.noText, 'Attack Opponent Monster');
+    assert(directAttackPrompt.promptData.description.includes('Blue-Eyes Toon Dragon'), 'Description must mention monster');
+
+    // Decode MSG_SELECT_YESNO with aux.Stringid (e.g. 53183600 << 4 = 850937600)
+    const customStringPrompt = decoder.decode({
+      type: OcgMessageType.SELECT_YESNO,
+      player: 0,
+      description: 850937600, // aux.Stringid(53183600, 0)
+    } as any);
+
+    assert.equal(customStringPrompt.promptData.code, 53183600);
+    assert.equal(customStringPrompt.promptData.cardName, 'Blue-Eyes Toon Dragon');
+    assert.equal(customStringPrompt.promptData.description, 'Special Summon ("Blue-Eyes Toon Dragon")');
+
+    // Test Battle Replay (desc: 30)
+    const replayPrompt = decoder.decode({
+      type: OcgMessageType.SELECT_YESNO,
+      player: 0,
+      description: 30,
+    } as any);
+    assert.equal(replayPrompt.promptData.isReplay, true);
+    assert.equal(replayPrompt.promptData.yesText, 'Continue Attack');
+    assert.equal(replayPrompt.promptData.noText, 'Cancel Attack');
+
+    console.log('  ✓ Toon Direct Attack & Rich SELECT_YESNO Prompt Presentation passed!\n');
 
     console.log('================================================================');
-    console.log('🎉 ALL 13 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 14 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();
@@ -848,5 +898,6 @@ runTestSuite().catch((err) => {
   console.error('❌ Test Suite Failed:', err);
   process.exit(1);
 });
+
 
 

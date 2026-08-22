@@ -229,9 +229,16 @@ export interface SelectPositionPayload {
 
 export interface SelectEffectYnPayload {
   player: number;
-  code: number;
+  code?: number;
   cardName?: string;
   description: string;
+  promptTitle?: string;
+  badgeLabel?: string;
+  badgeIcon?: string;
+  yesText?: string;
+  noText?: string;
+  isDirectAttack?: boolean;
+  isReplay?: boolean;
 }
 
 export interface SelectOptionPayload {

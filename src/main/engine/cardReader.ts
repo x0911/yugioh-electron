@@ -235,7 +235,7 @@ export class CardReaderService {
     let row = this.getCardTextsRow(code);
 
     // Fallback for 32-bit shift ((code << 4) | (strIndex & 0xf))
-    if (!row && (code === 0 || val < 0x10000000n)) {
+    if (!row) {
       const altCode = Number(val >> 4n);
       const altIdx = Number(val & 0xfn);
       const altRow = this.getCardTextsRow(altCode);
@@ -261,6 +261,45 @@ export class CardReaderService {
     }
 
     return String(rawVal);
+  }
+
+  /**
+   * Extracts the underlying card passcode from a 64-bit or 32-bit string ID, if valid.
+   */
+  public extractCardCodeFromStringId(rawVal: number | bigint | string): number | null {
+    if (rawVal === null || rawVal === undefined) return null;
+
+    let val: bigint;
+    if (typeof rawVal === 'bigint') {
+      val = rawVal;
+    } else if (typeof rawVal === 'number') {
+      val = BigInt(rawVal);
+    } else {
+      const trimmed = String(rawVal).trim();
+      if (!trimmed) return null;
+      try {
+        val = BigInt(trimmed);
+      } catch {
+        return null;
+      }
+    }
+
+    const num = Number(val);
+    if (num > 0 && num < 2048) return null; // System string, not a card ID
+
+    // Check 64-bit shift
+    const code64 = Number(val >> 20n);
+    if (code64 > 0 && this.getCardTextsRow(code64)) {
+      return code64;
+    }
+
+    // Check 32-bit shift
+    const code32 = Number(val >> 4n);
+    if (code32 > 0 && this.getCardTextsRow(code32)) {
+      return code32;
+    }
+
+    return null;
   }
 
   public getCardCount(): number {

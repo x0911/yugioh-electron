@@ -1796,6 +1796,9 @@ export const useDuelStore = defineStore('duel', {
     },
 
     async executeSelectEffectYn(yes: boolean): Promise<boolean> {
+      if (this.lastPromptEvent?.promptType === 'SELECT_YESNO') {
+        return this.executeSelectYesNo(yes);
+      }
       return this.sendCommand({
         type: 2, // SELECT_EFFECTYN
         yes,

@@ -224,14 +224,17 @@
       </template>
 
       <!-- ================================================================= -->
-      <!-- 3. OPTIONAL EFFECT YES/NO PROMPT -->
+      <!-- 3. OPTIONAL EFFECT / DIRECT ATTACK / YES-NO PROMPT -->
       <!-- ================================================================= -->
       <template v-else-if="selectEffectYn">
         <div class="prompt-header">
           <div class="prompt-header__top-row">
-            <div class="prompt-header__badge prompt-header__badge--effect">
-              <span class="badge-icon">✨</span>
-              <span class="badge-label">CARD EFFECT TRIGGER</span>
+            <div
+              class="prompt-header__badge"
+              :class="selectEffectYn.isDirectAttack || selectEffectYn.isReplay ? 'prompt-header__badge--battle' : 'prompt-header__badge--effect'"
+            >
+              <span class="badge-icon">{{ selectEffectYn.badgeIcon || (selectEffectYn.isDirectAttack ? '⚔️' : '✨') }}</span>
+              <span class="badge-label">{{ selectEffectYn.badgeLabel || (selectEffectYn.isDirectAttack ? 'DIRECT ATTACK CHOICE' : 'CARD EFFECT TRIGGER') }}</span>
             </div>
             <button
               type="button"
@@ -243,41 +246,69 @@
               <span>Observe Field</span>
             </button>
           </div>
-          <h3 class="prompt-header__title">Optional Card Effect</h3>
+          <h3 class="prompt-header__title">
+            {{ selectEffectYn.promptTitle || (selectEffectYn.isDirectAttack ? 'Declare Direct Attack' : 'Optional Card Effect') }}
+          </h3>
           <p class="prompt-header__subtitle">
-            Do you wish to activate the effect of <strong class="highlight-text">{{ selectEffectYn.cardName || 'this card' }}</strong>?
+            <template v-if="selectEffectYn.isDirectAttack">
+              Do you wish to declare a direct attack on opponent Life Points with <strong class="highlight-text">{{ effectiveCardName || 'your monster' }}</strong>?
+            </template>
+            <template v-else-if="selectEffectYn.isReplay">
+              A battle replay occurred. Do you want to continue the attack with <strong class="highlight-text">{{ effectiveCardName || 'your monster' }}</strong>?
+            </template>
+            <template v-else-if="effectiveCardName">
+              Do you wish to activate the effect of <strong class="highlight-text">{{ effectiveCardName }}</strong>?
+            </template>
+            <template v-else>
+              Do you wish to proceed with this action?
+            </template>
           </p>
         </div>
 
         <!-- Spotlight Card Presentation -->
         <div
           class="effect-spotlight"
-          @mouseenter="onCardHoverByCode(selectEffectYn.code)"
+          @mouseenter="onCardHoverByCode(effectiveCardCode)"
           @mouseleave="onCardHoverByCode(null)"
         >
-          <div class="effect-spotlight__card">
+          <div v-if="effectiveCardCode && effectiveCardCode > 0" class="effect-spotlight__card">
             <img
-              :src="getCardImageUrl(selectEffectYn.code, 'mini')"
-              :alt="selectEffectYn.cardName || 'Card'"
+              :src="getCardImageUrl(effectiveCardCode, 'mini')"
+              :alt="effectiveCardName || 'Card'"
               class="spotlight-img"
               @error="handleArtFallback"
             />
             <div class="spotlight-sheen" />
           </div>
-          <div v-if="resolvedEffectDescription" class="effect-spotlight__desc">
-            <span class="desc-quote-icon">💬</span>
-            <p class="desc-text">{{ resolvedEffectDescription }}</p>
+          <div v-else class="effect-spotlight__icon-card" :class="{ 'effect-spotlight__icon-card--battle': selectEffectYn.isDirectAttack }">
+            <span class="spotlight-fallback-icon">{{ selectEffectYn.isDirectAttack ? '⚔️' : '✨' }}</span>
+          </div>
+
+          <div class="effect-spotlight__content">
+            <div v-if="effectiveCardName" class="effect-spotlight__meta-row">
+              <span class="spotlight-card-name">{{ effectiveCardName }}</span>
+              <span v-if="effectiveCardDetail?.isMonster" class="spotlight-stats-badge">
+                ⚔️ {{ effectiveCardDetail.atk }} / 🛡️ {{ effectiveCardDetail.def }}
+              </span>
+              <span v-else-if="effectiveCardDetail" class="spotlight-stats-badge">
+                {{ effectiveCardDetail.typeLabels.join(' • ') }}
+              </span>
+            </div>
+            <div v-if="resolvedEffectDescription" class="effect-spotlight__desc">
+              <span class="desc-quote-icon">💬</span>
+              <p class="desc-text">{{ resolvedEffectDescription }}</p>
+            </div>
           </div>
         </div>
 
         <div class="prompt-footer prompt-footer--center">
           <button type="button" class="action-btn action-btn--secondary" @click="$emit('select-effect-yn', false)">
             <span class="btn-icon">✕</span>
-            <span>No, Decline</span>
+            <span>{{ selectEffectYn.noText || (selectEffectYn.isDirectAttack ? 'Attack Opponent Monster' : 'No, Decline') }}</span>
           </button>
           <button type="button" class="action-btn action-btn--confirm-emerald" @click="$emit('select-effect-yn', true)">
             <span class="btn-icon">✓</span>
-            <span>Yes, Activate Effect</span>
+            <span>{{ selectEffectYn.yesText || (selectEffectYn.isDirectAttack ? 'Attack Directly' : 'Yes, Activate Effect') }}</span>
           </button>
         </div>
       </template>
@@ -567,12 +598,51 @@ const emit = defineEmits<{
 
 const duelStore = useDuelStore();
 
+const effectiveCardCode = computed(() => {
+  if (!props.selectEffectYn) return null;
+  if (props.selectEffectYn.code && props.selectEffectYn.code > 0) {
+    return props.selectEffectYn.code;
+  }
+  return null;
+});
+
+const effectiveCardDetail = computed(() => {
+  if (!effectiveCardCode.value) return null;
+  return duelStore.getCardDetail(effectiveCardCode.value);
+});
+
+const effectiveCardName = computed(() => {
+  if (!props.selectEffectYn) return '';
+  if (props.selectEffectYn.cardName) return props.selectEffectYn.cardName;
+  if (effectiveCardDetail.value?.name) return effectiveCardDetail.value.name;
+  return '';
+});
+
 const resolvedEffectDescription = computed(() => {
   if (!props.selectEffectYn) return '';
   const d = props.selectEffectYn.description;
-  if (d && d !== '0' && isNaN(Number(d))) return d;
-  const detail = duelStore.getCardDetail(props.selectEffectYn.code);
-  return detail?.desc || 'Activate the effect of this card.';
+  if (
+    d &&
+    d !== '0' &&
+    isNaN(Number(d)) &&
+    !d.startsWith('Option #') &&
+    d !== 'Activate the effect of this card.' &&
+    d !== 'Do you wish to proceed?'
+  ) {
+    return d;
+  }
+  if (props.selectEffectYn.isDirectAttack) {
+    const name = effectiveCardName.value || 'This monster';
+    return `${name} can attack your opponent directly while you control "Toon World". If you decline, you must select an opponent monster to attack.`;
+  }
+  if (props.selectEffectYn.isReplay) {
+    const name = effectiveCardName.value || 'This monster';
+    return `The previous attack target is no longer valid. Choose whether to re-declare an attack with ${name} or stop.`;
+  }
+  if (effectiveCardDetail.value?.desc) {
+    return effectiveCardDetail.value.desc;
+  }
+  return d || 'Do you wish to activate the effect of this card?';
 });
 
 function onCardHoverByCode(code?: number | null): void {
@@ -1195,21 +1265,83 @@ function toRomanNumeral(num: number): string {
     }
   }
 
-  &__desc {
+  &__icon-card {
+    width: 72px;
+    height: 104px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(30, 40, 60, 0.8);
+    border: 1.5px dashed rgba(201, 162, 39, 0.4);
+    flex-shrink: 0;
+
+    .spotlight-fallback-icon {
+      font-size: 2rem;
+    }
+
+    &--battle {
+      border-color: rgba(235, 87, 87, 0.6);
+      background: rgba(235, 87, 87, 0.15);
+    }
+  }
+
+  &__content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border-bottom: 1px solid rgba(201, 162, 39, 0.25);
+    padding-bottom: 6px;
+
+    .spotlight-card-name {
+      font-family: $font-display;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: $color-gold-100;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .spotlight-stats-badge {
+      font-family: $font-mono;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #dfbaff;
+      background: rgba(155, 81, 224, 0.25);
+      border: 1px solid rgba(155, 81, 224, 0.5);
+      padding: 2px 8px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+  }
+
+  &__desc {
     display: flex;
     align-items: flex-start;
     gap: 8px;
 
     .desc-quote-icon {
       font-size: 1rem;
+      flex-shrink: 0;
+      margin-top: 2px;
     }
 
     .desc-text {
       margin: 0;
       font-family: $font-body;
       font-size: 0.92rem;
-      color: rgba(245, 241, 230, 0.9);
+      color: rgba(245, 241, 230, 0.92);
       line-height: 1.45;
     }
   }

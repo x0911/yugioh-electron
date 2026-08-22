@@ -8,6 +8,8 @@ import createCore, {
   OcgMessageType,
   OcgResponseType,
   OcgQueryFlags,
+  SelectIdleCMDAction,
+  SelectBattleCMDAction,
   type OcgMessage,
   type OcgResponse,
 } from 'ocgcore-wasm';
@@ -1118,6 +1120,22 @@ export class DuelEngineService {
           ...response,
           position: Number((response as any).position),
         };
+      case OcgResponseType.SELECT_EFFECTYN:
+        if (this.lastPromptMessage?.type === OcgMessageType.SELECT_YESNO) {
+          return {
+            ...response,
+            type: OcgResponseType.SELECT_YESNO,
+          };
+        }
+        break;
+      case OcgResponseType.SELECT_YESNO:
+        if (this.lastPromptMessage?.type === OcgMessageType.SELECT_EFFECTYN) {
+          return {
+            ...response,
+            type: OcgResponseType.SELECT_EFFECTYN,
+          };
+        }
+        break;
       case OcgResponseType.ROCK_PAPER_SCISSORS:
         return {
           ...response,
@@ -1398,6 +1416,30 @@ export class DuelEngineService {
     }
 
     try {
+      if (
+        this.lastPromptMessage?.type === OcgMessageType.SELECT_BATTLECMD &&
+        (response as any).type === OcgResponseType.SELECT_BATTLECMD
+      ) {
+        if ((response as any).action === SelectBattleCMDAction.SELECT_ATTACK) {
+          const attackIndex = (response as any).index;
+          const attackEntry = (this.lastPromptMessage as any).attacks?.[attackIndex];
+          if (attackEntry) {
+            this.messageDecoder.setLastAttackCard(attackEntry);
+          }
+        }
+      } else if (
+        this.lastPromptMessage?.type === OcgMessageType.SELECT_IDLECMD &&
+        (response as any).type === OcgResponseType.SELECT_IDLECMD
+      ) {
+        if ((response as any).action === SelectIdleCMDAction.SELECT_ACTIVATE) {
+          const actIndex = (response as any).index;
+          const actEntry = (this.lastPromptMessage as any).activates?.[actIndex];
+          if (actEntry) {
+            this.messageDecoder.setLastActivatedCard(actEntry);
+          }
+        }
+      }
+
       this.lib.duelSetResponse(this.currentDuel, this.normalizeResponse(response));
       this.state.isWaitingResponse = false;
       this.state.waitingPlayer = null;

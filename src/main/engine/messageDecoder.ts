@@ -454,9 +454,21 @@ export function sanitizeBigInts<T>(obj: T): T {
 
 export class MessageDecoder {
   private cardReader: CardReaderService;
+  private lastAttackCard: { code: number; controller?: number; location?: number; sequence?: number; can_direct?: boolean } | null = null;
+  private lastChainingCard: { code: number; player: number } | null = null;
+  private lastHintCard: number | null = null;
+  private lastActivatedCard: { code: number; player?: number } | null = null;
 
   constructor(cardReader: CardReaderService) {
     this.cardReader = cardReader;
+  }
+
+  public setLastAttackCard(card: { code: number; controller?: number; location?: number; sequence?: number; can_direct?: boolean } | null): void {
+    this.lastAttackCard = card;
+  }
+
+  public setLastActivatedCard(card: { code: number; player?: number } | null): void {
+    this.lastActivatedCard = card;
   }
 
   public decode(msg: OcgMessage): DecodedDuelEvent {
@@ -496,6 +508,10 @@ export class MessageDecoder {
         else if (pLower.includes('battle') || pLower.includes('damage')) phaseCode = 'BP';
         else if (pLower.includes('main2')) phaseCode = 'M2';
         else if (pLower.includes('end')) phaseCode = 'EP';
+
+        if (phaseCode !== 'BP') {
+          this.lastAttackCard = null;
+        }
 
         description = `Phase changed to ${phaseName.toUpperCase()}`;
         return {
@@ -663,6 +679,14 @@ export class MessageDecoder {
 
       case OcgMessageType.CHAINING: {
         type = 'CHAINING';
+        this.lastChainingCard = {
+          code: msg.code,
+          player: msg.triggering_controller ?? (msg as any).player ?? 0,
+        };
+        this.lastActivatedCard = {
+          code: msg.code,
+          player: msg.triggering_controller ?? (msg as any).player ?? 0,
+        };
         const name = this.cardReader.getCardName(msg.code);
         description = `Player ${msg.triggering_controller} activated effect of ${name} (Chain Link ${msg.chain_size})`;
         return {
@@ -687,6 +711,14 @@ export class MessageDecoder {
         type = 'ATTACK';
         const cardSeq = msg.card?.sequence ?? 0;
         const cardCtrl = msg.card?.controller ?? 0;
+        if (msg.card?.code) {
+          this.lastAttackCard = {
+            code: msg.card.code,
+            controller: cardCtrl,
+            sequence: cardSeq,
+            location: msg.card.location,
+          };
+        }
         if (msg.target) {
           description = `Player ${cardCtrl}'s monster declared an attack on opponent monster.`;
         } else {
@@ -1009,6 +1041,13 @@ export class MessageDecoder {
           code: msg.code,
           cardName: name,
           description: resolvedEffectDesc,
+          promptTitle: 'Optional Card Effect',
+          badgeLabel: 'CARD EFFECT TRIGGER',
+          badgeIcon: '✨',
+          yesText: 'Yes, Activate Effect',
+          noText: 'No, Decline',
+          isDirectAttack: false,
+          isReplay: false,
         };
 
         return {
@@ -1028,10 +1067,83 @@ export class MessageDecoder {
         type = 'SELECT_YESNO';
         promptType = 'SELECT_YESNO';
         promptPlayer = msg.player;
-        description = `Do you wish to proceed?`;
+
+        const rawDesc = (msg as any).description ?? (msg as any).desc ?? 0;
+        const resolvedString = this.cardReader.resolveString(rawDesc);
+
+        // 1. Try to extract card code from string ID
+        let code = this.cardReader.extractCardCodeFromStringId(rawDesc);
+
+        const numDesc = Number(rawDesc);
+        const isDirectAttack =
+          numDesc === 31 ||
+          (typeof resolvedString === 'string' && resolvedString.toLowerCase().includes('attack directly'));
+        const isReplay =
+          numDesc === 30 ||
+          (typeof resolvedString === 'string' && resolvedString.toLowerCase().includes('replay'));
+
+        if (!code) {
+          if ((isDirectAttack || isReplay) && this.lastAttackCard?.code) {
+            code = this.lastAttackCard.code;
+          } else if (this.lastChainingCard?.code) {
+            code = this.lastChainingCard.code;
+          } else if (this.lastHintCard) {
+            code = this.lastHintCard;
+          } else if (this.lastActivatedCard?.code) {
+            code = this.lastActivatedCard.code;
+          }
+        }
+
+        const cardDetail = code ? this.cardReader.getCardDetail(code) : null;
+        const cardName = cardDetail?.name ?? (code ? this.cardReader.getCardName(code) : undefined);
+
+        let promptTitle = 'Optional Card Effect';
+        let badgeLabel = 'CARD EFFECT TRIGGER';
+        let badgeIcon = '✨';
+        let yesText = 'Yes, Activate Effect';
+        let noText = 'No, Decline';
+        let finalDescription = '';
+
+        if (isDirectAttack) {
+          promptTitle = 'Declare Direct Attack';
+          badgeLabel = 'DIRECT ATTACK CHOICE';
+          badgeIcon = '⚔️';
+          yesText = 'Attack Directly';
+          noText = 'Attack Opponent Monster';
+          finalDescription = cardName
+            ? `"${cardName}" can attack your opponent directly. Do you wish to declare a direct attack on opponent Life Points?`
+            : `Do you wish to declare a direct attack on opponent Life Points?`;
+        } else if (isReplay) {
+          promptTitle = 'Battle Replay';
+          badgeLabel = 'BATTLE REPLAY';
+          badgeIcon = '⚔️';
+          yesText = 'Continue Attack';
+          noText = 'Cancel Attack';
+          finalDescription = cardName
+            ? `A battle replay occurred. Do you want to continue the attack with "${cardName}"?`
+            : `A battle replay occurred. Do you wish to continue the attack?`;
+        } else if (resolvedString && !resolvedString.startsWith('Option #') && isNaN(Number(resolvedString))) {
+          finalDescription = resolvedString;
+        } else if (cardName) {
+          finalDescription = `Do you wish to activate the effect of "${cardName}"?`;
+        } else {
+          finalDescription = `Do you wish to proceed?`;
+        }
+
+        description = finalDescription;
 
         promptData = {
           player: msg.player,
+          code,
+          cardName,
+          description: finalDescription,
+          promptTitle,
+          badgeLabel,
+          badgeIcon,
+          yesText,
+          noText,
+          isDirectAttack,
+          isReplay,
         };
 
         return {
