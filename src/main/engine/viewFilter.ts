@@ -66,17 +66,72 @@ export class ViewFilterService {
   }
 
   /**
+   * Checks if a target player's hand is publicly revealed to the viewer.
+   * Continuous reveal effects:
+   * 1. Ceremonial Bell (20228463): Face-up on either player's field -> Both players keep hands revealed.
+   * 2. Respect Play (08953736): Face-up continuous trap on either field -> Turn player's hand revealed.
+   * 3. Mind on Air (66399653): Face-up monster on viewer's field -> Opponent keeps hand revealed.
+   * 4. Eye of Truth (47910970): Face-up trap on viewer's field -> Opponent keeps hand revealed.
+   */
+  public isPlayerHandPublic(
+    targetPf: PlayerFieldState,
+    otherPf?: PlayerFieldState,
+    viewerPlayerId: number = 0,
+  ): boolean {
+    if (targetPf.playerId === viewerPlayerId) return true;
+    if (!otherPf) return false;
+
+    const allFaceUpMonsters = [
+      ...targetPf.monsterZones,
+      ...otherPf.monsterZones,
+    ].filter((m): m is FieldCard => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'));
+
+    const allFaceUpSpellTraps = [
+      ...targetPf.spellTrapZones,
+      ...otherPf.spellTrapZones,
+    ].filter((st): st is FieldCard => !!st && st.position === 'faceup_spell');
+
+    // 1. Ceremonial Bell (20228463)
+    const hasCeremonialBell = allFaceUpMonsters.some((m) => m.code === 20228463);
+    if (hasCeremonialBell) return true;
+
+    // 2. Respect Play (08953736) - turn player's hand is public
+    const hasRespectPlay = allFaceUpSpellTraps.some((st) => st.code === 8953736);
+    if (hasRespectPlay && targetPf.isTurn) return true;
+
+    // 3. Mind on Air (66399653) on viewer's side
+    const viewerMonsters = otherPf.playerId === viewerPlayerId ? otherPf.monsterZones : targetPf.monsterZones;
+    const hasMindOnAir = viewerMonsters.some((m) => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense') && m.code === 66399653);
+    if (hasMindOnAir) return true;
+
+    // 4. Eye of Truth (47910970) on viewer's side
+    const viewerSpellTraps = otherPf.playerId === viewerPlayerId ? otherPf.spellTrapZones : targetPf.spellTrapZones;
+    const hasEyeOfTruth = viewerSpellTraps.some((st) => !!st && st.position === 'faceup_spell' && st.code === 47910970);
+    if (hasEyeOfTruth) return true;
+
+    return false;
+  }
+
+  /**
    * Sanitizes an entire PlayerFieldState for a viewer.
    */
-  public filterPlayerFieldForViewer(pf: PlayerFieldState, viewerPlayerId: number): PlayerFieldState {
+  public filterPlayerFieldForViewer(
+    pf: PlayerFieldState,
+    viewerPlayerId: number,
+    otherPf?: PlayerFieldState,
+  ): PlayerFieldState {
     const isOwner = pf.playerId === viewerPlayerId;
     if (isOwner) {
       return JSON.parse(JSON.stringify(pf));
     }
 
+    const isHandPublic = this.isPlayerHandPublic(pf, otherPf, viewerPlayerId);
+
     return {
       ...pf,
-      hand: pf.hand.map((c) => this.filterFieldCardForViewer(c, viewerPlayerId)!),
+      hand: isHandPublic
+        ? pf.hand.map((c) => ({ ...c }))
+        : pf.hand.map((c) => this.filterFieldCardForViewer(c, viewerPlayerId)!),
       monsterZones: pf.monsterZones.map((c) => this.filterFieldCardForViewer(c, viewerPlayerId)),
       spellTrapZones: pf.spellTrapZones.map((c) => this.filterFieldCardForViewer(c, viewerPlayerId)),
       fieldZone: this.filterFieldCardForViewer(pf.fieldZone, viewerPlayerId),
@@ -90,10 +145,14 @@ export class ViewFilterService {
    * Filters decoded duel events before they are transmitted over IPC to the renderer (human view)
    * or passed to AIController (AI view).
    */
-  public filterEventForViewer(event: DecodedDuelEvent, viewerPlayerId: number): DecodedDuelEvent {
+  public filterEventForViewer(
+    event: DecodedDuelEvent,
+    viewerPlayerId: number,
+    isOpponentHandPublic: boolean = false,
+  ): DecodedDuelEvent {
     // If event is DRAW:
     if (event.type === 'DRAW' && event.drawnCards && event.player !== undefined) {
-      if (event.player !== viewerPlayerId) {
+      if (event.player !== viewerPlayerId && !isOpponentHandPublic) {
         // Redact opponent drawn cards
         const redactedDrawnCards = event.drawnCards.map(() => ({
           code: 0,

@@ -88,6 +88,10 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
     - Prevented suicidal Battle Phase transitions when all AI attackers are weaker than opponent's face-up monsters.
     - Fixed `Option #221` text fallback in `SELECT_EFFECTYN` to display human-readable effect descriptions (*Card of Safe Return*).
     - Added explicit descriptive decoding for `CONFIRM_CARDS`, `SHUFFLE_DECK`, `EQUIP`, `BECOME_TARGET`, `CARD_TARGET`, `DAMAGE_STEP_START`, and `DAMAGE_STEP_END`.
+15. **Continuous Hand-Reveal Mechanics (*Ceremonial Bell*, *Respect Play*, *Mind on Air*, *Eye of Truth*)**:
+    - Retained master card identity in `DuelEngineService.ts` for all drawn and bounced hand cards, delegating client-side anti-cheat protection entirely to `ViewFilterService`.
+    - Added `isPlayerHandPublic` to `ViewFilterService` to dynamically detect face-up hand-reveal cards (*Ceremonial Bell* `20228463`, *Respect Play* `08953736`, *Mind on Air* `66399653`, *Eye of Truth* `47910970`) and unredact hand cards and `DRAW` events when active.
+    - Updated `HandFan.vue` to render full face-up card art, names, levels, ATK/DEF stats, and hover preview for revealed opponent hand cards.
 
 ---
 

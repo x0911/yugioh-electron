@@ -236,7 +236,12 @@ export class DuelEngineService {
         event.fieldStats = stats;
       }
     }
-    const filteredEvent = this.viewFilter.filterEventForViewer(event, this.humanPlayerId);
+    const isOppHandPublic = this.viewFilter.isPlayerHandPublic(
+      this.getPlayerField(1 - this.humanPlayerId),
+      this.getPlayerField(this.humanPlayerId),
+      this.humanPlayerId,
+    );
+    const filteredEvent = this.viewFilter.filterEventForViewer(event, this.humanPlayerId, isOppHandPublic);
     for (const listener of this.eventListeners) {
       listener(filteredEvent);
     }
@@ -741,8 +746,7 @@ export class DuelEngineService {
       const pf = this.getPlayerField(msg.player);
       pf.deckCount = Math.max(0, pf.deckCount - msg.drawn.length);
       for (const item of msg.drawn) {
-        const isHuman = msg.player === this.humanPlayerId;
-        const code = isHuman ? item.code : 0;
+        const code = item.code;
         const detail = code > 0 ? this.cardReader.getCardDetail(code) : null;
         const card: FieldCard = {
           id: `hand-${msg.player}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -751,7 +755,7 @@ export class DuelEngineService {
           controller: msg.player as 0 | 1,
           location: 'hand',
           sequence: pf.hand.length,
-          position: isHuman ? 'faceup_spell' : 'facedown_spell',
+          position: 'faceup_spell',
           atk: detail?.isMonster ? detail.atk : undefined,
           def: detail?.isMonster ? detail.def : undefined,
           level: detail?.isMonster ? detail.level : undefined,
@@ -998,8 +1002,7 @@ export class DuelEngineService {
       } else if (to.location === OcgLocation.HAND) {
         movedCard.location = 'hand';
         movedCard.sequence = toPf.hand.length;
-        movedCard.position = to.controller === this.humanPlayerId ? 'faceup_spell' : 'facedown_spell';
-        if (to.controller !== this.humanPlayerId) movedCard.code = 0;
+        movedCard.position = 'faceup_spell';
         movedCard.statuses = this.computeCardStatuses(movedCard);
         toPf.hand.push(movedCard);
         this.reindexHand(toPf);
@@ -1456,8 +1459,8 @@ export class DuelEngineService {
     this.enrichDynamicStatsForField(rawUserField, rawOpponentField);
     this.enrichDynamicStatsForField(rawOpponentField, rawUserField);
 
-    const userField = this.viewFilter.filterPlayerFieldForViewer(rawUserField, this.humanPlayerId);
-    const opponentField = this.viewFilter.filterPlayerFieldForViewer(rawOpponentField, this.humanPlayerId);
+    const userField = this.viewFilter.filterPlayerFieldForViewer(rawUserField, this.humanPlayerId, rawOpponentField);
+    const opponentField = this.viewFilter.filterPlayerFieldForViewer(rawOpponentField, this.humanPlayerId, rawUserField);
 
     return {
       userField,

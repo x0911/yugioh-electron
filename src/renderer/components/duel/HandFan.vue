@@ -87,24 +87,40 @@
           </div>
         </div>
 
-        <!-- Opponent Hand Card (Card Backs) -->
+        <!-- Opponent Hand Card (Revealed / Face-up or Card Back) -->
         <div
           v-else
           class="hand-card hand-card--ai"
           :class="{
+            'hand-card--revealed': card.code > 0,
             'hand-card--selectable': getCardTarget(card, idx)?.isSelectable,
             'hand-card--selected': getCardTarget(card, idx)?.isSelected,
             'hand-card--ineligible': isPromptActive && !getCardTarget(card, idx)?.isSelectable,
           }"
         >
-          <div class="hand-card__frame hand-card__frame--back">
+          <div class="hand-card__frame" :class="{ 'hand-card__frame--back': card.code === 0 }">
             <img
-              :src="getCardBackUrl()"
-              alt="Card Back"
+              :src="card.code > 0 ? getCardImageUrl(card.code, 'mini') : getCardBackUrl()"
+              :alt="card.code > 0 ? card.name : 'Card Back'"
               class="hand-card__image"
               @error="handleImageError"
             />
             <div class="hand-card__foil"></div>
+
+            <!-- Mini Header for Revealed Opponent Card -->
+            <div v-if="card.code > 0" class="hand-card__header">
+              <span class="hand-card__name" :title="card.name">{{ card.name }}</span>
+              <span v-if="card.level && card.level > 0 && !getCardTarget(card, idx)?.isSelectable" class="hand-card__level">
+                ★{{ card.level }}
+              </span>
+            </div>
+
+            <!-- Bottom ATK/DEF Footer for Revealed Opponent Monsters -->
+            <div v-if="card.code > 0 && card.atk !== undefined && card.def !== undefined" class="hand-card__stats">
+              <span class="stat-atk">{{ formatCombatStat(card.atk) }}</span>
+              <span class="stat-slash">/</span>
+              <span class="stat-def">{{ formatCombatStat(card.def) }}</span>
+            </div>
 
             <!-- Target Selection IconIndicator Overlay (Red for AI) -->
             <div v-if="getCardTarget(card, idx)?.isSelectable" class="hand-card__target-overlay">
@@ -184,15 +200,13 @@ function getSlotStyle(index: number, total: number): CSSProperties {
 }
 
 function onCardMouseEnter(card: FieldCard): void {
-  if (props.player === 'user') {
+  if (props.player === 'user' || (card && card.code > 0)) {
     emit('hover-card', card);
   }
 }
 
 function onCardMouseLeave(): void {
-  if (props.player === 'user') {
-    emit('hover-card', null);
-  }
+  emit('hover-card', null);
 }
 
 function onCardClick(card: FieldCard, event: MouseEvent, idx: number): void {
