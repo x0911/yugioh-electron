@@ -26,7 +26,7 @@
         v-for="(card, idx) in cards"
         :key="card.id || `hand-${player}-${card.code}-${card.sequence ?? idx}`"
         class="hand-card-slot"
-        :data-hand-card-id="`hand-${player}-${card.sequence ?? idx}`"
+        :data-hand-card-id="`hand-${player}-${idx}`"
         :class="{
           'hand-card-slot--selectable': getCardTarget(card, idx)?.isSelectable,
           'hand-card-slot--selected': getCardTarget(card, idx)?.isSelected,

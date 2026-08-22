@@ -878,11 +878,26 @@ async function setupEngineEventListener(): Promise<void> {
 
         if (fromLoc === 2) {
           // ── FLIP: Card leaving the hand ─────────────────────────────────
-          // Capture both rects BEFORE any state change.
-          const fromRect = getHandCardRect(domOwner, fromSeq) || getHandFanRect(domOwner);
+          // Find the card's ACTUAL array index by code (not engine's fromSeq).
+          // Engine sequence numbers can drift from the array index after prior
+          // hand mutations (draws, shuffles), so a code-based lookup is needed.
+          const handPf = p === duelStore.userPlayerId
+            ? duelStore.boardState.userField
+            : duelStore.boardState.opponentField;
+          let handArrayIdx = fromSeq; // fallback
+          if (moveEvt.code > 0) {
+            const codeIdx = handPf.hand.findIndex((c) => c && c.code === moveEvt.code);
+            if (codeIdx >= 0) handArrayIdx = codeIdx;
+          }
+
+          // Capture both rects BEFORE any state change using the correct array index.
+          // Issue F: field zone FieldZoneSlot has zoneIndex=0 (default), so its
+          // data-zone-id is slot-${player}-field-0, NOT slot-${player}-field-5.
+          const isFieldZone = toLoc === 8 && toSeq === 5;
+          const fromRect = getHandCardRect(domOwner, handArrayIdx) || getHandFanRect(domOwner);
           const toRect =
             toLoc === 16 ? getStackRect(domOwner, 'graveyard') :
-            toLoc === 8  ? getZoneRect(domOwner, toSeq === 5 ? 'field' : 'spell-trap', toSeq) :
+            toLoc === 8  ? getZoneRect(domOwner, isFieldZone ? 'field' : 'spell-trap', isFieldZone ? 0 : toSeq) :
             toLoc === 4  ? getZoneRect(domOwner, 'monster', toSeq) :
             toLoc === 32 ? getStackRect(domOwner, 'banished') :
             null;
@@ -890,7 +905,7 @@ async function setupEngineEventListener(): Promise<void> {
           if (toLoc === 16) {
             audioManager.playSfx('card-to-gy');
           } else if (toLoc === 8) {
-            audioManager.playSfx(isFaceup ? (toSeq === 5 ? 'field-activate' : 'spell-activate') : 'card-set-spell');
+            audioManager.playSfx(isFaceup ? (isFieldZone ? 'field-activate' : 'spell-activate') : 'card-set-spell');
           } else if (toLoc === 4) {
             audioManager.playSfx(isFaceup ? 'summon-normal' : 'card-set-monster');
           } else if (toLoc === 32) {
@@ -907,11 +922,13 @@ async function setupEngineEventListener(): Promise<void> {
 
           // Hide the destination zone card that handleEngineEvent just placed
           // there, so the flying overlay is the only visible copy during flight.
+          // Issue F: field zone query must use index 0 (FieldZoneSlot zoneIndex default).
           let destEl: HTMLElement | null = null;
           if (toLoc === 8) {
-            const zoneType = toSeq === 5 ? 'field' : 'spell-trap';
+            const destZoneIdx = isFieldZone ? 0 : toSeq;
+            const destZoneType = isFieldZone ? 'field' : 'spell-trap';
             destEl = document.querySelector(
-              `[data-zone-id="slot-${domOwner}-${zoneType}-${toSeq}"] .field-card`,
+              `[data-zone-id="slot-${domOwner}-${destZoneType}-${destZoneIdx}"] .field-card`,
             ) as HTMLElement | null;
           } else if (toLoc === 4) {
             destEl = document.querySelector(
@@ -942,12 +959,29 @@ async function setupEngineEventListener(): Promise<void> {
 
           // Flying overlay has landed — reveal the real card in the zone.
           if (destEl) { destEl.style.opacity = ''; destEl.style.visibility = ''; }
+          // Issue C safety: if the expected spell→GY MOVE never arrives (e.g. the
+          // activation is negated), the destEl would remain invisible forever.
+          // Set a 2.5 s fallback so the card always re-appears even without a
+          // follow-up MOVE event.  We only need this for hand→spell zone placements.
+          if (destEl && (toLoc === 8)) {
+            const safetyEl = destEl; // capture ref before closure
+            setTimeout(() => {
+              safetyEl.style.opacity = '';
+              safetyEl.style.visibility = '';
+            }, 2500);
+          }
 
         } else {
-          // ── Traditional: card leaving a field zone, GY, or deck ─────────
+          // ── Traditional: card leaving a field zone, GY, deck, or pile ───
 
-          if (toLoc === 16) {
-            // → Graveyard
+          // Issue E: Skip no-op internal MOVE events (e.g. tribute pre-notify
+          // events where fromLoc === toLoc and fromSeq === toSeq).
+          if (fromLoc === toLoc && fromSeq === toSeq) {
+            // no-op — do nothing, just let handleEngineEvent apply the event
+          }
+
+          else if (toLoc === 16) {
+            // → Graveyard (from monster zone, spell zone, field zone, or deck)
             if (fromLoc === 4) {
               audioManager.playSfx('card-destroy-monster');
             } else if (fromLoc === 8) {
@@ -956,20 +990,22 @@ async function setupEngineEventListener(): Promise<void> {
               audioManager.playSfx('card-to-gy');
             }
 
+            // Issue F: field zone FieldZoneSlot has zoneIndex=0 by default.
+            // When fromSeq===5 (engine's field-zone index), query with 0.
+            const isFromField = fromLoc === 8 && fromSeq === 5;
+            const fromZoneType = fromLoc === 8 ? (isFromField ? 'field' : 'spell-trap') : 'monster';
+            const fromZoneIdx  = isFromField ? 0 : fromSeq;
+
             const fromRect =
               fromLoc === 1
                 ? getStackRect(domOwner, 'deck')
-                : getZoneRect(
-                    domOwner,
-                    fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster',
-                    fromSeq,
-                  );
+                : getZoneRect(domOwner, fromZoneType, fromZoneIdx);
             const toRect = getStackRect(domOwner, 'graveyard');
 
             let hiddenEl: HTMLElement | null = null;
             if (fromLoc === 4 || fromLoc === 8) {
               hiddenEl = document.querySelector(
-                `[data-zone-id="slot-${domOwner}-${fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster'}-${fromSeq}"] .field-card`,
+                `[data-zone-id="slot-${domOwner}-${fromZoneType}-${fromZoneIdx}"] .field-card`,
               ) as HTMLElement | null;
             }
             if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
@@ -987,10 +1023,12 @@ async function setupEngineEventListener(): Promise<void> {
             // GY / Banished / Extra Deck → Monster Zone (special summon from pile)
             audioManager.playSfx('summon-special');
 
+            // Issue D: Extra Deck stack element may be absent if count is 0.
+            // Fall back to the hand fan rect so the animation still plays.
             const fromRect = getStackRect(
               domOwner,
               fromLoc === 16 ? 'graveyard' : fromLoc === 32 ? 'banished' : 'extra',
-            );
+            ) || getHandFanRect(domOwner);
             const toRect = getZoneRect(domOwner, 'monster', toSeq);
             await playCardFlight({
               code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
@@ -1004,23 +1042,24 @@ async function setupEngineEventListener(): Promise<void> {
             });
 
           } else if (toLoc === 32) {
-            // → Banished (from field or GY)
+            // → Banished (from monster zone, spell zone, field zone, or GY)
             audioManager.playSfx('card-banish');
+
+            // Issue F: field zone uses index 0
+            const isFromField = fromLoc === 8 && fromSeq === 5;
+            const fromZoneType = fromLoc === 8 ? (isFromField ? 'field' : 'spell-trap') : 'monster';
+            const fromZoneIdx  = isFromField ? 0 : fromSeq;
 
             const fromRect =
               fromLoc === 16
                 ? getStackRect(domOwner, 'graveyard')
-                : getZoneRect(
-                    domOwner,
-                    fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster',
-                    fromSeq,
-                  );
+                : getZoneRect(domOwner, fromZoneType, fromZoneIdx);
             const toRect = getStackRect(domOwner, 'banished');
 
             let hiddenEl: HTMLElement | null = null;
             if (fromLoc === 4 || fromLoc === 8) {
               hiddenEl = document.querySelector(
-                `[data-zone-id="slot-${domOwner}-${fromLoc === 8 ? (fromSeq === 5 ? 'field' : 'spell-trap') : 'monster'}-${fromSeq}"] .field-card`,
+                `[data-zone-id="slot-${domOwner}-${fromZoneType}-${fromZoneIdx}"] .field-card`,
               ) as HTMLElement | null;
             }
             if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
@@ -1033,9 +1072,49 @@ async function setupEngineEventListener(): Promise<void> {
               type: 'banish',
               durationMs: 440,
             });
+
+          } else if (toLoc === 2 && fromLoc !== 2) {
+            // Issue J: Card returning to hand ("bounce" — Compulsory Evacuation Device,
+            // Book of Moon, etc.). Animate from the field zone to the hand fan.
+            audioManager.playSfx('card-to-gy'); // closest SFX we have for "whoosh back"
+
+            // Issue F: field zone uses index 0
+            const isFromField = fromLoc === 8 && fromSeq === 5;
+            const fromZoneType = fromLoc === 8 ? (isFromField ? 'field' : 'spell-trap') : 'monster';
+            const fromZoneIdx  = isFromField ? 0 : fromSeq;
+
+            const fromRect =
+              fromLoc === 4 || fromLoc === 8
+                ? getZoneRect(domOwner, fromZoneType, fromZoneIdx)
+                : fromLoc === 16 ? getStackRect(domOwner, 'graveyard')
+                : fromLoc === 32 ? getStackRect(domOwner, 'banished')
+                : null;
+            const toRect = getHandFanRect(domOwner);
+
+            // Hide the source zone card during the bounce flight
+            let hiddenEl: HTMLElement | null = null;
+            if (fromLoc === 4 || fromLoc === 8) {
+              hiddenEl = document.querySelector(
+                `[data-zone-id="slot-${domOwner}-${fromZoneType}-${fromZoneIdx}"] .field-card`,
+              ) as HTMLElement | null;
+            }
+            if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
+
+            if (fromRect) {
+              await playCardFlight({
+                code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
+                cardName: moveEvt.cardName || 'Card',
+                fromRect,
+                toRect,
+                type: 'draw',
+                durationMs: 380,
+              });
+            }
+            // hiddenEl will be destroyed by Vue when handleEngineEvent removes
+            // the card from the zone, so no need to restore its visibility.
           }
-        }
-      }
+        } // end else-traditional
+      } // end else-if MOVE
 
       // -----------------------------------------------------------------------
       // 3. Chaining / Spell Activation Visual Pause
