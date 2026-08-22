@@ -342,7 +342,6 @@ import {
 import DuelReviewModal from '../components/duel/DuelReviewModal.vue';
 import {
   duelAnimationQueue,
-  aiDrawAnimationQueue,
   playCardFlight,
   getZoneRect,
   getHandCardRect,
@@ -725,7 +724,6 @@ async function onRestartMatch(): Promise<void> {
   // stale queue tasks can call addSingleDrawnCard / handleEngineEvent on the
   // newly-reset board state and corrupt card counts for the fresh duel.
   duelAnimationQueue.clear();
-  aiDrawAnimationQueue.clear();
   audioManager.playSfx('duel-start');
   appendLog('RESTART', 'Restarting live duel...');
   await duelStore.startPreparedDuel();
@@ -778,9 +776,9 @@ async function setupEngineEventListener(): Promise<void> {
       //
       //    Multi-card draws (e.g. Pot of Greed draws 2) iterate one card at a time.
       //
-      //    AI draws are routed to aiDrawAnimationQueue (a separate parallel queue)
-      //    so both players' initial 5-card deal animates simultaneously rather
-      //    than sequentially.
+      //    AI draws are handled separately below (after this function) using
+      //    Promise.all for simultaneous flight animations, then delegating state
+      //    updates to handleEngineEvent in one atomic batch.
       // -----------------------------------------------------------------------
       const runDrawAnimation = async () => {
         if (event.type !== 'DRAW' || event.player === undefined) return;
@@ -837,16 +835,40 @@ async function setupEngineEventListener(): Promise<void> {
       if (event.type === 'DRAW' && event.player !== undefined) {
         const isHuman = event.player === duelStore.userPlayerId;
         if (isHuman) {
-          // User draw: process in main queue (already inside it — just run)
+          // Human draw: FLIP technique — add card first, capture exact slot rect,
+          // hide real card, fly clone to exact position, then reveal real card.
           await runDrawAnimation();
         } else {
-          // AI draw: enqueue on the parallel AI draw queue so both players
-          // animate simultaneously. We do NOT await here — firing it into the
-          // second queue and letting the main queue continue immediately is
-          // what creates the parallel effect.
-          aiDrawAnimationQueue.enqueue(runDrawAnimation);
+          // AI draw: animate all N cards simultaneously (face-down, no exact-slot
+          // FLIP needed). State is NOT updated here — we let handleEngineEvent
+          // (called below via eventHandled=false path) add all AI cards at once
+          // after the animation, keeping it synchronised with fetchBoardState.
+          const domOwner = toDomOwner(event.player as 0 | 1);
+          const drawnCards: any[] = (event as any).drawnCards || (event as any).drawn || [];
+          const count = drawnCards.length || 1;
+          const flights: Promise<void>[] = [];
+          for (let i = 0; i < count; i++) {
+            audioManager.playSfx('card-draw');
+            flights.push(
+              playCardFlight({
+                code: 0, // AI cards are always face-down to the player
+                cardName: 'Card',
+                fromRect: getStackRect(domOwner, 'deck'),
+                toRect: getHandFanRect(domOwner),
+                type: 'draw',
+                isFacedown: true,
+                durationMs: 360,
+              }),
+            );
+            // Small stagger so the cards don't all start in exactly the same frame
+            await new Promise<void>((r) => setTimeout(r, 60));
+          }
+          await Promise.all(flights);
+          // Let handleEngineEvent add all AI cards to hand state at once:
+          await duelStore.handleEngineEvent(event);
+          eventHandled = true; // prevent the bottom catch-all from calling it again
         }
-        eventHandled = true;
+        if (isHuman) eventHandled = true;
       }
 
       // -----------------------------------------------------------------------
@@ -868,6 +890,10 @@ async function setupEngineEventListener(): Promise<void> {
         const moveEvt = event as any;
         const p = (moveEvt.controller ?? duelStore.userPlayerId) as 0 | 1;
         const domOwner = toDomOwner(p);
+        // fromDomOwner: cross-controller moves (Monster Reborn, Premature Burial, etc.)
+        // have a different source player. The raw OCG message has from.controller.
+        const fromController = (moveEvt.raw?.from?.controller ?? p) as 0 | 1;
+        const fromDomOwner = toDomOwner(fromController);
         const fromLoc = moveEvt.fromLocation ?? 0;
         const fromSeq = moveEvt.fromSequence ?? 0;
         const toLoc = moveEvt.toLocation ?? 0;
@@ -991,21 +1017,21 @@ async function setupEngineEventListener(): Promise<void> {
             }
 
             // Issue F: field zone FieldZoneSlot has zoneIndex=0 by default.
-            // When fromSeq===5 (engine's field-zone index), query with 0.
             const isFromField = fromLoc === 8 && fromSeq === 5;
             const fromZoneType = fromLoc === 8 ? (isFromField ? 'field' : 'spell-trap') : 'monster';
             const fromZoneIdx  = isFromField ? 0 : fromSeq;
 
+            // Issue 3: use fromDomOwner so the animation starts at the correct player's zone
             const fromRect =
               fromLoc === 1
-                ? getStackRect(domOwner, 'deck')
-                : getZoneRect(domOwner, fromZoneType, fromZoneIdx);
+                ? getStackRect(fromDomOwner, 'deck')
+                : getZoneRect(fromDomOwner, fromZoneType, fromZoneIdx);
             const toRect = getStackRect(domOwner, 'graveyard');
 
             let hiddenEl: HTMLElement | null = null;
             if (fromLoc === 4 || fromLoc === 8) {
               hiddenEl = document.querySelector(
-                `[data-zone-id="slot-${domOwner}-${fromZoneType}-${fromZoneIdx}"] .field-card`,
+                `[data-zone-id="slot-${fromDomOwner}-${fromZoneType}-${fromZoneIdx}"] .field-card`,
               ) as HTMLElement | null;
             }
             if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }
@@ -1021,14 +1047,13 @@ async function setupEngineEventListener(): Promise<void> {
 
           } else if (toLoc === 4 && (fromLoc === 16 || fromLoc === 32 || fromLoc === 64)) {
             // GY / Banished / Extra Deck → Monster Zone (special summon from pile)
+            // Issue 3: source may be the opponent's GY — use fromDomOwner
             audioManager.playSfx('summon-special');
 
-            // Issue D: Extra Deck stack element may be absent if count is 0.
-            // Fall back to the hand fan rect so the animation still plays.
             const fromRect = getStackRect(
-              domOwner,
+              fromDomOwner,
               fromLoc === 16 ? 'graveyard' : fromLoc === 32 ? 'banished' : 'extra',
-            ) || getHandFanRect(domOwner);
+            ) || getHandFanRect(fromDomOwner);
             const toRect = getZoneRect(domOwner, 'monster', toSeq);
             await playCardFlight({
               code: isFaceup || p === duelStore.userPlayerId ? (moveEvt.code || 0) : 0,
@@ -1052,14 +1077,14 @@ async function setupEngineEventListener(): Promise<void> {
 
             const fromRect =
               fromLoc === 16
-                ? getStackRect(domOwner, 'graveyard')
-                : getZoneRect(domOwner, fromZoneType, fromZoneIdx);
+                ? getStackRect(fromDomOwner, 'graveyard')
+                : getZoneRect(fromDomOwner, fromZoneType, fromZoneIdx);
             const toRect = getStackRect(domOwner, 'banished');
 
             let hiddenEl: HTMLElement | null = null;
             if (fromLoc === 4 || fromLoc === 8) {
               hiddenEl = document.querySelector(
-                `[data-zone-id="slot-${domOwner}-${fromZoneType}-${fromZoneIdx}"] .field-card`,
+                `[data-zone-id="slot-${fromDomOwner}-${fromZoneType}-${fromZoneIdx}"] .field-card`,
               ) as HTMLElement | null;
             }
             if (hiddenEl) { hiddenEl.style.opacity = '0'; hiddenEl.style.visibility = 'hidden'; }

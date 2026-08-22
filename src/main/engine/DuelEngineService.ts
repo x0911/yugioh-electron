@@ -596,7 +596,7 @@ export class DuelEngineService {
           controller: 0,
           location: 'spell-trap',
           sequence: st.sequence,
-          position: isFaceup ? 'faceup_spell' : 'facedown_spell',
+          position: isFaceup ? 'faceup_attack' : 'facedown_spell',
           statuses: [],
         };
         this.player0Field.spellTrapZones[st.sequence] = card;
@@ -624,7 +624,7 @@ export class DuelEngineService {
           controller: 1,
           location: 'spell-trap',
           sequence: st.sequence,
-          position: isFaceup ? 'faceup_spell' : 'facedown_spell',
+          position: isFaceup ? 'faceup_attack' : 'facedown_spell',
           statuses: [],
         };
         this.player1Field.spellTrapZones[st.sequence] = card;
@@ -990,13 +990,17 @@ export class DuelEngineService {
         const isFaceup = (to.position & OcgPosition.FACEUP) !== 0;
         movedCard.location = 'spell-trap';
         movedCard.sequence = to.sequence;
-        movedCard.position = isFaceup ? 'faceup_spell' : 'facedown_spell';
+        // Use 'faceup_attack' for face-up spell-zone cards (upright orientation).
+        // This keeps the engine's internal state consistent with what the renderer's
+        // applyCardMoveToBoard sets, so fetchBoardState snapshots match and Vue
+        // never sees a class-change that would trigger a spurious transform flash.
+        movedCard.position = isFaceup ? 'faceup_attack' : 'facedown_spell';
         movedCard.statuses = this.computeCardStatuses(movedCard);
         toPf.spellTrapZones[to.sequence] = movedCard;
       } else if (to.location === OcgLocation.FZONE) {
         movedCard.location = 'field';
         movedCard.sequence = 0;
-        movedCard.position = 'faceup_spell';
+        movedCard.position = 'faceup_attack'; // field zone cards render upright
         movedCard.statuses = this.computeCardStatuses(movedCard);
         toPf.fieldZone = movedCard;
       } else if (to.location === OcgLocation.HAND) {
@@ -1196,7 +1200,7 @@ export class DuelEngineService {
       if ((position & OcgPosition.FACEUP_DEFENSE) !== 0) return 'faceup_defense';
       return 'faceup_attack';
     }
-    return (position & OcgPosition.FACEUP) !== 0 ? 'faceup_spell' : 'facedown_spell';
+    return (position & OcgPosition.FACEUP) !== 0 ? 'faceup_attack' : 'facedown_spell';
   }
 
   private shuffleArray<T>(array: readonly T[]): T[] {
