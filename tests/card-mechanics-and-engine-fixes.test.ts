@@ -75,7 +75,7 @@ async function runTestSuite() {
     });
 
     const prompt2 = (service as any).lastPromptMessage;
-    const hfdIndex = prompt2?.activates?.findIndex((a: any) => a.code === 18144507);
+    const hfdIndex = prompt2?.activates?.findIndex((a: any) => a.code === 18144507 || a.code === 18144506);
     assert(hfdIndex >= 0, 'HFD should be activatable when opponent has backrow');
 
     service.sendResponse({

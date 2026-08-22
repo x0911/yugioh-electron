@@ -1358,6 +1358,8 @@
   - Cutscene Ducking Mode selection (`normal` 85% reduction, `mute` full mute during videos, `off` keep full volume).
 - **Procedural Sound Synthesizer (`SoundSynthesizer.ts`)**:
   - Zero-dependency, zero-latency Web Audio procedural waveform synthesizer for authentic retro sound effects (LP ticks, coin flip whistles, attack blade whooshes, sword clashes, spell chimes, destruction noise bursts, and fanfares).
+- **Audio Asset Generation & Soundpack Downloader (`scripts/download-soundpack.ts`)**:
+  - Automatically downloads and installs authentic Yu-Gi-Oh! community duel simulator uncompressed `.wav` and `.mp3` audio files (from Project Ignis EDOPro / YGOPro sound repositories) for all 45 SFX triggers and BGM tracks (`npm run download:soundpack` / `npm run generate:audio`).
 - **Comprehensive SFX Coverage (35+ Triggers)**:
   - **Duel Field & Combat**: Card draw, normal/special/flip/tribute summon, monster/spell set, spell/trap/field activation, chain links, attack declarations, monster clashes, direct attacks, destructions to GY, discards, banishes, position change, phase change, turn start, deck shuffle, prompt alert, and target locked.
   - **Life Points Meter**: Numerical tween loop ticking, heavy damage impact (>1000 LP), heal chimes, and critical low-LP alarm ($\le 2000$ LP).
@@ -1365,9 +1367,11 @@
   - **UI & Navigation**: Button hovers and clicks in `YugiButton.vue`.
 - **Automated Test Suites**:
   - Created `tests/audio-manager-and-ducking.test.ts` and `tests/sound-effects-matrix.test.ts`.
-  - All 22 automated test suites pass with 100% success rate (`npm test`).
+  - All 24 automated test suites pass with 100% success rate (`npm test`).
 
 **Files added/changed:**
+- `scripts/download-soundpack.ts`: Script to download authentic community duel simulator sound files into `resources/audio/`.
+- `scripts/generate-audio-tracks.ts`: Procedural audio generation script.
 - `src/renderer/audio/audioManifest.ts`: Sourced 6 BGM themes and 35+ SFX definitions with volume multipliers and synth fallback keys.
 - `src/renderer/audio/soundSynthesizer.ts`: Procedural Web Audio synthesizer for zero-latency retro sound effects.
 - `src/renderer/audio/audioManager.ts`: Master audio singleton with gain buses, ducking, previews, and gesture unlocking.
@@ -1387,7 +1391,7 @@
 - `resources/audio/README.md`: Created audio resources directory and streaming documentation.
 - `tests/audio-manager-and-ducking.test.ts`: AudioManager and dynamic ducking unit test suite.
 - `tests/sound-effects-matrix.test.ts`: Sound effects trigger matrix unit test suite.
-- `package.json`: Registered audio test suites in `npm test`.
+- `package.json`: Registered audio test suites and `download:soundpack` in `package.json`.
 
 **How to manually verify this phase:**
 1. Run `npm test` — verify all 22 test suites pass cleanly.

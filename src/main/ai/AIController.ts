@@ -219,6 +219,12 @@ export class AIController {
           score -= 1800;
         }
 
+        // Avoid summoning weak monsters in Attack Position when opponent controls high-ATK boss monsters
+        const oppMaxAtk = Math.max(0, ...oppFaceUpMonsters.map((m) => m?.atk ?? 0));
+        if (oppMaxAtk >= 1900 && atk < oppMaxAtk && atk <= 1600) {
+          score -= 3500;
+        }
+
         // Tribute summon reward
         if (level >= 5) {
           score += 400 * personality.riskTolerance;
@@ -289,6 +295,12 @@ export class AIController {
 
         // Favorable to set if DEF > ATK, or when defensive
         let score = 300 + (def - atk) * 0.4 + def * 0.5 * personality.defensiveness * archetypePlan.defenseWeight;
+
+        // Prioritize setting defensively when opponent controls a boss monster
+        const oppMaxAtk = Math.max(0, ...oppFaceUpMonsters.map((m) => m?.atk ?? 0));
+        if (oppMaxAtk >= 1900 && atk < oppMaxAtk) {
+          score += 1200;
+        }
 
         // Prioritize setting face-down to protect monster from Slifer / Wanghu destruction
         if (hasOppSlifer && atk <= 2000) {

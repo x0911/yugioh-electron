@@ -137,17 +137,20 @@ export function evaluateAttackOption(
         targetScore = 800;
         targetReason = `Attack face-down monster with defense-destroying effect (${attacker.attackerName})`;
       } else if (attacker.attackerAtk >= 2000) {
-        targetScore = 350 * personality.aggression;
-        targetReason = `Attack face-down monster with overwhelming power (${attacker.attackerAtk} ATK)`;
+        targetScore = 750 + (attacker.attackerAtk - 2000) * 0.3;
+        targetReason = `Attack face-down monster with overwhelming power (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
       } else if (attacker.attackerAtk >= 1600) {
-        targetScore = 200 * (personality.aggression + personality.riskTolerance * 0.5);
-        targetReason = `Attack face-down monster with solid beatstick (${attacker.attackerAtk} ATK)`;
-      } else if (attacker.attackerAtk >= 1200) {
-        targetScore = 50 * personality.riskTolerance - 100 * personality.defensiveness;
-        targetReason = `Cautious strike on face-down monster (${attacker.attackerAtk} ATK)`;
+        targetScore = 550 + (attacker.attackerAtk - 1600) * 0.5;
+        targetReason = `Attack face-down monster with solid beatstick (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+      } else if (attacker.attackerAtk >= 1400) {
+        targetScore = 350 + 100 * personality.aggression;
+        targetReason = `Attack face-down monster with mid-range attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+      } else if (attacker.attackerAtk >= 1000) {
+        targetScore = 100 * personality.riskTolerance - 50 * personality.defensiveness;
+        targetReason = `Cautious probe on face-down monster (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
       } else {
         targetScore = -800 * (1 - personality.riskTolerance);
-        targetReason = `Hold back low ATK monster (${attacker.attackerAtk} ATK) from unknown face-down defense`;
+        targetReason = `Hold back low ATK monster (${attacker.attackerName}: ${attacker.attackerAtk} ATK) from unknown face-down defense`;
       }
     }
 

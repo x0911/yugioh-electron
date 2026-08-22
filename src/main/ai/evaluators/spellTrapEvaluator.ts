@@ -22,6 +22,31 @@ export function evaluateSpellActivation(
     };
   }
 
+  // 1b. Hand Refresh & Disruption: Card Destruction (72892420)
+  if (code === 72892420 || cardName.includes('Card Destruction')) {
+    const aiHandCount = aiField.hand.length;
+    const oppHandCount = oppField.hand.length;
+
+    // If AI has small hand (<= 2) and opponent has a larger hand (>= 3): DO NOT REFRESH OPPONENT HAND!
+    if (aiHandCount <= 2 && oppHandCount >= 3) {
+      return {
+        score: -4500,
+        reason: `Hold ${cardName}: would give opponent +${oppHandCount} fresh cards while AI only has ${aiHandCount}`,
+      };
+    }
+    // If opponent has huge hand (5+ cards) or AI has larger hand than opponent:
+    if (oppHandCount >= 5 || aiHandCount > oppHandCount) {
+      return {
+        score: 1600 * personality.cardAdvantageWeight,
+        reason: `Activate ${cardName} to disrupt opponent hand (${oppHandCount} cards) and cycle AI cards (${aiHandCount} cards)`,
+      };
+    }
+    return {
+      score: 300,
+      reason: `Activate ${cardName} to cycle hand`,
+    };
+  }
+
   // 2. Mass Monster Removal: Raigeki (12580477)
   if (code === 12580477 || cardName.includes('Raigeki')) {
     if (oppMonsterCount === 0) {

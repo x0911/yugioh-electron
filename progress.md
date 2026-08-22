@@ -16,7 +16,7 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
 | **Audio, BGM & Sound Effects** | ✅ Complete | 6 selectable BGM themes, 35+ retro SFX triggers, procedural Web Audio synth, and dynamic cutscene ducking |
 | **Legendary AI & Deck Executors** | ✅ Complete | WindBot-inspired dual-layer AI with Universal Competitive Core and modular archetype executors |
 | **Duel Logs & Diagnostics** | ✅ Complete | Developer Logs page with max-10 duel retention and copyable Markdown diagnostic reports |
-| **Test Suite Coverage** | ✅ Complete | **22 automated test suites** passing with 100% success rate (`npm test`) |
+| **Test Suite Coverage** | ✅ Complete | **24 automated test suites** passing with 100% success rate (`npm test`) |
 
 ---
 
@@ -52,7 +52,7 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
 - **Settings UI & Live Previews**: Interactive BGM Theme Selector cards with genre tags, descriptions, active badges, and 15s preview buttons; Master, BGM, and SFX volume sliders with mute toggles.
 - **Dynamic Audio Ducking**: Ref-counted `activeDuckSources: Set<string>` that automatically attenuates background music to 15% (or 0% if configured) during summon/attack videos and character cutscenes, smoothly returning to 100% when finished or skipped.
 - **Procedural Sound Synthesizer (`SoundSynthesizer.ts`)**: Built-in zero-dependency Web Audio waveform generator for authentic retro sound effects.
-- **Audio Asset Generation Pipeline (`scripts/generate-audio-tracks.ts`)**: Synthesizes standard PCM audio tracks for all 6 BGM themes and all 45 SFX triggers directly into `resources/audio/` (`npm run generate:audio`).
+- **Audio Asset Generation & Soundpack Downloader (`scripts/download-soundpack.ts`)**: Automatically downloads and installs authentic Yu-Gi-Oh! community duel simulator uncompressed `.wav` and `.mp3` audio files (from Project Ignis EDOPro / YGOPro sound repositories) for all 45 SFX triggers and BGM tracks (`npm run download:soundpack` / `npm run generate:audio`).
 - **35+ SFX Triggers**: Complete coverage for card draw, normal/special/flip/tribute summon, sets, spell/trap activations, field spells, chain links, attacks, clashes, direct hits, destructions, banishes, discards, LP count tween ticking, heavy damage, heals, low-LP alarms, coin toss choices/spins/lands, deck drag/drop/save/trash, and win/loss fanfares.
 
 ---
@@ -130,7 +130,7 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
 
 ## 5. Automated Test Suite Status
 
-All **22 test suites** run and pass with **100% success rate** (`npm test`):
+All **23 test suites** run and pass with **100% success rate** (`npm test`):
 
 1. `tests/guidance-targeting.test.ts` ✅
 2. `tests/hand-and-pacing.test.ts` ✅
@@ -152,5 +152,7 @@ All **22 test suites** run and pass with **100% success rate** (`npm test`):
 18. `tests/duel-logs-store.test.ts` ✅
 19. `tests/legendary-ai-executors.test.ts` ✅
 20. `tests/transition-animations-and-hand-integrity.test.ts` ✅
-21. `tests/audio-manager-and-ducking.test.ts` ✅
-22. `tests/sound-effects-matrix.test.ts` ✅
+21. `tests/hand-reveal-mechanics.test.ts` ✅
+22. `tests/audio-manager-and-ducking.test.ts` ✅
+23. `tests/sound-effects-matrix.test.ts` ✅
+24. `tests/ai-post-match-reviewer-and-tactics.test.ts` ✅

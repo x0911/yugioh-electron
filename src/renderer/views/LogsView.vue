@@ -155,6 +155,16 @@
 
           <!-- Actions Bar -->
           <div class="duel-card__actions">
+            <!-- AI Tactical Review Button -->
+            <button
+              type="button"
+              class="action-btn action-btn--review"
+              @click="onOpenReview(duel)"
+            >
+              <span class="btn-icon">🧠</span>
+              <span>AI Tactical Review</span>
+            </button>
+
             <!-- Copy Full Log Button (Primary) -->
             <button
               type="button"
@@ -210,6 +220,14 @@
         </article>
       </div>
     </div>
+
+    <!-- AI Tactical Post-Match Review Modal -->
+    <DuelReviewModal
+      :is-open="isReviewOpen"
+      :loading="isReviewLoading"
+      :review="activeReview"
+      @close="isReviewOpen = false"
+    />
   </div>
 </template>
 
@@ -218,6 +236,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDuelLogsStore, type SavedDuelLog } from '../stores/duelLogsStore.js';
 import { getBackgroundUrl } from '../utils/media.js';
+import DuelReviewModal from '../components/duel/DuelReviewModal.vue';
 
 const router = useRouter();
 const duelLogsStore = useDuelLogsStore();
@@ -225,6 +244,26 @@ const duelLogsStore = useDuelLogsStore();
 const expandedId = ref<string | null>(null);
 const copiedId = ref<string | null>(null);
 let copyTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const isReviewOpen = ref(false);
+const isReviewLoading = ref(false);
+const activeReview = ref<any>(null);
+
+async function onOpenReview(duel: SavedDuelLog): Promise<void> {
+  isReviewOpen.value = true;
+  isReviewLoading.value = true;
+  activeReview.value = null;
+  try {
+    if ((window as any).electronAPI?.duel?.getReview) {
+      const rep = await (window as any).electronAPI.duel.getReview(duel.markdownLog, duel.opponentName);
+      activeReview.value = rep;
+    }
+  } catch (err) {
+    console.error('[LogsView] Error fetching review:', err);
+  } finally {
+    isReviewLoading.value = false;
+  }
+}
 
 function toggleExpand(id: string): void {
   expandedId.value = expandedId.value === id ? null : id;
@@ -735,6 +774,19 @@ function getEventRowClass(type: string): string {
     &:hover {
       background: rgba(239, 68, 68, 0.3);
       color: #fff;
+    }
+  }
+
+  &--review {
+    background: linear-gradient(135deg, rgba(64, 196, 255, 0.2), rgba(0, 145, 234, 0.1));
+    border: 1px solid rgba(64, 196, 255, 0.5);
+    color: #40c4ff;
+    justify-content: center;
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(64, 196, 255, 0.35), rgba(0, 145, 234, 0.2));
+      border-color: #40c4ff;
+      box-shadow: 0 0 12px rgba(64, 196, 255, 0.35);
     }
   }
 

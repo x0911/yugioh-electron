@@ -54,6 +54,12 @@ const duelAPI: DuelAPI = {
   notifyVideoFinished: (): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DUEL_VIDEO_FINISHED);
   },
+  getReview: (logMarkdown: string, opponentName?: string): Promise<any> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DUEL_GET_REVIEW, logMarkdown, opponentName);
+  },
+  getTacticalMemory: (): Promise<any> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DUEL_GET_TACTICAL_MEMORY);
+  },
 };
 
 const deckAPI: DeckAPI = {

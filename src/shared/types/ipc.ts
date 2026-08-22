@@ -22,6 +22,8 @@ export const IPC_CHANNELS = {
   DUEL_GET_CARD_NAME: 'duel:get-card-name',
   DUEL_PLAY_VIDEO: 'duel:play-video',
   DUEL_VIDEO_FINISHED: 'duel:video-finished',
+  DUEL_GET_REVIEW: 'duel:get-review',
+  DUEL_GET_TACTICAL_MEMORY: 'duel:get-tactical-memory',
 
   // Deck & Card Pool (Phase 7)
   DECK_GET_ALL_CARDS: 'deck:get-all-cards',
@@ -65,6 +67,8 @@ export interface DuelAPI {
   onEvent: (callback: (event: DuelEventPayload) => void) => () => void;
   playVideo: (callback: (video: import('./duel.js').CardVideoPayload) => void) => () => void;
   notifyVideoFinished: () => Promise<void>;
+  getReview: (logMarkdown: string, opponentName?: string) => Promise<any>;
+  getTacticalMemory: () => Promise<any>;
 }
 
 export interface DeckAPI {

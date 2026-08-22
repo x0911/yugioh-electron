@@ -242,6 +242,9 @@
           <button class="action-btn action-btn--primary" @click="onRestartMatch">
             🔄 Rematch
           </button>
+          <button class="action-btn action-btn--review" @click="onOpenPostMatchReview">
+            🧠 AI Tactical Review
+          </button>
           <button class="action-btn action-btn--secondary" @click="returnToCharacters">
             🏠 Exit to Menu
           </button>
@@ -290,6 +293,14 @@
       @finish="duelStore.finishVideo"
     />
 
+    <!-- AI Tactical Post-Match Review Modal -->
+    <DuelReviewModal
+      :is-open="isReviewModalOpen"
+      :loading="isReviewLoading"
+      :review="postMatchReview"
+      @close="isReviewModalOpen = false"
+    />
+
     <!-- Floating Duel Tools -->
     <aside class="dev-floating-controls">
       <button
@@ -328,6 +339,7 @@ import {
   CardSelectionModal,
   VideoOverlay,
 } from '../components/duel/index.js';
+import DuelReviewModal from '../components/duel/DuelReviewModal.vue';
 import {
   duelAnimationQueue,
   playCardFlight,
@@ -367,6 +379,31 @@ const isDuelLogOpen = ref(false);
 const isInspectModalOpen = ref(false);
 const activeInspectStack = ref<InspectStackState | null>(null);
 const isObservingPrompt = ref(false);
+
+const isReviewModalOpen = ref(false);
+const isReviewLoading = ref(false);
+const postMatchReview = ref<any>(null);
+
+async function onOpenPostMatchReview(): Promise<void> {
+  isReviewModalOpen.value = true;
+  isReviewLoading.value = true;
+  postMatchReview.value = null;
+  try {
+    const latestDuel = duelLogsStore.savedDuels[0];
+    const markdownLog = latestDuel?.markdownLog || duelLogsStore.buildMarkdownReport(duelLogs.value, currentBoardState.value, {
+      outcome: isUserWinner.value ? 'victory' : 'defeat',
+      winReason: gameOverSubtitle.value,
+    });
+    if ((window as any).electronAPI?.duel?.getReview) {
+      const rep = await (window as any).electronAPI.duel.getReview(markdownLog, opponentName.value);
+      postMatchReview.value = rep;
+    }
+  } catch (err) {
+    console.error('[DuelView] Error fetching post-match review:', err);
+  } finally {
+    isReviewLoading.value = false;
+  }
+}
 
 const hasAnyActivePrompt = computed(() => {
   return (

@@ -105,6 +105,17 @@ export function registerIpcHandlers(): void {
     duelEngineService.onVideoFinished();
   });
 
+  ipcMain.handle(IPC_CHANNELS.DUEL_GET_REVIEW, async (_event, logMarkdown: string, opponentName?: string) => {
+    const { duelReviewer } = await import('../ai/reviewer/DuelReviewerService.js');
+    const board = duelEngineService.getBoardState();
+    return duelReviewer.reviewDuel(logMarkdown, board, 1, opponentName || 'Opponent');
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DUEL_GET_TACTICAL_MEMORY, async () => {
+    const { tacticalMemory } = await import('../ai/reviewer/tacticalMemory.js');
+    return tacticalMemory.getMemory();
+  });
+
   // Deck & Card Pool Handlers (Phase 7)
   ipcMain.handle(IPC_CHANNELS.DECK_GET_ALL_CARDS, async () => {
     return duelEngineService.getAllCards();

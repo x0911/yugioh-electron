@@ -120,6 +120,16 @@ if (!gotTheLock) {
             if (fs.existsSync(fallbackPath)) {
               targetPath = fallbackPath;
             }
+          } else if (cleanSubPath.endsWith('.mp3')) {
+            const wavCandidate = path.resolve(basePath, cleanSubPath.replace(/\.mp3$/, '.wav'));
+            if (fs.existsSync(wavCandidate)) {
+              targetPath = wavCandidate;
+            }
+          } else if (cleanSubPath.endsWith('.wav')) {
+            const mp3Candidate = path.resolve(basePath, cleanSubPath.replace(/\.wav$/, '.mp3'));
+            if (fs.existsSync(mp3Candidate)) {
+              targetPath = mp3Candidate;
+            }
           }
         }
 

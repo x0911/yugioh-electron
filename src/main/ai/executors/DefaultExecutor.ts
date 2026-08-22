@@ -165,6 +165,28 @@ export class DefaultExecutor implements DeckExecutor {
           continue;
         }
 
+        // Avoid summoning weak monsters in Attack Position into opponent's high-ATK boss monsters
+        const oppMaxAtk = Math.max(
+          0,
+          ...oppField.monsterZones
+            .filter((m) => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'))
+            .map((m) => m?.atk ?? 0),
+        );
+        if (oppMaxAtk >= 1900 && atk < oppMaxAtk && atk <= 1600) {
+          candidates.push({
+            action: {
+              type: OcgResponseType.SELECT_IDLECMD,
+              action: SelectIdleCMDAction.SELECT_SUMMON,
+              index: i,
+            },
+            score: -3500,
+            reason: `[AVOID] Avoid Normal Summoning weak ${name} (${atk} ATK) in Attack Position into opponent's superior ${oppMaxAtk} ATK boss monster`,
+            cardCode: code,
+            cardName: name,
+          });
+          continue;
+        }
+
         let score = atk * 0.7;
         if (level > 4) {
           score += 400; // Tribute boss monster bonus
@@ -191,6 +213,13 @@ export class DefaultExecutor implements DeckExecutor {
     // 3. EVALUATE MONSTER SETS
     // =========================================================================
     if (msg.monster_sets && msg.monster_sets.length > 0) {
+      const oppMaxAtk = Math.max(
+        0,
+        ...oppField.monsterZones
+          .filter((m) => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'))
+          .map((m) => m?.atk ?? 0),
+      );
+
       for (let i = 0; i < msg.monster_sets.length; i++) {
         const set = msg.monster_sets[i];
         const code = set.code ?? 0;
@@ -202,6 +231,9 @@ export class DefaultExecutor implements DeckExecutor {
         let score = def * 0.5 * (defensiveness + 0.3);
         if (hasOppSlifer && atk <= 2000) {
           score += 1500; // Prefer setting when Slifer is face-up
+        }
+        if (oppMaxAtk >= 1900 && atk < oppMaxAtk) {
+          score += 1200; // Prefer setting defensively when opponent controls a boss monster
         }
 
         candidates.push({
