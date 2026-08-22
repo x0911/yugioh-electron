@@ -98,9 +98,16 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
     - Fixed `Option #221` text fallback in `SELECT_EFFECTYN` to display human-readable effect descriptions (*Card of Safe Return*).
     - Added explicit descriptive decoding for `CONFIRM_CARDS`, `SHUFFLE_DECK`, `EQUIP`, `BECOME_TARGET`, `CARD_TARGET`, `DAMAGE_STEP_START`, and `DAMAGE_STEP_END`.
 15. **Continuous Hand-Reveal Mechanics (*Ceremonial Bell*, *Respect Play*, *Mind on Air*, *Eye of Truth*)**:
-    - Retained master card identity in `DuelEngineService.ts` for all drawn and bounced hand cards, delegating client-side anti-cheat protection entirely to `ViewFilterService`.
-    - Added `isPlayerHandPublic` to `ViewFilterService` to dynamically detect face-up hand-reveal cards (*Ceremonial Bell* `20228463`, *Respect Play* `08953736`, *Mind on Air* `66399653`, *Eye of Truth* `47910970`) and unredact hand cards and `DRAW` events when active.
-    - Updated `HandFan.vue` to render full face-up card art, names, levels, ATK/DEF stats, and hover preview for revealed opponent hand cards.
+    - Preserved real card codes on server master state for all drawn and bounced hand cards.
+    - Implemented `isPlayerHandPublic()` in `viewFilter.ts` to unredact opponent hand cards and `DRAW` log events when *Ceremonial Bell* (`20228463`), *Respect Play* (`08953736`), *Mind on Air* (`66399653`), or *Eye of Truth* (`47910970`) is active.
+    - Updated `HandFan.vue` to render real card art, names, levels, ATK/DEF stats, cyan reveal aura, and hover inspection for revealed opponent hand cards.
+16. **AI Tactical Improvements & Autonomous Post-Match Reviewer**:
+    - **Smart Card Destruction Advantage Checks**: Heavily penalizes casting *Card Destruction* (`72892420`) when AI hand $\le 2$ and opponent hand $\ge 3$ (`-4500` penalty), ensuring the AI never gives opponents free hand refreshes.
+    - **Weak Monster Defense Positioning**: Sets utility searchers and monsters with $\le 1600$ ATK (*Red Gadget*, *Beta*, *Gamma*, *Goggle Golem*) in Defense Position when facing $\ge 1900$ ATK opponent boss monsters instead of suicidal Attack Position summons (`-3500` penalty).
+    - **Face-down Defense Target Proactivity**: Eliminates unprovoked Battle Phase skips by scoring $\ge 1400$ ATK beatstick attacks positively against face-down defense monsters when holding board advantage.
+    - **Autonomous Post-Match Reviewer (`DuelReviewerService.ts`)**: Retrospectively analyzes match event streams, detects blunders (suicides, hand leaks, passivity), calculates tactical grades (`A+` to `F`), and synthesizes anime coach commentary (with Gemini Flash LLM integration via `@google/genai`).
+    - **Persistent Tactical Memory Store (`tacticalMemory.ts`)**: Records learned blunder entries and adapts AI rules across duels in `userData/ai-tactical-memory.json`.
+    - **Post-Match Review UI (`DuelReviewModal.vue`)**: Built modal accessible from the game-over screen and `/logs` archive page displaying grades, mistake breakdowns with self-corrections, active AI memory rules, and coach retrospectives.
 
 ---
 

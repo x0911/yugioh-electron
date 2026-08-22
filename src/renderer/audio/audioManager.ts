@@ -7,6 +7,12 @@ import { SoundSynthesizer } from './soundSynthesizer.js';
 
 export type DuckingIntensity = 'normal' | 'mute' | 'off';
 
+// Global baseline mixing balance:
+// BGM is mastered to sit comfortably in the background (0.22 ceiling with power curve)
+// so that SFX (draws, summons, attacks, destructions, LP ticks) are always crisp and prominent.
+export const BGM_GLOBAL_SCALE = 0.22;
+export const SFX_GLOBAL_SCALE = 1.0;
+
 export class AudioManager {
   private static instance: AudioManager | null = null;
 
@@ -210,7 +216,11 @@ export class AudioManager {
     if (typeof Audio !== 'undefined') {
       this.previewAudioEl = new Audio(theme.src);
       this.previewAudioEl.crossOrigin = 'anonymous';
-      this.previewAudioEl.volume = this.isBgmMuted || this.isMasterMuted ? 0 : this.bgmVolume * this.masterVolume;
+
+      const basePct = this.isBgmMuted || this.isMasterMuted ? 0 : this.bgmVolume;
+      const perceivedVol = Math.pow(basePct, 1.8) * BGM_GLOBAL_SCALE;
+      const masterScale = this.isMasterMuted ? 0 : Math.pow(this.masterVolume, 1.5);
+      this.previewAudioEl.volume = Math.max(0, Math.min(1, perceivedVol * masterScale));
 
       // Safely set currentTime after metadata has loaded
       const onLoaded = () => {
@@ -322,7 +332,10 @@ export class AudioManager {
       this.bgmDuckGain.gain.linearRampToValueAtTime(targetValue, now + durationSec);
     } else if (this.bgmAudioEl) {
       // Fallback direct element volume ramping
-      const targetVol = (this.isBgmMuted || this.isMasterMuted ? 0 : this.bgmVolume * this.masterVolume) * targetValue;
+      const basePct = this.isBgmMuted || this.isMasterMuted ? 0 : this.bgmVolume;
+      const perceivedBgm = Math.pow(basePct, 1.8) * BGM_GLOBAL_SCALE;
+      const masterScale = this.isMasterMuted ? 0 : Math.pow(this.masterVolume, 1.5);
+      const targetVol = perceivedBgm * masterScale * targetValue;
       this.bgmAudioEl.volume = Math.max(0, Math.min(1, targetVol));
     }
   }
@@ -454,25 +467,29 @@ export class AudioManager {
   }
 
   private updateMasterGain(): void {
-    const vol = this.isMasterMuted ? 0 : this.masterVolume;
+    const vol = this.isMasterMuted ? 0 : Math.pow(this.masterVolume, 1.5);
     if (this.ctx && this.masterGain) {
       this.masterGain.gain.setValueAtTime(vol, this.ctx.currentTime);
     }
   }
 
   private updateBgmGain(): void {
-    const vol = this.isBgmMuted || this.isMasterMuted ? 0 : this.bgmVolume;
+    const basePct = this.isBgmMuted || this.isMasterMuted ? 0 : this.bgmVolume;
+    const perceivedBgm = Math.pow(basePct, 1.8) * BGM_GLOBAL_SCALE;
+    const masterScale = this.isMasterMuted ? 0 : Math.pow(this.masterVolume, 1.5);
+
     if (this.ctx && this.bgmGain) {
-      this.bgmGain.gain.setValueAtTime(vol, this.ctx.currentTime);
+      this.bgmGain.gain.setValueAtTime(perceivedBgm, this.ctx.currentTime);
     } else if (this.bgmAudioEl) {
-      this.bgmAudioEl.volume = Math.max(0, Math.min(1, vol * this.masterVolume));
+      this.bgmAudioEl.volume = Math.max(0, Math.min(1, perceivedBgm * masterScale));
     }
   }
 
   private updateSfxGain(): void {
-    const vol = this.isSfxMuted || this.isMasterMuted ? 0 : this.sfxVolume;
+    const basePct = this.isSfxMuted || this.isMasterMuted ? 0 : this.sfxVolume;
+    const perceivedSfx = Math.pow(basePct, 1.2) * SFX_GLOBAL_SCALE;
     if (this.ctx && this.sfxGain) {
-      this.sfxGain.gain.setValueAtTime(vol, this.ctx.currentTime);
+      this.sfxGain.gain.setValueAtTime(perceivedSfx, this.ctx.currentTime);
     }
   }
 }
