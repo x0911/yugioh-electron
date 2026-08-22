@@ -94,6 +94,17 @@ export const BGM_THEMES: BgmTheme[] = [
     color: '#a8ff78',
     icon: '☕',
   },
+  {
+    id: 'tag-force-3',
+    name: 'Tag Force 3 Arena',
+    subtitle: 'PSP Classic GX Duel BGM',
+    description: 'Authentic high-energy arcade synthesizer duel theme from Yu-Gi-Oh! GX Tag Force 3.',
+    genre: 'Arcade Rock',
+    src: 'app-resource://audio/bgm/theme_tag_force_3.mp3',
+    previewStartSec: 8,
+    color: '#ff9900',
+    icon: '🎮',
+  },
 ];
 
 /**

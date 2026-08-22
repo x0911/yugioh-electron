@@ -55,6 +55,7 @@ const SOUND_MAPPINGS: SoundMapping[] = [
   { remoteName: 'song-disadvantage.mp3', targetPaths: ['bgm/theme_millennium.mp3'] },
   { remoteName: 'playerenter.wav', targetPaths: ['bgm/theme_kaibacorp.mp3'] },
   { remoteName: 'deck.mp3', targetPaths: ['bgm/theme_lounge.mp3'] },
+  { remoteName: 'song-advantage.mp3', targetPaths: ['bgm/theme_tag_force_3.mp3'] },
 ];
 
 async function downloadFile(remoteName: string): Promise<Buffer | null> {

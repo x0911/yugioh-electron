@@ -653,8 +653,37 @@ async function runTestSuite() {
     );
     console.log('  ✓ Anti-Cheat Target Redaction passed!\n');
 
+    // 11. The Hunter with 7 Weapons & ANNOUNCE_RACE Prompt Execution
+    console.log('▶ Test 11: The Hunter with 7 Weapons & ANNOUNCE_RACE Prompt Flow');
+    service.startNewDuel({
+      player0Deck: [95956346, ...Array(39).fill(83764719)],
+      player0Monsters: [
+        { code: 95956346, sequence: 0, position: 0x1, controller: 0 }, // Shining Angel (Fairy)
+      ],
+      player1Deck: [...Array(35).fill(83764719), 1525329, 1525329, 1525329, 1525329, 1525329],
+      noShuffle: true,
+      humanPlayerId: 0,
+      startingLP: 8000,
+    });
+
+    // Pass turn 1
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.TO_EP,
+    });
+
+    // Process AI Turn 2 where AI summons Hunter with 7 Weapons and responds to ANNOUNCE_RACE
+    service.processStep();
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const hunterBoard = service.getBoardState();
+    const hunterOnField = hunterBoard.opponentField.monsterZones.some((m) => m?.code === 1525329);
+    assert(hunterOnField, 'The Hunter with 7 Weapons must be summoned and on field without freeze');
+    service.destroyCurrentDuel();
+    console.log('  ✓ The Hunter with 7 Weapons & ANNOUNCE_RACE passed!\n');
+
     console.log('================================================================');
-    console.log('🎉 ALL 10 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 11 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();
@@ -666,3 +695,4 @@ runTestSuite().catch((err) => {
   console.error('❌ Test Suite Failed:', err);
   process.exit(1);
 });
+

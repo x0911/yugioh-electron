@@ -1042,6 +1042,18 @@ export class DuelEngineService {
     this.lastPromptMessage = null;
   }
 
+  private normalizeResponse(response: OcgResponse): OcgResponse {
+    if (!response) return response;
+    // Normalize BigInts for ANNOUNCE_RACE
+    if (response.type === OcgResponseType.ANNOUNCE_RACE && (response as any).races) {
+      return {
+        ...response,
+        races: (response as any).races.map((r: any) => (typeof r === 'bigint' ? r : BigInt(r))),
+      };
+    }
+    return response;
+  }
+
   private scheduleAiResponse(handle: OcgDuelHandle, response: OcgResponse, delayMs?: number): void {
     if (this.aiStepTimer) {
       clearTimeout(this.aiStepTimer);
@@ -1053,7 +1065,7 @@ export class DuelEngineService {
     this.aiStepTimer = setTimeout(() => {
       if (!this.lib || !this.currentDuel || !this.state.isActive || this.isVideoPlaying) return;
       try {
-        this.lib.duelSetResponse(handle, response);
+        this.lib.duelSetResponse(handle, this.normalizeResponse(response));
         this.state.isWaitingResponse = false;
         this.state.waitingPlayer = null;
         this.lastPromptMessage = null;
@@ -1313,7 +1325,7 @@ export class DuelEngineService {
     }
 
     try {
-      this.lib.duelSetResponse(this.currentDuel, response);
+      this.lib.duelSetResponse(this.currentDuel, this.normalizeResponse(response));
       this.state.isWaitingResponse = false;
       this.state.waitingPlayer = null;
       this.lastPromptMessage = null;

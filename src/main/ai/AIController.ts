@@ -76,8 +76,36 @@ export class AIController {
         };
 
       case OcgMessageType.ANNOUNCE_RACE: {
+        const { aiPlayerId, boardState } = context;
+        const oppField: PlayerFieldState = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+        const oppMonsters = oppField.monsterZones.filter(
+          (m): m is FieldCard => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense')
+        );
+
+        let targetRace: bigint | null = null;
+        if (oppMonsters.length > 0) {
+          const strongestOpp = oppMonsters.reduce((prev, curr) => (curr.atk > prev.atk ? curr : prev), oppMonsters[0]);
+          if (strongestOpp && strongestOpp.code) {
+            const detail = context.cardReader.getCardDetail(strongestOpp.code);
+            if (detail && detail.race !== undefined && detail.race !== null) {
+              if (typeof detail.race === 'number' || typeof detail.race === 'bigint') {
+                targetRace = BigInt(detail.race);
+              } else if (typeof detail.race === 'string') {
+                const raceName = String(detail.race).toUpperCase().replace(/[-_ ]/g, '');
+                const ocgRaceKey = Object.keys(OcgRace).find(
+                  (k) => k.replace(/_/g, '') === raceName
+                ) as keyof typeof OcgRace | undefined;
+                if (ocgRaceKey && OcgRace[ocgRaceKey]) {
+                  targetRace = OcgRace[ocgRaceKey];
+                }
+              }
+            }
+          }
+        }
+
         const archetype = resolveArchetypePlan(context.deckArchetype);
-        const race = archetype.preferredRaces[0] ?? OcgRace.WARRIOR;
+        const rawRace = targetRace ?? (archetype.preferredRaces[0] ?? OcgRace.WARRIOR);
+        const race = typeof rawRace === 'bigint' ? rawRace : BigInt(rawRace);
         return {
           type: OcgResponseType.ANNOUNCE_RACE,
           races: [race],

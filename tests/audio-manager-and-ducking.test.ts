@@ -103,7 +103,7 @@ async function runAudioAndDuckingTests() {
 
   // Test 1: BGM Themes Catalog
   console.log('▶ Test 1: BGM Themes Catalog Completeness');
-  assert.equal(BGM_THEMES.length, 6, 'Should define exactly 6 curated BGM themes');
+  assert.ok(BGM_THEMES.length >= 6, 'Should define at least 6 curated BGM themes');
   const themeIds = BGM_THEMES.map((t) => t.id);
   assert.ok(themeIds.includes('passionate'), 'Should include Passionate Duelist');
   assert.ok(themeIds.includes('master-duel'), 'Should include Master Duel Arena');
@@ -111,7 +111,8 @@ async function runAudioAndDuckingTests() {
   assert.ok(themeIds.includes('millennium'), 'Should include Millennium Mystery');
   assert.ok(themeIds.includes('kaibacorp'), 'Should include KaibaCorp Cyber Matrix');
   assert.ok(themeIds.includes('lounge'), 'Should include Casual Duel Lounge');
-  console.log('  ✓ All 6 BGM themes verified.\n');
+  assert.ok(themeIds.includes('tag-force-3'), 'Should include Tag Force 3 Arena');
+  console.log(`  ✓ All ${BGM_THEMES.length} BGM themes verified.\n`);
 
   // Test 2: SFX Catalog Definitions
   console.log('▶ Test 2: SFX Catalog Definitions and Multipliers');
