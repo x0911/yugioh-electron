@@ -5,7 +5,7 @@ export interface BlunderEntry {
   id: string;
   timestamp: string;
   turn: number;
-  type: 'SUICIDAL_ATTACK' | 'CARD_ADVANTAGE_LEAK' | 'PASSIVE_PHASE_SKIP' | 'RECKLESS_SUMMON' | 'FUTILE_ATTACK';
+  type: 'SUICIDAL_ATTACK' | 'CARD_ADVANTAGE_LEAK' | 'PASSIVE_PHASE_SKIP' | 'RECKLESS_SUMMON' | 'FUTILE_ATTACK' | 'WALL_SACRIFICE';
   cardName: string;
   cardCode?: number;
   description: string;
@@ -36,6 +36,7 @@ const DEFAULT_MEMORY: TacticalMemoryData = {
     'Do not activate Card Destruction when opponent has more cards than AI.',
     'Set weak utility monsters in defense position when facing boss monsters with >= 1900 ATK.',
     'Proactively attack face-down monsters with >= 1400 ATK beatsticks when holding board advantage.',
+    'Never sacrifice indestructible stall walls (Marshmallon, Spirit Reaper) when under threat from superior monsters.',
   ],
   personalityDeltas: {
     aggression: 0,

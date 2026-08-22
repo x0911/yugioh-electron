@@ -286,9 +286,22 @@ export class AIController {
           score -= 3500;
         }
 
-        // Tribute summon reward
+        // Tribute summon reward or wall preservation penalty
         if (level >= 5) {
-          score += 400 * personality.riskTolerance;
+          const aiField = context.aiPlayerId === 0 ? context.boardState.userField : context.boardState.opponentField;
+          const aiMonsters = aiField.monsterZones.filter((m): m is FieldCard => !!m);
+          const hasStallWall = aiMonsters.some(
+            (m) =>
+              m.code === 31305911 || // Marshmallon
+              m.code === 23205979 || // Spirit Reaper
+              m.code === 37412656 || // Arcana Force 0
+              m.code === 78371393    // Yubel
+          );
+          if (hasStallWall && aiMonsters.length <= 1 && oppMaxAtk > atk) {
+            score -= 5000; // Do not sacrifice our indestructible stall wall when facing superior monster!
+          } else {
+            score += 400 * personality.riskTolerance;
+          }
         }
 
         // Signature card boost
@@ -353,9 +366,26 @@ export class AIController {
         const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
         const def = detail?.isMonster ? detail.def : 1000;
         const atk = detail?.isMonster ? detail.atk : 1000;
+        const level = detail?.isMonster ? detail.level : 4;
 
         // Favorable to set if DEF > ATK, or when defensive
         let score = 300 + (def - atk) * 0.4 + def * 0.5 * personality.defensiveness * archetypePlan.defenseWeight;
+
+        // Tribute Set check: NEVER sacrifice our only indestructible wall for a mortal defense set against a boss monster!
+        if (level >= 5) {
+          const aiField = context.aiPlayerId === 0 ? context.boardState.userField : context.boardState.opponentField;
+          const aiMonsters = aiField.monsterZones.filter((m): m is FieldCard => !!m);
+          const hasStallWall = aiMonsters.some(
+            (m) =>
+              m.code === 31305911 || // Marshmallon
+              m.code === 23205979 || // Spirit Reaper
+              m.code === 37412656 || // Arcana Force 0
+              m.code === 78371393    // Yubel
+          );
+          if (hasStallWall && aiMonsters.length <= 1 && oppMaxAtk > def) {
+            score -= 6000; // Throwing away stall wall to set a monster that will die next turn is fatal blunder
+          }
+        }
 
         // Prioritize setting defensively when opponent controls a boss monster
         const oppMaxAtk = Math.max(0, ...oppFaceUpMonsters.map((m) => m?.atk ?? 0));
@@ -660,13 +690,22 @@ export class AIController {
     const minCount = Math.max(1, msg.min ?? 1);
     const { cardReader } = context;
 
-    // For tribute sacrifice: sacrifice LOWEST ATK monsters first
+    // For tribute sacrifice: sacrifice LOWEST ATK monsters first, but PRESERVE indestructible walls
     const scoredCandidates = msg.selects.map((c: any, index: number) => {
       const code = c.code ?? 0;
       const detail = code > 0 ? cardReader.getCardDetail(code) : null;
       const atk = detail?.isMonster ? detail.atk : 1000;
-      // Lower ATK gets higher priority to be sacrificed
-      return { index, sacrificePriority: 5000 - atk };
+      const isIndestructibleWall =
+        code === 31305911 || // Marshmallon
+        code === 23205979 || // Spirit Reaper
+        code === 37412656 || // Arcana Force 0 - The Fool
+        code === 78371393;   // Yubel
+
+      let sacrificePriority = 5000 - atk;
+      if (isIndestructibleWall) {
+        sacrificePriority -= 50000; // Never sacrifice indestructible stall wall unless forced
+      }
+      return { index, sacrificePriority };
     });
 
     scoredCandidates.sort((a, b) => b.sacrificePriority - a.sacrificePriority);
@@ -744,13 +783,31 @@ export class AIController {
 
   private decideSelectPosition(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
     const positions = ocgPositionParse(msg.positions);
-    const { personality, cardReader } = context;
+    const { personality, cardReader, aiPlayerId, boardState, currentPhase } = context;
 
     // Check monster stats if code is provided
     const code = (msg as any).code ?? 0;
     const detail = code > 0 ? cardReader.getCardDetail(code) : null;
     const atk = detail?.isMonster ? detail.atk : 1500;
     const def = detail?.isMonster ? detail.def : 1000;
+
+    const oppField = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+    const oppMonsters = oppField.monsterZones.filter(
+      (m): m is FieldCard => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense')
+    );
+    const oppMaxAtk = Math.max(0, ...oppMonsters.map((m) => m.atk ?? 0));
+
+    // If it's AI's turn during Main Phase 1 and opponent has no monsters or weaker monsters,
+    // choose Attack Position so the monster can declare direct attacks / battle attacks!
+    const isAiTurn = (boardState.turnNumber % 2 !== 0 && aiPlayerId === 0) || (boardState.turnNumber % 2 === 0 && aiPlayerId === 1);
+    const canAttackFreely = isAiTurn && (currentPhase === 'MAIN1' || currentPhase === 'DP' || currentPhase === 'SP') && (oppMonsters.length === 0 || atk >= oppMaxAtk);
+
+    if (canAttackFreely && positions.includes(OcgPosition.FACEUP_ATTACK) && atk >= 1000) {
+      return {
+        type: OcgResponseType.SELECT_POSITION,
+        position: OcgPosition.FACEUP_ATTACK,
+      };
+    }
 
     if (atk >= 1400 || personality.aggression >= 0.7) {
       if (positions.includes(OcgPosition.FACEUP_ATTACK)) {

@@ -52,9 +52,16 @@ function createMockContext(aiHandCount = 2, oppHandCount = 4): EvaluatorContext 
     isTurn: false,
     deckCount: 30,
     extraDeckCount: 0,
-    hand: Array.from({ length: oppHandCount }, (_, i) =>
-      createMockCard({ code: 89631139, name: 'Opponent Card', location: 'hand', sequence: i, controller: 0 }),
-    ),
+    hand: Array.from({ length: oppHandCount }, (_, i) => ({
+      id: `opp-hand-${i}`,
+      code: 0,
+      name: 'Card Back',
+      controller: 0,
+      location: 'hand',
+      sequence: i,
+      position: 'facedown_spell',
+      statuses: [],
+    })),
     monsterZones: [null, null, null, null, null],
     spellTrapZones: [null, null, null, null, null],
     fieldZone: null,
@@ -170,4 +177,59 @@ describe('AI Tactical Improvements & Autonomous Post-Match Reviewer', () => {
     assert.equal(mem.blunders.length, 2);
     assert.ok(mem.learnedRules.some((r) => r.includes('avoid declaring attacks when attacker ATK is lower')));
   });
+
+  it('5. Tribute Fodder Preservation: Indestructible stall walls (Marshmallon) are protected from sacrifice', async () => {
+    const { DefaultExecutor } = await import('../src/main/ai/executors/DefaultExecutor.js');
+    const { aiController } = await import('../src/main/ai/AIController.js');
+    const { OcgMessageType, OcgResponseType } = await import('ocgcore-wasm');
+
+    const executor = new DefaultExecutor();
+    const context = createMockContext(2, 2);
+
+    // Marshmallon (31305911, 300 ATK) vs normal monster (1200 ATK)
+    const msg = {
+      type: OcgMessageType.SELECT_TRIBUTE,
+      min: 1,
+      max: 1,
+      selects: [
+        { code: 31305911, controller: 1, location: 'monster', sequence: 0 }, // Marshmallon
+        { code: 1000, controller: 1, location: 'monster', sequence: 1 }, // Generic 1200 ATK
+      ],
+    };
+
+    const tributes = executor.onSelectTribute(msg as any, context);
+    assert.deepEqual(tributes, [1], 'Must choose index 1 (generic monster) instead of index 0 (Marshmallon)');
+
+    const aiResp = aiController.decideResponse(msg as any, context);
+    assert.equal(aiResp.type, OcgResponseType.SELECT_TRIBUTE);
+    assert.deepEqual((aiResp as any).indicies, [1], 'AIController must preserve Marshmallon');
+  });
+
+  it('6. Post-Match Reviewer: Detects WALL_SACRIFICE when AI tributes indestructible stall monster', async () => {
+    const testPath = '/tmp/test-tactical-memory-wall.json';
+    try {
+      const fs = await import('node:fs');
+      if (fs.existsSync(testPath)) fs.unlinkSync(testPath);
+    } catch {}
+    const memoryStore = new TacticalMemoryStore(testPath);
+    const reviewer = new DuelReviewerService(memoryStore);
+
+    const wallSacrificeLog = `=== YU-GI-OH! DUEL LOG & DIAGNOSTIC REPORT ===
+• Turn: 28 | Phase: M1 | Turn Player: Opponent
+--- EVENT STREAM ---
+[42:52.9] [NEW_TURN] Turn 24 begins. Active player: Player 1
+[42:53.5] [DRAW] Player 1 drew: Marshmallon
+[42:53.5] [SET] Player 1 Set a card on the field.
+[43:11.9] [NEW_TURN] Turn 28 begins. Active player: Player 1
+[43:11.9] [DRAW] Player 1 drew: Cyber Prima
+[43:13.3] [SELECT_TRIBUTE] Select 1 monster(s) to Tribute.
+[43:13.3] [SET] Player 1 Set a card on the field.
+[43:32.1] [WIN] Duel ended! Winner: Player 0 (Reason: 1).
+==============================================`;
+
+    const report = await reviewer.reviewDuel(wallSacrificeLog, null, 1, 'Yugi Muto');
+    assert.ok(report.blunders.some((b) => b.type === 'WALL_SACRIFICE'), 'Must detect WALL_SACRIFICE blunder');
+    assert.ok(report.learnedLessons.some((l) => l.includes('indestructible stall walls')));
+  });
 });
+

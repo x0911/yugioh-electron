@@ -493,10 +493,16 @@ export class DefaultExecutor implements DeckExecutor {
       const detail = code > 0 ? cardReader.getCardDetail(code) : null;
       const atk = detail?.atk ?? 1000;
       const isToken = detail?.type ? (detail.type & 0x4000) !== 0 : false;
+      const isIndestructibleWall =
+        code === 31305911 || // Marshmallon
+        code === 23205979 || // Spirit Reaper
+        code === 37412656 || // Arcana Force 0 - The Fool
+        code === 78371393;   // Yubel
 
       let score = -atk; // Higher ATK = worse tribute choice
       if (isToken) score += 5000; // Tokens are ideal tributes
       if (code === 11662742) score += 2000; // Gellenduo counts as 2 tributes for LIGHT Fairy
+      if (isIndestructibleWall) score -= 50000; // Protect indestructible stall walls from being sacrificed
 
       return { index, score };
     });

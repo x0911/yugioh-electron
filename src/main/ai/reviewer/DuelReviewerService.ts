@@ -165,6 +165,25 @@ export class DuelReviewerService {
         }
       }
 
+      // Track Indestructible Wall Sacrifices
+      if (line.includes(`Player ${aiPlayerId} Set a card on the field`) || line.includes(`Player ${aiPlayerId} is Normal Summoning`)) {
+        if (i > 0 && lines[i - 1].includes('[SELECT_TRIBUTE]')) {
+          // Check if AI previously had Marshmallon or Spirit Reaper set
+          const hadMarshmallon = lines.slice(0, i).some((l) => l.includes('Marshmallon') && l.includes(`Player ${aiPlayerId}`));
+          if (hadMarshmallon) {
+            const blunder: Omit<BlunderEntry, 'id' | 'timestamp'> = {
+              turn: currentTurn,
+              type: 'WALL_SACRIFICE',
+              cardName: 'Marshmallon',
+              description: `AI tributed an indestructible battle stall monster (Marshmallon) to set/summon a mortal monster while under threat.`,
+              remedy: `Never sacrifice indestructible stall walls (Marshmallon, Spirit Reaper) when under threat from superior monsters.`,
+            };
+            blunders.push({ ...blunder, id: `blunder-${Date.now()}-${blunders.length}`, timestamp: new Date().toISOString() });
+            this.memoryStore.recordBlunder(blunder);
+          }
+        }
+      }
+
       // Track Best Moves
       if (line.includes(`Player ${aiPlayerId} activated effect of Raigeki`) || line.includes(`Player ${aiPlayerId} activated effect of Dark Hole`)) {
         bestMoves.push(`Turn ${currentTurn}: Timely board clear activation to reset opponent monster presence.`);
@@ -178,6 +197,7 @@ export class DuelReviewerService {
     let gradeScore = 100;
     for (const b of blunders) {
       if (b.type === 'SUICIDAL_ATTACK') gradeScore -= 35;
+      else if (b.type === 'WALL_SACRIFICE') gradeScore -= 30;
       else if (b.type === 'CARD_ADVANTAGE_LEAK') gradeScore -= 20;
       else if (b.type === 'PASSIVE_PHASE_SKIP') gradeScore -= 15;
       else gradeScore -= 10;
