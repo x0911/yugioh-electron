@@ -113,8 +113,26 @@ export class AIController {
       }
 
       case OcgMessageType.ANNOUNCE_ATTRIB: {
+        const { aiPlayerId, boardState } = context;
+        const oppField: PlayerFieldState = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+        const oppMonsters = oppField.monsterZones.filter(
+          (m): m is FieldCard => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense')
+        );
+
+        let targetAttr: number | null = null;
+        if (oppMonsters.length > 0) {
+          const strongestOpp = oppMonsters.reduce((prev, curr) => (curr.atk > prev.atk ? curr : prev), oppMonsters[0]);
+          if (strongestOpp && strongestOpp.code) {
+            const detail = context.cardReader.getCardDetail(strongestOpp.code);
+            if (detail && detail.attribute) {
+              targetAttr = Number(detail.attribute);
+            }
+          }
+        }
+
         const archetype = resolveArchetypePlan(context.deckArchetype);
-        const attr = archetype.preferredAttributes[0] ?? OcgAttribute.DARK;
+        const rawAttr = targetAttr ?? (archetype.preferredAttributes[0] ?? OcgAttribute.DARK);
+        const attr = typeof rawAttr === 'number' ? rawAttr : Number(rawAttr);
         return {
           type: OcgResponseType.ANNOUNCE_ATTRIB,
           attributes: [attr],
@@ -122,10 +140,10 @@ export class AIController {
       }
 
       case OcgMessageType.ANNOUNCE_CARD: {
-        const signature = context.signatureCardIds[0] ?? 91152256;
+        const defaultCard = context.signatureCardIds[0] ?? 91152256;
         return {
           type: OcgResponseType.ANNOUNCE_CARD,
-          card: signature,
+          card: typeof defaultCard === 'number' ? defaultCard : Number(defaultCard),
         };
       }
 
@@ -140,15 +158,30 @@ export class AIController {
       case OcgMessageType.ROCK_PAPER_SCISSORS: {
         return {
           type: OcgResponseType.ROCK_PAPER_SCISSORS,
-          value: Math.floor(Math.random() * 3) + 1,
+          value: (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3,
         };
       }
 
+      case OcgMessageType.SORT_CHAIN:
       case OcgMessageType.SORT_CARD: {
         const order = msg.cards ? Array.from({ length: msg.cards.length }, (_, i) => i) : null;
         return {
           type: OcgResponseType.SORT_CARD,
           order,
+        };
+      }
+
+      case OcgMessageType.SELECT_COUNTER: {
+        let remaining = msg.count ?? 0;
+        const counters: number[] = [];
+        for (const c of msg.cards ?? []) {
+          const take = Math.min(remaining, c.count ?? 0);
+          counters.push(take);
+          remaining -= take;
+        }
+        return {
+          type: OcgResponseType.SELECT_COUNTER,
+          counters,
         };
       }
 
@@ -750,7 +783,7 @@ export class AIController {
   private decideSelectPlace(msg: OcgMessage, _context: EvaluatorContext): OcgResponse {
     const places = parseFieldMask(msg.player, msg.field_mask, msg.count);
     return {
-      type: OcgResponseType.SELECT_PLACE,
+      type: msg.type === OcgMessageType.SELECT_DISFIELD ? OcgResponseType.SELECT_DISFIELD : OcgResponseType.SELECT_PLACE,
       places,
     };
   }

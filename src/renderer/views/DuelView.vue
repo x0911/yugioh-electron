@@ -342,6 +342,7 @@ import {
 import DuelReviewModal from '../components/duel/DuelReviewModal.vue';
 import {
   duelAnimationQueue,
+  aiDrawAnimationQueue,
   playCardFlight,
   getZoneRect,
   getHandCardRect,
@@ -720,6 +721,11 @@ async function onRestartMatch(): Promise<void> {
   closeCardActionMenu();
   hasSavedCurrentDuel = false;
   duelLogs.value = [];
+  // Cancel any in-flight animation tasks from the old duel — without this,
+  // stale queue tasks can call addSingleDrawnCard / handleEngineEvent on the
+  // newly-reset board state and corrupt card counts for the fresh duel.
+  duelAnimationQueue.clear();
+  aiDrawAnimationQueue.clear();
   audioManager.playSfx('duel-start');
   appendLog('RESTART', 'Restarting live duel...');
   await duelStore.startPreparedDuel();
@@ -759,18 +765,29 @@ async function setupEngineEventListener(): Promise<void> {
       // the bottom catch-all call should be skipped to avoid double-application.
       let eventHandled = false;
 
+
       // -----------------------------------------------------------------------
       // 1. Draw from Deck → Hand
-      //    Loops per-card so a multi-card draw (e.g. Pot of Greed) animates
-      //    each card individually rather than all at once.
-      //    addSingleDrawnCard places each card in hand immediately after its
-      //    flight lands, so the hand grows one-by-one.
+      //    Uses the FLIP technique so each card flies to its EXACT slot position:
+      //      a) addSingleDrawnCard first (updates state)
+      //      b) nextTick — Vue renders the card in hand at its actual slot
+      //      c) Capture the card element's precise rect as toRect
+      //      d) Hide the element (avoid double-image with the flying clone)
+      //      e) playCardFlight to that precise rect
+      //      f) Reveal the element after landing
+      //
+      //    Multi-card draws (e.g. Pot of Greed draws 2) iterate one card at a time.
+      //
+      //    AI draws are routed to aiDrawAnimationQueue (a separate parallel queue)
+      //    so both players' initial 5-card deal animates simultaneously rather
+      //    than sequentially.
       // -----------------------------------------------------------------------
-      if (event.type === 'DRAW' && event.player !== undefined) {
+      const runDrawAnimation = async () => {
+        if (event.type !== 'DRAW' || event.player === undefined) return;
+
         const isHuman = event.player === duelStore.userPlayerId;
         const domOwner = toDomOwner(event.player);
         const drawnCards: any[] = (event as any).drawnCards || (event as any).drawn || [];
-        // count = number of cards drawn; fall back to 1 for events without card list
         const count = drawnCards.length || 1;
 
         for (let i = 0; i < count; i++) {
@@ -779,20 +796,55 @@ async function setupEngineEventListener(): Promise<void> {
           const cardName =
             d?.cardName || d?.name || (i === 0 ? event.cardName : null) || 'Card Drawn';
 
+          // FLIP step 1: add card to hand state so Vue can render it at the real slot
+          duelStore.addSingleDrawnCard(event, i);
+
+          // FLIP step 2: flush Vue's DOM update so the card element exists in the DOM
+          await nextTick();
+
+          // FLIP step 3: find the newly added card element (it's the last one in the hand)
+          const newSeq = isHuman
+            ? duelStore.boardState.userField.hand.length - 1
+            : duelStore.boardState.opponentField.hand.length - 1;
+          const cardEl = document.querySelector(
+            `[data-hand-card-id="hand-${domOwner}-${newSeq}"]`,
+          ) as HTMLElement | null;
+
+          // Capture exact slot rect BEFORE hiding (getBoundingClientRect needs visibility)
+          const preciseToRect = cardEl?.getBoundingClientRect() ?? null;
+
+          // FLIP step 4: hide the real card so only the flying clone is visible
+          if (cardEl) { cardEl.style.opacity = '0'; cardEl.style.visibility = 'hidden'; }
+
           audioManager.playSfx('card-draw');
 
+          // FLIP step 5: fly from deck to the card's exact slot position
           await playCardFlight({
             code: isHuman ? cardCode : 0,
             cardName: isHuman ? cardName : 'Card Drawn',
             fromRect: getStackRect(domOwner, 'deck'),
-            toRect: getHandFanRect(domOwner),
+            toRect: preciseToRect || getHandFanRect(domOwner),
             type: 'draw',
             isFacedown: !isHuman,
-            durationMs: 380,
+            durationMs: 360,
           });
 
-          // Card lands → add it to hand. Next iteration starts from an updated hand.
-          duelStore.addSingleDrawnCard(event, i);
+          // FLIP step 6: reveal the real card — it's now at the exact landing position
+          if (cardEl) { cardEl.style.opacity = ''; cardEl.style.visibility = ''; }
+        }
+      };
+
+      if (event.type === 'DRAW' && event.player !== undefined) {
+        const isHuman = event.player === duelStore.userPlayerId;
+        if (isHuman) {
+          // User draw: process in main queue (already inside it — just run)
+          await runDrawAnimation();
+        } else {
+          // AI draw: enqueue on the parallel AI draw queue so both players
+          // animate simultaneously. We do NOT await here — firing it into the
+          // second queue and letting the main queue continue immediately is
+          // what creates the parallel effect.
+          aiDrawAnimationQueue.enqueue(runDrawAnimation);
         }
         eventHandled = true;
       }

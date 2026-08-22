@@ -235,6 +235,15 @@ export class AnimationQueue {
 export const duelAnimationQueue = new AnimationQueue();
 
 /**
+ * Secondary queue for AI/opponent draw animations.
+ * Runs independently of `duelAnimationQueue` so that both players' cards
+ * can animate simultaneously at the start of a duel (and during each
+ * player's draw phase), rather than waiting for one side to finish before
+ * the other begins.
+ */
+export const aiDrawAnimationQueue = new AnimationQueue();
+
+/**
  * Resets inline opacity/visibility styles that were manually applied to a DOM element
  * during a card-flight animation to prevent them leaking onto newly rendered cards
  * at the same slot index after Vue re-renders.

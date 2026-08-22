@@ -405,11 +405,26 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       };
     }
 
+    case OcgMessageType.SORT_CHAIN:
     case OcgMessageType.SORT_CARD: {
       const order = msg.cards ? Array.from({ length: msg.cards.length }, (_, i) => i) : null;
       return {
         type: OcgResponseType.SORT_CARD,
         order,
+      };
+    }
+
+    case OcgMessageType.SELECT_COUNTER: {
+      let remaining = msg.count ?? 0;
+      const counters: number[] = [];
+      for (const c of msg.cards ?? []) {
+        const take = Math.min(remaining, c.count ?? 0);
+        counters.push(take);
+        remaining -= take;
+      }
+      return {
+        type: OcgResponseType.SELECT_COUNTER,
+        counters,
       };
     }
 

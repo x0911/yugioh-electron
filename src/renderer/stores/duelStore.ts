@@ -896,7 +896,11 @@ export const useDuelStore = defineStore('duel', {
           const isFaceup = (pos & 0x5) !== 0;
           card.location = 'spell-trap';
           card.sequence = toSeq;
-          card.position = isFaceup ? 'faceup_spell' : 'facedown_spell';
+          // Use 'faceup_attack' (upright) for face-up cards — this matches what
+          // hydratePlayerField returns from the engine snapshot, preventing the
+          // brief 90° rotation flash that occurred when incremental state used
+          // 'faceup_spell' (sideways) but fetchBoardState later applied 'faceup_attack'.
+          card.position = isFaceup ? 'faceup_attack' : 'facedown_spell';
           toPf.spellTrapZones[toSeq] = card;
         }
       } else if (toLoc === 16) {
