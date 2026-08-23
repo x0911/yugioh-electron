@@ -217,7 +217,7 @@ export function getGxCharacters(): CharacterData[] {
           buildDeck(['Cyber Gymnast', 'Cyber Tutu', 'Blade Skater', 'Etoile Cyber', 'Polymerization', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Warrior', era: 'GX' }, ['Cyber Blader'])
         ),
         makeDeckData('alexis_deck_8', 'Cyber Angel Vrash Apocalypse', 'Board Clear & Multi-Attack', 'Destroys all opponent Extra Deck monsters, burns 1000 for each, and attacks twice.', 'alexis-rhodes', 8,
-          buildDeck(['Cyber Angel Vrash', 'Cyber Angel Dakini', 'Cyber Angel Benten', 'Machine Angel Absolute Ritual', 'Ritual Sanctuary', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Fairy', era: 'GX' })
+          buildDeck(['Cyber Angel Vrash', 'Cyber Angel Dakini', 'Cyber Angel Benten', 'Machine Angel Absolute Ritual', 'Machine Angel Ritual', 'Ritual Sanctuary', 'Manju of the Ten Thousand Hands', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Fairy', era: 'GX' })
         ),
         makeDeckData('alexis_deck_9', 'Doble Passe Counter Strike', 'Direct Damage Retaliation', 'Doble Passe redirects an attack directly to Alexis and allows her monster to strike back directly.', 'alexis-rhodes', 9,
           buildDeck(['Doble Passe', 'Blade Skater', 'Etoile Cyber', 'Cyber Blader', 'Polymerization', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { era: 'GX' }, ['Cyber Blader'])

@@ -38,7 +38,7 @@ export interface GroupedDeckCard {
 
 export const DECK_LIMITS = {
   MIN_MAIN: 40,
-  MAX_MAIN: 60,
+  MAX_MAIN: 80,
   MIN_EXTRA: 0,
   MAX_EXTRA: 15,
   MAX_COPIES_PER_CARD: 3,

@@ -16,7 +16,7 @@
   justify-content: space-between;
   padding: $space-5 $space-6;
   background-color: $color-bg-void;
-  background-image: 
+  background-image:
     radial-gradient(ellipse at 50% 30%, rgba(201, 162, 39, 0.12) 0%, transparent 65%),
     radial-gradient(circle at 50% 80%, rgba(10, 12, 16, 0.95) 0%, $color-bg-void 100%),
     url('app-resource://backgrounds/settings-bg.jpg');
@@ -163,7 +163,12 @@
     bottom: -18px;
     width: 200px;
     height: 36px;
-    background: radial-gradient(ellipse at center, rgba($color-gold-500, 0.45) 0%, rgba(0, 0, 0, 0.8) 70%, transparent 100%);
+    background: radial-gradient(
+      ellipse at center,
+      rgba($color-gold-500, 0.45) 0%,
+      rgba(0, 0, 0, 0.8) 70%,
+      transparent 100%
+    );
     border-radius: 50%;
     filter: blur(4px);
     pointer-events: none;
@@ -173,7 +178,12 @@
     position: absolute;
     inset: -30px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba($color-gold-300, 0.25) 0%, rgba($color-gold-500, 0.08) 50%, transparent 75%);
+    background: radial-gradient(
+      circle,
+      rgba($color-gold-300, 0.25) 0%,
+      rgba($color-gold-500, 0.08) 50%,
+      transparent 75%
+    );
     animation: pulse-glow 2.5s ease-in-out infinite;
     pointer-events: none;
   }
@@ -213,7 +223,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 
+    box-shadow:
       0 0 35px rgba($color-gold-500, 0.4),
       inset 0 0 20px rgba(0, 0, 0, 0.6);
 
@@ -288,7 +298,7 @@
     &:hover:not(:disabled) {
       transform: translateY(-4px) scale(1.02);
       border-color: $color-gold-300;
-      box-shadow: 
+      box-shadow:
         0 12px 32px rgba(0, 0, 0, 0.6),
         0 0 24px rgba($color-gold-500, 0.45);
 
@@ -400,10 +410,14 @@
 
     &--user-won {
       border: 2px solid $color-user;
-      box-shadow: 
+      box-shadow:
         0 12px 36px rgba(0, 0, 0, 0.7),
         0 0 32px rgba($color-user, 0.45);
-      background: radial-gradient(ellipse at 50% 0%, rgba($color-user, 0.22) 0%, rgba(18, 22, 30, 0.9) 70%);
+      background: radial-gradient(
+        ellipse at 50% 0%,
+        rgba($color-user, 0.22) 0%,
+        rgba(18, 22, 30, 0.9) 70%
+      );
 
       .coin-toss-view__outcome-badge {
         background: rgba($color-user, 0.25);
@@ -418,10 +432,14 @@
 
     &--opponent-won {
       border: 2px solid $color-ai;
-      box-shadow: 
+      box-shadow:
         0 12px 36px rgba(0, 0, 0, 0.7),
         0 0 32px rgba($color-ai, 0.45);
-      background: radial-gradient(ellipse at 50% 0%, rgba($color-ai, 0.22) 0%, rgba(18, 22, 30, 0.9) 70%);
+      background: radial-gradient(
+        ellipse at 50% 0%,
+        rgba($color-ai, 0.22) 0%,
+        rgba(18, 22, 30, 0.9) 70%
+      );
 
       .coin-toss-view__outcome-badge {
         background: rgba($color-ai, 0.25);
@@ -483,9 +501,24 @@
     width: 100%;
     max-width: 1100px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: space-between;
     padding: $space-3 0;
+    gap: $space-4;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: $space-2;
+    }
+  }
+
+  &__footer-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $space-2;
   }
 }
 

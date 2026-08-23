@@ -32,18 +32,18 @@ async function runPhase14QATests() {
   assert.strictEqual(valUnder40.isValid, false, 'Deck under 40 cards must be invalid');
   assert(valUnder40.errors.some(e => e.includes('minimum 40')), 'Must report min 40 error');
 
-  // Over 60 cards
-  const deckOver60 = {
-    id: 'test-over-60',
-    name: 'Over 60',
-    main: Array(61).fill(46986414), // 61 cards
+  // Over 80 cards
+  const deckOver80 = {
+    id: 'test-over-80',
+    name: 'Over 80',
+    main: Array(81).fill(46986414), // 81 cards
     extra: [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
-  const valOver60 = validateDeck(deckOver60);
-  assert.strictEqual(valOver60.isValid, false, 'Deck over 60 cards must be invalid');
-  assert(valOver60.errors.some(e => e.includes('maximum 60')), 'Must report max 60 error');
+  const valOver80 = validateDeck(deckOver80);
+  assert.strictEqual(valOver80.isValid, false, 'Deck over 80 cards must be invalid');
+  assert(valOver80.errors.some(e => e.includes('maximum 80')), 'Must report max 80 error');
 
   // Over 3 copies of a card
   const deckOver3Copies = {

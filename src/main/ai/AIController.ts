@@ -12,6 +12,7 @@ import {
   type OcgResponse,
 } from 'ocgcore-wasm';
 import type { EvaluatorContext, ScoredAction } from './types.js';
+import { getAiAndOpponentFields } from './types.js';
 import type { CharacterPersonality } from '../../shared/types/character.js';
 import type { FieldCard, PlayerFieldState } from '../../shared/types/field.js';
 import { parseFieldMask } from '../engine/messageDecoder.js';
@@ -76,8 +77,8 @@ export class AIController {
         };
 
       case OcgMessageType.ANNOUNCE_RACE: {
-        const { aiPlayerId, boardState } = context;
-        const oppField: PlayerFieldState = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+        const { cardReader, deckArchetype } = context;
+        const { oppField } = getAiAndOpponentFields(context);
         const oppMonsters = oppField.monsterZones.filter(
           (m): m is FieldCard => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense')
         );
@@ -86,7 +87,7 @@ export class AIController {
         if (oppMonsters.length > 0) {
           const strongestOpp = oppMonsters.reduce((prev, curr) => (curr.atk > prev.atk ? curr : prev), oppMonsters[0]);
           if (strongestOpp && strongestOpp.code) {
-            const detail = context.cardReader.getCardDetail(strongestOpp.code);
+            const detail = cardReader.getCardDetail(strongestOpp.code);
             if (detail && detail.race !== undefined && detail.race !== null) {
               if (typeof detail.race === 'number' || typeof detail.race === 'bigint') {
                 targetRace = BigInt(detail.race);
@@ -103,7 +104,7 @@ export class AIController {
           }
         }
 
-        const archetype = resolveArchetypePlan(context.deckArchetype);
+        const archetype = resolveArchetypePlan(deckArchetype);
         const rawRace = targetRace ?? (archetype.preferredRaces[0] ?? OcgRace.WARRIOR);
         const race = typeof rawRace === 'bigint' ? rawRace : BigInt(rawRace);
         return {
@@ -113,8 +114,8 @@ export class AIController {
       }
 
       case OcgMessageType.ANNOUNCE_ATTRIB: {
-        const { aiPlayerId, boardState } = context;
-        const oppField: PlayerFieldState = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+        const { cardReader } = context;
+        const { oppField } = getAiAndOpponentFields(context);
         const oppMonsters = oppField.monsterZones.filter(
           (m): m is FieldCard => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense')
         );
@@ -288,7 +289,7 @@ export class AIController {
 
         // Tribute summon reward or wall preservation / downgrade prevention
         if (level >= 5) {
-          const aiField = context.aiPlayerId === 0 ? context.boardState.userField : context.boardState.opponentField;
+          const { aiField } = getAiAndOpponentFields(context);
           const aiMonsters = aiField.monsterZones.filter((m): m is FieldCard => !!m);
           const hasStallWall = aiMonsters.some(
             (m) =>
@@ -387,7 +388,7 @@ export class AIController {
 
         // Tribute Set check: NEVER sacrifice our only indestructible wall for a mortal defense set against a boss monster!
         if (level >= 5) {
-          const aiField = context.aiPlayerId === 0 ? context.boardState.userField : context.boardState.opponentField;
+          const { aiField } = getAiAndOpponentFields(context);
           const aiMonsters = aiField.monsterZones.filter((m): m is FieldCard => !!m);
           const hasStallWall = aiMonsters.some(
             (m) =>
@@ -457,7 +458,7 @@ export class AIController {
 
     // 6. Evaluate Position Changes
     if (msg.pos_changes && msg.pos_changes.length > 0) {
-      const aiField = context.aiPlayerId === 0 ? context.boardState.userField : context.boardState.opponentField;
+      const { aiField } = getAiAndOpponentFields(context);
       for (let i = 0; i < msg.pos_changes.length; i++) {
         const pc = msg.pos_changes[i];
         const code = pc.code ?? 0;
@@ -681,10 +682,17 @@ export class AIController {
 
     const minCount = Math.max(1, msg.min ?? 1);
     const { aiPlayerId, cardReader, signatureCardIds, boardState } = context;
-    const oppField = boardState.userField.playerId === aiPlayerId ? boardState.opponentField : boardState.userField;
-
-    const aiField = boardState.userField.playerId === aiPlayerId ? boardState.userField : boardState.opponentField;
+    const { aiField, oppField } = getAiAndOpponentFields(context);
     const aiLp = aiField.currentLp;
+
+    const isBattlePhase =
+      boardState.currentPhase === 'BP' ||
+      boardState.currentPhase === 'BATTLE_START' ||
+      boardState.currentPhase === 'BATTLE_STEP';
+    const aiAttackers = aiField.monsterZones.filter(
+      (m): m is FieldCard => !!m && m.position === 'faceup_attack' && (m.atk ?? 0) > 0,
+    );
+    const aiAttackerAtk = aiAttackers.length > 0 ? Math.max(...aiAttackers.map((m) => m.atk ?? 0)) : 2000;
 
     // Score each candidate in msg.selects
     const scoredCandidates = msg.selects.map((c: any, index: number) => {
@@ -716,15 +724,18 @@ export class AIController {
           oppMonster?.position === 'faceup_attack';
 
         const def = detail?.isMonster ? detail.def : (oppMonster?.def ?? 1000);
+        const targetAtk = oppMonster?.atk ?? atk;
 
         if (isBattleImmuneDef) {
           score = -5000;
         } else if (isFaceupDefense) {
           // If in face-up defense: check DEF vs typical attacker ATK
-          if (def >= 1800) {
-            // High-DEF wall (e.g. Giant Soldier of Stone 2000 DEF, Labyrinth Wall 3000 DEF)
-            // Attacking this deals self recoil damage and fails to destroy it!
-            score = -12000 - def;
+          if (def > aiAttackerAtk) {
+            // High-DEF wall (deals self recoil damage and fails to destroy it!)
+            score = -12000 - (def - aiAttackerAtk) * 5;
+          } else if (def === aiAttackerAtk) {
+            // Stalemate clash: deals 0 damage and fails to destroy the monster
+            score = -3000;
           } else {
             // Weaker defense wall (can be destroyed by beatsticks)
             score = 2200 - def * 0.5;
@@ -733,8 +744,16 @@ export class AIController {
           // Unknown face-down card: moderate score if healthy, heavily penalized if low LP
           score = aiLp <= 2000 ? -2000 : 900;
         } else if (isFaceupAttack) {
-          // Face-up attack monster: prioritize destroying it and inflicting damage
-          score = 3000 + atk;
+          if (isBattlePhase && targetAtk > aiAttackerAtk) {
+            // SUICIDAL ATTACK: Target is stronger than our attacker!
+            score = -18000 - (targetAtk - aiAttackerAtk) * 10;
+          } else if (isBattlePhase && targetAtk === aiAttackerAtk) {
+            // Mutual destruction trade
+            score = 500;
+          } else {
+            // Safe destruction: prioritize destroying the biggest threat we CAN destroy and deal damage
+            score = 4000 + targetAtk;
+          }
         } else {
           score = atk + 500;
         }
@@ -875,6 +894,7 @@ export class AIController {
   private decideSelectPosition(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
     const positions = ocgPositionParse(msg.positions);
     const { personality, cardReader, aiPlayerId, boardState, currentPhase } = context;
+    const { oppField } = getAiAndOpponentFields(context);
 
     // Check monster stats if code is provided
     const code = (msg as any).code ?? 0;
@@ -882,7 +902,6 @@ export class AIController {
     const atk = detail?.isMonster ? detail.atk : 1500;
     const def = detail?.isMonster ? detail.def : 1000;
 
-    const oppField = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
     const oppMonsters = oppField.monsterZones.filter(
       (m): m is FieldCard => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense')
     );

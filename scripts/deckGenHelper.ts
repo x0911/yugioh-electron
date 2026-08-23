@@ -51,6 +51,94 @@ export function findCardId(nameOrId: string | number): number {
   throw new Error(`Card "${nameOrId}" not found in whitelist!`);
 }
 
+const getDescStmt = db.prepare('SELECT desc, type FROM datas d JOIN texts t ON d.id = t.id WHERE d.id = ?');
+
+const FORBIDDEN_FILL_CARD_NAMES = new Set([
+  'Destiny Board',
+  'Exodia Necross',
+  'Contract with Exodia',
+  'Dark Sage',
+  'Valkyrion the Magna Warrior',
+  'Berserkion the Electromagna Warrior',
+  'Gate Guardian',
+  'Sanga of the Thunder',
+  'Kazejin',
+  'Suijin',
+  'Water Dragon',
+  'Water Dragon Cluster',
+  'Bonding - H2O',
+  'Bonding - D2O',
+  'Bonding - DHO',
+  'Perfectly Ultimate Great Moth',
+  'Great Moth',
+  'Larvae Moth',
+  'Cocoon of Evolution',
+  'Amplifier',
+  'Burst Stream of Destruction',
+  'Inferno Fire Blast',
+  'Dark Magic Curtain',
+  'Thousand Knives',
+  'Dark Magic Attack',
+  'Sage\'s Stone',
+  'Ojama Delta Hurricane!!',
+  'Ojamagic',
+  'Triangle Ecstasy Spark',
+  'Cybernetic Zone',
+  'Inari Fire',
+  'Des Volstgalph',
+  'Mirage Knight',
+  'Machina Force',
+  'Metalzoa',
+  'Red-Eyes Black Metal Dragon',
+  'Blue-Eyes Shining Dragon',
+  'Red-Eyes Darkness Dragon',
+]);
+
+export function isUnusableOrOrphanFiller(card: WhitelistCard): boolean {
+  // 1. Extra deck card types
+  const lowerType = card.type.toLowerCase();
+  if (
+    lowerType.includes('fusion') ||
+    lowerType.includes('synchro') ||
+    lowerType.includes('xyz') ||
+    lowerType.includes('link')
+  ) {
+    return true;
+  }
+
+  // 2. Ritual monsters and ritual spells
+  if (lowerType.includes('ritual')) {
+    return true;
+  }
+
+  // 3. Name-based exclusions
+  if (card.name.includes('the Forbidden One') || card.name.startsWith('Spirit Message')) {
+    return true;
+  }
+  if (FORBIDDEN_FILL_CARD_NAMES.has(card.name)) {
+    return true;
+  }
+
+  // 4. Check CDB description for "Cannot be Normal Summoned" or "Must be Special Summoned"
+  try {
+    const row = getDescStmt.get(card.id) as { desc?: string; type?: number } | undefined;
+    if (row && row.desc) {
+      if (
+        row.desc.includes('Cannot be Normal Summoned/Set') ||
+        row.desc.includes('Cannot be Normal Summoned or Set') ||
+        row.desc.includes('Must be Special Summoned') ||
+        row.desc.includes('Must first be Special Summoned')
+      ) {
+        return true;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return false;
+}
+
 export function findCardsByCriteria(criteria: {
   race?: string;
   type?: string;
@@ -62,6 +150,7 @@ export function findCardsByCriteria(criteria: {
   era?: string;
 }): WhitelistCard[] {
   return Object.values(pool).filter((card) => {
+    if (isUnusableOrOrphanFiller(card)) return false;
     if (criteria.race && card.race !== criteria.race) return false;
     if (criteria.type && !card.type.toLowerCase().includes(criteria.type.toLowerCase()))
       return false;
@@ -112,7 +201,7 @@ export const DM_GX_STAPLES = [
 
 export function buildDeck(
   keyCards: (string | number)[],
-  fillCriteria: {
+  fillCriteria?: {
     race?: string;
     type?: string;
     attribute?: string;
@@ -137,77 +226,81 @@ export function buildDeck(
     }
   }
 
-  // Only query pool if specific archetype constraints are given (never broad era-only)
-  const hasSpecificCriteria = Boolean(
-    fillCriteria.race || fillCriteria.type || fillCriteria.attribute || fillCriteria.nameContains,
-  );
-  if (hasSpecificCriteria) {
-    const poolCandidates = findCardsByCriteria(fillCriteria);
-    let poolIdx = 0;
-    while (main.length < 30 && poolIdx < poolCandidates.length) {
-      const card = poolCandidates[poolIdx++];
-      if (card.type.toLowerCase().includes('fusion')) continue;
-      const count = main.filter((id) => id === card.id).length;
+  // If the deck already has 40+ cards provided, do not add filler
+  if (main.length < 40 && fillCriteria) {
+    const hasSpecificCriteria = Boolean(
+      fillCriteria.race || fillCriteria.type || fillCriteria.attribute || fillCriteria.nameContains,
+    );
+    if (hasSpecificCriteria) {
+      const poolCandidates = findCardsByCriteria(fillCriteria);
+      let poolIdx = 0;
+      while (main.length < 30 && poolIdx < poolCandidates.length) {
+        const card = poolCandidates[poolIdx++];
+        if (isUnusableOrOrphanFiller(card)) continue;
+        const count = main.filter((id) => id === card.id).length;
+        if (count < 3) {
+          main.push(card.id);
+        }
+      }
+    }
+
+    // Add staple power spells and traps
+    let stapleIdx = 0;
+    while (main.length < 36 && stapleIdx < DM_GX_STAPLES.length) {
+      try {
+        const stapleId = findCardId(DM_GX_STAPLES[stapleIdx++]);
+        const count = main.filter((id) => id === stapleId).length;
+        if (count < 1) {
+          main.push(stapleId);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // Duplicate core archetype cards up to 3 copies
+    let dupIdx = 0;
+    while (main.length < 40 && dupIdx < main.length) {
+      const id = main[dupIdx++];
+      const count = main.filter((c) => c === id).length;
       if (count < 3) {
-        main.push(card.id);
+        main.push(id);
+      }
+    }
+
+    // Fallback staple fillers if still under 40
+    const stapleFallbacks = [
+      'Mystical Space Typhoon',
+      'Sakuretsu Armor',
+      'Bottomless Trap Hole',
+      'Compulsory Evacuation Device',
+      'Solemn Judgment',
+      'Smashing Ground',
+      'Waboku',
+    ];
+    let fbIdx = 0;
+    while (main.length < 40 && fbIdx < stapleFallbacks.length) {
+      try {
+        const fbId = findCardId(stapleFallbacks[fbIdx++]);
+        const count = main.filter((id) => id === fbId).length;
+        if (count < 3) {
+          main.push(fbId);
+        }
+      } catch {
+        // ignore
       }
     }
   }
 
-  // Add staple power spells and traps
-  let stapleIdx = 0;
-  while (main.length < 36 && stapleIdx < DM_GX_STAPLES.length) {
-    try {
-      const stapleId = findCardId(DM_GX_STAPLES[stapleIdx++]);
-      const count = main.filter((id) => id === stapleId).length;
-      if (count < 1) {
-        main.push(stapleId);
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  // Duplicate core archetype cards up to 3 copies
-  let dupIdx = 0;
-  while (main.length < 40 && dupIdx < main.length) {
-    const id = main[dupIdx++];
-    const count = main.filter((c) => c === id).length;
-    if (count < 3) {
-      main.push(id);
-    }
-  }
-
-  // Fallback staple fillers if still under 40
-  const stapleFallbacks = [
-    'Mystical Space Typhoon',
-    'Sakuretsu Armor',
-    'Bottomless Trap Hole',
-    'Compulsory Evacuation Device',
-    'Solemn Judgment',
-    'Smashing Ground',
-    'Waboku',
-  ];
-  let fbIdx = 0;
-  while (main.length < 40 && fbIdx < stapleFallbacks.length) {
-    try {
-      const fbId = findCardId(stapleFallbacks[fbIdx++]);
-      const count = main.filter((id) => id === fbId).length;
-      if (count < 3) {
-        main.push(fbId);
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  const finalMain = main.slice(0, 40);
+  const finalMain = main.slice(0, 80);
 
   const extra: number[] = [];
   for (const item of extraCardNamesOrIds) {
     try {
       const id = findCardId(item);
-      extra.push(id);
+      if (extra.length < 15) {
+        extra.push(id);
+      }
     } catch (e) {
       console.warn(`[DeckGen Extra Warning] ${e}`);
     }

@@ -1,5 +1,5 @@
 import type { OcgResponse } from 'ocgcore-wasm';
-import type { DuelBoardState, FieldCard } from '../../shared/types/field.js';
+import type { DuelBoardState, FieldCard, PlayerFieldState } from '../../shared/types/field.js';
 import type { CharacterPersonality } from '../../shared/types/character.js';
 import type { CardReaderService } from '../engine/cardReader.js';
 
@@ -41,3 +41,14 @@ export type ArchetypeName =
   | 'RITUAL'
   | 'GENERIC_CONTROL'
   | 'GENERIC_AGGRO';
+
+export function getAiAndOpponentFields(context: {
+  aiPlayerId: number;
+  boardState: DuelBoardState;
+}): { aiField: PlayerFieldState; oppField: PlayerFieldState } {
+  const isUserAi = context.boardState.userField.playerId === context.aiPlayerId;
+  return {
+    aiField: isUserAi ? context.boardState.userField : context.boardState.opponentField,
+    oppField: isUserAi ? context.boardState.opponentField : context.boardState.userField,
+  };
+}

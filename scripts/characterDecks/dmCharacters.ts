@@ -43,7 +43,7 @@ export function getDmCharacters(): CharacterData[] {
           buildDeck(['Marshmallon', 'Marshmallon Glasses', 'Big Shield Gardna', 'Spirit Reaper', 'Gellenduo', 'Solar Flare Dragon', 'Wave-Motion Cannon', 'Swords of Revealing Light', 'Level Limit - Area B', 'Gravity Bind', 'Secret Barrel', 'Just Desserts', 'Pot of Greed', 'Graceful Charity'], { type: 'Monster', era: 'DM' })
         ),
         makeDeckData('yugi_deck_10', 'Ceremonial Duel Farewell', 'Final Duel Masterpiece', 'Yugi\'s ultimate deck combining Silent LV champions, Gadgets, and the supreme Gandora.', 'yugi-muto', 10,
-          buildDeck(['Silent Swordsman LV7', 'Silent Magician LV8', 'Gandora the Dragon of Destruction', 'Valkyrion the Magna Warrior', 'Red Gadget', 'Green Gadget', 'Yellow Gadget', 'Marshmallon', 'Blockman', 'Swords of Revealing Light', 'Card Destruction', 'Monster Reborn', 'Pot of Greed', 'Graceful Charity', 'Mirror Force'], { era: 'DM' })
+          buildDeck(['Silent Swordsman LV4', 'Silent Swordsman LV7', 'Silent Magician LV4', 'Silent Magician LV8', 'Gandora the Dragon of Destruction', 'Red Gadget', 'Green Gadget', 'Yellow Gadget', 'Stronghold the Moving Fortress', 'Marshmallon', 'Blockman', 'Swords of Revealing Light', 'Card Destruction', 'Monster Reborn', 'Pot of Greed', 'Graceful Charity', 'Mirror Force'], { era: 'DM' })
         ),
       ],
     },
@@ -121,7 +121,7 @@ export function getDmCharacters(): CharacterData[] {
           buildDeck(['Vorse Raider', 'La Jinn the Mystical Genie of the Lamp', 'Dark Blade', 'Sangan', 'Witch of the Black Forest', 'Crush Card Virus', 'Deck Devastation Virus', 'Eradicator Epidemic Virus', 'Enemy Controller', 'Shrink', 'Ring of Destruction', 'Pot of Greed', 'Graceful Charity'], { attribute: 'DARK', era: 'DM' })
         ),
         makeDeckData('kaiba_deck_6', 'Dragon Master Knight Colossus', 'Dragon & Warrior Ultimate Fusion', 'Fuses Blue-Eyes Ultimate Dragon and Black Luster Soldier into Dragon Master Knight.', 'seto-kaiba', 6,
-          buildDeck(['Blue-Eyes White Dragon', 'Black Luster Soldier', 'King of the Swamp', 'Polymerization', 'Dragon\'s Mirror', 'Fusion Sage', 'The Flute of Summoning Dragon', 'Lord of D.', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Dragon', era: 'DM' }, ['Blue-Eyes Ultimate Dragon', 'Dragon Master Knight'])
+          buildDeck(['Blue-Eyes White Dragon', 'Black Luster Soldier', 'Black Luster Ritual', 'King of the Swamp', 'Polymerization', 'Dragon\'s Mirror', 'Fusion Sage', 'The Flute of Summoning Dragon', 'Lord of D.', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Dragon', era: 'DM' }, ['Blue-Eyes Ultimate Dragon', 'Dragon Master Knight'])
         ),
         makeDeckData('kaiba_deck_7', 'Battle City Power Beatdown', 'Warrior & Dragon Aggro', 'Kaiba\'s classic tournament deck featuring Vorse Raider, Spear Dragon, and Enemy Controller.', 'seto-kaiba', 7,
           buildDeck(['Vorse Raider', 'Spear Dragon', 'Blade Knight', 'Kaiser Sea Horse', 'Blue-Eyes White Dragon', 'Enemy Controller', 'Shrink', 'Shadow Spell', 'Crush Card Virus', 'Ring of Destruction', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { era: 'DM' })
@@ -349,7 +349,7 @@ export function getDmCharacters(): CharacterData[] {
           buildDeck(['Puppet Master', 'Dark Necrofear', 'Dark Ruler Ha Des', 'Archfiend of Gilfer', 'Sangan', 'Foolish Burial', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Call of the Haunted'], { race: 'Fiend', era: 'DM' })
         ),
         makeDeckData('bakura_deck_7', 'Zoma the Spirit Trap Monsters', 'Trap Monsters & Burn', 'Summons Zoma the Spirit to reflect double battle damage back to the attacker.', 'bakura-ryou', 7,
-          buildDeck(['Zoma the Spirit', 'Embodiment of Apophis', 'Metal Reflect Slime', 'Dark Sanctuary', 'Destiny Board', 'Imperial Custom', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { era: 'DM' })
+          buildDeck(['Zoma the Spirit', 'Embodiment of Apophis', 'Metal Reflect Slime', 'Dark Sanctuary', 'Imperial Custom', 'Bowganian', 'Stealth Bird', 'Lava Golem', 'Solemn Judgment', 'Curse of Anubis', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { era: 'DM' })
         ),
         makeDeckData('bakura_deck_8', 'Final Countdown Shadow Stall', 'Turn Countdown Victory', 'Pays 2000 LP to initiate Final Countdown and stalls for 20 turns for instant victory.', 'bakura-ryou', 8,
           buildDeck(['Final Countdown', 'Marshmallon', 'Spirit Reaper', 'Gellenduo', 'Swords of Revealing Light', 'Gravity Bind', 'Level Limit - Area B', 'Threatening Roar', 'Waboku', 'Pot of Greed', 'Graceful Charity'], { era: 'DM' })
@@ -357,8 +357,8 @@ export function getDmCharacters(): CharacterData[] {
         makeDeckData('bakura_deck_9', 'Man-Eater Bug & Flip Nightmares', 'Flip Effect Trap Control', 'Deploys sneaky flip effect monsters like Man-Eater Bug and Night Assailant.', 'bakura-ryou', 9,
           buildDeck(['Man-Eater Bug', 'Night Assailant', 'Morphing Jar', 'Penguin Soldier', 'Old Vindictive Magician', 'Book of Moon', 'Swords of Revealing Light', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { era: 'DM' })
         ),
-        makeDeckData('bakura_deck_10', 'Bakura\'s Millennium Occult Finale', 'Master Occult Darkness', 'Bakura\'s ultimate combination of Destiny Board, Dark Necrofear, and Zorc.', 'bakura-ryou', 10,
-          buildDeck(['Dark Necrofear', 'Destiny Board', 'Dark Sanctuary', 'Dark Master - Zorc', 'Doomcaliber Knight', 'Morphing Jar', 'Zoma the Spirit', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { era: 'DM' })
+        makeDeckData('bakura_deck_10', 'Bakura\'s Millennium Occult Finale', 'Master Occult Darkness', 'Bakura\'s ultimate combination of Dark Necrofear, Zorc, and Shadow Fiends.', 'bakura-ryou', 10,
+          buildDeck(['Dark Necrofear', 'Curse Necrofear', 'Dark Master - Zorc', 'Contract with the Dark Master', 'Dark Ruler Ha Des', 'Doomcaliber Knight', 'Morphing Jar', 'Zoma the Spirit', 'Dark Sanctuary', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Fiend', era: 'DM' })
         ),
       ],
     },
@@ -523,7 +523,7 @@ export function getDmCharacters(): CharacterData[] {
           buildDeck(['Parasite Paracide', 'Jade Insect Whistle', 'Insect Barrier', 'DNA Surgery', 'Pinch Hopper', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Insect', era: 'DM' })
         ),
         makeDeckData('weevil_deck_5', 'Pinch Hopper Special Swarm', 'Insect Swarm Special Summon', 'When Pinch Hopper is sent to the GY, immediately summon high-level insects from hand.', 'weevil-underwood', 5,
-          buildDeck(['Pinch Hopper', 'Insect Queen', 'Great Moth', 'Gokipon', 'Danipon', 'Verdant Sanctuary', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Insect', era: 'DM' })
+          buildDeck(['Pinch Hopper', 'Insect Queen', 'Doom Dozer', 'Insect Knight', 'Gokipon', 'Danipon', 'Verdant Sanctuary', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Insect', era: 'DM' })
         ),
         makeDeckData('weevil_deck_6', 'Doom Dozer Banish Assault', 'Insect Banish Beatdown', 'Banishes 2 Insects from the Graveyard to special summon the 2800 ATK Doom Dozer.', 'weevil-underwood', 6,
           buildDeck(['Doom Dozer', 'Pinch Hopper', 'Gokipon', 'Danipon', 'Insect Knight', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Insect', era: 'DM' })
@@ -538,7 +538,7 @@ export function getDmCharacters(): CharacterData[] {
           buildDeck(['Insect Queen', 'Pinch Hopper', 'Parasite Paracide', 'Insect Barrier', 'DNA Surgery', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Insect', era: 'DM' })
         ),
         makeDeckData('weevil_deck_10', 'Weevil\'s Ultimate Great Moth Reign', 'Master Insect Dominance', 'Weevil\'s supreme tournament deck combining Great Moth, Doom Dozer, and Insect Barrier.', 'weevil-underwood', 10,
-          buildDeck(['Perfectly Ultimate Great Moth', 'Doom Dozer', 'Insect Queen', 'Pinch Hopper', 'Cocoon of Evolution', 'Insect Barrier', 'DNA Surgery', 'Parasite Paracide', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Insect', era: 'DM' })
+          buildDeck(['Perfectly Ultimate Great Moth', 'Great Moth', 'Cocoon of Evolution', 'Petit Moth', 'Doom Dozer', 'Insect Queen', 'Pinch Hopper', 'Insect Barrier', 'DNA Surgery', 'Parasite Paracide', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Insect', era: 'DM' })
         ),
       ],
     },

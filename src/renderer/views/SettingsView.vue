@@ -148,7 +148,7 @@
             <!-- Prebuilt Decks -->
             <div class="settings-view__decks-block">
               <div class="settings-view__decks-header">
-                <h4 class="settings-view__decks-title">Character Decks (3 Archetypes)</h4>
+                <h4 class="settings-view__decks-title">Character Decks</h4>
                 <span class="settings-view__decks-random-note">
                   🎲 One picked randomly when duel starts
                 </span>
@@ -184,18 +184,21 @@
       <section class="settings-view__section">
         <div class="settings-view__section-header">
           <h2 class="settings-view__section-title">Main Background Music Theme</h2>
-          <span class="settings-view__section-tag">
-            {{ BGM_THEMES.length }} Themes Available
-          </span>
+          <span class="settings-view__section-tag"> {{ BGM_THEMES.length }} Themes Available </span>
         </div>
 
-        <GlassPanel class="settings-view__setting-group settings-view__setting-group--full" accent="gold">
+        <GlassPanel
+          class="settings-view__setting-group settings-view__setting-group--full"
+          accent="gold"
+        >
           <div class="settings-view__themes-grid">
             <div
               v-for="theme in BGM_THEMES"
               :key="theme.id"
               class="settings-view__theme-card"
-              :class="{ 'settings-view__theme-card--selected': settingsStore.selectedBgmTheme === theme.id }"
+              :class="{
+                'settings-view__theme-card--selected': settingsStore.selectedBgmTheme === theme.id,
+              }"
               @click="handleSelectBgmTheme(theme.id)"
             >
               <div class="settings-view__theme-top">
@@ -256,7 +259,9 @@
                   >
                     {{ settingsStore.isMasterMuted ? '🔇' : '🔊' }}
                   </button>
-                  <label for="master-slider" class="settings-view__slider-label">Master Volume</label>
+                  <label for="master-slider" class="settings-view__slider-label"
+                    >Master Volume</label
+                  >
                 </div>
                 <span class="settings-view__slider-val">
                   {{ settingsStore.isMasterMuted ? 'MUTED' : `${settingsStore.masterVolume}%` }}
@@ -287,7 +292,9 @@
                   >
                     {{ settingsStore.isBgmMuted ? '🔇' : '🎵' }}
                   </button>
-                  <label for="bgm-slider" class="settings-view__slider-label">Music Volume (BGM)</label>
+                  <label for="bgm-slider" class="settings-view__slider-label"
+                    >Music Volume (BGM)</label
+                  >
                 </div>
                 <span class="settings-view__slider-val">
                   {{ settingsStore.isBgmMuted ? 'MUTED' : `${settingsStore.bgmVolume}%` }}
@@ -318,7 +325,9 @@
                   >
                     {{ settingsStore.isSfxMuted ? '🔇' : '🔔' }}
                   </button>
-                  <label for="sfx-slider" class="settings-view__slider-label">Sound Effects (SFX)</label>
+                  <label for="sfx-slider" class="settings-view__slider-label"
+                    >Sound Effects (SFX)</label
+                  >
                 </div>
                 <span class="settings-view__slider-val">
                   {{ settingsStore.isSfxMuted ? 'MUTED' : `${settingsStore.sfxVolume}%` }}

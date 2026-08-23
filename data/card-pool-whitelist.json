@@ -4622,6 +4622,17 @@
     "race": "Fiend",
     "attribute": "DARK"
   },
+  "12958920": {
+    "id": 12958920,
+    "name": "Skyblaster Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 500,
+    "def": 500,
+    "level": 4,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "12965761": {
     "id": 12965761,
     "name": "Des Dendle",
@@ -4630,6 +4641,17 @@
     "atk": 300,
     "def": 2000,
     "level": 4,
+    "race": "Plant",
+    "attribute": "EARTH"
+  },
+  "12965762": {
+    "id": 12965762,
+    "name": "Wicked Plant Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 800,
+    "def": 800,
+    "level": 1,
     "race": "Plant",
     "attribute": "EARTH"
   },
@@ -4995,6 +5017,17 @@
     "type": "Effect Monster",
     "atk": 1700,
     "def": 1000,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "LIGHT"
+  },
+  "14089429": {
+    "id": 14089429,
+    "name": "Thunder Option Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 1500,
+    "def": 1500,
     "level": 4,
     "race": "Machine",
     "attribute": "LIGHT"
@@ -5445,6 +5478,28 @@
     "level": 3,
     "race": "Plant",
     "attribute": "EARTH"
+  },
+  "15341822": {
+    "id": 15341822,
+    "name": "Fluff Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Plant",
+    "attribute": "WIND"
+  },
+  "15341823": {
+    "id": 15341823,
+    "name": "Fluff Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Plant",
+    "attribute": "WIND"
   },
   "15367030": {
     "id": 15367030,
@@ -5987,6 +6042,17 @@
     "atk": 0,
     "def": 0,
     "race": "Continuous"
+  },
+  "16946850": {
+    "id": 16946850,
+    "name": "Synthetic Seraph Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 300,
+    "def": 300,
+    "level": 1,
+    "race": "Fairy",
+    "attribute": "LIGHT"
   },
   "16956455": {
     "id": 16956455,
@@ -7602,6 +7668,17 @@
     "def": 0,
     "race": "Continuous"
   },
+  "21770261": {
+    "id": 21770261,
+    "name": "Slime Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 500,
+    "def": 500,
+    "level": 1,
+    "race": "Aqua",
+    "attribute": "WATER"
+  },
   "21785144": {
     "id": 21785144,
     "name": "Gragonith, Lightsworn Dragon",
@@ -7821,6 +7898,28 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "22493812": {
+    "id": 22493812,
+    "name": "Army Ant Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 500,
+    "def": 1200,
+    "level": 4,
+    "race": "Insect",
+    "attribute": "EARTH"
+  },
+  "22493813": {
+    "id": 22493813,
+    "name": "Army Ant Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 500,
+    "def": 1200,
+    "level": 4,
+    "race": "Insect",
+    "attribute": "EARTH"
   },
   "22499463": {
     "id": 22499463,
@@ -8637,6 +8736,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "24874631": {
+    "id": 24874631,
+    "name": "Metal Fiend Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "25034083": {
     "id": 25034083,
@@ -9599,6 +9709,17 @@
     "race": "Warrior",
     "attribute": "DARK"
   },
+  "28355719": {
+    "id": 28355719,
+    "name": "Double Dude Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 1000,
+    "def": 1000,
+    "level": 4,
+    "race": "Warrior",
+    "attribute": "DARK"
+  },
   "28357177": {
     "id": 28357177,
     "name": "Hade-Hane",
@@ -10089,6 +10210,39 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "29843092": {
+    "id": 29843092,
+    "name": "Ojama Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 1000,
+    "level": 2,
+    "race": "Beast",
+    "attribute": "LIGHT"
+  },
+  "29843093": {
+    "id": 29843093,
+    "name": "Ojama Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 1000,
+    "level": 2,
+    "race": "Beast",
+    "attribute": "LIGHT"
+  },
+  "29843094": {
+    "id": 29843094,
+    "name": "Ojama Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 1000,
+    "level": 2,
+    "race": "Beast",
+    "attribute": "LIGHT"
   },
   "29934351": {
     "id": 29934351,
@@ -10794,6 +10948,28 @@
     "atk": 0,
     "def": 1500,
     "level": 7,
+    "race": "Plant",
+    "attribute": "DARK"
+  },
+  "31986289": {
+    "id": 31986289,
+    "name": "Rose Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 800,
+    "def": 800,
+    "level": 3,
+    "race": "Plant",
+    "attribute": "DARK"
+  },
+  "31986290": {
+    "id": 31986290,
+    "name": "Rose Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 800,
+    "def": 800,
+    "level": 3,
     "race": "Plant",
     "attribute": "DARK"
   },
@@ -15140,6 +15316,17 @@
     "race": "Fiend",
     "attribute": "DARK"
   },
+  "44330099": {
+    "id": 44330099,
+    "name": "Emissary of Darkness Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 7,
+    "race": "Fairy",
+    "attribute": "LIGHT"
+  },
   "44397496": {
     "id": 44397496,
     "name": "Red-Eyes Spirit",
@@ -15691,6 +15878,28 @@
     "atk": 0,
     "def": 0,
     "race": "Quick-Play"
+  },
+  "46173680": {
+    "id": 46173680,
+    "name": "Doomsday Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "46173681": {
+    "id": 46173681,
+    "name": "Doomsday Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "46181000": {
     "id": 46181000,
@@ -16910,6 +17119,17 @@
     "atk": 800,
     "def": 300,
     "level": 3,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "49808197": {
+    "id": 49808197,
+    "name": "Globster Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
     "race": "Fiend",
     "attribute": "DARK"
   },
@@ -19167,6 +19387,28 @@
     "race": "Fairy",
     "attribute": "WATER"
   },
+  "56597273": {
+    "id": 56597273,
+    "name": "Cloudian Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fairy",
+    "attribute": "WATER"
+  },
+  "56597274": {
+    "id": 56597274,
+    "name": "Cloudian Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fairy",
+    "attribute": "WATER"
+  },
   "56605802": {
     "id": 56605802,
     "name": "Phantom Cricket",
@@ -20399,6 +20641,17 @@
     "def": 0,
     "race": "Normal"
   },
+  "60406592": {
+    "id": 60406592,
+    "name": "Sinister Seed Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 100,
+    "def": 100,
+    "level": 1,
+    "race": "Plant",
+    "attribute": "DARK"
+  },
   "60417395": {
     "id": 60417395,
     "name": "Darkness Neosphere",
@@ -20518,6 +20771,28 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "60764582": {
+    "id": 60764582,
+    "name": "Lamb Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Beast",
+    "attribute": "EARTH"
+  },
+  "60764583": {
+    "id": 60764583,
+    "name": "Lamb Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Beast",
+    "attribute": "EARTH"
   },
   "60802233": {
     "id": 60802233,
@@ -21065,12 +21340,12 @@
   },
   "62543393": {
     "id": 62543393,
-    "name": "Lekunga",
+    "name": "Lekunga Token",
     "era": "DM",
-    "type": "Effect Monster",
-    "atk": 1700,
-    "def": 500,
-    "level": 4,
+    "type": "Token Monster",
+    "atk": 700,
+    "def": 700,
+    "level": 2,
     "race": "Plant",
     "attribute": "WATER"
   },
@@ -21353,6 +21628,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "63442605": {
+    "id": 63442605,
+    "name": "Mirage Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Warrior",
+    "attribute": "EARTH"
   },
   "63468625": {
     "id": 63468625,
@@ -21963,6 +22249,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "65810490": {
+    "id": 65810490,
+    "name": "Wicked Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 1000,
+    "def": 1000,
+    "level": 4,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "65824822": {
     "id": 65824822,
@@ -22928,6 +23225,17 @@
     "def": 0,
     "race": "Quick-Play"
   },
+  "68815402": {
+    "id": 68815402,
+    "name": "Wild Fire Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 1000,
+    "def": 1000,
+    "level": 3,
+    "race": "Pyro",
+    "attribute": "FIRE"
+  },
   "68846917": {
     "id": 68846917,
     "name": "Rock Ogre Grotto #1",
@@ -23256,6 +23564,17 @@
     "atk": 4000,
     "def": 4000,
     "level": 10,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "69890968": {
+    "id": 69890968,
+    "name": "Phantasm Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 1000,
+    "def": 1000,
+    "level": 1,
     "race": "Fiend",
     "attribute": "DARK"
   },
@@ -24558,6 +24877,50 @@
     "def": 0,
     "race": "Quick-Play"
   },
+  "73915052": {
+    "id": 73915052,
+    "name": "Sheep Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Beast",
+    "attribute": "EARTH"
+  },
+  "73915053": {
+    "id": 73915053,
+    "name": "Sheep Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Beast",
+    "attribute": "EARTH"
+  },
+  "73915054": {
+    "id": 73915054,
+    "name": "Sheep Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Beast",
+    "attribute": "EARTH"
+  },
+  "73915055": {
+    "id": 73915055,
+    "name": "Sheep Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Beast",
+    "attribute": "EARTH"
+  },
   "74029853": {
     "id": 74029853,
     "name": "Golden Bamboo Sword",
@@ -25108,6 +25471,17 @@
     "def": 0,
     "race": "Equip"
   },
+  "75524093": {
+    "id": 75524093,
+    "name": "Evil Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 2500,
+    "def": 2500,
+    "level": 7,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
   "75559356": {
     "id": 75559356,
     "name": "Cyber Soldier of Darkworld",
@@ -25156,6 +25530,28 @@
     "atk": 3000,
     "def": 300,
     "level": 8,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "75732623": {
+    "id": 75732623,
+    "name": "Grinder Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "75732624": {
+    "id": 75732624,
+    "name": "Grinder Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
     "race": "Fiend",
     "attribute": "DARK"
   },
@@ -28477,6 +28873,28 @@
     "race": "Fairy",
     "attribute": "DARK"
   },
+  "85771020": {
+    "id": 85771020,
+    "name": "Asmo Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 1800,
+    "def": 1300,
+    "level": 5,
+    "race": "Fairy",
+    "attribute": "DARK"
+  },
+  "85771021": {
+    "id": 85771021,
+    "name": "Deus Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 1200,
+    "def": 1200,
+    "level": 3,
+    "race": "Fairy",
+    "attribute": "DARK"
+  },
   "85800949": {
     "id": 85800949,
     "name": "Legendary Knight Critias",
@@ -28793,6 +29211,17 @@
     "race": "Reptile",
     "attribute": "EARTH"
   },
+  "86801872": {
+    "id": 86801872,
+    "name": "Poisonous Snake Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 1200,
+    "def": 1200,
+    "level": 3,
+    "race": "Reptile",
+    "attribute": "EARTH"
+  },
   "86805855": {
     "id": 86805855,
     "name": "Dark Blade the Dragon Knight",
@@ -28812,6 +29241,17 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "86871615": {
+    "id": 86871615,
+    "name": "Clone Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Warrior",
+    "attribute": "EARTH"
   },
   "86988864": {
     "id": 86988864,
@@ -30077,6 +30517,17 @@
     "race": "Insect",
     "attribute": "EARTH"
   },
+  "91512836": {
+    "id": 91512836,
+    "name": "Insect Monster Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 100,
+    "def": 100,
+    "level": 1,
+    "race": "Insect",
+    "attribute": "EARTH"
+  },
   "91559748": {
     "id": 91559748,
     "name": "Prickle Fairy",
@@ -30527,6 +30978,17 @@
     "race": "Machine",
     "attribute": "LIGHT"
   },
+  "93130022": {
+    "id": 93130022,
+    "name": "Option Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 4,
+    "race": "Machine",
+    "attribute": "LIGHT"
+  },
   "93187568": {
     "id": 93187568,
     "name": "Spell Striker",
@@ -30577,6 +31039,39 @@
     "atk": 0,
     "def": 0,
     "race": "Normal"
+  },
+  "93224849": {
+    "id": 93224849,
+    "name": "Phantasmal Martyr Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "93224850": {
+    "id": 93224850,
+    "name": "Phantasmal Martyr Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fiend",
+    "attribute": "DARK"
+  },
+  "93224851": {
+    "id": 93224851,
+    "name": "Phantasmal Martyr Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
+    "race": "Fiend",
+    "attribute": "DARK"
   },
   "93343894": {
     "id": 93343894,
@@ -31933,6 +32428,17 @@
     "atk": 2800,
     "def": 2800,
     "level": 7,
+    "race": "Fairy",
+    "attribute": "LIGHT"
+  },
+  "97452818": {
+    "id": 97452818,
+    "name": "Moon Token",
+    "era": "DM",
+    "type": "Token Monster",
+    "atk": 0,
+    "def": 0,
+    "level": 1,
     "race": "Fairy",
     "attribute": "LIGHT"
   },

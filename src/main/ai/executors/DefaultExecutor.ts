@@ -7,6 +7,7 @@ import {
 } from 'ocgcore-wasm';
 import type { DeckExecutor } from './types.js';
 import type { EvaluatorContext, ScoredAction } from '../types.js';
+import { getAiAndOpponentFields } from '../types.js';
 import type { PlayerFieldState, FieldCard } from '../../../shared/types/field.js';
 import { evaluateAttackOption, type AttackCandidate } from '../evaluators/combatEvaluator.js';
 import { evaluateSpellTrapSet, evaluateSpellActivation } from '../evaluators/spellTrapEvaluator.js';
@@ -27,8 +28,7 @@ export class DefaultExecutor implements DeckExecutor {
   public onIdleCmd(msg: OcgMessage, context: EvaluatorContext): ScoredAction[] | null {
     const candidates: ScoredAction[] = [];
     const { cardReader, personality, signatureCardIds } = context;
-    const oppField = context.aiPlayerId === 0 ? context.boardState.opponentField : context.boardState.userField;
-    const aiField = context.aiPlayerId === 0 ? context.boardState.userField : context.boardState.opponentField;
+    const { aiField, oppField } = getAiAndOpponentFields(context);
 
     const oppMonsters = oppField.monsterZones.filter((m): m is FieldCard => !!m);
     const oppFaceUpMonsters = oppMonsters.filter((m) => m.position === 'faceup_attack' || m.position === 'faceup_defense');
@@ -475,8 +475,7 @@ export class DefaultExecutor implements DeckExecutor {
   public onBattleCmd(msg: OcgMessage, context: EvaluatorContext): ScoredAction[] | null {
     const candidates: ScoredAction[] = [];
     const { cardReader } = context;
-    const oppField = context.aiPlayerId === 0 ? context.boardState.opponentField : context.boardState.userField;
-    const aiField = context.aiPlayerId === 0 ? context.boardState.userField : context.boardState.opponentField;
+    const { aiField, oppField } = getAiAndOpponentFields(context);
     const oppLp = oppField.currentLp;
 
     // Check on-board total attack power for lethal calculation

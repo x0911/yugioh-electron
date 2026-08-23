@@ -1,4 +1,5 @@
 import type { EvaluatorContext } from '../types.js';
+import { getAiAndOpponentFields } from '../types.js';
 import type { PlayerFieldState } from '../../../shared/types/field.js';
 
 export function evaluateSpellActivation(
@@ -6,9 +7,8 @@ export function evaluateSpellActivation(
   cardName: string,
   context: EvaluatorContext,
 ): { score: number; reason: string } {
-  const { aiPlayerId, boardState, personality, signatureCardIds } = context;
-  const aiField: PlayerFieldState = aiPlayerId === 0 ? boardState.userField : boardState.opponentField;
-  const oppField: PlayerFieldState = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+  const { boardState, personality, signatureCardIds } = context;
+  const { aiField, oppField } = getAiAndOpponentFields(context);
 
   const oppMonsterCount = oppField.monsterZones.filter(Boolean).length;
   const aiMonsterCount = aiField.monsterZones.filter(Boolean).length;
@@ -19,6 +19,37 @@ export function evaluateSpellActivation(
     return {
       score: 1800 * personality.cardAdvantageWeight,
       reason: `Activate draw spell ${cardName} (+2 card advantage)`,
+    };
+  }
+
+  // 1a. Destiny Board Win Condition & Backrow Preservation (94212438)
+  if (code === 94212438 || cardName.includes('Destiny Board')) {
+    const hasActiveDestinyBoard = aiField.spellTrapZones.some(
+      (c) => !!c && c.code === 94212438 && (c.position === 'faceup_attack' || c.position === 'faceup_spell'),
+    );
+    if (hasActiveDestinyBoard) {
+      return {
+        score: -10000,
+        reason: `Hold duplicate Destiny Board: AI already controls an active Destiny Board (activating another would jam S/T zones and prevent victory)`,
+      };
+    }
+
+    const hasDarkSanctuary =
+      aiField.fieldZone?.code === 16625614 ||
+      aiField.spellTrapZones.some((c) => !!c && c.code === 16625614);
+    const currentBackrowCount = aiField.spellTrapZones.filter(Boolean).length;
+    const openBackrow = 5 - currentBackrowCount;
+
+    if (!hasDarkSanctuary && openBackrow < 4) {
+      return {
+        score: -6000,
+        reason: `Hold Destiny Board: only ${openBackrow} open Spell/Trap zones (requires 4 open zones for Spirit Messages I, N, A, L)`,
+      };
+    }
+
+    return {
+      score: 2500 * (personality.comboFocus + 0.5),
+      reason: `Activate Destiny Board to begin assembling Spirit Messages for alternate victory`,
     };
   }
 
@@ -326,8 +357,8 @@ export function evaluateSpellTrapSet(
   cardName: string,
   context: EvaluatorContext,
 ): { score: number; reason: string } {
-  const { aiPlayerId, boardState, personality } = context;
-  const aiField: PlayerFieldState = aiPlayerId === 0 ? boardState.userField : boardState.opponentField;
+  const { personality } = context;
+  const { aiField } = getAiAndOpponentFields(context);
 
   const currentBackrowCount = aiField.spellTrapZones.filter(Boolean).length;
   if (currentBackrowCount >= 5) {
@@ -336,6 +367,31 @@ export function evaluateSpellTrapSet(
       reason: `Backrow is completely full (5/5 set)`,
     };
   }
+
+  // Preserve open Spell/Trap zones when Destiny Board is active on field
+  const hasActiveDestinyBoard = aiField.spellTrapZones.some(
+    (c) => !!c && c.code === 94212438 && (c.position === 'faceup_attack' || c.position === 'faceup_spell'),
+  );
+  const hasDarkSanctuary =
+    aiField.fieldZone?.code === 16625614 ||
+    aiField.spellTrapZones.some((c) => !!c && c.code === 16625614);
+
+  if (hasActiveDestinyBoard && !hasDarkSanctuary) {
+    // Count active spirit messages on field: I (31893528), N (67287533), A (94772232), L (30170981)
+    const spiritMsgCount = aiField.spellTrapZones.filter(
+      (c) => !!c && (c.code === 31893528 || c.code === 67287533 || c.code === 94772232 || c.code === 30170981),
+    ).length;
+    const remainingMessagesNeeded = 4 - spiritMsgCount;
+    const openZones = 5 - currentBackrowCount;
+
+    if (openZones <= remainingMessagesNeeded) {
+      return {
+        score: -9500,
+        reason: `[PRESERVE BACKROW] Do not set ${cardName}: preserve open Spell/Trap zones for Destiny Board Spirit Messages (${openZones} open vs ${remainingMessagesNeeded} messages needed)`,
+      };
+    }
+  }
+
   if (currentBackrowCount >= 4) {
     return {
       score: -200,

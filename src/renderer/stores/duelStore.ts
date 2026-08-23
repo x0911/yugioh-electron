@@ -73,6 +73,7 @@ export interface DuelStoreState {
   selectedOpponent: CharacterData | null;
   selectedOpponentDeck: CharacterDeckData | null;
   selectedOpponentDeckIndex: number;
+  isOpponentDeckManual: boolean;
   selectedUserDeck: CustomDeck | null;
   userChoice: CoinChoice | null;
   coinResult: CoinChoice | null;
@@ -169,6 +170,7 @@ export const useDuelStore = defineStore('duel', {
     selectedOpponent: null,
     selectedOpponentDeck: null,
     selectedOpponentDeckIndex: 0,
+    isOpponentDeckManual: false,
     selectedUserDeck: null,
     userChoice: null,
     coinResult: null,
@@ -383,13 +385,16 @@ export const useDuelStore = defineStore('duel', {
       if (customOpponentDeck) {
         this.selectedOpponentDeck = customOpponentDeck;
         this.selectedOpponentDeckIndex = 0;
-      } else if (opponent && opponent.decks.length > 0) {
-        const idx = Math.floor(Math.random() * opponent.decks.length);
-        this.selectedOpponentDeck = opponent.decks[idx];
-        this.selectedOpponentDeckIndex = idx;
-      } else {
-        this.selectedOpponentDeck = null;
-        this.selectedOpponentDeckIndex = 0;
+        this.isOpponentDeckManual = true;
+      } else if (!this.isOpponentDeckManual || !this.selectedOpponentDeck || !opponent?.decks.some((d) => d.id === this.selectedOpponentDeck?.id)) {
+        if (opponent && opponent.decks.length > 0) {
+          const idx = Math.floor(Math.random() * opponent.decks.length);
+          this.selectedOpponentDeck = opponent.decks[idx];
+          this.selectedOpponentDeckIndex = idx;
+        } else {
+          this.selectedOpponentDeck = null;
+          this.selectedOpponentDeckIndex = 0;
+        }
       }
 
       // 3. Resolve User Deck
@@ -425,6 +430,28 @@ export const useDuelStore = defineStore('duel', {
     },
 
     /**
+     * Manually sets or resets the opponent's chosen deck.
+     */
+    setOpponentDeck(deck: CharacterDeckData | null): void {
+      if (deck) {
+        this.selectedOpponentDeck = deck;
+        if (this.selectedOpponent) {
+          const idx = this.selectedOpponent.decks.findIndex((d) => d.id === deck.id);
+          this.selectedOpponentDeckIndex = idx >= 0 ? idx : 0;
+        }
+        this.isOpponentDeckManual = true;
+      } else {
+        // Random mode
+        this.isOpponentDeckManual = false;
+        if (this.selectedOpponent && this.selectedOpponent.decks.length > 0) {
+          const idx = Math.floor(Math.random() * this.selectedOpponent.decks.length);
+          this.selectedOpponentDeck = this.selectedOpponent.decks[idx];
+          this.selectedOpponentDeckIndex = idx;
+        }
+      }
+    },
+
+    /**
      * Resolves coin toss outcome and assigns starting player / player IDs.
      */
     resolveCoinToss(choice: CoinChoice, outcome: CoinChoice): void {
@@ -450,8 +477,8 @@ export const useDuelStore = defineStore('duel', {
     async startPreparedDuel(): Promise<boolean> {
       if (!this.selectedOpponent || !this.selectedOpponentDeck) {
         await this.setupMatch();
-      } else if (this.selectedOpponent && this.selectedOpponent.decks.length > 0) {
-        // AI-Opponent starts with a random deck of the 3 decks that character has
+      } else if (!this.isOpponentDeckManual && this.selectedOpponent && this.selectedOpponent.decks.length > 0) {
+        // Pick a fresh random deck for the opponent if manual selection was not locked
         const idx = Math.floor(Math.random() * this.selectedOpponent.decks.length);
         this.selectedOpponentDeck = this.selectedOpponent.decks[idx];
         this.selectedOpponentDeckIndex = idx;

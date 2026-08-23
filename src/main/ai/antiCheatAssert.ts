@@ -9,7 +9,7 @@ import type { DuelBoardState } from '../../shared/types/field.js';
  */
 export function assertAiStateSanitized(boardState: DuelBoardState, aiPlayerId: number): void {
   // Human is the opposing player from the AI's perspective
-  const humanField = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+  const humanField = boardState.userField.playerId === aiPlayerId ? boardState.opponentField : boardState.userField;
 
   // 1. Check human hand cards (must have code === 0 and undefined stats)
   for (let i = 0; i < humanField.hand.length; i++) {

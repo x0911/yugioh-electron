@@ -1,4 +1,5 @@
 import type { EvaluatorContext } from '../types.js';
+import { getAiAndOpponentFields } from '../types.js';
 import type { PlayerFieldState } from '../../../shared/types/field.js';
 
 export interface AdvantageEvaluation {
@@ -14,9 +15,8 @@ export interface AdvantageEvaluation {
 }
 
 export function evaluateAdvantage(context: EvaluatorContext): AdvantageEvaluation {
-  const { aiPlayerId, boardState, personality } = context;
-  const aiField: PlayerFieldState = aiPlayerId === 0 ? boardState.userField : boardState.opponentField;
-  const oppField: PlayerFieldState = aiPlayerId === 0 ? boardState.opponentField : boardState.userField;
+  const { personality } = context;
+  const { aiField, oppField } = getAiAndOpponentFields(context);
 
   const aiLp = aiField.currentLp;
   const oppLp = oppField.currentLp;

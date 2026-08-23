@@ -20,7 +20,7 @@
           class="character-card__series-badge"
           :class="`character-card__series-badge--${character.series.toLowerCase()}`"
         >
-          {{ character.series === 'DM' ? 'DM • Duel Monsters' : 'GX • Academy' }}
+          {{ character.series === 'DM' ? 'DM' : 'GX' }}
         </span>
         <span v-if="isSelected" class="character-card__selected-indicator">
           <svg

@@ -6,6 +6,7 @@ import {
 } from 'ocgcore-wasm';
 import { DefaultExecutor } from '../DefaultExecutor.js';
 import type { EvaluatorContext, ScoredAction } from '../../types.js';
+import { getAiAndOpponentFields } from '../../types.js';
 
 export class BurnOTKExecutor extends DefaultExecutor {
   public override readonly id = 'burn-otk';
@@ -28,7 +29,7 @@ export class BurnOTKExecutor extends DefaultExecutor {
 
   public override onIdleCmd(msg: OcgMessage, context: EvaluatorContext): ScoredAction[] | null {
     const baseCandidates = super.onIdleCmd(msg, context) || [];
-    const oppField = context.aiPlayerId === 0 ? context.boardState.opponentField : context.boardState.userField;
+    const { oppField } = getAiAndOpponentFields(context);
     const oppLp = oppField.currentLp;
 
     for (const c of baseCandidates) {
