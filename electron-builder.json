@@ -45,6 +45,7 @@
     "gatekeeperAssess": false
   },
   "win": {
+    "npmRebuild": false,
     "target": [
       {
         "target": "nsis",
