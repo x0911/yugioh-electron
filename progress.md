@@ -8,12 +8,12 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
 
 | Milestone / Component | Status | Description |
 | :--- | :---: | :--- |
-| **Card Pool & Database** | ✅ Complete | 2,826 legal DM & GX cards filtered into `resources/cards.cdb` SQLite database with Lua scripts |
-| **Asset & Image Pipeline** | ✅ Complete | Resumable 3-tier image downloader (`full`, `art`, `mini`) with Sharp optimization |
+| **Card Pool & Database** | ✅ Complete | 3,205 legal DM & GX cards filtered into `resources/cards.cdb` SQLite database with 100% Lua scripts |
+| **Asset & Image Pipeline** | ✅ Complete | Resumable 3-tier image downloader (`full`, `art`, `mini`) with Sharp optimization for all 3,205 cards |
 | **Duel Engine (ocgcore-wasm)** | ✅ Complete | WebAssembly port of official `ygopro-core` engine with synchronous message decoding |
 | **Ancient Duel Arena UI** | ✅ Complete | Vue 3 + Pinia + SCSS 3D perspective field with obsidian glassmorphism & holographic glow |
 | **Deck Builder & 80 Pre-Built Decks**| ✅ Complete | Full deck editor with virtualized grid, search/filter, and 80 anime & meta pre-built decks |
-| **Audio, BGM & Sound Effects** | ✅ Complete | 6 selectable BGM themes, 35+ retro SFX triggers, procedural Web Audio synth, and dynamic cutscene ducking |
+| **Audio, BGM & Sound Effects** | ✅ Complete | 6 selectable BGM themes, 44 retro SFX triggers, procedural Web Audio synth, and dynamic cutscene ducking |
 | **Legendary AI & Deck Executors** | ✅ Complete | WindBot-inspired dual-layer AI with Universal Competitive Core and modular archetype executors |
 | **Duel Logs & Diagnostics** | ✅ Complete | Developer Logs page with max-10 duel retention and copyable Markdown diagnostic reports |
 | **Test Suite Coverage** | ✅ Complete | **24 automated test suites** passing with 100% success rate (`npm test`) |
@@ -108,6 +108,19 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
     - **Autonomous Post-Match Reviewer (`DuelReviewerService.ts`)**: Retrospectively analyzes match event streams, detects blunders (suicides, hand leaks, passivity), calculates tactical grades (`A+` to `F`), and synthesizes anime coach commentary (with Gemini Flash LLM integration via `@google/genai`).
     - **Persistent Tactical Memory Store (`tacticalMemory.ts`)**: Records learned blunder entries and adapts AI rules across duels in `userData/ai-tactical-memory.json`.
     - **Post-Match Review UI (`DuelReviewModal.vue`)**: Built modal accessible from the game-over screen and `/logs` archive page displaying grades, mistake breakdowns with self-corrections, active AI memory rules, and coach retrospectives.
+17. **Original Series (DM) & GX Card Pool Expansion to 3,205 Cards**:
+    - Expanded legal offline card database from 2,826 to **3,205 cards** (+379 new iconic anime, manga, and promo cards) across 2,029 DM cards and 1,176 GX cards with **0 modern mechanic leaks** (0 Synchro, 0 Xyz, 0 Pendulum, 0 Link).
+    - Integrated key legendary bosses: *The 3 Wicked Gods* (*The Wicked Avatar*, *The Wicked Dreadroot*, *The Wicked Eraser*), *The 3 Legendary Dragons* (*The Eye of Timaeus*, *The Fang of Critias*, *The Claw of Hermos*), *The Seal of Orichalcos*, *Armityle the Chaos Phantasm*, *Arcana Force EX - The Light Ruler / Dark Ruler*, *Red-Eyes Darkness Metal Dragon*, *Clear Vice Dragon*, *Clear World*, *Darkness Neosphere*, *Elemental HERO Absolute Zero*, *Masked HERO Dark Law / Acid*, *Vision HERO Faris / Increase / Vyon*, *Blue-Eyes Chaos MAX Dragon*, *Holactie the Creator of Light*, *Ra - Sphere Mode / Immortal Phoenix*, etc.
+    - Achieved **100% Lua script coverage** (2,817 official effect scripts compiled in `resources/scripts/official/`).
+    - Completed offline image downloader pipeline (`npm run download:cards`) providing high-res full cards, cropped art, and Sharp lanczos3 mini thumbnails for all 3,205 cards.
+18. **Toon Direct Attack & Rich Prompt Presentation (`SELECT_YESNO`)**:
+    - Resolved missing monster card artwork `?` placeholder and ambiguous `"Do you wish to activate the effect of this card?"` prompt when declaring attacks with Toon monsters (e.g. *Blue-Eyes Toon Dragon* with *Toon World* active).
+    - Enhanced `MessageDecoder` to track active attacker/chain context and decode system string `31` (*"Attack Directly?"*) into a dedicated **"Declare Direct Attack"** prompt modal.
+    - Enriched `PromptModal.vue` with combat stats badge (`⚔️ 3000 / 🛡️ 2500`), left-panel hover inspection, tactical explanation, and dynamic buttons (`"✓ Attack Directly"` vs `"⚔️ Attack Opponent Monster"`).
+    - Fixed 32-bit `aux.Stringid` bitshift resolution in `cardReader.ts` and added `extractCardCodeFromStringId` to resolve custom card text strings.
+    - Added auto-dispatch in `duelStore.ts` and bidirectional response normalization in `DuelEngineService.ts` for seamless `SELECT_YESNO` and `SELECT_EFFECTYN` compatibility.
+19. **Indestructible Stall Wall Preservation**:
+    - Updated `UniversalAI` and `DefaultExecutor` tribute evaluation to protect battle-immune stall monsters (*Marshmallon*, *Spirit Reaper*, *Gellenduo*) from sacrificial tributes when the AI is under board pressure.
 
 ---
 
@@ -116,7 +129,7 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
 ### Universal Competitive Core (`DefaultExecutor.ts`)
 - **Card Advantage Sequencing**: Always plays *Pot of Greed*, *Graceful Charity*, *Upstart*, *Allure*, *Trade-In* first.
 - **Board Clear Strategy**: Plays *Feather Duster* / *Heavy Storm* before summons; clears superior fields with *Raigeki* / *Dark Hole*.
-- **Smart Tribute Selection**: Sacrifices tokens, low-ATK monsters, and spent searchers (*Sangan*); protects floodgates and boss monsters.
+- **Smart Tribute Selection**: Sacrifices tokens, low-ATK monsters, and spent searchers (*Sangan*); protects floodgates, indestructible stall walls, and boss monsters.
 - **Battle Phase Lethal Push**: Sequences attacks from lowest ATK to highest ATK to bait battle traps, triggering lethal pushes when total damage $\ge$ LP.
 - **Anti-Wall Combat Intelligence**: Avoids futile attacks into battle-immune walls (*Spirit Reaper*, *Marshmallon*, *Gellenduo*); prioritizes defense destroyers (*Sasuke*, *Drillroid*, *Ehren*).
 - **Interruption & Negation Matrix**: Reserves counter traps (*Solemn Judgment*, *Solemn Strike*, *Dark Bribe*) for search engines, wipes, and boss summons.
@@ -137,7 +150,7 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
 
 ## 5. Automated Test Suite Status
 
-All **23 test suites** run and pass with **100% success rate** (`npm test`):
+All **24 test suites** run and pass with **100% success rate** (`npm test`):
 
 1. `tests/guidance-targeting.test.ts` ✅
 2. `tests/hand-and-pacing.test.ts` ✅
