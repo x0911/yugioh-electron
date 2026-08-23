@@ -1,7 +1,23 @@
 <template>
   <div class="duel-field">
     <!-- Obsidian Arena Floor Texture & Center Magic Circle -->
-    <div class="arena-floor">
+    <div
+      class="arena-floor"
+      :class="{ 'arena-floor--has-field-spell': Boolean(activeFieldSpellArtUrl) }"
+    >
+      <!-- Dynamic Field Spell Artwork Realm Cover -->
+      <Transition name="field-spell-fade">
+        <div
+          v-if="activeFieldSpellArtUrl"
+          :key="activeFieldSpellArtUrl"
+          class="arena-floor__field-spell-layer"
+          :style="{ backgroundImage: `url('${activeFieldSpellArtUrl}')` }"
+        >
+          <!-- Darken Overlay Above Artwork -->
+          <div class="arena-floor__field-spell-darken-overlay"></div>
+        </div>
+      </Transition>
+
       <div class="arena-center-circle">
         <div class="center-rune-ring"></div>
         <div class="center-divider-line"></div>
@@ -351,8 +367,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { FieldCard, PlayerFieldState } from '../../../shared/types/field.js';
 import type { TargetInfo } from '../../stores/duelStore.js';
+import { getCardImageUrl } from '../../utils/media.js';
 import FieldZoneSlot from './FieldZoneSlot.vue';
 import DeckStack from './DeckStack.vue';
 import Tooltip from '../common/Tooltip.vue';
@@ -405,6 +423,37 @@ function onStackClick(stackType: string, controller: number): void {
 
   emit('inspect-stack', stackType, controller);
 }
+
+function isFaceUpFieldCard(card: FieldCard | null | undefined): boolean {
+  if (!card || !card.code || card.code <= 0) return false;
+  return (
+    card.position === 'faceup_spell' ||
+    (card.position as any) === 'faceup_attack' ||
+    (typeof card.position === 'number' && (card.position & 0x1) !== 0) ||
+    card.isFaceUp === true
+  );
+}
+
+/**
+ * Resolves the currently active, face-up Field Spell on the arena (user or opponent field zone).
+ */
+const activeFieldSpellCard = computed<FieldCard | null>(() => {
+  if (isFaceUpFieldCard(props.userState?.fieldZone)) {
+    return props.userState.fieldZone;
+  }
+  if (isFaceUpFieldCard(props.opponentState?.fieldZone)) {
+    return props.opponentState.fieldZone;
+  }
+  return null;
+});
+
+/**
+ * Dynamic artwork image URL for the active Field Spell.
+ */
+const activeFieldSpellArtUrl = computed<string | null>(() => {
+  if (!activeFieldSpellCard.value || !activeFieldSpellCard.value.code) return null;
+  return getCardImageUrl(activeFieldSpellCard.value.code, 'art');
+});
 </script>
 
 <style scoped lang="scss">
@@ -443,6 +492,55 @@ function onStackClick(stackType: string, controller: number): void {
     );
     border: 1px solid rgba(201, 162, 39, 0.15);
     box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.8);
+    transition: border-color 0.5s ease, box-shadow 0.5s ease;
+
+    &--has-field-spell {
+      border-color: rgba(201, 162, 39, 0.35);
+      box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.85), 0 0 25px rgba(201, 162, 39, 0.15);
+    }
+  }
+
+  .arena-floor__field-spell-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    z-index: 0;
+  }
+
+  .arena-floor__field-spell-darken-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(10, 14, 22, 0.62) 0%,
+      rgba(6, 8, 12, 0.82) 75%,
+      rgba(4, 5, 8, 0.94) 100%
+    );
+    backdrop-filter: blur(0.5px);
+  }
+
+  // Transitions for field spell entry, replacement, and destruction
+  .field-spell-fade-enter-active,
+  .field-spell-fade-leave-active {
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s ease-out;
+  }
+
+  .field-spell-fade-enter-from,
+  .field-spell-fade-leave-to {
+    opacity: 0;
+    transform: scale(1.04);
   }
 
   .arena-center-circle {
@@ -457,6 +555,7 @@ function onStackClick(stackType: string, controller: number): void {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1;
 
     .center-rune-ring {
       width: 420px;

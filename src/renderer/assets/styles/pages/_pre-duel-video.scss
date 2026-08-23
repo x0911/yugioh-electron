@@ -35,7 +35,7 @@
     justify-content: space-between;
     padding: $space-6;
     background-color: $color-bg-void;
-    background-image: 
+    background-image:
       radial-gradient(ellipse at 50% 40%, rgba(201, 162, 39, 0.15) 0%, transparent 70%),
       radial-gradient(circle at 50% 100%, rgba(10, 12, 16, 0.98) 0%, $color-bg-void 100%),
       url('app-resource://backgrounds/loading-bg.jpg');
@@ -47,7 +47,7 @@
   &__backdrop-particles {
     position: absolute;
     inset: 0;
-    background: 
+    background:
       radial-gradient(circle at 20% 30%, rgba($color-gold-300, 0.08) 0%, transparent 40%),
       radial-gradient(circle at 80% 70%, rgba($color-gold-500, 0.06) 0%, transparent 40%);
     pointer-events: none;
@@ -107,7 +107,7 @@
     padding: $space-5 $space-6;
     @include glass-panel-elevated;
     border-color: rgba($color-gold-500, 0.45);
-    box-shadow: 
+    box-shadow:
       0 16px 48px rgba(0, 0, 0, 0.8),
       0 0 40px rgba($color-gold-500, 0.2);
     animation: modal-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -123,7 +123,11 @@
     justify-content: center;
     border-radius: 14px;
     overflow: hidden;
-    background: radial-gradient(circle at 50% 30%, rgba(201, 162, 39, 0.25) 0%, rgba(18, 22, 30, 0.95) 100%);
+    background: radial-gradient(
+      circle at 50% 30%,
+      rgba(201, 162, 39, 0.25) 0%,
+      rgba(18, 22, 30, 0.95) 100%
+    );
     border: 2px solid rgba($color-gold-500, 0.5);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   }
@@ -131,7 +135,7 @@
   &__portrait-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
   }
 
   &__portrait-silhouette {
