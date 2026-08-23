@@ -11,7 +11,10 @@ export interface CustomDeck {
   updatedAt: number;
   series?: 'DM' | 'GX' | 'ALL';
   archetype?: string;
+  characterId?: string;
   characterName?: string;
+  avatar?: string;
+  portrait?: string;
   category?: 'character-dm' | 'character-gx' | 'popular-dm' | 'popular-gx' | 'custom' | string;
 }
 

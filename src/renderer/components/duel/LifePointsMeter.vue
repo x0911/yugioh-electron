@@ -17,7 +17,7 @@
         <div class="lp-meter__avatar">
           <img
             v-if="characterId && !avatarFailed"
-            :src="getCharacterPortraitUrl(characterId)"
+            :src="getCharacterAvatarUrl(characterId)"
             :alt="name"
             class="avatar-image"
             @error="handleAvatarError"
@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
-import { getCharacterPortraitUrl } from '../../utils/media.js';
+import { getCharacterAvatarUrl, getCharacterPortraitUrl } from '../../utils/media.js';
 import { audioManager } from '../../audio/index.js';
 
 const props = withDefaults(

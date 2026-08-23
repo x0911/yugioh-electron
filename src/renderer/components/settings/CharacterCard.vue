@@ -46,8 +46,8 @@
 
         <!-- Real Image if available -->
         <img
-          v-if="!imageFailed && character.avatar"
-          :src="character.avatar"
+          v-if="!imageFailed && (character.portrait || character.avatar)"
+          :src="character.portrait || character.avatar"
           :alt="character.name"
           class="character-card__image"
           @error="handleImageError"

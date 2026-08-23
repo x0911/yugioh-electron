@@ -34,6 +34,7 @@ export interface CharacterData {
   tagline: string;
   description: string;
   avatar: string;
+  portrait?: string;
   video: string;
   decks: CharacterDeckData[];
   signatureCards: number[];

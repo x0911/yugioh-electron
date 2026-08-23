@@ -58,10 +58,17 @@ export function getCharacterVideoUrl(characterId: string): string {
 }
 
 /**
- * Returns the character portrait image URL.
+ * Returns the character portrait image URL (full/bust standee).
  */
 export function getCharacterPortraitUrl(characterId: string): string {
   return `app-resource://characters/portraits/${characterId}.png`;
+}
+
+/**
+ * Returns the character head / face avatar image URL (256x256 square crop).
+ */
+export function getCharacterAvatarUrl(characterId: string): string {
+  return `app-resource://characters/avatars/${characterId}.png`;
 }
 
 /**

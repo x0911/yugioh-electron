@@ -5,6 +5,31 @@ function GetID()
 	return self_table,self_code
 end
 
+-- Card & Effect Helper Polyfills for modern script compatibility
+if Card and not Card.IsSpellTrap then
+	function Card.IsSpellTrap(c)
+		return c:IsType(TYPE_SPELL+TYPE_TRAP)
+	end
+end
+
+if Card and not Card.IsMonster then
+	function Card.IsMonster(c)
+		return c:IsType(TYPE_MONSTER)
+	end
+end
+
+if Effect and not Effect.IsSpellTrapEffect then
+	function Effect.IsSpellTrapEffect(e)
+		return e:IsHasType(EFFECT_TYPE_ACTIVATE) or (e:IsActiveType(TYPE_SPELL+TYPE_TRAP) and not e:IsActiveType(TYPE_MONSTER))
+	end
+end
+
+if Effect and not Effect.IsMonsterEffect then
+	function Effect.IsMonsterEffect(e)
+		return e:IsActiveType(TYPE_MONSTER)
+	end
+end
+
 function Auxiliary.NULL()
 end
 

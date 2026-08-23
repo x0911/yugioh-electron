@@ -70,10 +70,11 @@ export function getPersistedCustomDecks(): CustomDeck[] {
   const prebuilt = defaultStarterDecks;
   let hasMissingPrebuilt = false;
 
-  // Merge any missing or outdated prebuilt decks into store so user gets all complete decks
+  // Merge latest prebuilt decks into store so user always has updated names, avatars, and legal card lists
   for (const [id, deck] of Object.entries(prebuilt)) {
-    if (!decksMap[id] || (decksMap[id].main && decksMap[id].main.length < 40)) {
-      decksMap[id] = deck;
+    const existing = decksMap[id];
+    if (!existing || !existing.avatar || existing.name !== deck.name || (existing.main && existing.main.length < 40)) {
+      decksMap[id] = { ...existing, ...deck };
       hasMissingPrebuilt = true;
     }
   }
@@ -81,7 +82,21 @@ export function getPersistedCustomDecks(): CustomDeck[] {
   if (hasMissingPrebuilt || Object.keys(decksMap).length === 0) {
     appStore.set('customDecks', decksMap);
   }
-  return Object.values(decksMap);
+
+  // Group and sort decks: Prebuilt DM/GX character decks (in canonical roster order), then Popular, then Custom
+  const prebuiltOrder = Object.keys(prebuilt);
+  const allDecks = Object.values(decksMap);
+
+  allDecks.sort((a, b) => {
+    const idxA = prebuiltOrder.indexOf(a.id);
+    const idxB = prebuiltOrder.indexOf(b.id);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return (b.updatedAt || 0) - (a.updatedAt || 0);
+  });
+
+  return allDecks;
 }
 
 export function savePersistedCustomDeck(deck: CustomDeck): CustomDeck {

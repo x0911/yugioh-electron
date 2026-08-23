@@ -28,6 +28,34 @@ const inputRef = ref<HTMLInputElement | null>(null);
 const listContainerRef = ref<HTMLDivElement | null>(null);
 const rootRef = ref<HTMLDivElement | null>(null);
 
+// Canonical DM and GX character ordering for grouped sorting
+const DM_CHARACTER_ORDER = [
+  'yugi-muto', 'yami-yugi', 'seto-kaiba', 'joey-wheeler', 'tea-gardner',
+  'tristan-taylor', 'mai-valentine', 'yami-bakura', 'marik-ishtar', 'maximillion-pegasus',
+  'bandit-keith', 'weevil-underwood', 'rex-raptor', 'mako-tsunami', 'ishizu-ishtar',
+  'odion', 'espa-roba', 'arkana', 'rafael', 'dartz'
+];
+
+const GX_CHARACTER_ORDER = [
+  'jaden-yuki', 'zane-truesdale', 'syrus-truesdale', 'chazz-princeton', 'alexis-rhodes',
+  'bastion-misawa', 'chumley-huffington', 'aster-phoenix', 'jesse-anderson', 'dr-vellian-crowler',
+  'atticus-rhodes', 'tyranno-hassleberry', 'jim-crocodile-cook', 'axel-brodie', 'adrian-gecko',
+  'sartorius-kumar', 'yubel', 'nightshroud', 'yusuke-fujiwara', 'supreme-king-jaden'
+];
+
+function getDeckSortWeight(d: CustomDeck): number {
+  if (d.characterId) {
+    const dmIdx = DM_CHARACTER_ORDER.indexOf(d.characterId);
+    if (dmIdx !== -1) return 1000 + dmIdx * 20;
+    const gxIdx = GX_CHARACTER_ORDER.indexOf(d.characterId);
+    if (gxIdx !== -1) return 2000 + gxIdx * 20;
+  }
+  if (d.category === 'character-dm' || d.series === 'DM') return 1500;
+  if (d.category === 'character-gx' || d.series === 'GX') return 2500;
+  if (d.category?.startsWith('popular') || d.id.startsWith('pop-') || d.characterName === 'Community Popular') return 3000;
+  return 4000;
+}
+
 // Find currently selected deck
 const activeDeck = computed(() => {
   return props.decks.find((d) => d.id === props.modelValue) || props.decks[0] || null;
@@ -41,9 +69,9 @@ const counts = computed(() => {
   let customCount = 0;
 
   for (const d of props.decks) {
-    if (d.category === 'character-dm') dmCount++;
-    else if (d.category === 'character-gx') gxCount++;
-    else if (d.category === 'popular-dm' || d.category === 'popular-gx' || d.id.startsWith('pop-')) popCount++;
+    if (d.category === 'character-dm' || (d.series === 'DM' && d.characterName && d.characterName !== 'Community Popular')) dmCount++;
+    else if (d.category === 'character-gx' || (d.series === 'GX' && d.characterName && d.characterName !== 'Community Popular')) gxCount++;
+    else if (d.category === 'popular-dm' || d.category === 'popular-gx' || d.id.startsWith('pop-') || d.characterName === 'Community Popular') popCount++;
     else customCount++;
   }
 
@@ -56,7 +84,7 @@ const counts = computed(() => {
   };
 });
 
-// Filtered deck list based on category & search query
+// Filtered & grouped deck list based on category & search query
 const filteredDecks = computed(() => {
   let list = props.decks;
 
@@ -83,7 +111,15 @@ const filteredDecks = computed(() => {
     });
   }
 
-  return list;
+  // 3. Sort decks contiguously by duelist
+  const sorted = [...list].sort((a, b) => {
+    const wA = getDeckSortWeight(a);
+    const wB = getDeckSortWeight(b);
+    if (wA !== wB) return wA - wB;
+    return a.id.localeCompare(b.id, undefined, { numeric: true });
+  });
+
+  return sorted;
 });
 
 // Reset highlighted index when filter changes
@@ -229,15 +265,33 @@ onUnmounted(() => {
       @click="toggleDropdown"
     >
       <div class="deck-autocomplete__trigger-left">
-        <span class="deck-autocomplete__icon" aria-hidden="true">🗂️</span>
+        <div class="deck-autocomplete__avatar-frame">
+          <img
+            v-if="activeDeck?.avatar"
+            :src="activeDeck.avatar"
+            :alt="activeDeck.characterName || activeDeck.name"
+            class="deck-autocomplete__avatar-img"
+            @error="(e) => ((e.target as HTMLImageElement).src = 'app-resource://characters/avatars/generic.png')"
+          />
+          <span v-else class="deck-autocomplete__icon" aria-hidden="true">🗂️</span>
+        </div>
+
         <div v-if="activeDeck" class="deck-autocomplete__current-info">
           <span class="deck-autocomplete__current-name">{{ activeDeck.name }}</span>
-          <span
-            v-if="activeDeck.archetype"
-            class="deck-autocomplete__current-arch"
-          >
-            {{ activeDeck.archetype }}
-          </span>
+          <div class="deck-autocomplete__current-sub">
+            <span
+              v-if="activeDeck.characterName && activeDeck.characterName !== 'Community Popular'"
+              class="deck-autocomplete__current-duelist"
+            >
+              {{ activeDeck.characterName }}
+            </span>
+            <span
+              v-if="activeDeck.archetype"
+              class="deck-autocomplete__current-arch"
+            >
+              {{ activeDeck.archetype }}
+            </span>
+          </div>
         </div>
         <span v-else class="deck-autocomplete__placeholder">Select a deck...</span>
       </div>
@@ -353,28 +407,48 @@ onUnmounted(() => {
             @mouseenter="highlightedIndex = idx"
             @click="selectDeck(deck)"
           >
-            <!-- Left Info -->
+            <!-- Left Info with Duelist Face Avatar -->
             <div class="deck-autocomplete__item-left">
-              <div class="deck-autocomplete__item-title-row">
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <span
-                  class="deck-autocomplete__item-name"
-                  v-html="highlightMatch(deck.name, searchQuery)"
+              <div class="deck-autocomplete__avatar-frame">
+                <img
+                  v-if="deck.avatar"
+                  :src="deck.avatar"
+                  :alt="deck.characterName || deck.name"
+                  class="deck-autocomplete__avatar-img"
+                  loading="lazy"
+                  @error="(e) => ((e.target as HTMLImageElement).src = 'app-resource://characters/avatars/generic.png')"
                 />
-                <span
-                  v-if="deck.id === modelValue"
-                  class="deck-autocomplete__item-check"
-                  title="Current Active Deck"
-                >
-                  ✓
-                </span>
+                <span v-else class="deck-autocomplete__avatar-fallback">🎴</span>
               </div>
-              <div class="deck-autocomplete__item-sub-row">
-                <span
-                  v-if="deck.archetype"
-                  class="deck-autocomplete__item-archetype"
-                  v-html="highlightMatch(deck.archetype, searchQuery)"
-                />
+
+              <div class="deck-autocomplete__item-text">
+                <div class="deck-autocomplete__item-title-row">
+                  <!-- eslint-disable-next-line vue/no-v-html -->
+                  <span
+                    class="deck-autocomplete__item-name"
+                    v-html="highlightMatch(deck.name, searchQuery)"
+                  />
+                  <span
+                    v-if="deck.id === modelValue"
+                    class="deck-autocomplete__item-check"
+                    title="Current Active Deck"
+                  >
+                    ✓
+                  </span>
+                </div>
+                <div class="deck-autocomplete__item-sub-row">
+                  <span
+                    v-if="deck.characterName && deck.characterName !== 'Community Popular'"
+                    class="deck-autocomplete__item-duelist-tag"
+                  >
+                    {{ deck.characterName }}
+                  </span>
+                  <span
+                    v-if="deck.archetype"
+                    class="deck-autocomplete__item-archetype"
+                    v-html="highlightMatch(deck.archetype, searchQuery)"
+                  />
+                </div>
               </div>
             </div>
 

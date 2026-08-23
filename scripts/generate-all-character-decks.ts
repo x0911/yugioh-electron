@@ -80,14 +80,17 @@ for (const char of allCharacters) {
     // 4. Convert to CustomDeck format for prebuilt-decks.json
     const customDeck: CustomDeck = {
       id: deck.id,
-      name: `${char.name} — ${deck.name}`,
+      name: deck.name, // Clean name: e.g. "Magnet & Gadget Arsenal"
       main: deck.mainCards,
       extra: deck.extraCards || [],
       createdAt: 1700000000000 + totalDecks * 1000,
       updatedAt: 1700000000000 + totalDecks * 1000,
       series: char.series,
       archetype: deck.archetype,
+      characterId: char.id,
       characterName: char.name,
+      avatar: `app-resource://characters/avatars/${char.id}.png`,
+      portrait: `app-resource://characters/portraits/${char.id}.png`,
       category: char.series === 'DM' ? 'character-dm' : 'character-gx',
     };
     allPrebuiltDecks.push(customDeck);
@@ -104,11 +107,23 @@ if (fs.existsSync(PREBUILT_DECKS_PATH)) {
     const popularDecks = existing.filter(
       (d) => d.category === 'popular-dm' || d.category === 'popular-gx' || d.id.startsWith('pop-')
     );
+    for (const pop of popularDecks) {
+      pop.characterId = 'popular';
+      pop.characterName = 'Community Popular';
+      pop.avatar = 'app-resource://characters/avatars/generic.png';
+      pop.portrait = 'app-resource://characters/avatars/generic.png';
+    }
     console.log(`\nPreserving ${popularDecks.length} community popular decks from previous prebuilt-decks.json.`);
     allPrebuiltDecks.push(...popularDecks);
   } catch (err) {
     console.warn('Could not read existing popular decks:', err);
   }
+}
+
+// Update allCharacters with valid app-resource URLs for portraits and avatars
+for (const char of allCharacters) {
+  char.avatar = `app-resource://characters/avatars/${char.id}.png`;
+  char.portrait = `app-resource://characters/portraits/${char.id}.png`;
 }
 
 // 6. Write out data/characters.json

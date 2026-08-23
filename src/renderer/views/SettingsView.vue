@@ -59,8 +59,8 @@
           <div class="settings-view__dossier-left">
             <div class="settings-view__dossier-avatar-box">
               <img
-                v-if="!avatarFailed && selectedChar.avatar"
-                :src="selectedChar.avatar"
+                v-if="!avatarFailed && (selectedChar.portrait || selectedChar.avatar)"
+                :src="selectedChar.portrait || selectedChar.avatar"
                 :alt="selectedChar.name"
                 class="settings-view__dossier-img"
                 @error="avatarFailed = true"

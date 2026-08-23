@@ -190,3 +190,22 @@ All **25 test suites** run and pass with **100% success rate** (`npm test`):
 23. `tests/sound-effects-matrix.test.ts` ✅
 24. `tests/ai-post-match-reviewer-and-tactics.test.ts` ✅
 25. `tests/prebuilt-decks-and-roster-expansion.test.ts` ✅
+
+---
+
+## 6. Milestone 22: Character Art Assets & Deck Selector Autocomplete Transformation
+
+### Duelist Art Generation & Storage
+- **Official Full/Bust Standee Portraits (`resources/characters/portraits/*.png`)**: Downloaded and sharp-trimmed transparent high-resolution character portraits for all **40 anime duelists** (20 DM + 20 GX).
+- **256x256 Head/Face Avatars (`resources/characters/avatars/*.png`)**: Extracted facial / upper-bust bounding crops and generated circular 256x256 avatars for all 40 duelists, plus generic Millennium Eye and custom deck fallbacks.
+
+### Clean Deck Names & Contiguous Duelist Sorting
+- **Clean Deck Names**: Stripped redundant `{duelist_name} — ` prefixes across all 421 decks (e.g. `"Magnet & Gadget Arsenal"`, `"Blue-Eyes Chaos MAX Demolition"`).
+- **Contiguous Duelist Grouping**: Decks in `DeckSelectorAutocomplete.vue` and persistence store are grouped contiguously by character in canonical anime order (DM 1–20 $\to$ GX 1–20 $\to$ Community Popular $\to$ User Custom), so all 10 decks for each duelist appear right next to each other.
+
+### UI Enhancements
+- **Deck Autocomplete Dropdown**: Renders each duelist's face avatar on the left with glowing holographic borders, clean deck name in title row, and stylish character name tag in sub-row.
+- **Trigger Bar**: Displays active deck's character face avatar, clean deck name, and duelist / archetype subtitle.
+- **Settings Page**: Full character standee portraits integrated into `CharacterCard.vue`, `OpponentCarousel.vue`, and `SettingsView.vue`.
+- **In-Duel HUD**: `LifePointsMeter.vue` updated to render face avatar previews.
+

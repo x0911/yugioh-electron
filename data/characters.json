@@ -6,7 +6,7 @@
     "title": "King of Games",
     "tagline": "Heart of the Cards & Master Tactician",
     "description": "A kind-hearted high school student who solved the ancient Millennium Puzzle. Yugi trusts completely in the Heart of the Cards and uses clever defensive and toolbox combos.",
-    "avatar": "resources/characters/portraits/yugi-muto.png",
+    "avatar": "app-resource://characters/avatars/yugi-muto.png",
     "video": "resources/videos/characters/yugi-muto.mp4",
     "themeColor": "#c9a227",
     "decks": [
@@ -560,7 +560,8 @@
           75347539
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/yugi-muto.png"
   },
   {
     "id": "yami-yugi",
@@ -569,7 +570,7 @@
     "title": "Pharaoh of the Millennium",
     "tagline": "Master of Dark Magic & The Egyptian Gods",
     "description": "The ancient Egyptian Pharaoh Atem. He commands the Ultimate Wizard Dark Magician, the Egyptian God Slifer the Sky Dragon, and legendary rituals.",
-    "avatar": "resources/characters/portraits/yami-yugi.png",
+    "avatar": "app-resource://characters/avatars/yami-yugi.png",
     "video": "resources/videos/characters/yami-yugi.mp4",
     "themeColor": "#e3c567",
     "decks": [
@@ -1141,7 +1142,8 @@
           10000010
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/yami-yugi.png"
   },
   {
     "id": "seto-kaiba",
@@ -1150,7 +1152,7 @@
     "title": "CEO of KaibaCorp",
     "tagline": "Unstoppable Power & High-Tech Domination",
     "description": "The president of KaibaCorp and master of Blue-Eyes White Dragon. Kaiba believes in overwhelming strength, crushing virus traps, and futuristic machine unions.",
-    "avatar": "resources/characters/portraits/seto-kaiba.png",
+    "avatar": "app-resource://characters/avatars/seto-kaiba.png",
     "video": "resources/videos/characters/seto-kaiba.mp4",
     "themeColor": "#2f80ed",
     "decks": [
@@ -1725,7 +1727,8 @@
           65622692
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/seto-kaiba.png"
   },
   {
     "id": "joey-wheeler",
@@ -1734,7 +1737,7 @@
     "title": "The Underdog Duelist",
     "tagline": "Guts, Luck & Fiery Red-Eyes Spirit",
     "description": "A street-smart duelist with unyielding courage. Joey wins through daring gambles, coin-flip turnarounds, and his legendary Red-Eyes Black Dragon.",
-    "avatar": "resources/characters/portraits/joey-wheeler.png",
+    "avatar": "app-resource://characters/avatars/joey-wheeler.png",
     "video": "resources/videos/characters/joey-wheeler.mp4",
     "themeColor": "#eb5757",
     "decks": [
@@ -2301,7 +2304,8 @@
           423705
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/joey-wheeler.png"
   },
   {
     "id": "tea-gardner",
@@ -2310,7 +2314,7 @@
     "title": "Heartwarming Spirit",
     "tagline": "Life Point Recovery & Fairy Radiance",
     "description": "The moral compass of the gang. Téa heals life points and commands radiant Fairies and Magician Girls with cheerful determination.",
-    "avatar": "resources/characters/portraits/tea-gardner.png",
+    "avatar": "app-resource://characters/avatars/tea-gardner.png",
     "video": "resources/videos/characters/tea-gardner.mp4",
     "themeColor": "#3ddc97",
     "decks": [
@@ -2864,7 +2868,8 @@
           18036057
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/tea-gardner.png"
   },
   {
     "id": "tristan-taylor",
@@ -2873,7 +2878,7 @@
     "title": "Tough-Guy Guardian",
     "tagline": "Cyber Commander & Ironclad Defense",
     "description": "Yugi's loyal protector who fights with gritty machine soldiers, heavy battle armor, and Cyber Commander tactics.",
-    "avatar": "resources/characters/portraits/tristan-taylor.png",
+    "avatar": "app-resource://characters/avatars/tristan-taylor.png",
     "video": "resources/videos/characters/tristan-taylor.mp4",
     "themeColor": "#756f60",
     "decks": [
@@ -3436,7 +3441,8 @@
           38916461
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/tristan-taylor.png"
   },
   {
     "id": "mai-valentine",
@@ -3445,7 +3451,7 @@
     "title": "Harpy Queen of the Wind",
     "tagline": "Harpie Lady Swarm & Amazoness Ferocity",
     "description": "A stylish and glamorous duelist who commands the Harpie Lady flock, Hunting Grounds, and fierce Amazoness warriors.",
-    "avatar": "resources/characters/portraits/mai-valentine.png",
+    "avatar": "app-resource://characters/avatars/mai-valentine.png",
     "video": "resources/videos/characters/mai-valentine.mp4",
     "themeColor": "#9b51e0",
     "decks": [
@@ -4001,7 +4007,8 @@
           12206212
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/mai-valentine.png"
   },
   {
     "id": "bakura-ryou",
@@ -4010,7 +4017,7 @@
     "title": "Tomb Robber of the Millennium Ring",
     "tagline": "Destiny Board Occult & Fiend Haunting",
     "description": "Host to the evil spirit of the Millennium Ring. Bakura plays deadly occult decks, Destiny Board word-spells, and graveyard-haunting fiends.",
-    "avatar": "resources/characters/portraits/bakura-ryou.png",
+    "avatar": "app-resource://characters/avatars/bakura-ryou.png",
     "video": "resources/videos/characters/bakura-ryou.mp4",
     "themeColor": "#56ccf2",
     "decks": [
@@ -4564,7 +4571,8 @@
           97642679
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/bakura-ryou.png"
   },
   {
     "id": "marik-ishtar",
@@ -4573,7 +4581,7 @@
     "title": "Tomb Keeper of the Sun God",
     "tagline": "The Winged Dragon of Ra & Shadow Torture",
     "description": "Leader of the Rare Hunters and wielder of the Millennium Rod. Marik inflicts agonizing burn damage and commands The Winged Dragon of Ra.",
-    "avatar": "resources/characters/portraits/marik-ishtar.png",
+    "avatar": "app-resource://characters/avatars/marik-ishtar.png",
     "video": "resources/videos/characters/marik-ishtar.mp4",
     "themeColor": "#f2c94c",
     "decks": [
@@ -5127,7 +5135,8 @@
           102380
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/marik-ishtar.png"
   },
   {
     "id": "maximillion-pegasus",
@@ -5136,7 +5145,7 @@
     "title": "Creator of Duel Monsters",
     "tagline": "Toon World Whimsy & Relinquished Illusions",
     "description": "The eccentric creator of Duel Monsters and holder of the Millennium Eye. Pegasus bypasses defense with cartoonish Toons and absorbs souls with Relinquished.",
-    "avatar": "resources/characters/portraits/maximillion-pegasus.png",
+    "avatar": "app-resource://characters/avatars/maximillion-pegasus.png",
     "video": "resources/videos/characters/maximillion-pegasus.mp4",
     "themeColor": "#c9a227",
     "decks": [
@@ -5694,7 +5703,8 @@
           53183600
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/maximillion-pegasus.png"
   },
   {
     "id": "bandit-keith",
@@ -5703,7 +5713,7 @@
     "title": "US National Champion",
     "tagline": "Heavy Metal Machines & Coin-Toss Barrage",
     "description": "Former US Champion duelist known for his ruthless machine monsters, coin-toss artillery like Blowback and Gatling Dragon, and sneaky traps.",
-    "avatar": "resources/characters/portraits/bandit-keith.png",
+    "avatar": "app-resource://characters/avatars/bandit-keith.png",
     "video": "resources/videos/characters/bandit-keith.mp4",
     "themeColor": "#8c6e16",
     "decks": [
@@ -6263,7 +6273,8 @@
           50705071
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/bandit-keith.png"
   },
   {
     "id": "weevil-underwood",
@@ -6272,7 +6283,7 @@
     "title": "Regional Insect Champion",
     "tagline": "Great Moth Metamorphosis & Insect Swarm",
     "description": "The calculating Japanese Regional Champion. Weevil traps opponents behind Insect Barrier and evolves Petit Moth into Perfectly Ultimate Great Moth.",
-    "avatar": "resources/characters/portraits/weevil-underwood.png",
+    "avatar": "app-resource://characters/avatars/weevil-underwood.png",
     "video": "resources/videos/characters/weevil-underwood.mp4",
     "themeColor": "#3ddc97",
     "decks": [
@@ -6826,7 +6837,8 @@
           91512835
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/weevil-underwood.png"
   },
   {
     "id": "rex-raptor",
@@ -6835,7 +6847,7 @@
     "title": "Dinosaur Tyrant",
     "tagline": "Prehistoric Dinosaurs & Dragon Might",
     "description": "Regional runner-up and dinosaur fanatic. Rex stomps rivals with prehistoric titans like Ultimate Tyranno, Black Tyranno, and Red-Eyes.",
-    "avatar": "resources/characters/portraits/rex-raptor.png",
+    "avatar": "app-resource://characters/avatars/rex-raptor.png",
     "video": "resources/videos/characters/rex-raptor.mp4",
     "themeColor": "#eb5757",
     "decks": [
@@ -7395,7 +7407,8 @@
           38670435
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/rex-raptor.png"
   },
   {
     "id": "mako-tsunami",
@@ -7404,7 +7417,7 @@
     "title": "Ocean Master of the Seas",
     "tagline": "Sea Stealth Umi & The Legendary Fisherman",
     "description": "A sea-faring fisherman duelist who hides his monsters beneath Umi waves and protects the honor of his father with The Legendary Fisherman.",
-    "avatar": "resources/characters/portraits/mako-tsunami.png",
+    "avatar": "app-resource://characters/avatars/mako-tsunami.png",
     "video": "resources/videos/characters/mako-tsunami.mp4",
     "themeColor": "#56ccf2",
     "decks": [
@@ -7958,7 +7971,8 @@
           62337487
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/mako-tsunami.png"
   },
   {
     "id": "ishizu-ishtar",
@@ -7967,7 +7981,7 @@
     "title": "Guardian of the Millennium Necklace",
     "tagline": "Exchange of the Spirit & Gravekeeper Prophecy",
     "description": "Keeper of the Egyptian Antiquities and the Millennium Necklace. Ishizu sees the future, commands Gravekeepers, and flips graveyards with Exchange of the Spirit.",
-    "avatar": "resources/characters/portraits/ishizu-ishtar.png",
+    "avatar": "app-resource://characters/avatars/ishizu-ishtar.png",
     "video": "resources/videos/characters/ishizu-ishtar.mp4",
     "themeColor": "#c9a227",
     "decks": [
@@ -8521,7 +8535,8 @@
           24317029
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/ishizu-ishtar.png"
   },
   {
     "id": "odion",
@@ -8530,7 +8545,7 @@
     "title": "Loyal Guardian of the Ishtar Tomb",
     "tagline": "Embodiment of Apophis & Mystical Beast Serket",
     "description": "Marik's sworn protector. Odion overwhelms opponents with continuous Trap Monsters like Apophis and the devastating Mystical Beast of Serket.",
-    "avatar": "resources/characters/portraits/odion.png",
+    "avatar": "app-resource://characters/avatars/odion.png",
     "video": "resources/videos/characters/odion.mp4",
     "themeColor": "#8c6e16",
     "decks": [
@@ -9090,7 +9105,8 @@
           55256016
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/odion.png"
   },
   {
     "id": "espa-roba",
@@ -9099,7 +9115,7 @@
     "title": "Psychic Duelist & Jinzo Master",
     "tagline": "Jinzo Trap Annihilation & Cyber Telepathy",
     "description": "The psychic duelist with extraordinary tactical mind-reading. Espa Roba shuts down all opponent Traps with Jinzo and Jinzo - Lord.",
-    "avatar": "resources/characters/portraits/espa-roba.png",
+    "avatar": "app-resource://characters/avatars/espa-roba.png",
     "video": "resources/videos/characters/espa-roba.mp4",
     "themeColor": "#56ccf2",
     "decks": [
@@ -9653,7 +9669,8 @@
           9418534
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/espa-roba.png"
   },
   {
     "id": "arkana",
@@ -9662,7 +9679,7 @@
     "title": "Master of Dark Magic Illusion",
     "tagline": "Pandora Dark Magician & Ectoplasmer Sacrifices",
     "description": "The illusionist magician and Rare Hunter. Arkana wields the red-robed Dark Magician, sinister Ectoplasmer tributes, and sawblade traps.",
-    "avatar": "resources/characters/portraits/arkana.png",
+    "avatar": "app-resource://characters/avatars/arkana.png",
     "video": "resources/videos/characters/arkana.mp4",
     "themeColor": "#eb5757",
     "decks": [
@@ -10221,7 +10238,8 @@
           99789342
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/arkana.png"
   },
   {
     "id": "rafael",
@@ -10230,7 +10248,7 @@
     "title": "Noble Doma Guardian",
     "tagline": "Guardian Eatos & Dreadscythe Purity",
     "description": "The virtuous member of Doma. Rafael treats his Guardian monsters as comrades, never letting them fall to the Graveyard, and summons Guardian Eatos.",
-    "avatar": "resources/characters/portraits/rafael.png",
+    "avatar": "app-resource://characters/avatars/rafael.png",
     "video": "resources/videos/characters/rafael.mp4",
     "themeColor": "#3ddc97",
     "decks": [
@@ -10784,7 +10802,8 @@
           55569674
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/rafael.png"
   },
   {
     "id": "dartz",
@@ -10793,7 +10812,7 @@
     "title": "King of Atlantis",
     "tagline": "The Seal of Orichalcos & Great Leviathan",
     "description": "The ancient King of Atlantis and leader of Doma. Dartz harnesses the 10,000-year-old Seal of Orichalcos and awakens the Great Leviathan.",
-    "avatar": "resources/characters/portraits/dartz.png",
+    "avatar": "app-resource://characters/avatars/dartz.png",
     "video": "resources/videos/characters/dartz.mp4",
     "themeColor": "#3ddc97",
     "decks": [
@@ -11347,7 +11366,8 @@
           31305911
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/dartz.png"
   },
   {
     "id": "jaden-yuki",
@@ -11356,7 +11376,7 @@
     "title": "Slifer Red Supreme Duelist",
     "tagline": "Elemental HERO & Neos Contact Fusion",
     "description": "A fun-loving student at Duel Academy with unmatched instinct. Jaden fuses Elemental HEROs and contacts Neo-Spacians into cosmic warriors.",
-    "avatar": "resources/characters/portraits/jaden-yuki.png",
+    "avatar": "app-resource://characters/avatars/jaden-yuki.png",
     "video": "resources/videos/characters/jaden-yuki.mp4",
     "themeColor": "#eb5757",
     "decks": [
@@ -11961,7 +11981,8 @@
           89943723
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/jaden-yuki.png"
   },
   {
     "id": "zane-truesdale",
@@ -11970,7 +11991,7 @@
     "title": "Kaiser of the Academy",
     "tagline": "Cyber Dragon Power Bond & Cyberdark Underworld",
     "description": "The undefeated top duelist of Duel Academy who later embraced the ruthless Hell Kaiser underworld style. Commands Cyber Dragon, Power Bond, and Cyberdarks.",
-    "avatar": "resources/characters/portraits/zane-truesdale.png",
+    "avatar": "app-resource://characters/avatars/zane-truesdale.png",
     "video": "resources/videos/characters/zane-truesdale.mp4",
     "themeColor": "#2f80ed",
     "decks": [
@@ -12552,7 +12573,8 @@
           41230939
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/zane-truesdale.png"
   },
   {
     "id": "syrus-truesdale",
@@ -12561,7 +12583,7 @@
     "title": "Vehicroid Engineer",
     "tagline": "Vehicroid Mobile Taskforce & Connection Zone",
     "description": "Zane's determined younger brother. Syrus engineers cute and powerful Vehicroid machines, combining them with Vehicroid Connection Zone.",
-    "avatar": "resources/characters/portraits/syrus-truesdale.png",
+    "avatar": "app-resource://characters/avatars/syrus-truesdale.png",
     "video": "resources/videos/characters/syrus-truesdale.mp4",
     "themeColor": "#f2c94c",
     "decks": [
@@ -13132,7 +13154,8 @@
           44729197
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/syrus-truesdale.png"
   },
   {
     "id": "chazz-princeton",
@@ -13141,7 +13164,7 @@
     "title": "Chazz It Up! (The Manjoume)",
     "tagline": "Ojama Delta Hurricane & Armed Dragons",
     "description": "The arrogant and resilient prodigy of Duel Academy. Chazz commands the comical Ojama trio, evolving Armed Dragons, and VWXYZ catapult machines.",
-    "avatar": "resources/characters/portraits/chazz-princeton.png",
+    "avatar": "app-resource://characters/avatars/chazz-princeton.png",
     "video": "resources/videos/characters/chazz-princeton.mp4",
     "themeColor": "#756f60",
     "decks": [
@@ -13718,7 +13741,8 @@
           12482652
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/chazz-princeton.png"
   },
   {
     "id": "alexis-rhodes",
@@ -13727,7 +13751,7 @@
     "title": "Queen of Obelisk Blue",
     "tagline": "Cyber Angel Rituals & Ice Ballet",
     "description": "The top female duelist at Duel Academy. Alexis performs graceful ice ballet with Cyber Blader and unleashes the divine Cyber Angel ritual goddesses.",
-    "avatar": "resources/characters/portraits/alexis-rhodes.png",
+    "avatar": "app-resource://characters/avatars/alexis-rhodes.png",
     "video": "resources/videos/characters/alexis-rhodes.mp4",
     "themeColor": "#2f80ed",
     "decks": [
@@ -14289,7 +14313,8 @@
           3629090
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/alexis-rhodes.png"
   },
   {
     "id": "bastion-misawa",
@@ -14298,7 +14323,7 @@
     "title": "The Formula Tactician",
     "tagline": "Water Dragon Chemistry & Six Attribute Decks",
     "description": "The analytical genius of Ra Yellow who created six distinct decks to counter every attribute. Commands Hydrogeddon, Bonding H2O, and Water Dragon.",
-    "avatar": "resources/characters/portraits/bastion-misawa.png",
+    "avatar": "app-resource://characters/avatars/bastion-misawa.png",
     "video": "resources/videos/characters/bastion-misawa.mp4",
     "themeColor": "#f2c94c",
     "decks": [
@@ -14852,7 +14877,8 @@
           22587018
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/bastion-misawa.png"
   },
   {
     "id": "chumley-huffington",
@@ -14861,7 +14887,7 @@
     "title": "Beast Master of the Australian Outback",
     "tagline": "Master of Oz & Ayers Rock Sunrise",
     "description": "The laid-back Australian student and passionate card designer. Chumley commands massive Outback beasts, Des Koalas, and the 4200 ATK Master of Oz.",
-    "avatar": "resources/characters/portraits/chumley-huffington.png",
+    "avatar": "app-resource://characters/avatars/chumley-huffington.png",
     "video": "resources/videos/characters/chumley-huffington.mp4",
     "themeColor": "#eb5757",
     "decks": [
@@ -15427,7 +15453,8 @@
           69579761
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/chumley-huffington.png"
   },
   {
     "id": "aster-phoenix",
@@ -15436,7 +15463,7 @@
     "title": "Pro League Destiny Duelist",
     "tagline": "Destiny HERO Plasma & Clock Tower Prison",
     "description": "The top-ranked professional duelist. Aster commands dark Destiny HEROs, the Clock Tower of fate, and the monster-stealing Destiny HERO - Plasma.",
-    "avatar": "resources/characters/portraits/aster-phoenix.png",
+    "avatar": "app-resource://characters/avatars/aster-phoenix.png",
     "video": "resources/videos/characters/aster-phoenix.mp4",
     "themeColor": "#56ccf2",
     "decks": [
@@ -16005,7 +16032,8 @@
           40591390
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/aster-phoenix.png"
   },
   {
     "id": "jesse-anderson",
@@ -16014,7 +16042,7 @@
     "title": "Champion of the Crystal Beasts",
     "tagline": "Seven Crystal Beasts & Rainbow Dragon",
     "description": "The transfer student from North Academy who communicates with Duel Spirits. Jesse gathers all seven Crystal Beasts to summon Rainbow Dragon.",
-    "avatar": "resources/characters/portraits/jesse-anderson.png",
+    "avatar": "app-resource://characters/avatars/jesse-anderson.png",
     "video": "resources/videos/characters/jesse-anderson.mp4",
     "themeColor": "#56ccf2",
     "decks": [
@@ -16568,7 +16596,8 @@
           95600067
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/jesse-anderson.png"
   },
   {
     "id": "vellian-crowler",
@@ -16577,7 +16606,7 @@
     "title": "Head Professor of Duel Academy",
     "tagline": "Ancient Gear Golem & Geartown Industry",
     "description": "The eccentric Department Chair of Obelisk Blue. Crowler overwhelms students with Ancient Gear Golems that prevent spells and traps during battle.",
-    "avatar": "resources/characters/portraits/vellian-crowler.png",
+    "avatar": "app-resource://characters/avatars/vellian-crowler.png",
     "video": "resources/videos/characters/vellian-crowler.mp4",
     "themeColor": "#9b51e0",
     "decks": [
@@ -17139,7 +17168,8 @@
           92001300
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/vellian-crowler.png"
   },
   {
     "id": "atticus-rhodes",
@@ -17148,7 +17178,7 @@
     "title": "The Charismatic Red-Eyes Idol",
     "tagline": "Red-Eyes Darkness Dragon & Dragon Roar",
     "description": "Alexis's flashy older brother and top Obelisk Blue duelist. Atticus commands Red-Eyes Darkness Dragon, Dragon's Roar, and soaring draconic firepower.",
-    "avatar": "resources/characters/portraits/atticus-rhodes.png",
+    "avatar": "app-resource://characters/avatars/atticus-rhodes.png",
     "video": "resources/videos/characters/atticus-rhodes.mp4",
     "themeColor": "#2f80ed",
     "decks": [
@@ -17708,7 +17738,8 @@
           24094653
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/atticus-rhodes.png"
   },
   {
     "id": "tyranno-hassleberry",
@@ -17717,7 +17748,7 @@
     "title": "The Dino-DNA Sergeant",
     "tagline": "Ultimate Tyranno & Jurassic World",
     "description": "The energetic sergeant of Ra Yellow with a dinosaur bone in his leg. Hassleberry leads his prehistoric squad with Ultimate Tyranno and Babycerasaurus.",
-    "avatar": "resources/characters/portraits/tyranno-hassleberry.png",
+    "avatar": "app-resource://characters/avatars/tyranno-hassleberry.png",
     "video": "resources/videos/characters/tyranno-hassleberry.mp4",
     "themeColor": "#eb5757",
     "decks": [
@@ -18271,7 +18302,8 @@
           36042004
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/tyranno-hassleberry.png"
   },
   {
     "id": "jim-crocodile-cook",
@@ -18280,7 +18312,7 @@
     "title": "Fossil Excavation Specialist",
     "tagline": "Fossil Fusion & Ancient Skull Giants",
     "description": "The Australian archaeologist duelist who travels with his crocodile Shirley. Jim excavates monster bones from both graveyards with Fossil Fusion.",
-    "avatar": "resources/characters/portraits/jim-crocodile-cook.png",
+    "avatar": "app-resource://characters/avatars/jim-crocodile-cook.png",
     "video": "resources/videos/characters/jim-crocodile-cook.mp4",
     "themeColor": "#8c6e16",
     "decks": [
@@ -18834,7 +18866,8 @@
           17706537
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/jim-crocodile-cook.png"
   },
   {
     "id": "axel-brodie",
@@ -18843,7 +18876,7 @@
     "title": "Volcanic Mercenary",
     "tagline": "Volcanic Doomfire & Blaze Cannon Artillery",
     "description": "The stoic mercenary student from West Academy. Axel incinerates enemy boards with Blaze Cannon artillery, Volcanic Scattershot, and Volcanic Doomfire.",
-    "avatar": "resources/characters/portraits/axel-brodie.png",
+    "avatar": "app-resource://characters/avatars/axel-brodie.png",
     "video": "resources/videos/characters/axel-brodie.mp4",
     "themeColor": "#eb5757",
     "decks": [
@@ -19397,7 +19430,8 @@
           69750546
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/axel-brodie.png"
   },
   {
     "id": "adrian-gecko",
@@ -19406,7 +19440,7 @@
     "title": "Master of the Skies & Exodia",
     "tagline": "Cloudian Fog Counters & Exodius Lord",
     "description": "The calculating heir of the Gecko financial empire. Adrian uses battle-indestructible Cloudians with Fog Counters and summons Exodius the Ultimate Forbidden Lord.",
-    "avatar": "resources/characters/portraits/adrian-gecko.png",
+    "avatar": "app-resource://characters/avatars/adrian-gecko.png",
     "video": "resources/videos/characters/adrian-gecko.mp4",
     "themeColor": "#56ccf2",
     "decks": [
@@ -19960,7 +19994,8 @@
           16197610
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/adrian-gecko.png"
   },
   {
     "id": "sartorius-kumar",
@@ -19969,7 +20004,7 @@
     "title": "Leader of the Society of Light",
     "tagline": "Arcana Force Tarot of Destiny & Light Ruler",
     "description": "The enigmatic diviner and leader of the Society of Light. Sartorius spins the Wheel of Fate with Arcana Force monsters and summons the 4000 ATK Light Ruler.",
-    "avatar": "resources/characters/portraits/sartorius-kumar.png",
+    "avatar": "app-resource://characters/avatars/sartorius-kumar.png",
     "video": "resources/videos/characters/sartorius-kumar.mp4",
     "themeColor": "#c9a227",
     "decks": [
@@ -20523,7 +20558,8 @@
           62892347
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/sartorius-kumar.png"
   },
   {
     "id": "yubel",
@@ -20532,7 +20568,7 @@
     "title": "The Eternal Dark Soul",
     "tagline": "Yubel Ultimate Nightmare & Pain Reflection",
     "description": "The ancient Duel Spirit bonded to Jaden through eternity. Yubel cannot be destroyed in battle, turns all battle damage onto the attacker, and evolves through nightmares.",
-    "avatar": "resources/characters/portraits/yubel.png",
+    "avatar": "app-resource://characters/avatars/yubel.png",
     "video": "resources/videos/characters/yubel.mp4",
     "themeColor": "#9b51e0",
     "decks": [
@@ -21086,7 +21122,8 @@
           31764700
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/yubel.png"
   },
   {
     "id": "nightshroud",
@@ -21095,7 +21132,7 @@
     "title": "Embodiment of Darkness",
     "tagline": "Darkness Field Spell & Red-Eyes Darkness Metal Dragon",
     "description": "The primordial void of Darkness. Commands the Darkness Field Spell (Zero and Infinity spell traps), Darkness Neosphere, and Red-Eyes Darkness Metal Dragon.",
-    "avatar": "resources/characters/portraits/nightshroud.png",
+    "avatar": "app-resource://characters/avatars/nightshroud.png",
     "video": "resources/videos/characters/nightshroud.mp4",
     "themeColor": "#0a0c10",
     "decks": [
@@ -21649,7 +21686,8 @@
           19153634
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/nightshroud.png"
   },
   {
     "id": "yusuke-fujiwara",
@@ -21658,7 +21696,7 @@
     "title": "Wielder of Clear World",
     "tagline": "Clear World Attribute Void & Clear Vice Dragon",
     "description": "The mysterious student behind the Honest mystery. Fujiwara commands Clear World, punishing every attribute with severe handicaps while Clear Vice Dragon remains immune.",
-    "avatar": "resources/characters/portraits/yusuke-fujiwara.png",
+    "avatar": "app-resource://characters/avatars/yusuke-fujiwara.png",
     "video": "resources/videos/characters/yusuke-fujiwara.mp4",
     "themeColor": "#56ccf2",
     "decks": [
@@ -22212,7 +22250,8 @@
           73628505
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/yusuke-fujiwara.png"
   },
   {
     "id": "supreme-king-jaden",
@@ -22221,7 +22260,7 @@
     "title": "Haou Judai - Ruler of Darkness",
     "tagline": "Evil HERO Malicious Bane & Dark Fusion",
     "description": "The merciless dark ruler of the alternate dimension. Supreme King Jaden commands corrupted Evil HEROs summoned via Dark Fusion and Super Polymerization.",
-    "avatar": "resources/characters/portraits/supreme-king-jaden.png",
+    "avatar": "app-resource://characters/avatars/supreme-king-jaden.png",
     "video": "resources/videos/characters/supreme-king-jaden.mp4",
     "themeColor": "#8c6e16",
     "decks": [
@@ -22803,6 +22842,7 @@
           75347539
         ]
       }
-    ]
+    ],
+    "portrait": "app-resource://characters/portraits/supreme-king-jaden.png"
   }
 ]
