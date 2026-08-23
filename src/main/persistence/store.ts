@@ -70,9 +70,9 @@ export function getPersistedCustomDecks(): CustomDeck[] {
   const prebuilt = defaultStarterDecks;
   let hasMissingPrebuilt = false;
 
-  // Merge any missing prebuilt decks into store so user gets all 80 decks
+  // Merge any missing or outdated prebuilt decks into store so user gets all complete decks
   for (const [id, deck] of Object.entries(prebuilt)) {
-    if (!decksMap[id]) {
+    if (!decksMap[id] || (decksMap[id].main && decksMap[id].main.length < 40)) {
       decksMap[id] = deck;
       hasMissingPrebuilt = true;
     }

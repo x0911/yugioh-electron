@@ -11,7 +11,7 @@ const props = withDefaults(
   }>(),
   {
     disabled: false,
-    placeholder: 'Search 80+ decks (e.g. Kaiba, Cyber, Exodia)...',
+    placeholder: 'Search 400+ decks (e.g. Kaiba, Jaden, Yubel, Exodia)...',
   },
 );
 
@@ -91,16 +91,21 @@ watch(filteredDecks, () => {
   highlightedIndex.value = 0;
 });
 
+function initDropdownFocus(): void {
+  const currentIdx = filteredDecks.value.findIndex((d) => d.id === props.modelValue);
+  highlightedIndex.value = currentIdx >= 0 ? currentIdx : 0;
+  nextTick(() => {
+    inputRef.value?.focus();
+    scrollHighlightedIntoView(true);
+  });
+}
+
 function toggleDropdown(): void {
   if (props.disabled) return;
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
     searchQuery.value = '';
-    highlightedIndex.value = 0;
-    nextTick(() => {
-      inputRef.value?.focus();
-      scrollHighlightedIntoView();
-    });
+    initDropdownFocus();
   }
 }
 
@@ -108,11 +113,7 @@ function openDropdown(): void {
   if (props.disabled || isOpen.value) return;
   isOpen.value = true;
   searchQuery.value = '';
-  highlightedIndex.value = 0;
-  nextTick(() => {
-    inputRef.value?.focus();
-    scrollHighlightedIntoView();
-  });
+  initDropdownFocus();
 }
 
 function closeDropdown(): void {
@@ -144,11 +145,11 @@ function onKeyDown(e: KeyboardEvent): void {
   if (e.key === 'ArrowDown') {
     e.preventDefault();
     highlightedIndex.value = (highlightedIndex.value + 1) % len;
-    scrollHighlightedIntoView();
+    scrollHighlightedIntoView(false);
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
     highlightedIndex.value = (highlightedIndex.value - 1 + len) % len;
-    scrollHighlightedIntoView();
+    scrollHighlightedIntoView(false);
   } else if (e.key === 'Enter') {
     e.preventDefault();
     const target = filteredDecks.value[highlightedIndex.value];
@@ -161,13 +162,13 @@ function onKeyDown(e: KeyboardEvent): void {
   }
 }
 
-function scrollHighlightedIntoView(): void {
+function scrollHighlightedIntoView(instant = false): void {
   nextTick(() => {
     if (!listContainerRef.value) return;
     const items = listContainerRef.value.querySelectorAll('.deck-autocomplete__item');
     const target = items[highlightedIndex.value] as HTMLElement | undefined;
     if (target) {
-      target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      target.scrollIntoView({ block: instant ? 'center' : 'nearest', behavior: instant ? 'auto' : 'smooth' });
     }
   });
 }

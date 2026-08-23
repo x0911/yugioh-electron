@@ -9,7 +9,7 @@ import {
   getAnimationUserPlayerId,
 } from '../src/renderer/utils/animationService.js';
 
-console.log('=== Running 80 Pre-Built Decks & Premium Autocomplete Selector Tests ===\n');
+console.log('=== Running 400+ Pre-Built Decks & Premium Autocomplete Selector Tests ===\n');
 
 const ROOT_DIR = process.cwd();
 const CDB_PATH = path.resolve(ROOT_DIR, 'resources/cards.cdb');
@@ -19,8 +19,8 @@ const CHARACTERS_PATH = path.resolve(ROOT_DIR, 'data/characters.json');
 const db = new Database(CDB_PATH, { readonly: true });
 const checkCardStmt = db.prepare('SELECT id, name FROM texts WHERE id = ?');
 
-// --- TEST 1: 80 Pre-Built Decks Totality & Database Verification ---
-console.log('Test 1: 80 Pre-Built Decks Totality & Database Verification...');
+// --- TEST 1: 400+ Pre-Built Decks Totality & Database Verification ---
+console.log('Test 1: 400+ Pre-Built Decks Totality & Database Verification...');
 assert.ok(fs.existsSync(PREBUILT_PATH), 'data/prebuilt-decks.json must exist');
 const prebuiltDecks: CustomDeck[] = JSON.parse(fs.readFileSync(PREBUILT_PATH, 'utf-8'));
 assert.ok(prebuiltDecks.length >= 80, `Expected at least 80 pre-built decks, got ${prebuiltDecks.length}`);
@@ -54,10 +54,10 @@ const dmHeroDecks = prebuiltDecks.filter((d) => d.category === 'character-dm');
 const gxHeroDecks = prebuiltDecks.filter((d) => d.category === 'character-gx');
 const popDecks = prebuiltDecks.filter((d) => d.category === 'popular-dm' || d.category === 'popular-gx');
 
-assert.strictEqual(dmHeroDecks.length, 30, `Expected 30 DM character decks (10 characters x 3), got ${dmHeroDecks.length}`);
-assert.strictEqual(gxHeroDecks.length, 30, `Expected 30 GX character decks (10 characters x 3), got ${gxHeroDecks.length}`);
+assert.strictEqual(dmHeroDecks.length, 200, `Expected 200 DM character decks (20 characters x 10), got ${dmHeroDecks.length}`);
+assert.strictEqual(gxHeroDecks.length, 200, `Expected 200 GX character decks (20 characters x 10), got ${gxHeroDecks.length}`);
 assert.ok(popDecks.length >= 20, `Expected at least 20 popular community decks, got ${popDecks.length}`);
-console.log(`✓ Exactly 30 DM character decks, 30 GX character decks, and ${popDecks.length} popular community decks partitioned.`);
+console.log(`✓ Exactly 200 DM character decks, 200 GX character decks, and ${popDecks.length} popular community decks partitioned.`);
 
 // --- TEST 3: Autocomplete Query & Filter Logic ---
 console.log('\nTest 3: Autocomplete Query & Filter Logic...');
@@ -97,8 +97,8 @@ assert.ok(cyberDecks.length >= 3, `Expected at least 3 decks matching "Cyber", f
 console.log(`  Query "Cyber": found ${cyberDecks.length} matches (${cyberDecks.map((d) => d.name).slice(0, 3).join(', ')}...)`);
 
 const kaibaDecks = filterDecks(prebuiltDecks, 'Kaiba', 'ALL');
-assert.strictEqual(kaibaDecks.length, 3, `Expected 3 Kaiba decks, found ${kaibaDecks.length}`);
-console.log(`  Query "Kaiba": found ${kaibaDecks.length} matches (${kaibaDecks.map((d) => d.name).join(', ')})`);
+assert.strictEqual(kaibaDecks.length, 10, `Expected 10 Kaiba decks, found ${kaibaDecks.length}`);
+console.log(`  Query "Kaiba": found ${kaibaDecks.length} matches (${kaibaDecks.map((d) => d.name).slice(0, 3).join(', ')}...)`);
 
 const exodiaDecks = filterDecks(prebuiltDecks, 'Exodia', 'ALL');
 assert.ok(exodiaDecks.length >= 1, `Expected at least 1 Exodia deck, found ${exodiaDecks.length}`);
@@ -120,4 +120,4 @@ assert.strictEqual(toPlayerDomId(1), 'user', 'Player 1 should map to user when u
 assert.strictEqual(toPlayerDomId(0), 'ai', 'Player 0 should map to ai when user goes second');
 console.log('✓ Player perspective strictly maps Player 1 to user and Player 0 to AI when user plays second.');
 
-console.log('\n🎉 ALL 80 PRE-BUILT DECKS & SELECTOR AUTOCOMPLETE TESTS PASSED SUCCESSFULLY!\n');
+console.log('\n🎉 ALL 400+ PRE-BUILT DECKS & SELECTOR AUTOCOMPLETE TESTS PASSED SUCCESSFULLY!\n');

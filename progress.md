@@ -12,11 +12,11 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
 | **Asset & Image Pipeline** | ✅ Complete | Resumable 3-tier image downloader (`full`, `art`, `mini`) with Sharp optimization for all 3,205 cards |
 | **Duel Engine (ocgcore-wasm)** | ✅ Complete | WebAssembly port of official `ygopro-core` engine with synchronous message decoding |
 | **Ancient Duel Arena UI** | ✅ Complete | Vue 3 + Pinia + SCSS 3D perspective field with obsidian glassmorphism & holographic glow |
-| **Deck Builder & 80 Pre-Built Decks**| ✅ Complete | Full deck editor with virtualized grid, search/filter, and 80 anime & meta pre-built decks |
+| **Deck Builder & 421 Pre-Built Decks**| ✅ Complete | Full deck editor with virtualized grid, search/filter, and 421 anime canonical & meta pre-built decks |
 | **Audio, BGM & Sound Effects** | ✅ Complete | 6 selectable BGM themes, 44 retro SFX triggers, procedural Web Audio synth, and dynamic cutscene ducking |
 | **Legendary AI & Deck Executors** | ✅ Complete | WindBot-inspired dual-layer AI with Universal Competitive Core and modular archetype executors |
 | **Duel Logs & Diagnostics** | ✅ Complete | Developer Logs page with max-10 duel retention and copyable Markdown diagnostic reports |
-| **Test Suite Coverage** | ✅ Complete | **24 automated test suites** passing with 100% success rate (`npm test`) |
+| **Test Suite Coverage** | ✅ Complete | **25 automated test suites** passing with 100% success rate (`npm test`) |
 
 ---
 
@@ -121,6 +121,14 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
     - Added auto-dispatch in `duelStore.ts` and bidirectional response normalization in `DuelEngineService.ts` for seamless `SELECT_YESNO` and `SELECT_EFFECTYN` compatibility.
 19. **Indestructible Stall Wall Preservation**:
     - Updated `UniversalAI` and `DefaultExecutor` tribute evaluation to protect battle-immune stall monsters (*Marshmallon*, *Spirit Reaper*, *Gellenduo*) from sacrificial tributes when the AI is under board pressure.
+20. **40-Duelist Roster & 400 Canonical Character Decks Expansion + Deck Edit Pre-Scroll**:
+    - **40 Duelists Roster**: Expanded from 20 to 40 anime duelists:
+      - **20 Original Series (DM)**: *Yugi Muto, Yami Yugi, Seto Kaiba, Joey Wheeler, Téa Gardner, Tristan Taylor, Mai Valentine, Yami Bakura, Marik Ishtar, Maximillion Pegasus, Bandit Keith, Weevil Underwood, Rex Raptor, Mako Tsunami, Ishizu Ishtar, Odion, Espa Roba, Arkana, Rafael, Dartz*.
+      - **20 GX Series**: *Jaden Yuki, Zane Truesdale, Syrus Truesdale, Chazz Princeton, Alexis Rhodes, Bastion Misawa, Chumley Huffington, Aster Phoenix, Jesse Anderson, Dr. Vellian Crowler, Atticus Rhodes, Tyranno Hassleberry, Jim Crocodile Cook, Axel Brodie, Adrian Gecko, Sartorius Kumar, Yubel, Nightshroud, Yusuke Fujiwara, Supreme King Jaden*.
+    - **400 Canonical Decks**: Created 10 canon-accurate, anime-themed decks for each of the 40 characters (400 character decks total + 21 popular decks = 421 total prebuilt decks in `data/prebuilt-decks.json`).
+    - **$\ge 40$ Card Completeness & Database Verification**: All 400 character decks and 21 popular decks guaranteed $\ge 40$ main cards with 100% legal card codes verified against `data/card-pool-whitelist.json` and `resources/cards.cdb`.
+    - **AI Personality Profiles**: Added 20 new distinct AI personality configurations in `personalityProfiles.ts` tuning aggression, risk tolerance, and combo weights.
+    - **Deck Edit Autocomplete Active Deck Pre-Scroll**: Updated `DeckSelectorAutocomplete.vue` on open to dynamically locate the index of `props.modelValue` and center-scroll the active deck into visible viewport focus (`block: 'center'`).
 
 ---
 
@@ -150,7 +158,7 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
 
 ## 5. Automated Test Suite Status
 
-All **24 test suites** run and pass with **100% success rate** (`npm test`):
+All **25 test suites** run and pass with **100% success rate** (`npm test`):
 
 1. `tests/guidance-targeting.test.ts` ✅
 2. `tests/hand-and-pacing.test.ts` ✅
@@ -176,3 +184,4 @@ All **24 test suites** run and pass with **100% success rate** (`npm test`):
 22. `tests/audio-manager-and-ducking.test.ts` ✅
 23. `tests/sound-effects-matrix.test.ts` ✅
 24. `tests/ai-post-match-reviewer-and-tactics.test.ts` ✅
+25. `tests/prebuilt-decks-and-roster-expansion.test.ts` ✅
