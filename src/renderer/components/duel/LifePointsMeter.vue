@@ -38,16 +38,13 @@
         </span>
 
         <!-- Turn Active Badge -->
-        <span v-if="isTurn" class="turn-badge">
-          TURN
-        </span>
+        <span v-if="isTurn" class="turn-badge"> TURN </span>
       </div>
 
       <!-- Info & LP Counter -->
       <div class="lp-meter__content">
         <div class="lp-meter__header">
           <span class="player-name" :title="name">{{ name }}</span>
-          <span v-if="title" class="player-title" :title="title">{{ title }}</span>
         </div>
 
         <!-- Huge Oxanium LP Counter (Tweened Countdown) -->
