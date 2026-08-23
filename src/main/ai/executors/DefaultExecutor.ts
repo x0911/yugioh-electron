@@ -9,7 +9,7 @@ import type { DeckExecutor } from './types.js';
 import type { EvaluatorContext, ScoredAction } from '../types.js';
 import type { PlayerFieldState, FieldCard } from '../../../shared/types/field.js';
 import { evaluateAttackOption, type AttackCandidate } from '../evaluators/combatEvaluator.js';
-import { evaluateSpellTrapSet } from '../evaluators/spellTrapEvaluator.js';
+import { evaluateSpellTrapSet, evaluateSpellActivation } from '../evaluators/spellTrapEvaluator.js';
 
 /**
  * Universal Competitive AI Executor.
@@ -68,29 +68,21 @@ export class DefaultExecutor implements DeckExecutor {
         }
         // 1.2 Backrow Wipes (Harpie's Feather Duster, Heavy Storm, Mystical Space Typhoon)
         else if (code === 18144506 || code === 19613556 || code === 5318639) {
-          if (oppBackrow.length === 0) {
-            score = -1000;
-            reason = `Hold ${name} (opponent has no backrow cards)`;
-          } else {
-            score = 2200 + oppBackrow.length * 500;
-            reason = `[CLEAR BACKROW] Activate ${name} before summoning monsters into backrow`;
-          }
+          const evalResult = evaluateSpellActivation(code, name, context);
+          score = evalResult.score;
+          reason = evalResult.reason;
         }
         // 1.3 Monster Board Wipes (Raigeki, Dark Hole, Lightning Vortex)
         else if (code === 12580477 || code === 53129443 || code === 63590062) {
-          if (oppMonsters.length === 0) {
-            score = -1200;
-            reason = `Hold ${name} (opponent has no monsters)`;
-          } else {
-            const aiMonsterCount = aiField.monsterZones.filter(Boolean).length;
-            if (code === 53129443 && aiMonsterCount > oppMonsters.length) {
-              score = -800; // Don't wipe own board if we are ahead
-              reason = `Hold Dark Hole (AI has superior field ${aiMonsterCount} vs ${oppMonsters.length})`;
-            } else {
-              score = 2500 + oppMonsters.length * 400;
-              reason = `[CLEAR FIELD] Activate ${name} to wipe opponent monsters`;
-            }
-          }
+          const evalResult = evaluateSpellActivation(code, name, context);
+          score = evalResult.score;
+          reason = evalResult.reason;
+        }
+        // 1.3b Monster Stealers (Change of Heart, Snatch Steal, Brain Control, Mind Control)
+        else if (code === 4031928 || code === 45986603 || code === 87910978 || code === 37576645) {
+          const evalResult = evaluateSpellActivation(code, name, context);
+          score = evalResult.score;
+          reason = evalResult.reason;
         }
         // 1.4 Searchers & Deck Thinners (Reinforcement of the Army, E - Emergency Call, Terraforming, Sangan)
         else if (code === 32807846 || code === 75043725 || code === 73628505) {
@@ -223,7 +215,27 @@ export class DefaultExecutor implements DeckExecutor {
         }
 
         let score = atk * 0.7;
-        if (level > 4) {
+        if (level >= 5) {
+          const aiMonsters = aiField.monsterZones.filter((m): m is FieldCard => !!m);
+          const neededTributes = level >= 7 ? 2 : 1;
+          const sortedFodder = [...aiMonsters].sort((a, b) => (a.atk ?? 0) - (b.atk ?? 0));
+          const tributesToSacrifice = sortedFodder.slice(0, neededTributes);
+          const highestTributeAtk = Math.max(0, ...tributesToSacrifice.map((t) => t.atk ?? 0));
+
+          if (highestTributeAtk >= atk && !signatureCardIds.includes(code)) {
+            candidates.push({
+              action: {
+                type: OcgResponseType.SELECT_IDLECMD,
+                action: SelectIdleCMDAction.SELECT_SUMMON,
+                index: i,
+              },
+              score: -8000,
+              reason: `[AVOID DOWNGRADE] Do not tribute higher ATK monster (${highestTributeAtk} ATK) for weaker ${name} (${atk} ATK)`,
+              cardCode: code,
+              cardName: name,
+            });
+            continue;
+          }
           score += 400; // Tribute boss monster bonus
         }
         if (signatureCardIds.includes(code)) {
@@ -361,11 +373,42 @@ export class DefaultExecutor implements DeckExecutor {
         const code = pc.code ?? 0;
         const detail = code > 0 ? cardReader.getCardDetail(code) : null;
         const atk = detail?.atk ?? 1500;
+        const def = detail?.def ?? 1000;
+        const isFlip = detail?.isFlip || (detail?.desc?.includes('FLIP:') ?? false);
         const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
 
-        let score = 500 + atk * 0.3 * aggression;
-        if (hasOppSlifer && atk <= 2000) {
-          score = -2000; // Do not Flip Summon into Slifer debuff destruction
+        const onFieldCard = aiField.monsterZones.find((m) => m && (m.sequence === pc.sequence || m.code === code));
+        let score = 400;
+        let reason = `Change battle position / Flip Summon ${name}`;
+
+        if (onFieldCard) {
+          const oppMaxAtk = Math.max(0, ...oppFaceUpMonsters.map((m) => m?.atk ?? 0));
+          if (onFieldCard.position === 'faceup_attack') {
+            if (atk >= 1400 && oppMaxAtk <= atk) {
+              score = -4000;
+              reason = `[AVOID] Hold ${name} (${atk} ATK) in Attack Position for combat`;
+            } else if (def > atk && oppMaxAtk > atk) {
+              score = 800 + (def - atk) * 0.4;
+              reason = `Switch ${name} to Defense Position to absorb attacks`;
+            } else {
+              score = -2000;
+              reason = `Avoid pointless defense switch for ${name}`;
+            }
+          } else {
+            if (hasOppSlifer && atk <= 2000) {
+              score = -2000;
+              reason = `Keep ${name} in Defense to avoid Slifer destruction`;
+            } else if (atk >= 1400 && oppMaxAtk <= atk) {
+              score = 1200 + atk * 0.4 * aggression;
+              reason = `Switch/Flip Summon ${name} (${atk} ATK) to Attack Position for combat`;
+            } else if (isFlip) {
+              score = 1500;
+              reason = `Flip Summon ${name} to activate flip effect`;
+            } else {
+              score = -1000;
+              reason = `Keep low-ATK ${name} in Defense Position`;
+            }
+          }
         }
 
         candidates.push({
@@ -375,7 +418,7 @@ export class DefaultExecutor implements DeckExecutor {
             index: i,
           },
           score,
-          reason: `Change battle position / Flip Summon ${name}`,
+          reason,
           cardCode: code,
           cardName: name,
         });
@@ -398,11 +441,11 @@ export class DefaultExecutor implements DeckExecutor {
       let bpScore = 0;
       if (aiAttackers.length === 0) {
         bpScore = -500;
-      } else if (oppFaceUpAttack.length > 0 && oppStrongerCount === oppFaceUpAttack.length) {
+      } else if (oppFaceUpAttack.length > 0 && oppStrongerCount === oppFaceUpAttack.length && oppMonsters.length === oppFaceUpAttack.length) {
         // Opponent has only stronger face-up attack monsters; entering BP would lead to suicide
         bpScore = -2500;
       } else {
-        bpScore = 350 + aiAttackers.length * 150;
+        bpScore = 1400 + aiAttackers.length * 200 + aiMaxAtk * 0.2;
       }
 
       candidates.push({
@@ -547,10 +590,11 @@ export class DefaultExecutor implements DeckExecutor {
         score = 2500 * defensiveness;
         reason = `[COUNTER NEGATE] Activate counter trap ${name} to negate opponent action`;
       }
-      // Mass Removal Battle Traps (Mirror Force, Torrential Tribute, Dimensional Prison)
-      else if (code === 44095762 || code === 53582587 || code === 29401950) {
-        score = 2200;
-        reason = `[BATTLE TRAP] Activate ${name} to punish attacking monsters`;
+      // Mass Removal Battle Traps (Mirror Force, Torrential Tribute, Dimensional Prison, Bottomless)
+      else if (code === 44095762 || code === 53582587 || code === 29401950 || code === 70342110) {
+        const evalResult = evaluateSpellActivation(code, name, context);
+        score = evalResult.score;
+        reason = evalResult.reason;
       }
       // Draw / Search quick triggers
       else if (code === 55144522 || code === 79571449) {

@@ -286,7 +286,7 @@ export class AIController {
           score -= 3500;
         }
 
-        // Tribute summon reward or wall preservation penalty
+        // Tribute summon reward or wall preservation / downgrade prevention
         if (level >= 5) {
           const aiField = context.aiPlayerId === 0 ? context.boardState.userField : context.boardState.opponentField;
           const aiMonsters = aiField.monsterZones.filter((m): m is FieldCard => !!m);
@@ -299,6 +299,20 @@ export class AIController {
           );
           if (hasStallWall && aiMonsters.length <= 1 && oppMaxAtk > atk) {
             score -= 5000; // Do not sacrifice our indestructible stall wall when facing superior monster!
+          }
+
+          // DOWGRADE PENALTY: Never sacrifice a stronger monster to summon a weaker one!
+          // (e.g. Tributing 2300 ATK Horus LV6 to summon 2000 ATK Curse of Dragonfire)
+          const neededTributes = level >= 7 ? 2 : 1;
+          const sortedFodder = [...aiMonsters].sort((a, b) => (a.atk ?? 0) - (b.atk ?? 0));
+          const tributesToSacrifice = sortedFodder.slice(0, neededTributes);
+          const highestTributeAtk = Math.max(0, ...tributesToSacrifice.map((t) => t.atk ?? 0));
+
+          if (highestTributeAtk >= atk && !signatureCardIds.includes(code)) {
+            score -= 8000; // Major blunder to downgrade field ATK
+          } else if (highestTributeAtk > 0) {
+            const netGain = atk - highestTributeAtk;
+            score += netGain * 0.5;
           } else {
             score += 400 * personality.riskTolerance;
           }
@@ -443,19 +457,49 @@ export class AIController {
 
     // 6. Evaluate Position Changes
     if (msg.pos_changes && msg.pos_changes.length > 0) {
+      const aiField = context.aiPlayerId === 0 ? context.boardState.userField : context.boardState.opponentField;
       for (let i = 0; i < msg.pos_changes.length; i++) {
         const pc = msg.pos_changes[i];
         const code = pc.code ?? 0;
         const name = pc.cardName || (code > 0 ? cardReader.getCardName(code) : 'Monster');
         const detail = code > 0 ? cardReader.getCardDetail(code) : null;
         const atk = detail?.isMonster ? detail.atk : 1500;
+        const def = detail?.isMonster ? detail.def : 1000;
 
-        let score = 400 + atk * 0.3 * personality.aggression;
-        if (hasOppSlifer && atk <= 2000) {
-          score -= 1500; // Don't Flip Summon into Slifer destruction
-        }
-        if (board.oppVisibleMaxAtk > atk) {
-          score -= 300 * personality.defensiveness;
+        const onFieldCard = aiField.monsterZones.find((m) => m && (m.sequence === pc.sequence || m.code === code));
+        let score = 400;
+        let reason = `Change position / Flip Summon ${name}`;
+
+        if (onFieldCard) {
+          if (onFieldCard.position === 'faceup_attack') {
+            // Changing from Attack to Defense:
+            // If monster has high ATK and opponent does not exceed it: DO NOT switch to defense!
+            if (atk >= 1400 && board.oppVisibleMaxAtk <= atk) {
+              score = -4000;
+              reason = `Hold ${name} (${atk} ATK) in Attack Position for combat`;
+            } else if (def > atk && board.oppVisibleMaxAtk > atk) {
+              score = 800 + (def - atk) * 0.4;
+              reason = `Switch ${name} to Defense Position to absorb attacks (${def} DEF vs opp ${board.oppVisibleMaxAtk} ATK)`;
+            } else {
+              score = -2000;
+              reason = `Avoid pointless defense switch for ${name}`;
+            }
+          } else {
+            // Changing from Defense to Attack (Flip Summon or Attack switch):
+            if (hasOppSlifer && atk <= 2000) {
+              score = -1500; // Don't Flip Summon into Slifer destruction
+              reason = `Keep ${name} in Defense to avoid Slifer destruction`;
+            } else if (atk >= 1400 && board.oppVisibleMaxAtk <= atk) {
+              score = 900 + atk * 0.4 * personality.aggression;
+              reason = `Switch/Flip Summon ${name} (${atk} ATK) to Attack Position for combat`;
+            } else if (detail?.isFlip) {
+              score = 700;
+              reason = `Flip Summon ${name} to activate flip effect`;
+            } else {
+              score = -1000;
+              reason = `Keep low-ATK ${name} in Defense Position`;
+            }
+          }
         }
 
         candidates.push({
@@ -465,7 +509,7 @@ export class AIController {
             index: i,
           },
           score,
-          reason: `Change position / Flip Summon ${name}`,
+          reason,
           cardCode: code,
           cardName: name,
         });
@@ -486,10 +530,11 @@ export class AIController {
         ).length;
 
         // If opponent has only stronger face-up attack monsters, do not enter BP to commit suicide
-        if (oppFaceUpAttack.length > 0 && oppStrongerCount === oppFaceUpAttack.length) {
+        if (oppFaceUpAttack.length > 0 && oppStrongerCount === oppFaceUpAttack.length && board.oppMonsterCount === oppFaceUpAttack.length) {
           score = -2500;
         } else {
-          score = 650 + (board.aiTotalAtk - board.oppVisibleTotalAtk) * 0.2 * personality.aggression;
+          // If opponent field is open or weaker: high score to prioritize attacking
+          score = 1200 + (board.aiTotalAtk - board.oppVisibleTotalAtk) * 0.25 * personality.aggression;
         }
       } else {
         score = -500; // Low score if no attack monsters

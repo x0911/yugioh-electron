@@ -141,39 +141,38 @@ export function evaluateAttackOption(
       }
     } else {
       // Face-down defense monster (hidden identity)
-      const potentialRecoil = Math.max(0, 2000 - attacker.attackerAtk);
-      const isLethalRisk = potentialRecoil >= aiLp && potentialRecoil > 0;
+      // Defensive walls (e.g., Labyrinth Wall, Big Shield Gardna, Millennium Shield) have up to 3000 DEF
+      const maxPotentialRecoil = Math.max(0, 3000 - attacker.attackerAtk);
+      const isLethalRisk = maxPotentialRecoil >= aiLp && maxPotentialRecoil > 0;
 
       if (isDefenseDestroyer) {
         targetScore = 800;
         targetReason = `Attack face-down monster with defense-destroying effect (${attacker.attackerName})`;
-      } else if (isLethalRisk) {
-        targetScore = -8000;
-        targetReason = `[AVOID LETHAL RECOIL] Do not attack unknown face-down defense with weak ${attacker.attackerName} (${attacker.attackerAtk} ATK) when AI LP is only ${aiLp}`;
+      } else if (isLethalRisk || (aiLp <= 1200 && attacker.attackerAtk < 3000)) {
+        targetScore = -9000;
+        targetReason = `[AVOID LETHAL RECOIL] Do not attack unknown face-down defense with ${attacker.attackerName} (${attacker.attackerAtk} ATK) when AI LP is only ${aiLp}`;
+      } else if (aiLp <= 2000 && attacker.attackerAtk < 2400) {
+        targetScore = -3500;
+        targetReason = `[HOLD] Low LP (${aiLp}) prevents probing face-down defense with sub-2400 ATK attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+      } else if (attacker.attackerAtk >= 3000) {
+        targetScore = 1200;
+        targetReason = `Attack face-down monster with supreme titan power (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+      } else if (attacker.attackerAtk >= 2400) {
+        targetScore = 750 + (attacker.attackerAtk - 2400) * 0.3;
+        targetReason = `Attack face-down monster with high-tier beatstick (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
       } else if (attacker.attackerAtk >= 2000) {
-        targetScore = 750 + (attacker.attackerAtk - 2000) * 0.3;
-        targetReason = `Attack face-down monster with overwhelming power (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
-      } else if (attacker.attackerAtk >= 1600) {
-        targetScore = 550 + (attacker.attackerAtk - 1600) * 0.5;
+        targetScore = 550 + (attacker.attackerAtk - 2000) * 0.4;
         targetReason = `Attack face-down monster with solid beatstick (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
-      } else if (attacker.attackerAtk >= 1400) {
-        if (aiLp <= 1500) {
+      } else if (attacker.attackerAtk >= 1600) {
+        if (aiLp <= 2500) {
           targetScore = -2500;
-          targetReason = `[HOLD] Low LP (${aiLp}) prevents probing face-down defense with mid-range attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+          targetReason = `[HOLD] Fragile LP (${aiLp}) prevents probing face-down defense with mid-range attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
         } else {
           targetScore = 350 + 100 * personality.aggression;
           targetReason = `Attack face-down monster with mid-range attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
         }
-      } else if (attacker.attackerAtk >= 1000) {
-        if (aiLp <= 2000) {
-          targetScore = -4000;
-          targetReason = `[HOLD] Low LP (${aiLp}) prevents probing face-down defense with weak attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
-        } else {
-          targetScore = -500 + 100 * personality.riskTolerance - 100 * personality.defensiveness;
-          targetReason = `Cautious probe on face-down monster (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
-        }
       } else {
-        targetScore = -2000;
+        targetScore = -4000;
         targetReason = `Hold back low ATK monster (${attacker.attackerName}: ${attacker.attackerAtk} ATK) from unknown face-down defense`;
       }
     }

@@ -77,6 +77,130 @@ export function evaluateSpellActivation(
     };
   }
 
+  // 3b. Symmetric Summon Response: Torrential Tribute (53582587)
+  if (code === 53582587 || cardName.includes('Torrential Tribute')) {
+    if (oppMonsterCount === 0) {
+      return {
+        score: -10000,
+        reason: `Hold ${cardName}: Opponent controls 0 monsters on field (would destroy own monster for nothing)`,
+      };
+    }
+    const aiTotalAtk = aiField.monsterZones.reduce((sum, m) => sum + (m?.atk ?? 0), 0);
+    const oppTotalAtk = oppField.monsterZones.reduce((sum, m) => sum + (m?.atk ?? 0), 0);
+    const oppMaxAtk = Math.max(0, ...oppField.monsterZones.map((m) => m?.atk ?? 0));
+
+    // If AI has greater field presence and opponent has no dangerous threat: do NOT blow up own field!
+    if (aiTotalAtk > oppTotalAtk && oppMaxAtk < 1800 && aiMonsterCount >= oppMonsterCount) {
+      return {
+        score: -6000,
+        reason: `Hold ${cardName}: AI controls superior board (${aiTotalAtk} ATK vs ${oppTotalAtk} ATK)`,
+      };
+    }
+
+    const score = 900 + (oppMonsterCount - aiMonsterCount) * 500 + oppMaxAtk * 0.4;
+    return {
+      score,
+      reason: `Activate ${cardName} to wipe opponent's dangerous board (${oppMonsterCount} monsters, ${oppMaxAtk} top ATK)`,
+    };
+  }
+
+  // 3c. Spell & Trap Board Wipes: Heavy Storm (19613556), Harpie's Feather Duster (18144506), Giant Trunade (42703248)
+  if (
+    code === 19613556 || // Heavy Storm
+    code === 42703248 || // Giant Trunade
+    code === 18144506 || // Harpie's Feather Duster
+    cardName.includes('Heavy Storm') ||
+    cardName.includes('Feather Duster') ||
+    cardName.includes('Giant Trunade')
+  ) {
+    const isSymmetric = code === 19613556 || code === 42703248 || cardName.includes('Heavy Storm') || cardName.includes('Giant Trunade');
+    const oppBackrowCount = oppField.spellTrapZones.filter(Boolean).length;
+    const aiBackrowCount = aiField.spellTrapZones.filter(Boolean).length;
+
+    if (oppBackrowCount === 0) {
+      return {
+        score: -8000,
+        reason: `Hold ${cardName}: Opponent controls 0 Spells/Traps`,
+      };
+    }
+
+    if (isSymmetric) {
+      // Check for active protective continuous spells/traps (Swords of Revealing Light, Gravity Bind, Level Limit, Messenger of Peace, Imperial Order)
+      const hasActiveProtectiveCard = aiField.spellTrapZones.some((s) => {
+        if (!s) return false;
+        return (
+          s.code === 72302403 || // Swords of Revealing Light
+          s.code === 8574277 ||  // Gravity Bind
+          s.code === 3136426 ||  // Level Limit - Area B
+          s.code === 44656491 || // Messenger of Peace
+          s.code === 61740673 || // Imperial Order
+          (s.name && (s.name.includes('Swords of Revealing') || s.name.includes('Gravity Bind') || s.name.includes('Messenger of Peace')))
+        );
+      });
+
+      if (hasActiveProtectiveCard) {
+        return {
+          score: -9000,
+          reason: `Hold ${cardName}: Would destroy AI's own active protective Swords of Revealing Light / floodgate!`,
+        };
+      }
+
+      if (aiBackrowCount > oppBackrowCount) {
+        return {
+          score: -3500 - (aiBackrowCount - oppBackrowCount) * 800,
+          reason: `Hold ${cardName}: Would destroy more AI backrow (${aiBackrowCount}) than opponent (${oppBackrowCount})`,
+        };
+      }
+    }
+
+    const score = 1000 + oppBackrowCount * 500 * (personality.aggression + 0.4);
+    return {
+      score,
+      reason: `Activate ${cardName} to clear all ${oppBackrowCount} opponent Spell/Trap card(s)`,
+    };
+  }
+
+  // 3d. Monster Stealing Spells: Change of Heart (4031928), Snatch Steal (45986603), Brain Control (87910978), Mind Control (37576645)
+  if (
+    code === 4031928 || // Change of Heart
+    code === 45986603 || // Snatch Steal
+    code === 87910978 || // Brain Control
+    code === 37576645 || // Mind Control
+    cardName.includes('Change of Heart') ||
+    cardName.includes('Snatch Steal') ||
+    cardName.includes('Brain Control') ||
+    cardName.includes('Mind Control')
+  ) {
+    if (oppMonsterCount === 0) {
+      return {
+        score: -8000,
+        reason: `Hold ${cardName}: Opponent controls 0 monsters to steal`,
+      };
+    }
+    const oppMaxAtk = Math.max(0, ...oppField.monsterZones.map((m) => m?.atk ?? 0));
+    const score = 1800 + oppMaxAtk * 0.5 * (personality.aggression + 0.5);
+    return {
+      score,
+      reason: `Activate ${cardName} to take control of opponent's strongest monster (${oppMaxAtk} ATK)`,
+    };
+  }
+
+  // 3e. Protective Stall Spells: Swords of Revealing Light (72302403)
+  if (code === 72302403 || cardName.includes('Swords of Revealing Light')) {
+    const oppTotalAtk = oppField.monsterZones.reduce((sum, m) => sum + (m?.atk ?? 0), 0);
+    const aiTotalAtk = aiField.monsterZones.reduce((sum, m) => sum + (m?.atk ?? 0), 0);
+    if (oppMonsterCount > 0 && oppTotalAtk >= aiTotalAtk) {
+      return {
+        score: 1800 * (personality.defensiveness + 0.5),
+        reason: `Activate ${cardName} to freeze all opponent attacks for 3 turns`,
+      };
+    }
+    return {
+      score: 1100,
+      reason: `Activate ${cardName} to reveal opponent monsters and prevent attacks`,
+    };
+  }
+
   // 4. Monster Reborn (83764719) / Special Summon Spells
   if (code === 83764719 || cardName.includes('Monster Reborn') || cardName.includes('Call of the Haunted') || cardName.includes('Premature Burial')) {
     const hasOppSlifer = oppField.monsterZones.some(
