@@ -10,7 +10,7 @@
       <!-- Top Emblem & App Name Banner -->
       <div class="about-hero">
         <div class="about-logo-badge">
-          <span class="about-logo-glyph">🎴</span>
+          <img src="../../assets/logo.png" alt="Yu-Gi-Oh! Logo" class="about-logo-img" />
         </div>
         <div class="about-hero-text">
           <h2 class="about-app-title">Yu-Gi-Oh! Duel Arena</h2>
@@ -138,8 +138,8 @@ onMounted(async () => {
 }
 
 .about-logo-badge {
-  width: 52px;
-  height: 52px;
+  width: 58px;
+  height: 58px;
   border-radius: 12px;
   background: rgba(201, 162, 39, 0.15);
   border: 1px solid $color-gold-500;
@@ -147,11 +147,15 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  padding: 4px;
   box-shadow: 0 0 16px rgba(201, 162, 39, 0.3);
 }
 
-.about-logo-glyph {
-  font-size: 1.8rem;
+.about-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(227, 197, 103, 0.6));
 }
 
 .about-hero-text {

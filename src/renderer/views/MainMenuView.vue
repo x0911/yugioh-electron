@@ -6,21 +6,14 @@
     <!-- Top Header Bar -->
     <header class="main-menu-view__header">
       <div class="main-menu-view__brand">
-        <div class="main-menu-view__brand-emblem">
-          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <polygon
-              points="18,3 33,30 3,30"
-              stroke="#c9a227"
-              stroke-width="2"
-              fill="rgba(18, 22, 30, 0.8)"
-            />
-            <circle cx="18" cy="20" r="4" fill="#e3c567" />
-            <path d="M11 20 C13 16, 23 16, 25 20" stroke="#f4e4b8" stroke-width="1.5" />
-          </svg>
-        </div>
+        <img
+          src="../assets/logo.png"
+          alt="Yu-Gi-Oh! Logo"
+          class="main-menu-view__brand-logo"
+        />
         <div class="main-menu-view__brand-text">
-          <span class="main-menu-view__brand-title">YU-GI-OH!</span>
-          <span class="main-menu-view__brand-sub">DESKTOP DUEL</span>
+          <span class="main-menu-view__brand-title">DUEL ARENA</span>
+          <span class="main-menu-view__brand-sub">DM + GX SIMULATOR</span>
         </div>
       </div>
 
@@ -53,6 +46,11 @@
 
     <!-- Center Hero Callout -->
     <div class="main-menu-view__hero">
+      <img
+        src="../assets/logo.png"
+        alt="Yu-Gi-Oh!"
+        class="main-menu-view__hero-logo"
+      />
       <h1 class="main-menu-view__hero-title">ANCIENT DUEL ARENA</h1>
       <p class="main-menu-view__hero-subtitle">
         Step forth into the sacred arena. Choose your path, Duelist.

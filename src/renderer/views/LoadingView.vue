@@ -5,44 +5,13 @@
 
     <!-- Centered Glass Loading Card -->
     <GlassPanel elevated accent="gold" padding="40px 48px" class="loading-view__card">
-      <!-- Millennium Puzzle / Duel Arena Emblem -->
+      <!-- Duel Arena Official Logo -->
       <div class="loading-view__emblem">
-        <svg
-          class="loading-view__emblem-svg"
-          viewBox="0 0 64 64"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <!-- Outer Egyptian Triangle -->
-          <polygon
-            points="32,6 58,54 6,54"
-            stroke="#c9a227"
-            stroke-width="2.5"
-            fill="rgba(18, 22, 30, 0.7)"
-          />
-          <polygon
-            points="32,14 52,50 12,50"
-            stroke="rgba(244, 228, 184, 0.4)"
-            stroke-width="1.5"
-            fill="none"
-          />
-          <!-- Center All-Seeing Eye of Anubis / Horus -->
-          <circle cx="32" cy="36" r="6" fill="#e3c567" />
-          <circle cx="32" cy="36" r="3" fill="#0a0c10" />
-          <path
-            d="M20 36 C24 28, 40 28, 44 36 C40 44, 24 44, 20 36 Z"
-            stroke="#f4e4b8"
-            stroke-width="2"
-            fill="none"
-          />
-          <!-- Lower Egyptian Tear/Spiral Marker -->
-          <path
-            d="M32 42 L32 49 M38 42 C40 45, 41 48, 38 49"
-            stroke="#c9a227"
-            stroke-width="1.5"
-            stroke-linecap="round"
-          />
-        </svg>
+        <img
+          src="../assets/logo.png"
+          alt="Yu-Gi-Oh! Logo"
+          class="loading-view__logo-img"
+        />
       </div>
 
       <!-- Title & Branding -->
@@ -272,15 +241,16 @@ onMounted(() => {
 
   &__emblem {
     @include flex-center;
-    width: 72px;
-    height: 72px;
-    filter: drop-shadow(0 0 16px rgba(201, 162, 39, 0.45));
+    width: 120px;
+    height: 100px;
+    filter: drop-shadow(0 0 20px rgba(201, 162, 39, 0.65));
     animation: pulse-glow 3s infinite ease-in-out;
   }
 
-  &__emblem-svg {
+  &__logo-img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
   }
 
   &__title-group {

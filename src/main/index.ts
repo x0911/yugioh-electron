@@ -29,8 +29,13 @@ function createWindow(): void {
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
   const preloadPath = path.resolve(__dirname, '../preload/index.cjs');
 
+  const iconPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'build/icon.png')
+    : path.resolve(__dirname, '../../build/icon.png');
+
   mainWindow = new BrowserWindow({
     title: APP_CONFIG.TITLE,
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     width: APP_CONFIG.DEFAULT_WIDTH,
     height: APP_CONFIG.DEFAULT_HEIGHT,
     minWidth: APP_CONFIG.MIN_WIDTH,

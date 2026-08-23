@@ -3,6 +3,7 @@
   "appId": "com.antigravity.yugioh-electron",
   "productName": "Yu-Gi-Oh! Duel Arena",
   "copyright": "Copyright © 2026",
+  "npmRebuild": false,
   "directories": {
     "output": "release",
     "buildResources": "build"
@@ -45,7 +46,6 @@
     "gatekeeperAssess": false
   },
   "win": {
-    "npmRebuild": false,
     "target": [
       {
         "target": "nsis",
