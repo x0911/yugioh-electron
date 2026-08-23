@@ -86,6 +86,28 @@
 
       <!-- In-Deck Quantity Status & Drag Indicator -->
       <div class="previewer-actions">
+        <!-- Find Decks with this Card Button -->
+        <button
+          type="button"
+          class="find-decks-action-btn"
+          :class="{
+            'find-decks-action-btn--active': isCardFilterActive,
+            'find-decks-action-btn--empty': matchingDecksCount === 0,
+          }"
+          :title="isCardFilterActive ? 'Clear deck filter' : `Filter pre-built and custom decks containing ${card.name}`"
+          @click="toggleDeckFilter"
+        >
+          <div class="btn-left-content">
+            <span class="btn-icon">{{ isCardFilterActive ? '✕' : '🗂️' }}</span>
+            <span class="btn-text">
+              {{ isCardFilterActive ? 'Clear Deck Filter' : 'Find Decks with this Card' }}
+            </span>
+          </div>
+          <span class="btn-count-tag" :class="{ 'btn-count-tag--active': isCardFilterActive }">
+            {{ matchingDecksCount }} {{ matchingDecksCount === 1 ? 'Deck' : 'Decks' }}
+          </span>
+        </button>
+
         <div class="deck-quantity-status">
           <span class="quantity-label">In Deck:</span>
           <span
@@ -124,6 +146,24 @@ import { useDeckEditStore } from '../../stores/deckEditStore.js';
 const store = useDeckEditStore();
 
 const card = computed<CardDetail | null>(() => store.hoveredCard);
+
+const matchingDecksCount = computed(() => {
+  if (!card.value) return 0;
+  return store.getDecksContainingCard(card.value.id).length;
+});
+
+const isCardFilterActive = computed(() => {
+  return Boolean(store.deckFilterCard && card.value && store.deckFilterCard.id === card.value.id);
+});
+
+function toggleDeckFilter(): void {
+  if (!card.value) return;
+  if (isCardFilterActive.value) {
+    store.clearDeckFilterCard();
+  } else {
+    store.setDeckFilterCard(card.value);
+  }
+}
 
 watch(
   () => card.value?.id,
@@ -534,6 +574,86 @@ function onPreviewDragEnd(): void {
   flex-direction: column;
   gap: $space-2;
   padding-top: $space-1;
+}
+
+.find-decks-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.18) 0%, rgba(10, 14, 22, 0.85) 100%);
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  &:hover:not(.find-decks-action-btn--empty) {
+    background: linear-gradient(135deg, rgba(201, 162, 39, 0.32) 0%, rgba(18, 24, 38, 0.95) 100%);
+    border-color: $color-gold-300;
+    box-shadow: 0 0 14px rgba(201, 162, 39, 0.35);
+    transform: translateY(-1px);
+  }
+
+  &--active {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(10, 14, 22, 0.9) 100%);
+    border-color: rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.35) 0%, rgba(18, 24, 38, 0.95) 100%);
+      border-color: #ef4444;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+    }
+  }
+
+  &--empty {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.btn-left-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-icon {
+  font-size: 0.95rem;
+}
+
+.btn-text {
+  font-family: $font-family-display;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: $color-gold-300;
+  letter-spacing: 0.03em;
+
+  .find-decks-action-btn--active & {
+    color: #fca5a5;
+  }
+}
+
+.btn-count-tag {
+  font-family: $font-family-numeric;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: $color-gold-300;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+
+  &--active {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
 }
 
 .deck-quantity-status {

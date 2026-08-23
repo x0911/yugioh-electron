@@ -57,7 +57,7 @@
 
           <!-- Level / Rank Stars Row (Dedicated Line - only for revealed monsters) -->
           <div
-            v-if="effectiveCard.code > 0 && effectiveCard.level && effectiveCard.level > 0"
+            v-if="effectiveCard.code > 0 && isMonster && effectiveCard.level && effectiveCard.level > 0"
             class="card-level-row"
           >
             <div class="level-stars">
@@ -77,10 +77,10 @@
           </div>
 
           <!-- ATK / DEF Scores (Only for revealed Monsters) -->
-          <!-- ATK / DEF Scores (Only for revealed Monsters) -->
           <div
             v-if="
               effectiveCard.code > 0 &&
+              isMonster &&
               (effectiveCard.atk !== undefined || effectiveCard.def !== undefined)
             "
             class="combat-stats-box"
@@ -228,6 +228,13 @@ watch(
   },
   { immediate: true },
 );
+
+const isMonster = computed(() => {
+  if (!effectiveCard.value || effectiveCard.value.code <= 0) return false;
+  const detail = duelStore.getCardDetail(effectiveCard.value.code);
+  if (detail) return detail.isMonster;
+  return effectiveCard.value.attribute !== 'SPELL' && effectiveCard.value.attribute !== 'TRAP';
+});
 
 const isAtkBoosted = computed(() => {
   if (!effectiveCard.value) return false;

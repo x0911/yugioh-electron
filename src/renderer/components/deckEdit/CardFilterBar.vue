@@ -64,6 +64,26 @@
       </button>
     </div>
 
+    <!-- Active Deck Card Filter Banner -->
+    <transition name="expand">
+      <div v-if="store.deckFilterCard" class="deck-filter-active-strip">
+        <div class="strip-left">
+          <span class="strip-icon">🗂️</span>
+          <span class="strip-label">Filtering Decks with:</span>
+          <strong class="strip-card-name">{{ store.deckFilterCard.name }}</strong>
+          <span class="strip-count">({{ store.getDecksContainingCard(store.deckFilterCard.id).length }} decks match)</span>
+        </div>
+        <button
+          type="button"
+          class="strip-clear-btn"
+          title="Clear Deck Card Filter"
+          @click="store.clearDeckFilterCard()"
+        >
+          ✕ Clear Deck Filter
+        </button>
+      </div>
+    </transition>
+
     <!-- Kind Categories Tabs -->
     <div class="filter-kinds-row">
       <button
@@ -696,6 +716,66 @@ function toggleSortOrder(): void {
     background: rgba(235, 87, 87, 0.25);
     border-color: $color-danger;
     color: #fff;
+  }
+}
+
+.deck-filter-active-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: linear-gradient(90deg, rgba(201, 162, 39, 0.2) 0%, rgba(10, 14, 22, 0.9) 100%);
+  border: 1px solid rgba(201, 162, 39, 0.5);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.strip-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.strip-icon {
+  font-size: 1rem;
+}
+
+.strip-label {
+  font-family: $font-family-display;
+  font-size: 0.75rem;
+  color: $color-gold-300;
+  letter-spacing: 0.04em;
+}
+
+.strip-card-name {
+  font-family: $font-family-display;
+  font-size: 0.85rem;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.strip-count {
+  font-size: 0.75rem;
+  color: $color-text-secondary;
+}
+
+.strip-clear-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-family: $font-family-display;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.35);
+    color: #ffffff;
+    border-color: #ef4444;
   }
 }
 

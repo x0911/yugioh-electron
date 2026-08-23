@@ -46,6 +46,7 @@ export const defaultStarterDecks: Record<string, CustomDeck> = loadAllPrebuiltDe
 
 export const appStore = new Store<AppStoreSchema>({
   name: 'yugioh-desktop-settings',
+  projectName: 'yugioh-electron',
   defaults: {
     settings: defaultSettings,
     customDecks: defaultStarterDecks,
@@ -70,11 +71,20 @@ export function getPersistedCustomDecks(): CustomDeck[] {
   const prebuilt = defaultStarterDecks;
   let hasMissingPrebuilt = false;
 
-  // Merge latest prebuilt decks into store so user always has updated names, avatars, and legal card lists
+  // Always synchronize prebuilt decks so users receive updated card lists, archetypes, and avatars
   for (const [id, deck] of Object.entries(prebuilt)) {
     const existing = decksMap[id];
-    if (!existing || !existing.avatar || existing.name !== deck.name || (existing.main && existing.main.length < 40)) {
-      decksMap[id] = { ...existing, ...deck };
+    const isCustomUserDeck = existing && existing.category === 'custom' && !prebuilt[id];
+    if (isCustomUserDeck) continue;
+
+    if (
+      !existing ||
+      !existing.avatar ||
+      existing.name !== deck.name ||
+      JSON.stringify(existing.main) !== JSON.stringify(deck.main) ||
+      JSON.stringify(existing.extra || []) !== JSON.stringify(deck.extra || [])
+    ) {
+      decksMap[id] = { ...deck };
       hasMissingPrebuilt = true;
     }
   }

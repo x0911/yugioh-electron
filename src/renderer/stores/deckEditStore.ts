@@ -13,6 +13,7 @@ export interface DeckEditStoreState {
   activeDeck: CustomDeck;
   filters: CardFilterState;
   hoveredCard: CardDetail | null;
+  deckFilterCard: CardDetail | null;
   isDirty: boolean;
   toastMessage: string | null;
   toastType: 'success' | 'warning' | 'danger' | 'info';
@@ -42,6 +43,7 @@ export const useDeckEditStore = defineStore('deckEdit', {
     activeDeck: createEmptyDeck('temp-init'),
     filters: { ...DEFAULT_CARD_FILTER_STATE },
     hoveredCard: null,
+    deckFilterCard: null,
     isDirty: false,
     toastMessage: null,
     toastType: 'success',
@@ -268,9 +270,41 @@ export const useDeckEditStore = defineStore('deckEdit', {
     isDeckLegal(): boolean {
       return this.deckValidity.isValid;
     },
+
+    decksContainingFilterCard(state): CustomDeck[] {
+      if (!state.deckFilterCard) return state.customDecks;
+      const targetId = state.deckFilterCard.id;
+      return state.customDecks.filter(
+        (d) => d.main.includes(targetId) || (d.extra && d.extra.includes(targetId)),
+      );
+    },
+
+    getDecksContainingCard: (state) => (cardId: number): CustomDeck[] => {
+      return state.customDecks.filter(
+        (d) => d.main.includes(cardId) || (d.extra && d.extra.includes(cardId)),
+      );
+    },
+
+    getCardCopyCountInDeck: () => (deck: CustomDeck, cardId: number): { main: number; extra: number; total: number } => {
+      const mainCount = deck.main.filter((id) => id === cardId).length;
+      const extraCount = (deck.extra || []).filter((id) => id === cardId).length;
+      return { main: mainCount, extra: extraCount, total: mainCount + extraCount };
+    },
   },
 
   actions: {
+    setDeckFilterCard(card: CardDetail | null): void {
+      this.deckFilterCard = card;
+      if (card) {
+        const count = this.getDecksContainingCard(card.id).length;
+        this.showToast(`Filtering decks containing "${card.name}" (${count} found)`, 'info');
+      }
+    },
+
+    clearDeckFilterCard(): void {
+      this.deckFilterCard = null;
+      this.showToast('Cleared deck card filter', 'info');
+    },
     async initStore(): Promise<void> {
       if (this.isLoaded) return;
       this.isLoading = true;

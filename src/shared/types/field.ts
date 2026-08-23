@@ -50,6 +50,7 @@ export interface FieldCard {
   isTargeted?: boolean;
   isSelectable?: boolean;
   counters?: number;
+  turnCounter?: number;
   statuses?: CardStatusType[];
 }
 

@@ -293,6 +293,9 @@
       @finish="duelStore.finishVideo"
     />
 
+    <!-- Dice Roll & Coin Toss Visual Overlay -->
+    <TossVisualOverlay :toss-payload="activeTossPayload" />
+
     <!-- AI Tactical Post-Match Review Modal -->
     <DuelReviewModal
       :is-open="isReviewModalOpen"
@@ -318,7 +321,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import type { FieldCard, DuelBoardState } from '../../shared/types/field.js';
-import { type DuelEventPayload, getGameOverSubtitle } from '../../shared/types/duel.js';
+import { type DuelEventPayload, type TossPayload, getGameOverSubtitle } from '../../shared/types/duel.js';
 import { getBackgroundUrl } from '../utils/media.js';
 import { useDuelStore, type CardActionOption, type TargetInfo } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
@@ -338,6 +341,7 @@ import {
   CardListModal,
   CardSelectionModal,
   VideoOverlay,
+  TossVisualOverlay,
 } from '../components/duel/index.js';
 import DuelReviewModal from '../components/duel/DuelReviewModal.vue';
 import {
@@ -507,6 +511,9 @@ const actionGuideInfo = computed(() => {
 
 // Live Logs
 const duelLogs = ref<LogItem[]>([]);
+
+// Active Dice Roll / Coin Toss Visual Overlay State
+const activeTossPayload = ref<TossPayload | null>(null);
 
 const activePreviewCard = computed<FieldCard | null>(() => {
   if (lastHoveredCard.value && lastHoveredCard.value.code > 0) {
@@ -1220,6 +1227,34 @@ async function setupEngineEventListener(): Promise<void> {
 
       else if (event.type === 'NEW_TURN') {
         audioManager.playSfx('turn-start');
+      }
+
+      else if (event.type === 'TOSS_DICE') {
+        const diceResults = ((event as any).results && (event as any).results.length > 0
+          ? (event as any).results
+          : [1]) as number[];
+        audioManager.playSfx('ui-click');
+        activeTossPayload.value = {
+          type: 'dice',
+          player: event.player ?? 0,
+          results: diceResults,
+        };
+        await new Promise<void>((r) => setTimeout(r, 1400));
+        activeTossPayload.value = null;
+      }
+
+      else if (event.type === 'TOSS_COIN') {
+        const coinResults = ((event as any).results && (event as any).results.length > 0
+          ? (event as any).results
+          : [true]) as boolean[];
+        audioManager.playSfx('coin-flip');
+        activeTossPayload.value = {
+          type: 'coin',
+          player: event.player ?? 0,
+          results: coinResults,
+        };
+        await new Promise<void>((r) => setTimeout(r, 1400));
+        activeTossPayload.value = null;
       }
 
       else if (event.type === 'SHUFFLE_DECK' || event.type === 'SHUFFLE_HAND') {

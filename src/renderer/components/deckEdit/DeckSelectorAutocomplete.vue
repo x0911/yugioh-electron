@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import type { CustomDeck } from '../../../shared/types/deck.js';
+import { useDeckEditStore } from '../../stores/deckEditStore.js';
+import { getCardImageUrl, handleImageError } from '../../utils/media.js';
 
 const props = withDefaults(
   defineProps<{
@@ -11,7 +13,7 @@ const props = withDefaults(
   }>(),
   {
     disabled: false,
-    placeholder: 'Search 400+ decks (e.g. Kaiba, Jaden, Yubel, Exodia)...',
+    placeholder: 'Search 400+ decks or cards inside (e.g. Kaiba, Exodia, Jinzo)...',
   },
 );
 
@@ -19,6 +21,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
   (e: 'select', deck: CustomDeck): void;
 }>();
+
+const store = useDeckEditStore();
 
 const isOpen = ref(false);
 const searchQuery = ref('');
@@ -61,14 +65,23 @@ const activeDeck = computed(() => {
   return props.decks.find((d) => d.id === props.modelValue) || props.decks[0] || null;
 });
 
-// Category counts
+// Candidate decks based on active deckFilterCard
+const candidateDecks = computed(() => {
+  if (!store.deckFilterCard) return props.decks;
+  const targetId = store.deckFilterCard.id;
+  return props.decks.filter(
+    (d) => d.main.includes(targetId) || (d.extra && d.extra.includes(targetId)),
+  );
+});
+
+// Category counts (dynamically reflects candidateDecks)
 const counts = computed(() => {
   let dmCount = 0;
   let gxCount = 0;
   let popCount = 0;
   let customCount = 0;
 
-  for (const d of props.decks) {
+  for (const d of candidateDecks.value) {
     if (d.category === 'character-dm' || (d.series === 'DM' && d.characterName && d.characterName !== 'Community Popular')) dmCount++;
     else if (d.category === 'character-gx' || (d.series === 'GX' && d.characterName && d.characterName !== 'Community Popular')) gxCount++;
     else if (d.category === 'popular-dm' || d.category === 'popular-gx' || d.id.startsWith('pop-') || d.characterName === 'Community Popular') popCount++;
@@ -76,7 +89,7 @@ const counts = computed(() => {
   }
 
   return {
-    all: props.decks.length,
+    all: candidateDecks.value.length,
     dm: dmCount,
     gx: gxCount,
     popular: popCount,
@@ -84,9 +97,22 @@ const counts = computed(() => {
   };
 });
 
+function getInDeckCardMatch(deck: CustomDeck, query: string): { name: string; count: number } | null {
+  if (!query.trim()) return null;
+  const q = query.toLowerCase().trim();
+  for (const cid of [...deck.main, ...(deck.extra || [])]) {
+    const detail = store.cardMap.get(cid);
+    if (detail && detail.name.toLowerCase().includes(q)) {
+      const count = [...deck.main, ...(deck.extra || [])].filter((x) => x === cid).length;
+      return { name: detail.name, count };
+    }
+  }
+  return null;
+}
+
 // Filtered & grouped deck list based on category & search query
 const filteredDecks = computed(() => {
-  let list = props.decks;
+  let list = candidateDecks.value;
 
   // 1. Filter by category tab
   if (activeCategory.value === 'character-dm') {
@@ -99,7 +125,7 @@ const filteredDecks = computed(() => {
     list = list.filter((d) => !d.category || d.category === 'custom' || (!d.category.startsWith('character-') && !d.category.startsWith('popular-') && !d.id.startsWith('pop-') && !d.id.includes('_deck_')));
   }
 
-  // 2. Filter by search query
+  // 2. Filter by search query (across deck name, archetype, duelist, AND cards inside deck)
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim();
     list = list.filter((d) => {
@@ -107,7 +133,10 @@ const filteredDecks = computed(() => {
       const arch = (d.archetype || '').toLowerCase();
       const charName = (d.characterName || '').toLowerCase();
       const series = (d.series || '').toLowerCase();
-      return name.includes(q) || arch.includes(q) || charName.includes(q) || series.includes(q);
+      const directMatch = name.includes(q) || arch.includes(q) || charName.includes(q) || series.includes(q);
+      if (directMatch) return true;
+      // In-deck card match
+      return getInDeckCardMatch(d, q) !== null;
     });
   }
 
@@ -298,6 +327,13 @@ onUnmounted(() => {
 
       <div class="deck-autocomplete__trigger-right">
         <span
+          v-if="store.deckFilterCard"
+          class="deck-autocomplete__active-filter-chip"
+          :title="`Filtered by card: ${store.deckFilterCard.name}`"
+        >
+          🎴 {{ store.deckFilterCard.name }}
+        </span>
+        <span
           v-if="activeDeck"
           class="deck-autocomplete__badge"
           :class="`deck-autocomplete__badge--${getCategoryBadge(activeDeck).classModifier}`"
@@ -337,6 +373,33 @@ onUnmounted(() => {
           >
             ✕
           </button>
+        </div>
+
+        <!-- Active Card Filter Header Bar -->
+        <div v-if="store.deckFilterCard" class="deck-autocomplete__card-filter-bar">
+          <div class="card-filter-badge">
+            <img
+              :src="getCardImageUrl(store.deckFilterCard.id, 'mini')"
+              :alt="store.deckFilterCard.name"
+              class="filter-card-thumb"
+              @error="handleImageError"
+            />
+            <div class="filter-card-meta">
+              <span class="filter-card-label">FILTERED BY CARD:</span>
+              <span class="filter-card-name">{{ store.deckFilterCard.name }}</span>
+            </div>
+          </div>
+          <div class="filter-card-right">
+            <span class="filter-matches-pill">{{ filteredDecks.length }} Decks</span>
+            <button
+              type="button"
+              class="filter-card-clear-btn"
+              title="Clear card filter"
+              @click.stop="store.clearDeckFilterCard()"
+            >
+              ✕ Clear
+            </button>
+          </div>
         </div>
 
         <!-- Category Filter Tabs -->
@@ -448,6 +511,20 @@ onUnmounted(() => {
                     class="deck-autocomplete__item-archetype"
                     v-html="highlightMatch(deck.archetype, searchQuery)"
                   />
+                  <!-- Card Copy Count if Filter Card Active -->
+                  <span
+                    v-if="store.deckFilterCard"
+                    class="deck-autocomplete__card-copies-tag"
+                  >
+                    ✨ x{{ store.getCardCopyCountInDeck(deck, store.deckFilterCard.id).total }} in Deck
+                  </span>
+                  <!-- In-deck Search Card Match -->
+                  <span
+                    v-else-if="getInDeckCardMatch(deck, searchQuery)"
+                    class="deck-autocomplete__card-match-sub"
+                  >
+                    Includes: {{ getInDeckCardMatch(deck, searchQuery)?.name }} (x{{ getInDeckCardMatch(deck, searchQuery)?.count }})
+                  </span>
                 </div>
               </div>
             </div>
@@ -471,13 +548,15 @@ onUnmounted(() => {
           <!-- Empty State -->
           <div v-if="filteredDecks.length === 0" class="deck-autocomplete__empty">
             <span class="deck-autocomplete__empty-icon">🔍</span>
-            <p class="deck-autocomplete__empty-text">No decks matching "{{ searchQuery }}"</p>
+            <p class="deck-autocomplete__empty-text">
+              {{ store.deckFilterCard ? `No decks containing "${store.deckFilterCard.name}" match your filters` : `No decks matching "${searchQuery}"` }}
+            </p>
             <button
               type="button"
               class="deck-autocomplete__reset-search-btn"
-              @click="searchQuery = ''; activeCategory = 'ALL'"
+              @click="searchQuery = ''; activeCategory = 'ALL'; store.clearDeckFilterCard()"
             >
-              Reset Filters
+              Reset All Filters
             </button>
           </div>
         </div>

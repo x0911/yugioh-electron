@@ -127,7 +127,7 @@ export function buildDeck(
   for (const item of keyCards) {
     try {
       const id = findCardId(item);
-      if (signature.length < 3) signature.push(id);
+      if (signature.length < 3 && !signature.includes(id)) signature.push(id);
       const currentCount = main.filter((c) => c === id).length;
       if (currentCount < 3) {
         main.push(id);
@@ -137,19 +137,26 @@ export function buildDeck(
     }
   }
 
-  const poolCandidates = findCardsByCriteria(fillCriteria);
-  let poolIdx = 0;
-  while (main.length < 32 && poolIdx < poolCandidates.length) {
-    const card = poolCandidates[poolIdx++];
-    if (card.type.toLowerCase().includes('fusion')) continue;
-    const count = main.filter((id) => id === card.id).length;
-    if (count < 3) {
-      main.push(card.id);
+  // Only query pool if specific archetype constraints are given (never broad era-only)
+  const hasSpecificCriteria = Boolean(
+    fillCriteria.race || fillCriteria.type || fillCriteria.attribute || fillCriteria.nameContains,
+  );
+  if (hasSpecificCriteria) {
+    const poolCandidates = findCardsByCriteria(fillCriteria);
+    let poolIdx = 0;
+    while (main.length < 30 && poolIdx < poolCandidates.length) {
+      const card = poolCandidates[poolIdx++];
+      if (card.type.toLowerCase().includes('fusion')) continue;
+      const count = main.filter((id) => id === card.id).length;
+      if (count < 3) {
+        main.push(card.id);
+      }
     }
   }
 
+  // Add staple power spells and traps
   let stapleIdx = 0;
-  while (main.length < 40 && stapleIdx < DM_GX_STAPLES.length) {
+  while (main.length < 36 && stapleIdx < DM_GX_STAPLES.length) {
     try {
       const stapleId = findCardId(DM_GX_STAPLES[stapleIdx++]);
       const count = main.filter((id) => id === stapleId).length;
@@ -161,12 +168,36 @@ export function buildDeck(
     }
   }
 
+  // Duplicate core archetype cards up to 3 copies
   let dupIdx = 0;
   while (main.length < 40 && dupIdx < main.length) {
     const id = main[dupIdx++];
     const count = main.filter((c) => c === id).length;
     if (count < 3) {
       main.push(id);
+    }
+  }
+
+  // Fallback staple fillers if still under 40
+  const stapleFallbacks = [
+    'Mystical Space Typhoon',
+    'Sakuretsu Armor',
+    'Bottomless Trap Hole',
+    'Compulsory Evacuation Device',
+    'Solemn Judgment',
+    'Smashing Ground',
+    'Waboku',
+  ];
+  let fbIdx = 0;
+  while (main.length < 40 && fbIdx < stapleFallbacks.length) {
+    try {
+      const fbId = findCardId(stapleFallbacks[fbIdx++]);
+      const count = main.filter((id) => id === fbId).length;
+      if (count < 3) {
+        main.push(fbId);
+      }
+    } catch {
+      // ignore
     }
   }
 

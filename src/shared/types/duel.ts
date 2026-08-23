@@ -324,12 +324,24 @@ export interface DuelEventPayload {
   reason?: number;
   target?: unknown;
   drawnCards?: { code: number; cardName: string }[];
+  results?: (number | boolean)[];
+  counterType?: number;
+  hintType?: number;
+  turnCounter?: number;
+  value?: number | bigint;
   isPrompt: boolean;
   promptPlayer?: number;
   promptType?: string;
   promptData?: unknown;
   description: string;
   raw: unknown;
+}
+
+export interface TossPayload {
+  type: 'dice' | 'coin';
+  player: number;
+  results: (number | boolean)[];
+  cardName?: string;
 }
 
 export interface DuelStateSummary {

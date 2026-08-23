@@ -815,6 +815,109 @@ export class MessageDecoder {
         };
       }
 
+      case OcgMessageType.TOSS_DICE: {
+        type = 'TOSS_DICE';
+        const diceResults = msg.results || [];
+        const resultStr = diceResults.join(', ');
+        description = `🎲 Player ${msg.player} rolled dice: [${resultStr}]`;
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          results: diceResults,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.TOSS_COIN: {
+        type = 'TOSS_COIN';
+        const coinResults = (msg.results || []).map((r) => Boolean(r));
+        const resultStr = coinResults.map((r) => (r ? 'Heads' : 'Tails')).join(', ');
+        description = `🪙 Player ${msg.player} flipped coins: [${resultStr}]`;
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          results: coinResults,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.ADD_COUNTER: {
+        type = 'ADD_COUNTER';
+        description = `Added ${msg.count} counter(s) (Type #${msg.counter_type}) to card at ${msg.location === 4 ? 'Monster Zone' : 'Spell/Trap Zone'} ${msg.sequence}.`;
+        return {
+          type,
+          rawType,
+          controller: msg.controller,
+          location: msg.location,
+          sequence: msg.sequence,
+          count: msg.count,
+          counterType: msg.counter_type,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.REMOVE_COUNTER: {
+        type = 'REMOVE_COUNTER';
+        description = `Removed ${msg.count} counter(s) (Type #${msg.counter_type}) from card at ${msg.location === 4 ? 'Monster Zone' : 'Spell/Trap Zone'} ${msg.sequence}.`;
+        return {
+          type,
+          rawType,
+          controller: msg.controller,
+          location: msg.location,
+          sequence: msg.sequence,
+          count: msg.count,
+          counterType: msg.counter_type,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.CARD_HINT: {
+        type = 'CARD_HINT';
+        const hintVal = Number(msg.description);
+        description = `Card hint (${msg.card_hint === 1 ? 'Turn Count' : `Type ${msg.card_hint}`}): ${hintVal}`;
+        return {
+          type,
+          rawType,
+          controller: msg.controller,
+          location: msg.location,
+          sequence: msg.sequence,
+          hintType: msg.card_hint,
+          turnCounter: msg.card_hint === 1 ? hintVal : undefined,
+          value: msg.description,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.RANDOM_SELECTED: {
+        type = 'RANDOM_SELECTED';
+        description = `Player ${msg.player} randomly selected card(s).`;
+        return {
+          type,
+          rawType,
+          player: msg.player,
+          cards: (msg.cards || []).map((c) => ({
+            controller: c.controller,
+            location: c.location,
+            sequence: c.sequence,
+          })),
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
       // Prompt Message Types
       case OcgMessageType.SELECT_IDLECMD: {
         isPrompt = true;

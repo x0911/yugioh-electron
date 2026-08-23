@@ -376,7 +376,7 @@ export function getGxCharacters(): CharacterData[] {
       themeColor: '#56ccf2',
       decks: [
         makeDeckData('jesse_deck_1', 'Seven Crystal Beasts & Rainbow Dragon', 'Crystal Beast / Ultimate Crystal', 'Gathers all seven Crystal Beasts in the Graveyard or field to awaken Rainbow Dragon.', 'jesse-anderson', 1,
-          buildDeck(['Crystal Beast Sapphire Pegasus', 'Crystal Beast Topaz Tiger', 'Crystal Beast Ruby Carbuncle', 'Crystal Beast Amber Mammoth', 'Crystal Beast Cobalt Eagle', 'Crystal Beast Amethyst Cat', 'Crystal Beast Emerald Tortoise', 'Rainbow Dragon', 'Crystal Promise', 'Crystal Beacon', 'Crystal Abundance', 'Crystal Tree', 'Ancient City - Rainbow Ruins', 'Rare Value', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { era: 'GX' }, ['Rainbow Overdragon'])
+          buildDeck(['Crystal Beast Sapphire Pegasus', 'Crystal Beast Topaz Tiger', 'Crystal Beast Ruby Carbuncle', 'Crystal Beast Amber Mammoth', 'Crystal Beast Cobalt Eagle', 'Crystal Beast Amethyst Cat', 'Crystal Beast Emerald Tortoise', 'Rainbow Dragon', 'Crystal Promise', 'Crystal Beacon', 'Crystal Abundance', 'Crystal Tree', 'Ancient City - Rainbow Ruins', 'Rare Value', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { era: 'GX' }, ['Rainbow Neos'])
         ),
         makeDeckData('jesse_deck_2', 'Crystal Abundance OTK Board Wipe', 'Crystal Beast / Board Wipe', 'Sends 4 Crystal Beasts in the Spell/Trap zone to the GY to wipe the board and swarm the field.', 'jesse-anderson', 2,
           buildDeck(['Crystal Abundance', 'Crystal Beast Sapphire Pegasus', 'Crystal Beast Topaz Tiger', 'Crystal Beast Ruby Carbuncle', 'Ancient City - Rainbow Ruins', 'Crystal Promise', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { era: 'GX' })
@@ -388,7 +388,7 @@ export function getGxCharacters(): CharacterData[] {
           buildDeck(['Crystal Beast Ruby Carbuncle', 'Crystal Beast Sapphire Pegasus', 'Crystal Promise', 'Crystal Beacon', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { era: 'GX' })
         ),
         makeDeckData('jesse_deck_5', 'Advanced Crystal Beast Darkness', 'Darkness Crystal Beasts', 'Jesse\'s dark persona wielding Advanced Crystal Beasts powered by Advanced Dark.', 'jesse-anderson', 5,
-          buildDeck(['Rainbow Dark Dragon', 'Crystal Beast Sapphire Pegasus', 'Crystal Beast Topaz Tiger', 'Allure of Darkness', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { era: 'GX' }, ['Rainbow Overdragon'])
+          buildDeck(['Rainbow Dark Dragon', 'Crystal Beast Sapphire Pegasus', 'Crystal Beast Topaz Tiger', 'Allure of Darkness', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { era: 'GX' }, ['Rainbow Neos'])
         ),
         makeDeckData('jesse_deck_6', 'Sapphire Pegasus Search Turbo', 'Crystal Beast Search Engine', 'Sapphire Pegasus places a Crystal Beast from hand, deck, or GY into the Spell/Trap zone.', 'jesse-anderson', 6,
           buildDeck(['Crystal Beast Sapphire Pegasus', 'Rare Value', 'Crystal Beacon', 'Ancient City - Rainbow Ruins', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { era: 'GX' })
@@ -400,10 +400,10 @@ export function getGxCharacters(): CharacterData[] {
           buildDeck(['Rare Value', 'Crystal Beast Sapphire Pegasus', 'Crystal Beast Ruby Carbuncle', 'Ancient City - Rainbow Ruins', 'Pot of Greed', 'Graceful Charity'], { era: 'GX' })
         ),
         makeDeckData('jesse_deck_9', 'Rainbow Overdragon Fusion Ascension', 'Ultimate Crystal Fusion', 'Fuses 7 Crystal Beasts into the 4000 ATK Rainbow Overdragon to attack all monsters.', 'jesse-anderson', 9,
-          buildDeck(['Rainbow Dragon', 'Crystal Beast Sapphire Pegasus', 'Crystal Beast Topaz Tiger', 'Crystal Beast Ruby Carbuncle', 'Polymerization', 'Dragon\'s Mirror', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { era: 'GX' }, ['Rainbow Overdragon'])
+          buildDeck(['Rainbow Dragon', 'Crystal Beast Sapphire Pegasus', 'Crystal Beast Topaz Tiger', 'Crystal Beast Ruby Carbuncle', 'Polymerization', 'Dragon\'s Mirror', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { era: 'GX' }, ['Rainbow Neos'])
         ),
         makeDeckData('jesse_deck_10', 'Jesse\'s Ultimate Rainbow Symphony', 'Master Crystal Beast God', 'Jesse\'s supreme tournament deck uniting all 7 Crystal Beasts, Rainbow Dragon, and Abundance.', 'jesse-anderson', 10,
-          buildDeck(['Rainbow Dragon', 'Crystal Beast Sapphire Pegasus', 'Crystal Beast Topaz Tiger', 'Crystal Beast Ruby Carbuncle', 'Crystal Beast Amber Mammoth', 'Crystal Beast Cobalt Eagle', 'Crystal Beast Amethyst Cat', 'Crystal Beast Emerald Tortoise', 'Ancient City - Rainbow Ruins', 'Crystal Abundance', 'Crystal Promise', 'Rare Value', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { era: 'GX' }, ['Rainbow Overdragon'])
+          buildDeck(['Rainbow Dragon', 'Crystal Beast Sapphire Pegasus', 'Crystal Beast Topaz Tiger', 'Crystal Beast Ruby Carbuncle', 'Crystal Beast Amber Mammoth', 'Crystal Beast Cobalt Eagle', 'Crystal Beast Amethyst Cat', 'Crystal Beast Emerald Tortoise', 'Ancient City - Rainbow Ruins', 'Crystal Abundance', 'Crystal Promise', 'Rare Value', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { era: 'GX' }, ['Rainbow Neos'])
         ),
       ],
     },
@@ -421,10 +421,10 @@ export function getGxCharacters(): CharacterData[] {
       themeColor: '#9b51e0',
       decks: [
         makeDeckData('crowler_deck_1', 'Ancient Gear Golem & Castle', 'Ancient Gear / Machine Beatdown', 'Commands Ancient Gear Golem with Ancient Gear Castle and pierces defense with 3000 ATK.', 'vellian-crowler', 1,
-          buildDeck(['Ancient Gear Golem', 'Ancient Gear Beast', 'Ancient Gear Engineer', 'Ancient Gear Soldier', 'Ancient Gear Knight', 'Ancient Gear Castle', 'Ancient Gear Workshop', 'Ancient Gear Drill', 'Limiter Removal', 'Heavy Storm', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Machine', era: 'GX' }, ['Ultimate Ancient Gear Golem', 'Ancient Gear Megaton Golem'])
+          buildDeck(['Ancient Gear Golem', 'Ancient Gear Beast', 'Ancient Gear Engineer', 'Ancient Gear Soldier', 'Ancient Gear Knight', 'Ancient Gear Castle', 'Ancient Gear Workshop', 'Ancient Gear Drill', 'Limiter Removal', 'Heavy Storm', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Machine', era: 'GX' }, ['Ultimate Ancient Gear Golem'])
         ),
         makeDeckData('crowler_deck_2', 'Ultimate Ancient Gear Golem Fusion', 'Machine Fusion Piercing', 'Fuses Ancient Gear Golem with 2 Ancient Gear monsters into the 4400 ATK Ultimate Ancient Gear Golem.', 'crowler_deck_2', 2,
-          buildDeck(['Ancient Gear Golem', 'Ancient Gear Beast', 'Ancient Gear Engineer', 'Polymerization', 'Power Bond', 'Overload Fusion', 'Fusion Sage', 'Limiter Removal', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Machine', era: 'GX' }, ['Ultimate Ancient Gear Golem', 'Ancient Gear Megaton Golem'])
+          buildDeck(['Ancient Gear Golem', 'Ancient Gear Beast', 'Ancient Gear Engineer', 'Polymerization', 'Power Bond', 'Overload Fusion', 'Fusion Sage', 'Limiter Removal', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Machine', era: 'GX' }, ['Ultimate Ancient Gear Golem'])
         ),
         makeDeckData('crowler_deck_3', 'Geartown Demolition Turbo', 'Field Spell Special Summon', 'When Geartown is destroyed, it special summons Ancient Gear Golem directly from the deck.', 'vellian-crowler', 3,
           buildDeck(['Geartown', 'Ancient Gear Golem', 'Terraforming', 'Heavy Storm', 'Mystical Space Typhoon', 'Limiter Removal', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Machine', era: 'GX' })
@@ -439,7 +439,7 @@ export function getGxCharacters(): CharacterData[] {
           buildDeck(['Ancient Gear Engineer', 'Ancient Gear Golem', 'Ancient Gear Castle', 'Limiter Removal', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Machine', era: 'GX' })
         ),
         makeDeckData('crowler_deck_7', 'Ancient Gear Drill Spell Fetch', 'Spell Placement Engine', 'Discards a card with Ancient Gear Drill to set any Spell Card directly from the deck.', 'vellian-crowler', 7,
-          buildDeck(['Ancient Gear Drill', 'Ancient Gear Golem', 'Power Bond', 'Raigeki', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Machine', era: 'GX' })
+          buildDeck(['Ancient Gear Drill', 'Ancient Gear Golem', 'Power Bond', 'Raigeki', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Machine', era: 'GX' }, ['Ultimate Ancient Gear Golem'])
         ),
         makeDeckData('crowler_deck_8', 'Ancient Gear Workshop Graveyard Salvage', 'Machine Salvage', 'Adds an Ancient Gear monster from the Graveyard directly back to the hand.', 'vellian-crowler', 8,
           buildDeck(['Ancient Gear Workshop', 'Ancient Gear Golem', 'Ancient Gear Beast', 'Limiter Removal', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Machine', era: 'GX' })
@@ -448,7 +448,7 @@ export function getGxCharacters(): CharacterData[] {
           buildDeck(['Power Bond', 'Ancient Gear Golem', 'Ancient Gear Beast', 'Limiter Removal', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Machine', era: 'GX' }, ['Ultimate Ancient Gear Golem'])
         ),
         makeDeckData('crowler_deck_10', 'Crowler\'s Ultimate Antique Gear Master', 'Master Ancient Gear Industry', 'Crowler\'s supreme tournament deck uniting Geartown, Ultimate Golem, and Power Bond.', 'vellian-crowler', 10,
-          buildDeck(['Ancient Gear Golem', 'Ancient Gear Beast', 'Ancient Gear Castle', 'Geartown', 'Power Bond', 'Polymerization', 'Limiter Removal', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Machine', era: 'GX' }, ['Ultimate Ancient Gear Golem', 'Ancient Gear Megaton Golem'])
+          buildDeck(['Ancient Gear Golem', 'Ancient Gear Beast', 'Ancient Gear Castle', 'Geartown', 'Power Bond', 'Polymerization', 'Limiter Removal', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Machine', era: 'GX' }, ['Ultimate Ancient Gear Golem'])
         ),
       ],
     },
@@ -466,13 +466,13 @@ export function getGxCharacters(): CharacterData[] {
       themeColor: '#2f80ed',
       decks: [
         makeDeckData('atticus_deck_1', 'Red-Eyes Darkness Dragon Dominance', 'Red-Eyes / Dragon Beatdown', 'Tributes Red-Eyes B. Dragon to summon Red-Eyes Darkness Dragon, gaining 300 ATK per dragon in the GY.', 'atticus-rhodes', 1,
-          buildDeck(['Red-Eyes B. Dragon', 'Red-Eyes Darkness Dragon', 'Red-Eyes Wyvern', 'Black Metal Dragon', 'Dragon Shrine', 'Return of the Red-Eyes', 'Polymerization', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Dragon', era: 'GX' }, ['Meteor Black Dragon', 'Black Skull Dragon'])
+          buildDeck(['Red-Eyes B. Dragon', 'Red-Eyes Darkness Dragon', 'Red-Eyes Wyvern', 'Black Metal Dragon', 'Dragon Shrine', 'Return of the Red-Eyes', 'Polymerization', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Dragon', era: 'GX' }, ['Black Skull Dragon'])
         ),
         makeDeckData('atticus_deck_2', 'Red-Eyes Wyvern Graveyard Rebirth', 'Dragon Rebirth Engine', 'Banishes Red-Eyes Wyvern during the End Phase to revive Red-Eyes B. Dragon from the GY.', 'atticus-rhodes', 2,
           buildDeck(['Red-Eyes Wyvern', 'Red-Eyes B. Dragon', 'Dragon Shrine', 'Cards of Red Stone', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Dragon', era: 'GX' })
         ),
-        makeDeckData('atticus_deck_3', 'Meteor Black Dragon Classic Fusion', 'Dragon Fusion Aggro', 'Fuses Red-Eyes B. Dragon and Meteor Dragon into the 3500 ATK Meteor Black Dragon.', 'atticus-rhodes', 3,
-          buildDeck(['Red-Eyes B. Dragon', 'Meteor Dragon', 'Polymerization', 'Dragon\'s Mirror', 'Fusion Sage', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Dragon', era: 'GX' }, ['Meteor Black Dragon'])
+        makeDeckData('atticus_deck_3', 'Black Skull Dragon Classic Fusion', 'Dragon Fusion Aggro', 'Fuses Red-Eyes B. Dragon and Summoned Skull into the 3200 ATK Black Skull Dragon.', 'atticus-rhodes', 3,
+          buildDeck(['Red-Eyes B. Dragon', 'Summoned Skull', 'Polymerization', 'Dragon\'s Mirror', 'Fusion Sage', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Dragon', era: 'GX' }, ['Black Skull Dragon'])
         ),
         makeDeckData('atticus_deck_4', 'Mirage Dragon Attack Trap Lock', 'Dragon Trap Lockdown', 'While Mirage Dragon is on the field, opponent cannot activate Trap Cards during the Battle Phase.', 'atticus-rhodes', 4,
           buildDeck(['Mirage Dragon', 'Red-Eyes B. Dragon', 'Spear Dragon', 'Dragon Shrine', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Dragon', era: 'GX' })

@@ -88,7 +88,7 @@
         <!-- UNROTATED Slot Overlays (Always 0° Straight at Center-Bottom)   -->
         <!-- =============================================================== -->
 
-        <!-- 1. Combat Stat Badge (ATK only if Attack; DEF only if Defense) -->
+        <!-- 1. Combat Stat Badge (ATK only if Attack; DEF only if Defense, Monster zones only) -->
         <div
           v-if="card && showCombatStatBadge"
           class="slot-stat-badge"
@@ -104,12 +104,30 @@
           <span class="stat-value" :class="statDeltaClass">{{ activeStatValue }}</span>
         </div>
 
-        <!-- 2. Level / Rank Stars Badge (Always 0° Straight at Top-Right) -->
+        <!-- 2. Level / Rank Stars Badge (Monster zones only) -->
         <div
           v-if="card && isFaceUpMonster && card.level && card.level > 0 && (!targetInfo || !targetInfo.isSelectable)"
           class="slot-level-badge"
         >
           ★{{ card.level }}
+        </div>
+
+        <!-- 3. General / Spell Counter Badge (e.g. Spell Counters on field) -->
+        <div
+          v-if="card && activeCounterCount > 0"
+          class="slot-counter-badge slot-counter-badge--counters"
+          :title="`${activeCounterCount} Counter(s)`"
+        >
+          ⚡ {{ activeCounterCount }}
+        </div>
+
+        <!-- 4. Turn Timer Badge (e.g. Swords of Revealing Light Turn 1, 2, 3) -->
+        <div
+          v-if="card && activeTurnCounter !== null && activeTurnCounter > 0"
+          class="slot-counter-badge slot-counter-badge--turn"
+          :title="`Turn Count: ${activeTurnCounter}`"
+        >
+          ⏳ {{ activeTurnCounter }}
         </div>
       </div>
     </Tooltip>
@@ -168,16 +186,18 @@ const isFaceDown = computed(() => {
 });
 
 const isFaceUpMonster = computed(() => {
+  if (props.zoneType !== 'monster' && props.zoneType !== 'extra-monster') return false;
   return props.card?.position === 'faceup_attack' || props.card?.position === 'faceup_defense';
 });
 
 /**
- * Display combat stat only if monster is face-up:
+ * Display combat stat only if monster is face-up in a monster zone:
  * - Attack Position => ATK only
  * - Face-up Defense Position => DEF only
  */
 const showCombatStatBadge = computed(() => {
   if (!props.card) return false;
+  if (props.zoneType !== 'monster' && props.zoneType !== 'extra-monster') return false;
   if (props.card.position === 'faceup_attack') {
     return props.card.atk !== undefined;
   }
@@ -185,6 +205,16 @@ const showCombatStatBadge = computed(() => {
     return props.card.def !== undefined;
   }
   return false;
+});
+
+const activeCounterCount = computed<number>(() => {
+  if (!props.card) return 0;
+  return props.card.counters ?? 0;
+});
+
+const activeTurnCounter = computed<number | null>(() => {
+  if (!props.card || props.card.turnCounter === undefined) return null;
+  return props.card.turnCounter;
 });
 
 const activeStatMode = computed<'atk' | 'def'>(() => {
@@ -597,6 +627,36 @@ function onClick(event: MouseEvent): void {
     pointer-events: none;
     z-index: 25;
     text-shadow: 0 0 4px rgba(242, 201, 76, 0.6);
+  }
+
+  .slot-counter-badge {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-family: 'Oxanium', monospace, sans-serif;
+    font-size: 0.65rem;
+    font-weight: 800;
+    pointer-events: none;
+    z-index: 26;
+    letter-spacing: 0.05em;
+
+    &--counters {
+      background: rgba(10, 15, 30, 0.92);
+      border: 1px solid rgba(86, 204, 242, 0.8);
+      color: #56ccf2;
+      box-shadow: 0 0 10px rgba(86, 204, 242, 0.5);
+      text-shadow: 0 0 6px rgba(86, 204, 242, 0.8);
+    }
+
+    &--turn {
+      background: rgba(25, 15, 5, 0.92);
+      border: 1px solid rgba(242, 201, 76, 0.85);
+      color: #f2c94c;
+      box-shadow: 0 0 10px rgba(242, 201, 76, 0.5);
+      text-shadow: 0 0 6px rgba(242, 201, 76, 0.8);
+    }
   }
 }
 

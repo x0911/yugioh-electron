@@ -30,8 +30,8 @@ export function getDmCharacters(): CharacterData[] {
         makeDeckData('yugi_deck_5', 'Electromagnetic Magna Overlord', 'Magnet Warriors', 'Assembles the electromagnetic warriors to summon the mighty Magna Warriors.', 'yugi-muto', 5,
           buildDeck(['Alpha The Magnet Warrior', 'Beta The Magnet Warrior', 'Gamma The Magnet Warrior', 'Valkyrion the Magna Warrior', 'Berserkion the Electromagna Warrior', 'Alpha The Electromagnet Warrior', 'Beta The Electromagnet Warrior', 'Gamma The Electromagnet Warrior', 'Magnetic Field', 'Magnet Reverse', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Rock', era: 'DM' })
         ),
-        makeDeckData('yugi_deck_6', 'Royal Poker Knights', 'King, Queen & Jack Knights', 'Summons the Court Cards in royal formation to summon Arcana Knight Joker.', 'yugi-muto', 6,
-          buildDeck(["King's Knight", "Queen's Knight", "Jack's Knight", 'Arcana Triumph Joker', 'Joker\'s Straight', 'Joker\'s Wild', 'Polymerization', 'Reinforcement of the Army', 'Pot of Greed', 'Graceful Charity', 'Mirror Force'], { race: 'Warrior', era: 'DM' }, ['Arcana Knight Joker'])
+        makeDeckData('yugi_deck_6', 'Royal Poker Knights', 'King, Queen & Jack Knights', 'Summons the Court Cards in royal formation to overwhelm the opponent.', 'yugi-muto', 6,
+          buildDeck(["King's Knight", "Queen's Knight", "Jack's Knight", 'Arcana Triumph Joker', "Joker's Straight", "Joker's Wild", 'Reinforcement of the Army', 'The Warrior Returning Alive', 'United We Stand', 'Pot of Greed', 'Graceful Charity', 'Mirror Force'], { race: 'Warrior', era: 'DM' })
         ),
         makeDeckData('yugi_deck_7', 'Toy Box & Block Defenders', 'Earth Machine & Rock', 'Playful toy soldiers and sturdy block sentinels stall the enemy for devastating counterattacks.', 'yugi-muto', 7,
           buildDeck(['Toy Soldier', 'Toy Magician', 'Blockman', 'Block Golem', 'Giant Soldier of Stone', 'Morphing Jar', 'Swords of Revealing Light', 'Scapegoat', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { attribute: 'EARTH', era: 'DM' })
@@ -61,7 +61,7 @@ export function getDmCharacters(): CharacterData[] {
       themeColor: '#e3c567',
       decks: [
         makeDeckData('yami_deck_1', 'Dark Magician Arcana', 'Dark Magician / Spellcasters', 'Commands the Ultimate Wizard in terms of attack and defense with powerful spell support.', 'yami-yugi', 1,
-          buildDeck(['Dark Magician', 'Dark Magician Girl', 'Magician\'s Valkyria', 'Skilled Dark Magician', 'Buster Blader', 'Dark Magic Curtain', 'Thousand Knives', 'Dark Magic Attack', 'Eye of Timaeus', 'Magical Dimension', 'Polymerization', 'Monster Reborn', 'Pot of Greed', 'Graceful Charity', 'Mirror Force', 'Magician\'s Circle'], { race: 'Spellcaster', era: 'DM' }, ['Dark Paladin', 'Dark Magician Girl the Dragon Knight', 'Dark Magician the Dragon Knight'])
+          buildDeck(['Dark Magician', 'Dark Magician Girl', 'Magician\'s Valkyria', 'Skilled Dark Magician', 'Buster Blader', 'Dark Magic Curtain', 'Thousand Knives', 'Dark Magic Attack', 'Eye of Timaeus', 'Magical Dimension', 'Polymerization', 'Monster Reborn', 'Pot of Greed', 'Graceful Charity', 'Mirror Force', 'Magician\'s Circle'], { race: 'Spellcaster', era: 'DM' }, ['Dark Paladin'])
         ),
         makeDeckData('yami_deck_2', 'Slifer the Sky Dragon Descent', 'Egyptian God / Slifer Turbo', 'Gathers three tributes and accumulates card advantage to power up Slifer the Sky Dragon.', 'yami-yugi', 2,
           buildDeck(['Slifer the Sky Dragon', 'Dark Magician', 'Dark Magician Girl', 'Big Shield Gardna', 'Watapon', 'Kuriboh', 'Multiply', 'Card of Safe Return', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Premature Burial', 'Call of the Haunted', 'Swords of Revealing Light', 'Mirror Force'], { race: 'Spellcaster', era: 'DM' })
@@ -70,13 +70,13 @@ export function getDmCharacters(): CharacterData[] {
           buildDeck(['Black Luster Soldier', 'Black Luster Ritual', 'Magician of Black Chaos', 'Black Magic Ritual', 'Dark Magician', 'Gaia The Fierce Knight', 'Curse of Dragon', 'Polymerization', 'Sonic Bird', 'Senju of the Thousand Hands', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Warrior', era: 'DM' }, ['Gaia the Dragon Champion'])
         ),
         makeDeckData('yami_deck_4', 'Legendary Dragons & Hermos', 'Legendary Dragons & Fusion', 'Unites the Three Legendary Dragons: Timaeus, Critias, and Hermos with royal knights.', 'yami-yugi', 4,
-          buildDeck(['Dark Magician', 'Dark Magician Girl', 'Buster Blader', 'The Eye of Timaeus', 'The Fang of Critias', 'The Claw of Hermos', 'Mirror Force Dragon', 'Red-Eyes Black Dragon Sword', 'Time Magic Hammer', 'Polymerization', 'Pot of Greed', 'Graceful Charity', 'Mirror Force', 'Ring of Destruction', 'Torrential Tribute'], { era: 'DM' }, ['Dark Paladin', 'Dark Magician the Dragon Knight', 'Mirror Force Dragon', 'Red-Eyes Black Dragon Sword', 'Time Magic Hammer'])
+          buildDeck(['Dark Magician', 'Dark Magician Girl', 'Buster Blader', 'The Eye of Timaeus', 'The Fang of Critias', 'The Claw of Hermos', 'Polymerization', 'Pot of Greed', 'Graceful Charity', 'Mirror Force', 'Ring of Destruction', 'Torrential Tribute'], { era: 'DM' }, ['Dark Paladin'])
         ),
         makeDeckData('yami_deck_5', 'Dark Paladin Dragon Slayer', 'Dark Paladin Fusion', 'Combines Buster Blader and Dark Magician into the ultimate Dragon-slaying paladin.', 'yami-yugi', 5,
           buildDeck(['Dark Magician', 'Buster Blader', 'King of the Swamp', 'Skilled Dark Magician', 'Skilled White Magician', 'Polymerization', 'Fusion Sage', 'Emblem of Dragon Destroyer', 'Dark Magic Attack', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn'], { race: 'Spellcaster', era: 'DM' }, ['Dark Paladin'])
         ),
-        makeDeckData('yami_deck_6', 'Chimera Mythical Phantom Beast', 'Beast & Fusion Illusion', 'Fuses Gazelle the King of Mythical Beasts and Berfomet into Chimera.', 'yami-yugi', 6,
-          buildDeck(['Gazelle the King of Mythical Beasts', 'Berfomet', 'Phantom Beast Cross-Wing', 'Phantom Beast Wild-Horn', 'Polymerization', 'Fusion Recovery', 'Monster Reborn', 'Pot of Greed', 'Graceful Charity', 'Mirror Force'], { race: 'Beast', era: 'DM' }, ['Chimera the Flying Mythical Beast'])
+        makeDeckData('yami_deck_6', 'Chimera Mythical Phantom Beast', 'Beast & Phantom Assault', 'Commands Gazelle the King of Mythical Beasts and Berfomet in wild tandem.', 'yami-yugi', 6,
+          buildDeck(['Gazelle the King of Mythical Beasts', 'Berfomet', 'Phantom Beast Cross-Wing', 'Phantom Beast Wild-Horn', 'Horn of the Phantom Beast', 'Beast Rising', 'Monster Reborn', 'Pot of Greed', 'Graceful Charity', 'Mirror Force'], { race: 'Beast', era: 'DM' })
         ),
         makeDeckData('yami_deck_7', 'Kuriboh Brothers Defense', 'Kuriboh Swarm & Stall', 'The furry guardian Kuriboh multiplies into an impenetrable defensive shield.', 'yami-yugi', 7,
           buildDeck(['Kuriboh', 'Kuribabylon', 'Winged Kuriboh', 'Multiply', 'Flute of Summoning Kuriboh', 'Transcendent Wings', 'Morphing Jar', 'Swords of Revealing Light', 'Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Mirror Force'], { race: 'Fiend', era: 'DM' }, ['Winged Kuriboh LV10'])

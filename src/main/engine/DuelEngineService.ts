@@ -862,6 +862,45 @@ export class DuelEngineService {
       pf.currentLp = msg.lp;
       if (msg.player === 0) this.state.p0LP = pf.currentLp;
       else this.state.p1LP = pf.currentLp;
+    } else if (rawType === OcgMessageType.ADD_COUNTER && 'location' in msg) {
+      const { controller, location, sequence, count } = msg as any;
+      const pf = this.getPlayerField(controller);
+      const targetList = location === OcgLocation.MZONE ? pf.monsterZones : (location === OcgLocation.SZONE && sequence < 5 ? pf.spellTrapZones : null);
+      if (targetList && targetList[sequence]) {
+        const card = targetList[sequence]!;
+        card.counters = (card.counters || 0) + (count || 1);
+      } else if (location === OcgLocation.FZONE || (location === OcgLocation.SZONE && sequence === 5)) {
+        if (pf.fieldZone) {
+          pf.fieldZone.counters = (pf.fieldZone.counters || 0) + (count || 1);
+        }
+      }
+    } else if (rawType === OcgMessageType.REMOVE_COUNTER && 'location' in msg) {
+      const { controller, location, sequence, count } = msg as any;
+      const pf = this.getPlayerField(controller);
+      const targetList = location === OcgLocation.MZONE ? pf.monsterZones : (location === OcgLocation.SZONE && sequence < 5 ? pf.spellTrapZones : null);
+      if (targetList && targetList[sequence]) {
+        const card = targetList[sequence]!;
+        card.counters = Math.max(0, (card.counters || 0) - (count || 1));
+      } else if (location === OcgLocation.FZONE || (location === OcgLocation.SZONE && sequence === 5)) {
+        if (pf.fieldZone) {
+          pf.fieldZone.counters = Math.max(0, (pf.fieldZone.counters || 0) - (count || 1));
+        }
+      }
+    } else if (rawType === OcgMessageType.CARD_HINT && 'location' in msg) {
+      const { controller, location, sequence, card_hint, description } = msg as any;
+      const pf = this.getPlayerField(controller);
+      const targetList = location === OcgLocation.MZONE ? pf.monsterZones : (location === OcgLocation.SZONE && sequence < 5 ? pf.spellTrapZones : null);
+      const val = Number(description);
+      if (targetList && targetList[sequence]) {
+        const card = targetList[sequence]!;
+        if (card_hint === 1) { // OcgCardHintType.TURN
+          card.turnCounter = val;
+        }
+      } else if (location === OcgLocation.FZONE || (location === OcgLocation.SZONE && sequence === 5)) {
+        if (pf.fieldZone && card_hint === 1) {
+          pf.fieldZone.turnCounter = val;
+        }
+      }
     }
   }
 
@@ -952,6 +991,10 @@ export class DuelEngineService {
           movedCard.atk = detail.atk;
           movedCard.def = detail.def;
           movedCard.level = detail.level;
+        } else {
+          movedCard.atk = undefined;
+          movedCard.def = undefined;
+          movedCard.level = undefined;
         }
         movedCard.attribute = detail.attributeName;
         movedCard.race = detail.raceName;

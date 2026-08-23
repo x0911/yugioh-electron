@@ -230,6 +230,7 @@
   padding: 10px 12px;
   background: rgba(0, 0, 0, 0.4);
   border-bottom: 1px solid rgba(201, 162, 39, 0.3);
+  flex-shrink: 0;
 }
 
 .deck-autocomplete__search-icon {
@@ -269,12 +270,16 @@
 /* Filter Tabs */
 .deck-autocomplete__tabs {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
   padding: 6px 10px;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.35);
   border-bottom: 1px solid rgba(201, 162, 39, 0.2);
   overflow-x: auto;
   scrollbar-width: none;
+  flex-shrink: 0;
+  min-height: 38px;
+  box-sizing: border-box;
 
   &::-webkit-scrollbar {
     display: none;
@@ -282,13 +287,20 @@
 }
 
 .deck-autocomplete__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 26px;
+  box-sizing: border-box;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
-  padding: 4px 8px;
+  border-radius: 4px;
+  padding: 0 8px;
   font-family: $font-family-display;
   font-size: 0.72rem;
   font-weight: 600;
+  line-height: 1;
   color: $color-text-secondary;
   white-space: nowrap;
   cursor: pointer;
@@ -300,22 +312,24 @@
   }
 
   &--active {
-    background: rgba(201, 162, 39, 0.15);
-    border-color: rgba(201, 162, 39, 0.5);
+    background: rgba(201, 162, 39, 0.2);
+    border-color: rgba(201, 162, 39, 0.65);
     color: $color-gold-100;
-    box-shadow: 0 0 8px rgba(201, 162, 39, 0.2);
+    box-shadow: 0 0 8px rgba(201, 162, 39, 0.25);
   }
 }
 
 .deck-autocomplete__tab-count {
   font-family: $font-family-numeric;
-  opacity: 0.75;
+  opacity: 0.85;
   font-size: 0.68rem;
+  line-height: 1;
 }
 
 /* Scrollable List */
 .deck-autocomplete__list {
   flex: 1;
+  min-height: 140px;
   max-height: 340px;
   overflow-y: auto;
   padding: 6px;
@@ -466,6 +480,148 @@
   font-weight: 800;
   padding: 0 2px;
   border-radius: 2px;
+}
+
+/* Card Filter Header Bar inside dropdown */
+.deck-autocomplete__card-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, rgba(201, 162, 39, 0.18) 0%, rgba(10, 14, 22, 0.95) 100%);
+  border: 1px solid rgba(201, 162, 39, 0.5);
+  border-radius: 6px;
+  margin: 6px 10px 4px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 12px rgba(201, 162, 39, 0.15), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.card-filter-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.filter-card-thumb {
+  width: 24px;
+  height: 35px;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid rgba(201, 162, 39, 0.7);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+  flex-shrink: 0;
+}
+
+.filter-card-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.filter-card-label {
+  font-family: $font-family-display;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: $color-gold-500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.filter-card-name {
+  font-family: $font-family-display;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.filter-matches-pill {
+  font-family: $font-family-numeric;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: $color-gold-300;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.filter-card-clear-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.4);
+    color: #ffffff;
+    border-color: #ef4444;
+  }
+}
+
+/* In-trigger active card filter chip */
+.deck-autocomplete__active-filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(201, 162, 39, 0.18);
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: $font-family-display;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: $color-gold-300;
+  white-space: nowrap;
+  animation: pulseGoldGlow 2.5s infinite;
+}
+
+@keyframes pulseGoldGlow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(201, 162, 39, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(201, 162, 39, 0.5);
+  }
+}
+
+/* In-item card copy badge */
+.deck-autocomplete__card-copies-tag {
+  font-family: $font-family-display;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #fef08a;
+  background: rgba(202, 138, 4, 0.25);
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  border-radius: 3px;
+  padding: 1px 5px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.deck-autocomplete__card-match-sub {
+  font-size: 0.68rem;
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
 }
 
 /* Empty State */

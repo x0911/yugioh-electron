@@ -148,7 +148,9 @@ export class DefaultExecutor implements DeckExecutor {
         const detail = code > 0 ? cardReader.getCardDetail(code) : null;
         const atk = detail?.atk ?? 1200;
         const level = detail?.level ?? 4;
+        const def = detail?.def ?? 1000;
         const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
+        const isFlip = detail?.isFlip || (detail?.desc?.includes('FLIP:') ?? false);
 
         // Slifer Floodgate check: don't summon low-ATK into active Slifer
         if (hasOppSlifer && atk <= 2000) {
@@ -160,6 +162,38 @@ export class DefaultExecutor implements DeckExecutor {
             },
             score: -4000,
             reason: `[AVOID] Do not Normal Summon ${name} (${atk} ATK) into Slifer's 2000 ATK debuff`,
+            cardCode: code,
+            cardName: name,
+          });
+          continue;
+        }
+
+        // Avoid Normal Summoning Flip Effect monsters in Attack Position (wastes effect)
+        if (isFlip && atk < 2000) {
+          candidates.push({
+            action: {
+              type: OcgResponseType.SELECT_IDLECMD,
+              action: SelectIdleCMDAction.SELECT_SUMMON,
+              index: i,
+            },
+            score: -3000,
+            reason: `[AVOID] Do not Normal Summon Flip Effect monster ${name} in Attack Position; set face-down to utilize Flip effect`,
+            cardCode: code,
+            cardName: name,
+          });
+          continue;
+        }
+
+        // Avoid Normal Summoning defensive walls (high DEF, low ATK) in Attack Position
+        if (def > atk + 300 && atk <= 1500) {
+          candidates.push({
+            action: {
+              type: OcgResponseType.SELECT_IDLECMD,
+              action: SelectIdleCMDAction.SELECT_SUMMON,
+              index: i,
+            },
+            score: -2500,
+            reason: `[AVOID] Do not Normal Summon defensive wall ${name} (${atk} ATK / ${def} DEF) in Attack Position; set face-down`,
             cardCode: code,
             cardName: name,
           });
@@ -228,8 +262,19 @@ export class DefaultExecutor implements DeckExecutor {
         const def = detail?.def ?? 1000;
         const atk = detail?.atk ?? 1000;
         const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
+        const isFlip = detail?.isFlip || (detail?.desc?.includes('FLIP:') ?? false);
 
         let score = def * 0.5 * (defensiveness + 0.3);
+        let reason = `Set monster ${name} in Defense Position (${def} DEF)`;
+
+        if (isFlip) {
+          score += 2000; // Major priority to set Flip Effect monsters (Man-Eater Bug, Cyber Jar, Castle of Dark Illusions, etc.)
+          reason = `[PRIORITY SET] Set Flip Effect monster ${name} face-down in Defense Position (${def} DEF)`;
+        } else if (def > atk + 300 && atk <= 1500) {
+          score += 1200 + (def - atk) * 0.5; // Strong preference to set high-DEF defensive walls (Prevent Rat, Giant Soldier of Stone, etc.)
+          reason = `[DEFENSIVE SET] Set defensive wall ${name} (${def} DEF vs ${atk} ATK) face-down`;
+        }
+
         if (hasOppSlifer && atk <= 2000) {
           score += 1500; // Prefer setting when Slifer is face-up
         }
@@ -244,7 +289,7 @@ export class DefaultExecutor implements DeckExecutor {
             index: i,
           },
           score,
-          reason: `Set monster ${name} in Defense Position (${def} DEF)`,
+          reason,
           cardCode: code,
           cardName: name,
         });

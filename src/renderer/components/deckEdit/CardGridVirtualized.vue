@@ -32,6 +32,7 @@
           'card-grid-item--in-deck': (deckCounts.get(card.id) ?? 0) > 0,
           'card-grid-item--max': (deckCounts.get(card.id) ?? 0) >= 3,
           'card-grid-item--dragging': store.isDragging && store.draggingCard?.id === card.id,
+          'card-grid-item--filter-active': store.deckFilterCard?.id === card.id,
         }"
         draggable="true"
         @mouseenter="onCardHover(card)"
@@ -50,6 +51,15 @@
             @error="handleImageError"
           />
 
+          <!-- Active Filter Badge -->
+          <div
+            v-if="store.deckFilterCard?.id === card.id"
+            class="card-filtered-badge"
+            title="Filtering Decks with this Card"
+          >
+            🎴 FILTERED
+          </div>
+
           <!-- Quantity Badge in Deck (x0, x1, x2, x3) -->
           <div
             class="card-count-badge"
@@ -60,6 +70,17 @@
           >
             x{{ deckCounts.get(card.id) ?? 0 }}
           </div>
+
+          <!-- Quick Deck Filter Button on Card -->
+          <button
+            type="button"
+            class="card-quick-find-decks-btn"
+            :class="{ 'card-quick-find-decks-btn--active': store.deckFilterCard?.id === card.id }"
+            :title="store.deckFilterCard?.id === card.id ? 'Clear deck filter' : `Find decks containing ${card.name}`"
+            @click.stop="toggleCardDeckFilter(card)"
+          >
+            🗂️
+          </button>
 
           <!-- Drag Handle / Indicator Icon on Hover -->
           <div class="card-drag-indicator" title="Drag to Deck">
@@ -246,8 +267,17 @@ function onCardClick(card: CardDetail): void {
   store.setHoveredCard(card);
 }
 
-function onCardRightClick(card: CardDetail): void {
+function toggleCardDeckFilter(card: CardDetail): void {
   store.setHoveredCard(card);
+  if (store.deckFilterCard?.id === card.id) {
+    store.clearDeckFilterCard();
+  } else {
+    store.setDeckFilterCard(card);
+  }
+}
+
+function onCardRightClick(card: CardDetail): void {
+  toggleCardDeckFilter(card);
 }
 
 // HTML5 Drag & Drop handlers
@@ -390,6 +420,11 @@ function onPoolDrop(e: DragEvent): void {
     border-color: rgba(61, 220, 151, 0.8);
   }
 
+  &--filter-active {
+    border-color: $color-gold-500;
+    box-shadow: 0 0 16px rgba(201, 162, 39, 0.6), inset 0 0 8px rgba(201, 162, 39, 0.3);
+  }
+
   &--dragging {
     opacity: 0.4;
     border-style: dashed;
@@ -411,6 +446,61 @@ function onPoolDrop(e: DragEvent): void {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.card-filtered-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 2px 5px;
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.95) 0%, rgba(161, 98, 7, 0.95) 100%);
+  border: 1px solid #fef08a;
+  border-radius: 3px;
+  font-family: $font-family-display;
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #1a1200;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  z-index: 5;
+}
+
+.card-quick-find-decks-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(10, 14, 22, 0.8);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  color: $color-gold-300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 140ms ease;
+  z-index: 4;
+
+  .card-grid-item:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    background: rgba(201, 162, 39, 0.35);
+    border-color: $color-gold-300;
+    color: #ffffff;
+    transform: scale(1.1);
+  }
+
+  &--active {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.4);
+    border-color: #ef4444;
+    color: #ffffff;
+  }
 }
 
 .card-drag-indicator {
