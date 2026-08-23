@@ -390,7 +390,7 @@ async function onOpenPostMatchReview(): Promise<void> {
   postMatchReview.value = null;
   try {
     const latestDuel = duelLogsStore.savedDuels[0];
-    const markdownLog = latestDuel?.markdownLog || duelLogsStore.buildMarkdownReport(duelLogs.value, currentBoardState.value, {
+    const markdownLog = latestDuel?.markdownLog || duelLogsStore.buildMarkdownReport(currentBoardState.value, duelLogs.value, {
       outcome: isUserWinner.value ? 'victory' : 'defeat',
       winReason: gameOverSubtitle.value,
     });

@@ -129,6 +129,11 @@ Comprehensive log of all completed phases, features, bug fixes, AI systems, and 
     - **$\ge 40$ Card Completeness & Database Verification**: All 400 character decks and 21 popular decks guaranteed $\ge 40$ main cards with 100% legal card codes verified against `data/card-pool-whitelist.json` and `resources/cards.cdb`.
     - **AI Personality Profiles**: Added 20 new distinct AI personality configurations in `personalityProfiles.ts` tuning aggression, risk tolerance, and combo weights.
     - **Deck Edit Autocomplete Active Deck Pre-Scroll**: Updated `DeckSelectorAutocomplete.vue` on open to dynamically locate the index of `props.modelValue` and center-scroll the active deck into visible viewport focus (`block: 'center'`).
+21. **High-DEF Wall Recoil Suicide Prevention, Stolen Monster Tribute Priority & AI Tactical Review Diagnostics Fix**:
+    - **Face-Up High-DEF Wall Avoidance**: Updated `decideSelectCard` in `AIController.ts` to inspect opponent defense monsters and heavily penalize targeting face-up defense monsters whose DEF exceeds attacker ATK (e.g. *Giant Soldier of Stone* 2000 DEF, *Labyrinth Wall* 3000 DEF). The AI now attacks unknown face-down cards or passes instead of suicidal self-recoil attacks.
+    - **Stolen Monster Tribute Priority**: Updated `DefaultExecutor.onSelectTribute` and `decideSelectTribute` in `AIController.ts` to prioritize sacrificing stolen opponent monsters (e.g. under *Snatch Steal*, *Change of Heart*, or *Brain Control*), stopping the +1000 LP/turn heal to the opponent and disposing of temporary control monsters before End Phase.
+    - **"AI Tactical Review" Empty Dialog Fix**: Fixed argument order in `DuelView.vue` (`buildMarkdownReport(currentBoardState.value, duelLogs.value)`) and made `buildMarkdownReport` in `duelLogsStore.ts` argument-order resilient. Added empty/error state handling in `DuelReviewModal.vue`.
+    - **Player Perspective Auto-Detection in Reviewer**: Updated `DuelReviewerService.ts` to auto-detect whether AI is Player 0 or Player 1 from event logs, detecting recoil attacks into high-DEF walls as critical `SUICIDAL_ATTACK` blunders.
 
 ---
 

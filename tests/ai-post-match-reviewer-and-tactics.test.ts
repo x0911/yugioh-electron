@@ -231,5 +231,121 @@ describe('AI Tactical Improvements & Autonomous Post-Match Reviewer', () => {
     assert.ok(report.blunders.some((b) => b.type === 'WALL_SACRIFICE'), 'Must detect WALL_SACRIFICE blunder');
     assert.ok(report.learnedLessons.some((l) => l.includes('indestructible stall walls')));
   });
+
+  it('7. High-DEF Wall Avoidance in decideSelectCard: Giant Soldier of Stone (2000 DEF) is avoided', async () => {
+    const { aiController } = await import('../src/main/ai/AIController.js');
+    const { OcgMessageType, OcgResponseType } = await import('ocgcore-wasm');
+
+    const context = createMockContext(2, 2);
+    const oppField = context.boardState.userField;
+    // Set opp monster 0: Giant Soldier of Stone in face-up defense (2000 DEF)
+    oppField.monsterZones[0] = createMockCard({
+      code: 13039848,
+      name: 'Giant Soldier of Stone',
+      controller: 0,
+      position: 'faceup_defense',
+      atk: 1300,
+      def: 2000,
+      sequence: 0,
+    });
+    // Set opp monster 1: Face-down unknown monster (sanitized for anti-cheat)
+    oppField.monsterZones[1] = {
+      id: 'opp-m2',
+      code: 0,
+      name: 'Face-down Card',
+      controller: 0,
+      location: 'monster',
+      sequence: 1,
+      position: 'facedown_defense',
+      atk: undefined,
+      def: undefined,
+      level: undefined,
+      statuses: [],
+    };
+
+    const msg = {
+      type: OcgMessageType.SELECT_CARD,
+      min: 1,
+      max: 1,
+      selects: [
+        { code: 13039848, controller: 0, location: 0x4, sequence: 0, position: 4 }, // Giant Soldier of Stone
+        { code: 0, controller: 0, location: 0x4, sequence: 1, position: 8 }, // Face-down monster
+      ],
+    };
+
+    const aiResp = aiController.decideResponse(msg as any, context);
+    assert.equal(aiResp.type, OcgResponseType.SELECT_CARD);
+    // Index 1 (face-down monster) must be chosen over Index 0 (2000 DEF wall)
+    assert.deepEqual((aiResp as any).indicies, [1], 'AI must target face-down card and avoid 2000 DEF wall');
+  });
+
+  it('8. Stolen Monster Tribute Priority: Stolen monster under Snatch Steal is sacrificed first', async () => {
+    const { DefaultExecutor } = await import('../src/main/ai/executors/DefaultExecutor.js');
+    const { aiController } = await import('../src/main/ai/AIController.js');
+    const { OcgMessageType, OcgResponseType } = await import('ocgcore-wasm');
+
+    const executor = new DefaultExecutor();
+    const context = createMockContext(2, 2);
+    // AI has Snatch Steal in spell zone
+    const aiField = context.boardState.opponentField;
+    aiField.spellTrapZones[0] = createMockCard({
+      code: 45986603,
+      name: 'Snatch Steal',
+      controller: 1,
+      location: 'spell',
+    });
+
+    const msg = {
+      type: OcgMessageType.SELECT_TRIBUTE,
+      min: 1,
+      max: 1,
+      selects: [
+        { code: 10000, controller: 1, owner: 1, location: 'monster', sequence: 0 }, // AI native monster (1400 ATK)
+        { code: 20000, controller: 1, owner: 0, location: 'monster', sequence: 1 }, // Stolen Celtic Guardian (1400 ATK)
+      ],
+    };
+
+    const tributes = executor.onSelectTribute(msg as any, context);
+    assert.deepEqual(tributes, [1], 'DefaultExecutor must prioritize sacrificing stolen monster (index 1)');
+
+    const aiResp = aiController.decideResponse(msg as any, context);
+    assert.equal(aiResp.type, OcgResponseType.SELECT_TRIBUTE);
+    assert.deepEqual((aiResp as any).indicies, [1], 'AIController must prioritize sacrificing stolen monster');
+  });
+
+  it('9. Post-Match Reviewer: Auto-detects aiPlayerId = 0 when human is Player 1 and detects recoil attacks', async () => {
+    const testPath = '/tmp/test-tactical-memory-recoil.json';
+    try {
+      const fs = await import('node:fs');
+      if (fs.existsSync(testPath)) fs.unlinkSync(testPath);
+    } catch {}
+    const memoryStore = new TacticalMemoryStore(testPath);
+    const reviewer = new DuelReviewerService(memoryStore);
+
+    // Duel log where Player 1 is Human (has card names in draw) and Player 0 is AI attacking into defense wall
+    const userLog = `=== YU-GI-OH! DUEL LOG & DIAGNOSTIC REPORT ===
+• Turn: 7 | Phase: BP | Turn Player: Player (You)
+--- EVENT STREAM ---
+[28:52.0] [DRAW] Player 0 drew 5 card(s).
+[28:52.0] [DRAW] Player 1 drew: Buster Blader, Dark Hole, Giant Soldier of Stone
+[29:32.6] [NEW_TURN] Turn 7 begins. Active player: Player 0
+[29:32.6] [ATTACK] Player 0's monster declared an attack on opponent monster.
+[29:32.6] [BATTLE] Battle clash: Attacker (ATK 1900) vs Defender (ATK 1300).
+[29:32.6] [DAMAGE] Player 0 took 100 damage.
+[29:33.9] [ATTACK] Player 0's monster declared an attack on opponent monster.
+[29:33.9] [BATTLE] Battle clash: Attacker (ATK 1500) vs Defender (ATK 1300).
+[29:33.9] [DAMAGE] Player 0 took 500 damage.
+[29:35.4] [ATTACK] Player 0's monster declared an attack on opponent monster.
+[29:35.4] [BATTLE] Battle clash: Attacker (ATK 1400) vs Defender (ATK 1300).
+[29:35.4] [DAMAGE] Player 0 took 600 damage.
+[29:40.0] [WIN] Duel ended! Winner: Player 1 (Reason: 1).
+==============================================`;
+
+    const report = await reviewer.reviewDuel(userLog, null, 1, 'Marik Ishtar');
+    assert.equal(report.matchResult, 'DEFEAT');
+    // Must detect all 3 recoil attack blunders for Player 0
+    assert.equal(report.blunders.filter((b) => b.type === 'SUICIDAL_ATTACK').length, 3);
+    assert.ok(report.gradeScore < 50);
+  });
 });
 

@@ -484,7 +484,9 @@ export class DefaultExecutor implements DeckExecutor {
 
   public onSelectTribute(msg: OcgMessage, context: EvaluatorContext): number[] | null {
     if (!msg.selects || msg.selects.length === 0) return null;
-    const { cardReader } = context;
+    const { cardReader, boardState, aiPlayerId } = context;
+    const aiField = boardState.userField.playerId === aiPlayerId ? boardState.userField : boardState.opponentField;
+    const hasSnatchStealActive = aiField.spellTrapZones.some((s) => s && s.code === 45986603);
     const minCount = msg.min ?? 1;
 
     // Score tribute candidates: lowest value monsters / tokens are best tribute fodder
@@ -503,6 +505,15 @@ export class DefaultExecutor implements DeckExecutor {
       if (isToken) score += 5000; // Tokens are ideal tributes
       if (code === 11662742) score += 2000; // Gellenduo counts as 2 tributes for LIGHT Fairy
       if (isIndestructibleWall) score -= 50000; // Protect indestructible stall walls from being sacrificed
+
+      // If monster is stolen from opponent:
+      // Heavily prioritize sacrificing to stop opponent's +1000 LP gain and consume enemy monster!
+      const isStolenMonster = (c.owner !== undefined && c.owner !== aiPlayerId) || c.controller !== c.owner;
+      if (isStolenMonster) {
+        score += 100000;
+      } else if (hasSnatchStealActive && c.equipped) {
+        score += 100000;
+      }
 
       return { index, score };
     });

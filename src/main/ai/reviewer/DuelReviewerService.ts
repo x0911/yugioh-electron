@@ -36,6 +36,14 @@ export class DuelReviewerService {
     const bestMoves: string[] = [];
     const learnedLessons: string[] = [];
 
+    // Auto-detect aiPlayerId if inferrable from standard duel format
+    let resolvedAiPlayerId = aiPlayerId;
+    if (logMarkdown.includes('[DRAW] Player 1 drew:') && logMarkdown.includes('[DRAW] Player 0 drew 5 card(s).')) {
+      resolvedAiPlayerId = 0; // Standard format where human is Player 1 and AI is Player 0
+    } else if (logMarkdown.includes('[DRAW] Player 0 drew:') && logMarkdown.includes('[DRAW] Player 1 drew 5 card(s).')) {
+      resolvedAiPlayerId = 1; // Standard format where human is Player 0 and AI is Player 1
+    }
+
     const lines = logMarkdown.split('\n');
     let currentTurn = 1;
     let turnPlayer = 0;
@@ -64,17 +72,17 @@ export class DuelReviewerService {
       if (line.includes('[DRAW] Player 1 drew')) {
         const drawMatch = line.match(/drew (\d+) card/);
         const count = drawMatch ? parseInt(drawMatch[1], 10) : 1;
-        if (aiPlayerId === 1) aiHandCount += count;
+        if (resolvedAiPlayerId === 1) aiHandCount += count;
         else oppHandCount += count;
       } else if (line.includes('[DRAW] Player 0 drew')) {
         const drawMatch = line.match(/drew (\d+) card/);
         const count = drawMatch ? parseInt(drawMatch[1], 10) : 1;
-        if (aiPlayerId === 0) aiHandCount += count;
+        if (resolvedAiPlayerId === 0) aiHandCount += count;
         else oppHandCount += count;
       }
 
       // Track Phase
-      if (line.includes('[NEW_PHASE] Phase changed to BATTLE_START') && turnPlayer === aiPlayerId) {
+      if (line.includes('[NEW_PHASE] Phase changed to BATTLE_START') && turnPlayer === resolvedAiPlayerId) {
         inAiBattlePhase = true;
         battleDeclaredThisPhase = false;
         aiReadyAttackersCount = (lastSummonedMonster && lastSummonedMonster.turn === currentTurn ? 1 : 2);
@@ -97,7 +105,7 @@ export class DuelReviewerService {
 
       // Track Attacks & Suicides
       if (line.includes('[ATTACK] Player 1\'s monster declared an attack') || line.includes('[ATTACK] Player 0\'s monster declared an attack')) {
-        const isAiAttack = (line.includes(`Player ${aiPlayerId}`));
+        const isAiAttack = (line.includes(`Player ${resolvedAiPlayerId}`));
         if (isAiAttack) {
           battleDeclaredThisPhase = true;
           // Check subsequent battle clash lines
@@ -107,18 +115,28 @@ export class DuelReviewerService {
             if (match) {
               const attackerAtk = parseInt(match[1], 10);
               const defenderAtk = parseInt(match[2], 10);
-              if (attackerAtk < defenderAtk && defenderAtk > 0) {
-                const selfDmg = defenderAtk - attackerAtk;
-                const blunder: Omit<BlunderEntry, 'id' | 'timestamp'> = {
-                  turn: currentTurn,
-                  type: 'SUICIDAL_ATTACK',
-                  cardName: lastSummonedMonster?.name || 'Attacking Monster',
-                  description: `AI declared a suicidal attack with ${attackerAtk} ATK into a ${defenderAtk} ATK defender, suffering ${selfDmg} self-damage.`,
-                  remedy: `Strictly avoid declaring attacks when attacker ATK is lower than target defender ATK.`,
-                  damagePenalty: selfDmg,
-                };
-                blunders.push({ ...blunder, id: `blunder-${Date.now()}-${blunders.length}`, timestamp: new Date().toISOString() });
-                this.memoryStore.recordBlunder(blunder);
+
+              // Check if AI took damage from this clash (suicide into stronger ATK or recoil from high DEF wall)
+              for (let k = j + 1; k < Math.min(lines.length, j + 8); k++) {
+                const dmgMatch = lines[k].match(/\[DAMAGE\] Player (\d+) took (\d+) damage/);
+                if (dmgMatch) {
+                  const dmgPlayer = parseInt(dmgMatch[1], 10);
+                  const dmgAmt = parseInt(dmgMatch[2], 10);
+                  if (dmgPlayer === resolvedAiPlayerId && dmgAmt > 0) {
+                    const blunder: Omit<BlunderEntry, 'id' | 'timestamp'> = {
+                      turn: currentTurn,
+                      type: 'SUICIDAL_ATTACK',
+                      cardName: lastSummonedMonster?.name || 'Attacking Monster',
+                      description: `AI declared an attack with ${attackerAtk} ATK resulting in ${dmgAmt} self-inflicted recoil damage.`,
+                      remedy: `Strictly avoid declaring attacks when attacker ATK is lower than target defender or into higher DEF defense walls.`,
+                      damagePenalty: dmgAmt,
+                    };
+                    blunders.push({ ...blunder, id: `blunder-${Date.now()}-${blunders.length}`, timestamp: new Date().toISOString() });
+                    this.memoryStore.recordBlunder(blunder);
+                  }
+                  break;
+                }
+                if (lines[k].includes('[DAMAGE_STEP_END]')) break;
               }
               break;
             }
@@ -127,15 +145,15 @@ export class DuelReviewerService {
       }
 
       // Track Card Destruction Advantage Leaks
-      if (line.includes(`Player ${aiPlayerId} activated effect of Card Destruction`)) {
+      if (line.includes(`Player ${resolvedAiPlayerId} activated effect of Card Destruction`)) {
         let drawnByAi = 0;
         let drawnByOpp = 0;
         for (let j = i + 1; j < Math.min(lines.length, i + 10); j++) {
           const drawLine = lines[j];
-          if (drawLine.includes(`[DRAW] Player ${aiPlayerId} drew`)) {
+          if (drawLine.includes(`[DRAW] Player ${resolvedAiPlayerId} drew`)) {
             const m = drawLine.match(/drew (\d+) card/);
             if (m) drawnByAi = parseInt(m[1], 10);
-          } else if (drawLine.includes(`[DRAW] Player ${1 - aiPlayerId} drew`) || drawLine.includes(`[DRAW] Player ${aiPlayerId === 0 ? 1 : 0} drew`)) {
+          } else if (drawLine.includes(`[DRAW] Player ${1 - resolvedAiPlayerId} drew`)) {
             const m = drawLine.match(/drew (\d+) card/);
             if (m) drawnByOpp = parseInt(m[1], 10);
           }
@@ -160,16 +178,16 @@ export class DuelReviewerService {
       if (summonMatch) {
         const p = parseInt(summonMatch[1], 10);
         const name = summonMatch[2].trim();
-        if (p === aiPlayerId) {
+        if (p === resolvedAiPlayerId) {
           lastSummonedMonster = { name, atk: 1500, turn: currentTurn };
         }
       }
 
       // Track Indestructible Wall Sacrifices
-      if (line.includes(`Player ${aiPlayerId} Set a card on the field`) || line.includes(`Player ${aiPlayerId} is Normal Summoning`)) {
+      if (line.includes(`Player ${resolvedAiPlayerId} Set a card on the field`) || line.includes(`Player ${resolvedAiPlayerId} is Normal Summoning`)) {
         if (i > 0 && lines[i - 1].includes('[SELECT_TRIBUTE]')) {
           // Check if AI previously had Marshmallon or Spirit Reaper set
-          const hadMarshmallon = lines.slice(0, i).some((l) => l.includes('Marshmallon') && l.includes(`Player ${aiPlayerId}`));
+          const hadMarshmallon = lines.slice(0, i).some((l) => l.includes('Marshmallon') && l.includes(`Player ${resolvedAiPlayerId}`));
           if (hadMarshmallon) {
             const blunder: Omit<BlunderEntry, 'id' | 'timestamp'> = {
               turn: currentTurn,
@@ -185,10 +203,10 @@ export class DuelReviewerService {
       }
 
       // Track Best Moves
-      if (line.includes(`Player ${aiPlayerId} activated effect of Raigeki`) || line.includes(`Player ${aiPlayerId} activated effect of Dark Hole`)) {
+      if (line.includes(`Player ${resolvedAiPlayerId} activated effect of Raigeki`) || line.includes(`Player ${resolvedAiPlayerId} activated effect of Dark Hole`)) {
         bestMoves.push(`Turn ${currentTurn}: Timely board clear activation to reset opponent monster presence.`);
       }
-      if (line.includes(`Player ${aiPlayerId} activated effect of Power Bond`)) {
+      if (line.includes(`Player ${resolvedAiPlayerId} activated effect of Power Bond`)) {
         bestMoves.push(`Turn ${currentTurn}: Power Bond fusion summon doubling ATK for lethal pressure.`);
       }
     }
@@ -220,7 +238,7 @@ export class DuelReviewerService {
     }
 
     // Determine match result
-    const isAiWinner = finalBoard?.winner === aiPlayerId;
+    const isAiWinner = finalBoard?.winner === resolvedAiPlayerId;
     const matchResult: TacticalReviewReport['matchResult'] = finalBoard?.winner === null ? 'DRAW' : isAiWinner ? 'VICTORY' : 'DEFEAT';
 
     // Generate Commentary (LLM or deterministic)

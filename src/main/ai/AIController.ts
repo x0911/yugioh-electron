@@ -635,8 +635,8 @@ export class AIController {
     }
 
     const minCount = Math.max(1, msg.min ?? 1);
-    const maxCount = Math.min(msg.max ?? minCount, msg.selects.length);
-    const { aiPlayerId, cardReader, signatureCardIds } = context;
+    const { aiPlayerId, cardReader, signatureCardIds, boardState } = context;
+    const oppField = boardState.userField.playerId === aiPlayerId ? boardState.opponentField : boardState.userField;
 
     // Score each candidate in msg.selects
     const scoredCandidates = msg.selects.map((c: any, index: number) => {
@@ -655,8 +655,38 @@ export class AIController {
           (code === 23205979 || code === 31305911 || code === 11662742 || code === 37412656 || code === 78371393) &&
           (c.position === 8 || (c.position !== undefined && (c.position & 0x8) !== 0));
 
+        // Find monster in oppField if on monster zone
+        const oppMonster = (c.location === 0x4 && c.sequence !== undefined)
+          ? oppField.monsterZones[c.sequence]
+          : null;
+
+        const isFaceupDefense = (c.position !== undefined && ((c.position & 0x4) !== 0 || c.position === 4)) ||
+          oppMonster?.position === 'faceup_defense';
+        const isFacedownDefense = (c.position !== undefined && ((c.position & 0x8) !== 0 || c.position === 8)) ||
+          oppMonster?.position === 'facedown_defense';
+        const isFaceupAttack = (c.position !== undefined && ((c.position & 0x1) !== 0 || c.position === 1)) ||
+          oppMonster?.position === 'faceup_attack';
+
+        const def = detail?.isMonster ? detail.def : (oppMonster?.def ?? 1000);
+
         if (isBattleImmuneDef) {
-          score = -1000;
+          score = -5000;
+        } else if (isFaceupDefense) {
+          // If in face-up defense: check DEF vs typical attacker ATK
+          if (def >= 1800) {
+            // High-DEF wall (e.g. Giant Soldier of Stone 2000 DEF, Labyrinth Wall 3000 DEF)
+            // Attacking this deals self recoil damage and fails to destroy it!
+            score = -12000 - def;
+          } else {
+            // Weaker defense wall (can be destroyed by beatsticks)
+            score = 800 - def * 0.1;
+          }
+        } else if (isFacedownDefense) {
+          // Unknown face-down card: positive probing score
+          score = 1200;
+        } else if (isFaceupAttack) {
+          // Face-up attack monster: prioritize destroying it and inflicting damage
+          score = 3000 + atk;
         } else {
           score = atk + 500;
         }
@@ -688,9 +718,12 @@ export class AIController {
     }
 
     const minCount = Math.max(1, msg.min ?? 1);
-    const { cardReader } = context;
+    const { cardReader, boardState, aiPlayerId } = context;
+    const aiField = boardState.userField.playerId === aiPlayerId ? boardState.userField : boardState.opponentField;
+    const hasSnatchStealActive = aiField.spellTrapZones.some((s) => s && s.code === 45986603);
 
     // For tribute sacrifice: sacrifice LOWEST ATK monsters first, but PRESERVE indestructible walls
+    // AND PRIORITIZE SACRIFICING STOLEN / TEMPORARY OPPONENT MONSTERS (e.g. Snatch Steal / Change of Heart)
     const scoredCandidates = msg.selects.map((c: any, index: number) => {
       const code = c.code ?? 0;
       const detail = code > 0 ? cardReader.getCardDetail(code) : null;
@@ -705,6 +738,16 @@ export class AIController {
       if (isIndestructibleWall) {
         sacrificePriority -= 50000; // Never sacrifice indestructible stall wall unless forced
       }
+
+      // If monster is stolen from opponent:
+      // PRIORITIZE SACRIFICING IT to deny opponent +1000 LP and dispose of their monster!
+      const isStolenMonster = (c.owner !== undefined && c.owner !== aiPlayerId) || (c.controller === aiPlayerId && c.owner !== undefined && c.owner !== aiPlayerId);
+      if (isStolenMonster) {
+        sacrificePriority += 100000;
+      } else if (hasSnatchStealActive && c.equipped) {
+        sacrificePriority += 100000;
+      }
+
       return { index, sacrificePriority };
     });
 

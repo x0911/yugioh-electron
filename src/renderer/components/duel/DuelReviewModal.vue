@@ -103,6 +103,13 @@
         </div>
       </div>
 
+      <!-- Empty / Error State -->
+      <div v-else class="review-empty">
+        <span class="empty-icon">⚠️</span>
+        <h4 class="empty-title">Tactical Review Unavailable</h4>
+        <p class="empty-text">No match diagnostic data or events found for retrospective tactical analysis.</p>
+      </div>
+
       <!-- Modal Footer -->
       <div class="modal-footer">
         <button type="button" class="btn btn--secondary" @click="emit('close')">
@@ -454,6 +461,36 @@ function getGradeHeadline(grade: string): string {
     font-size: 0.8rem;
     color: #a0aec0;
     line-height: 1.35;
+  }
+}
+
+.review-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+
+  .empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+  }
+
+  .empty-title {
+    margin: 0 0 8px 0;
+    font-family: 'Oxanium', monospace, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f6ad55;
+  }
+
+  .empty-text {
+    margin: 0;
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    font-size: 0.9rem;
+    color: #a0aec0;
+    max-width: 400px;
   }
 }
 

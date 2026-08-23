@@ -119,10 +119,11 @@ export const useDuelLogsStore = defineStore('duelLogs', {
 
     /**
      * Builds standard markdown duel log string ready for 1-click LLM pasting.
+     * Resilient to either (boardState, logs) or (logs, boardState) parameter ordering.
      */
     buildMarkdownReport(
-      boardState: DuelBoardState | null,
-      logs: LogItem[],
+      arg1: DuelBoardState | LogItem[] | null,
+      arg2?: LogItem[] | DuelBoardState | null,
       options?: {
         outcome?: 'victory' | 'defeat' | 'draw' | 'surrender';
         winReason?: string | null;
@@ -130,11 +131,22 @@ export const useDuelLogsStore = defineStore('duelLogs', {
         guideSubText?: string;
       },
     ): string {
+      let boardState: DuelBoardState | null = null;
+      let logs: LogItem[] = [];
+
+      if (Array.isArray(arg1)) {
+        logs = arg1;
+        boardState = (arg2 && !Array.isArray(arg2)) ? (arg2 as DuelBoardState) : null;
+      } else {
+        boardState = arg1 as DuelBoardState | null;
+        logs = Array.isArray(arg2) ? arg2 : [];
+      }
+
       const lines: string[] = [];
       lines.push('```yugioh-duel-log');
       lines.push('=== YU-GI-OH! DUEL LOG & DIAGNOSTIC REPORT ===');
 
-      if (boardState) {
+      if (boardState && boardState.userField && boardState.opponentField) {
         const uPf = boardState.userField;
         const oPf = boardState.opponentField;
         lines.push(
