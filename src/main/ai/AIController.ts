@@ -638,6 +638,9 @@ export class AIController {
     const { aiPlayerId, cardReader, signatureCardIds, boardState } = context;
     const oppField = boardState.userField.playerId === aiPlayerId ? boardState.opponentField : boardState.userField;
 
+    const aiField = boardState.userField.playerId === aiPlayerId ? boardState.userField : boardState.opponentField;
+    const aiLp = aiField.currentLp;
+
     // Score each candidate in msg.selects
     const scoredCandidates = msg.selects.map((c: any, index: number) => {
       const code = c.code ?? 0;
@@ -679,11 +682,11 @@ export class AIController {
             score = -12000 - def;
           } else {
             // Weaker defense wall (can be destroyed by beatsticks)
-            score = 800 - def * 0.1;
+            score = 2200 - def * 0.5;
           }
         } else if (isFacedownDefense) {
-          // Unknown face-down card: positive probing score
-          score = 1200;
+          // Unknown face-down card: moderate score if healthy, heavily penalized if low LP
+          score = aiLp <= 2000 ? -2000 : 900;
         } else if (isFaceupAttack) {
           // Face-up attack monster: prioritize destroying it and inflicting damage
           score = 3000 + atk;

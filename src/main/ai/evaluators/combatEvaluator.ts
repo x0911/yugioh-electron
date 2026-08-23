@@ -16,7 +16,9 @@ export function evaluateAttackOption(
 ): ScoredAction {
   const { aiPlayerId, boardState, personality } = context;
   const oppField: PlayerFieldState = boardState.userField.playerId === aiPlayerId ? boardState.opponentField : boardState.userField;
+  const aiField: PlayerFieldState = boardState.userField.playerId === aiPlayerId ? boardState.userField : boardState.opponentField;
   const oppLp = oppField.currentLp;
+  const aiLp = aiField.currentLp;
 
   const oppMonsters = oppField.monsterZones.filter((m): m is FieldCard => m !== null);
 
@@ -106,8 +108,11 @@ export function evaluateAttackOption(
       } else {
         // Attacker is weaker: suicide
         const selfDamage = targetAtk - attacker.attackerAtk;
-        targetScore = -6000 - selfDamage * 5;
-        targetReason = `[AVOID] Suicide attack into stronger ${target.name} (${targetAtk} ATK)`;
+        const isLethal = selfDamage >= aiLp;
+        targetScore = isLethal ? -20000 : (-6000 - selfDamage * 5);
+        targetReason = isLethal
+          ? `[AVOID SUICIDE] Suicide attack into ${target.name} (${targetAtk} ATK) would reduce AI LP (${aiLp}) to 0!`
+          : `[AVOID] Suicide attack into stronger ${target.name} (${targetAtk} ATK)`;
       }
     } else if (target.position === 'faceup_defense') {
       const targetDef = target.def ?? 0;
@@ -121,21 +126,30 @@ export function evaluateAttackOption(
           targetReason = `[AVOID] Futile attack against battle-immune ${target.name} in Defense Position`;
         }
       } else if (attacker.attackerAtk > targetDef || isDefenseDestroyer) {
-        targetScore = 400 + targetDef * 0.2;
+        targetScore = 1500 - targetDef * 0.2;
         targetReason = `Destroy defensive wall ${target.name} (${targetDef} DEF)`;
       } else if (attacker.attackerAtk === targetDef) {
         targetScore = -500;
         targetReason = `Stalemate clash with ${target.name} (${targetDef} DEF)`;
       } else {
         const recoil = targetDef - attacker.attackerAtk;
-        targetScore = -3000 - recoil * 2;
-        targetReason = `[AVOID] Recoil against higher DEF ${target.name} (${targetDef} DEF)`;
+        const isLethalRecoil = recoil >= aiLp;
+        targetScore = isLethalRecoil ? -15000 : (-3000 - recoil * 2);
+        targetReason = isLethalRecoil
+          ? `[AVOID SUICIDE] Recoil from ${target.name} (${targetDef} DEF) would reduce AI LP (${aiLp}) to 0!`
+          : `[AVOID] Recoil against higher DEF ${target.name} (${targetDef} DEF)`;
       }
     } else {
       // Face-down defense monster (hidden identity)
+      const potentialRecoil = Math.max(0, 2000 - attacker.attackerAtk);
+      const isLethalRisk = potentialRecoil >= aiLp && potentialRecoil > 0;
+
       if (isDefenseDestroyer) {
         targetScore = 800;
         targetReason = `Attack face-down monster with defense-destroying effect (${attacker.attackerName})`;
+      } else if (isLethalRisk) {
+        targetScore = -8000;
+        targetReason = `[AVOID LETHAL RECOIL] Do not attack unknown face-down defense with weak ${attacker.attackerName} (${attacker.attackerAtk} ATK) when AI LP is only ${aiLp}`;
       } else if (attacker.attackerAtk >= 2000) {
         targetScore = 750 + (attacker.attackerAtk - 2000) * 0.3;
         targetReason = `Attack face-down monster with overwhelming power (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
@@ -143,13 +157,23 @@ export function evaluateAttackOption(
         targetScore = 550 + (attacker.attackerAtk - 1600) * 0.5;
         targetReason = `Attack face-down monster with solid beatstick (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
       } else if (attacker.attackerAtk >= 1400) {
-        targetScore = 350 + 100 * personality.aggression;
-        targetReason = `Attack face-down monster with mid-range attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+        if (aiLp <= 1500) {
+          targetScore = -2500;
+          targetReason = `[HOLD] Low LP (${aiLp}) prevents probing face-down defense with mid-range attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+        } else {
+          targetScore = 350 + 100 * personality.aggression;
+          targetReason = `Attack face-down monster with mid-range attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+        }
       } else if (attacker.attackerAtk >= 1000) {
-        targetScore = 100 * personality.riskTolerance - 50 * personality.defensiveness;
-        targetReason = `Cautious probe on face-down monster (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+        if (aiLp <= 2000) {
+          targetScore = -4000;
+          targetReason = `[HOLD] Low LP (${aiLp}) prevents probing face-down defense with weak attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+        } else {
+          targetScore = -500 + 100 * personality.riskTolerance - 100 * personality.defensiveness;
+          targetReason = `Cautious probe on face-down monster (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;
+        }
       } else {
-        targetScore = -800 * (1 - personality.riskTolerance);
+        targetScore = -2000;
         targetReason = `Hold back low ATK monster (${attacker.attackerName}: ${attacker.attackerAtk} ATK) from unknown face-down defense`;
       }
     }

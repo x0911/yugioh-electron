@@ -206,6 +206,12 @@ export function evaluateSpellTrapSet(
   const aiField: PlayerFieldState = aiPlayerId === 0 ? boardState.userField : boardState.opponentField;
 
   const currentBackrowCount = aiField.spellTrapZones.filter(Boolean).length;
+  if (currentBackrowCount >= 5) {
+    return {
+      score: -1000,
+      reason: `Backrow is completely full (5/5 set)`,
+    };
+  }
   if (currentBackrowCount >= 4) {
     return {
       score: -200,
@@ -215,11 +221,47 @@ export function evaluateSpellTrapSet(
 
   // Score setting traps / defensive spells
   const detail = code > 0 ? context.cardReader.getCardDetail(code) : null;
-  const isTrap = detail?.isTrap ?? (cardName.includes('Trap') || cardName.includes('Mirror') || cardName.includes('Hole'));
+  const isTrap = detail?.isTrap ?? (cardName.includes('Trap') || cardName.includes('Mirror') || cardName.includes('Hole') || cardName.includes('Armor') || cardName.includes('Cylinder') || cardName.includes('Prison') || cardName.includes('Bribe') || cardName.includes('Judgment'));
   const isQuickPlay = detail?.isQuickPlay ?? cardName.includes('Quick-Play');
 
+  // Premier reactive disruption / protection staples
+  const isPremierStaple =
+    code === 94192409 || // Compulsory Evacuation Device
+    code === 29401950 || // Bottomless Trap Hole
+    code === 44095762 || // Mirror Force
+    code === 53582587 || // Torrential Tribute
+    code === 41420027 || // Solemn Judgment
+    code === 70342110 || // Dimensional Prison
+    code === 62279055 || // Magic Cylinder
+    code === 38199696 || // Sakuretsu Armor
+    code === 83555666 || // Ring of Destruction
+    code === 36368606 || // Threatening Roar
+    code === 12607053 || // Waboku
+    code === 99518961 || // Dust Tornado
+    code === 77414722 || // Dark Bribe
+    code === 97077563 || // Call of the Haunted
+    code === 14087893 || // Book of Moon
+    code === 98045062 || // Enemy Controller
+    code === 55713623 || // Shrink
+    code === 70046172 || // Rush Recklessly
+    code === 5318639 ||  // Mystical Space Typhoon
+    cardName.includes('Compulsory') ||
+    cardName.includes('Bottomless') ||
+    cardName.includes('Mirror Force') ||
+    cardName.includes('Torrential') ||
+    cardName.includes('Solemn') ||
+    cardName.includes('Dimensional Prison');
+
+  if (isPremierStaple) {
+    const score = 1400 * (personality.defensiveness + 0.6) + (4 - currentBackrowCount) * 80;
+    return {
+      score,
+      reason: `[PRIORITY SET] Set premier defensive trap/quick-play ${cardName} for opponent's turn`,
+    };
+  }
+
   if (isTrap || isQuickPlay) {
-    const score = 450 * (personality.defensiveness + 0.5) + (4 - currentBackrowCount) * 50;
+    const score = 950 * (personality.defensiveness + 0.5) + (4 - currentBackrowCount) * 60;
     return {
       score,
       reason: `Set defensive Trap/Quick-Play ${cardName} for opponent's turn`,
@@ -229,7 +271,7 @@ export function evaluateSpellTrapSet(
   // Setting normal spell (e.g. to save hand space or bluff)
   if (aiField.hand.length > 5) {
     return {
-      score: 250,
+      score: 300,
       reason: `Set spell ${cardName} to manage hand size and prevent discard`,
     };
   }

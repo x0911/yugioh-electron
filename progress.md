@@ -240,3 +240,25 @@ All **26 test suites** run and pass with **100% success rate** (`npm test`):
   - Stored in `data/prebuilt-decks.json` (500 total prebuilt decks: 400 anime duelist decks + 100 community popular decks).
 - **Verification**: `tests/prebuilt-decks-and-selector.test.ts` and `tests/prebuilt-decks-and-roster-expansion.test.ts` assert 100 popular decks and 500 total prebuilt decks with 100% test pass rate.
 
+---
+
+## 9. Milestone 25: Field Spell Zone Routing, AI Trap Setting & Combat Safety Overhaul
+
+### 1. Field Spell Zone Binding & Arena Floor Continuity
+- **Fix Sequence 5 Mapping**: In `src/main/engine/DuelEngineService.ts`, mapped `OcgLocation.SZONE` with `sequence: 5` directly to `playerField.fieldZone`. Previously, this was assigned to `spellTrapZones[5]`, expanding the 5-element array to length 6 and creating a rogue `slot-user-spell-trap-5` beside the Main Deck while resetting the field spell arena floor texture.
+- **Defensive Frontend Hydration**: In `src/renderer/stores/duelStore.ts`, clamped `spellTrapZones` to exactly 5 elements and automatically extracted any legacy sequence 5 entries into `fieldZone`.
+
+### 2. AI Spell / Trap Setting Engine
+- **Property Name Fix**: In `src/main/ai/executors/DefaultExecutor.ts`, resolved property mismatch by changing `msg.sp_sets` $\to$ `msg.spell_sets`.
+- **Special Summon & Position Change Support**: Added full support for `msg.special_summons` (boss monsters like Cyber Dragon, BLS, Chaos Sorcerer) and `msg.pos_changes` (Flip Summons).
+- **Staple Disruption Traps**: Enhanced `src/main/ai/evaluators/spellTrapEvaluator.ts` to identify premier reactive traps (*Compulsory Evacuation Device*, *Bottomless Trap Hole*, *Mirror Force*, *Torrential Tribute*, *Solemn Judgment*, *Dimensional Prison*, *Sakuretsu Armor*, etc.) and score them with high priority (1200–1600), ensuring the AI sets them down before ending its turn.
+
+### 3. Combat Safety & Low-LP Suicide Prevention
+- **Low-LP Recoil Protection**: In `src/main/ai/evaluators/combatEvaluator.ts`, added explicit checks when AI LP $\le 2000$ or when potential recoil from a 2000 DEF wall exceeds AI's remaining LP. Weak attackers ($< 1600$ ATK, e.g. Sangan) are prevented from probing unknown face-down defense cards.
+- **Target Selection Prioritization**: In `src/main/ai/AIController.ts` `decideSelectCard`, prioritized known destroyable monsters over face-down defense cards, and heavily penalized attacking face-down defense monsters when AI LP is low.
+
+### 4. Automated Testing
+- Created `tests/field-spell-zone-and-ai-traps.test.ts` (4 passing tests).
+- All 27 test suites passing 100% in `npm test`.
+
+

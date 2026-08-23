@@ -336,12 +336,20 @@ export const useDuelStore = defineStore('duel', {
     },
 
     hydratePlayerField(pf: PlayerFieldState): PlayerFieldState {
+      // Defensively clamp spellTrapZones to 5 items and ensure fieldZone is extracted if placed at seq 5
+      const fieldCardFromSeq5 = pf.spellTrapZones.length > 5 ? pf.spellTrapZones[5] : null;
+      const effectiveFieldZone = pf.fieldZone || fieldCardFromSeq5;
+      const clampedSpellTrapZones = pf.spellTrapZones.slice(0, 5);
+      while (clampedSpellTrapZones.length < 5) {
+        clampedSpellTrapZones.push(null);
+      }
+
       return {
         ...pf,
         hand: pf.hand.map((c) => this.hydrateFieldCard(c)!),
         monsterZones: pf.monsterZones.map((c) => this.hydrateFieldCard(c)),
-        spellTrapZones: pf.spellTrapZones.map((c) => this.hydrateFieldCard(c)),
-        fieldZone: this.hydrateFieldCard(pf.fieldZone),
+        spellTrapZones: clampedSpellTrapZones.map((c) => this.hydrateFieldCard(c)),
+        fieldZone: this.hydrateFieldCard(effectiveFieldZone),
         graveyard: pf.graveyard.map((c) => this.hydrateFieldCard(c)!),
         banished: pf.banished.map((c) => this.hydrateFieldCard(c)!),
         extraDeck: pf.extraDeck.map((c) => this.hydrateFieldCard(c)!),

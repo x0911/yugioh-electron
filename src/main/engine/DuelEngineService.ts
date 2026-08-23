@@ -896,8 +896,13 @@ export class DuelEngineService {
         movedCard = fromPf.monsterZones[from.sequence];
         fromPf.monsterZones[from.sequence] = null;
       } else if (from.location === OcgLocation.SZONE) {
-        movedCard = fromPf.spellTrapZones[from.sequence];
-        fromPf.spellTrapZones[from.sequence] = null;
+        if (from.sequence === 5) {
+          movedCard = fromPf.fieldZone;
+          fromPf.fieldZone = null;
+        } else {
+          movedCard = fromPf.spellTrapZones[from.sequence];
+          fromPf.spellTrapZones[from.sequence] = null;
+        }
       } else if (from.location === OcgLocation.FZONE) {
         movedCard = fromPf.fieldZone;
         fromPf.fieldZone = null;
@@ -989,16 +994,24 @@ export class DuelEngineService {
         movedCard.statuses = this.computeCardStatuses(movedCard);
         toPf.monsterZones[to.sequence] = movedCard;
       } else if (to.location === OcgLocation.SZONE) {
-        const isFaceup = (to.position & OcgPosition.FACEUP) !== 0;
-        movedCard.location = 'spell-trap';
-        movedCard.sequence = to.sequence;
-        // Use 'faceup_attack' for face-up spell-zone cards (upright orientation).
-        // This keeps the engine's internal state consistent with what the renderer's
-        // applyCardMoveToBoard sets, so fetchBoardState snapshots match and Vue
-        // never sees a class-change that would trigger a spurious transform flash.
-        movedCard.position = isFaceup ? 'faceup_attack' : 'facedown_spell';
-        movedCard.statuses = this.computeCardStatuses(movedCard);
-        toPf.spellTrapZones[to.sequence] = movedCard;
+        if (to.sequence === 5) {
+          movedCard.location = 'field';
+          movedCard.sequence = 0;
+          movedCard.position = 'faceup_attack'; // field zone cards render upright
+          movedCard.statuses = this.computeCardStatuses(movedCard);
+          toPf.fieldZone = movedCard;
+        } else {
+          const isFaceup = (to.position & OcgPosition.FACEUP) !== 0;
+          movedCard.location = 'spell-trap';
+          movedCard.sequence = to.sequence;
+          // Use 'faceup_attack' for face-up spell-zone cards (upright orientation).
+          // This keeps the engine's internal state consistent with what the renderer's
+          // applyCardMoveToBoard sets, so fetchBoardState snapshots match and Vue
+          // never sees a class-change that would trigger a spurious transform flash.
+          movedCard.position = isFaceup ? 'faceup_attack' : 'facedown_spell';
+          movedCard.statuses = this.computeCardStatuses(movedCard);
+          toPf.spellTrapZones[to.sequence] = movedCard;
+        }
       } else if (to.location === OcgLocation.FZONE) {
         movedCard.location = 'field';
         movedCard.sequence = 0;

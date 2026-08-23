@@ -9,6 +9,7 @@ import type { DeckExecutor } from './types.js';
 import type { EvaluatorContext, ScoredAction } from '../types.js';
 import type { PlayerFieldState, FieldCard } from '../../../shared/types/field.js';
 import { evaluateAttackOption, type AttackCandidate } from '../evaluators/combatEvaluator.js';
+import { evaluateSpellTrapSet } from '../evaluators/spellTrapEvaluator.js';
 
 /**
  * Universal Competitive AI Executor.
@@ -251,19 +252,46 @@ export class DefaultExecutor implements DeckExecutor {
     }
 
     // =========================================================================
+    // 3b. EVALUATE SPECIAL SUMMONS (Cyber Dragon, Chaos Sorcerer, BLS, etc.)
+    // =========================================================================
+    if (msg.special_summons && msg.special_summons.length > 0) {
+      for (let i = 0; i < msg.special_summons.length; i++) {
+        const sp = msg.special_summons[i];
+        const code = sp.code ?? 0;
+        const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+        const atk = detail?.atk ?? 2000;
+        const level = detail?.level ?? 5;
+        const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
+
+        let score = 1500 + atk * 0.5 * (aggression + 0.5);
+        if (signatureCardIds.includes(code)) {
+          score += 1000 * sigFavoritism;
+        }
+
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.SELECT_SPECIAL_SUMMON,
+            index: i,
+          },
+          score,
+          reason: `Special Summon boss monster ${name} (${atk} ATK, Lv${level})`,
+          cardCode: code,
+          cardName: name,
+        });
+      }
+    }
+
+    // =========================================================================
     // 4. EVALUATE SPELL / TRAP SETS
     // =========================================================================
-    if (msg.sp_sets && msg.sp_sets.length > 0) {
-      const currentBackrow = aiField.spellTrapZones.filter(Boolean).length;
-      for (let i = 0; i < msg.sp_sets.length; i++) {
-        const s = msg.sp_sets[i];
+    if (msg.spell_sets && msg.spell_sets.length > 0) {
+      for (let i = 0; i < msg.spell_sets.length; i++) {
+        const s = msg.spell_sets[i];
         const code = s.code ?? 0;
         const detail = code > 0 ? cardReader.getCardDetail(code) : null;
         const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Card');
-        const isTrap = detail?.isTrap ?? name.includes('Trap');
-        const isQuickPlay = detail?.isQuickPlay ?? name.includes('Quick-Play');
-
-        let score = currentBackrow >= 4 ? -300 : (isTrap || isQuickPlay ? 400 + (3 - currentBackrow) * 100 : 100);
+        const evalResult = evaluateSpellTrapSet(code, name, context);
 
         candidates.push({
           action: {
@@ -271,8 +299,38 @@ export class DefaultExecutor implements DeckExecutor {
             action: SelectIdleCMDAction.SELECT_SPELL_SET,
             index: i,
           },
+          score: evalResult.score,
+          reason: evalResult.reason,
+          cardCode: code,
+          cardName: name,
+        });
+      }
+    }
+
+    // =========================================================================
+    // 4b. EVALUATE POSITION CHANGES / FLIP SUMMONS
+    // =========================================================================
+    if (msg.pos_changes && msg.pos_changes.length > 0) {
+      for (let i = 0; i < msg.pos_changes.length; i++) {
+        const pc = msg.pos_changes[i];
+        const code = pc.code ?? 0;
+        const detail = code > 0 ? cardReader.getCardDetail(code) : null;
+        const atk = detail?.atk ?? 1500;
+        const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
+
+        let score = 500 + atk * 0.3 * aggression;
+        if (hasOppSlifer && atk <= 2000) {
+          score = -2000; // Do not Flip Summon into Slifer debuff destruction
+        }
+
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_IDLECMD,
+            action: SelectIdleCMDAction.SELECT_POS_CHANGE,
+            index: i,
+          },
           score,
-          reason: `Set ${isTrap ? 'Trap' : isQuickPlay ? 'Quick-Play' : 'Spell'} ${name}`,
+          reason: `Change battle position / Flip Summon ${name}`,
           cardCode: code,
           cardName: name,
         });
