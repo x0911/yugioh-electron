@@ -56,8 +56,9 @@ const popDecks = prebuiltDecks.filter((d) => d.category === 'popular-dm' || d.ca
 
 assert.strictEqual(dmHeroDecks.length, 200, `Expected 200 DM character decks (20 characters x 10), got ${dmHeroDecks.length}`);
 assert.strictEqual(gxHeroDecks.length, 200, `Expected 200 GX character decks (20 characters x 10), got ${gxHeroDecks.length}`);
-assert.ok(popDecks.length >= 20, `Expected at least 20 popular community decks, got ${popDecks.length}`);
-console.log(`✓ Exactly 200 DM character decks, 200 GX character decks, and ${popDecks.length} popular community decks partitioned.`);
+assert.strictEqual(popDecks.length, 100, `Expected exactly 100 popular community decks, got ${popDecks.length}`);
+assert.strictEqual(prebuiltDecks.length, 500, `Expected 500 total prebuilt decks, got ${prebuiltDecks.length}`);
+console.log(`✓ Exactly 200 DM character decks, 200 GX character decks, and 100 popular community decks partitioned (500 total).`);
 
 // --- TEST 3: Autocomplete Query & Filter Logic ---
 console.log('\nTest 3: Autocomplete Query & Filter Logic...');

@@ -3,6 +3,7 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { getDmCharacters } from './characterDecks/dmCharacters.js';
 import { getGxCharacters } from './characterDecks/gxCharacters.js';
+import { getPopularDecks } from './characterDecks/popularDecks.js';
 import { writeYdkFile } from './deckGenHelper.js';
 import type { CharacterData } from '../src/shared/types/character.js';
 import type { CustomDeck } from '../src/shared/types/deck.js';
@@ -100,24 +101,25 @@ for (const char of allCharacters) {
   }
 }
 
-// 5. Preserve / merge existing popular decks from data/prebuilt-decks.json if present
-if (fs.existsSync(PREBUILT_DECKS_PATH)) {
-  try {
-    const existing: CustomDeck[] = JSON.parse(fs.readFileSync(PREBUILT_DECKS_PATH, 'utf-8'));
-    const popularDecks = existing.filter(
-      (d) => d.category === 'popular-dm' || d.category === 'popular-gx' || d.id.startsWith('pop-')
-    );
-    for (const pop of popularDecks) {
-      pop.characterId = 'popular';
-      pop.characterName = 'Community Popular';
-      pop.avatar = 'app-resource://characters/avatars/generic.png';
-      pop.portrait = 'app-resource://characters/avatars/generic.png';
+// 5. Generate all 100 Community Popular Decks (DM & GX)
+console.log('\n===========================================================');
+console.log('=== GENERATING 100 COMMUNITY POPULAR DECKS (DM & GX) ======');
+console.log('===========================================================');
+
+const popularDecks = getPopularDecks();
+for (const pop of popularDecks) {
+  // Validate card legality in cards.cdb
+  for (const cardId of [...pop.main, ...pop.extra]) {
+    const found = checkDbStmt.get(cardId);
+    if (!found) {
+      throw new Error(`Card ID ${cardId} in popular deck "${pop.name}" not found in cards.cdb!`);
     }
-    console.log(`\nPreserving ${popularDecks.length} community popular decks from previous prebuilt-decks.json.`);
-    allPrebuiltDecks.push(...popularDecks);
-  } catch (err) {
-    console.warn('Could not read existing popular decks:', err);
+    totalCardsChecked++;
   }
+
+  writeYdkFile(path.join(DECKS_DIR, `${pop.id}.ydk`), pop.main, pop.extra);
+  allPrebuiltDecks.push(pop);
+  console.log(`  ✓ Popular Deck #${popularDecks.indexOf(pop) + 1}: "${pop.name}" (${pop.series}) — ${pop.main.length} Main, ${pop.extra.length} Extra`);
 }
 
 // Update allCharacters with valid app-resource URLs for portraits and avatars
