@@ -26,6 +26,7 @@ function createEmptyDeck(id: string, name = 'New Custom Deck'): CustomDeck {
   return {
     id,
     name,
+    category: 'custom',
     main: [],
     extra: [],
     createdAt: Date.now(),
@@ -390,6 +391,11 @@ export const useDeckEditStore = defineStore('deckEdit', {
         ...JSON.parse(JSON.stringify(this.activeDeck)),
         id,
         name: `${this.activeDeck.name} (Copy)`,
+        category: 'custom',
+        characterId: undefined,
+        characterName: undefined,
+        series: undefined,
+        avatar: undefined,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };

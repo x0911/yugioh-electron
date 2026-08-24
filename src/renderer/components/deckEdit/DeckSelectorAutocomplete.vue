@@ -47,6 +47,14 @@ const GX_CHARACTER_ORDER = [
   'sartorius-kumar', 'yubel', 'nightshroud', 'yusuke-fujiwara', 'supreme-king-jaden'
 ];
 
+function getDeckCategory(d: CustomDeck | null): 'character-dm' | 'character-gx' | 'popular' | 'custom' {
+  if (!d) return 'custom';
+  if (d.category === 'character-dm' || (d.series === 'DM' && d.characterName && d.characterName !== 'Community Popular')) return 'character-dm';
+  if (d.category === 'character-gx' || (d.series === 'GX' && d.characterName && d.characterName !== 'Community Popular')) return 'character-gx';
+  if (d.category === 'popular-dm' || d.category === 'popular-gx' || d.id.startsWith('pop-') || d.characterName === 'Community Popular') return 'popular';
+  return 'custom';
+}
+
 function getDeckSortWeight(d: CustomDeck): number {
   if (d.characterId) {
     const dmIdx = DM_CHARACTER_ORDER.indexOf(d.characterId);
@@ -82,9 +90,10 @@ const counts = computed(() => {
   let customCount = 0;
 
   for (const d of candidateDecks.value) {
-    if (d.category === 'character-dm' || (d.series === 'DM' && d.characterName && d.characterName !== 'Community Popular')) dmCount++;
-    else if (d.category === 'character-gx' || (d.series === 'GX' && d.characterName && d.characterName !== 'Community Popular')) gxCount++;
-    else if (d.category === 'popular-dm' || d.category === 'popular-gx' || d.id.startsWith('pop-') || d.characterName === 'Community Popular') popCount++;
+    const cat = getDeckCategory(d);
+    if (cat === 'character-dm') dmCount++;
+    else if (cat === 'character-gx') gxCount++;
+    else if (cat === 'popular') popCount++;
     else customCount++;
   }
 
@@ -115,14 +124,8 @@ const filteredDecks = computed(() => {
   let list = candidateDecks.value;
 
   // 1. Filter by category tab
-  if (activeCategory.value === 'character-dm') {
-    list = list.filter((d) => d.category === 'character-dm' || (d.series === 'DM' && d.characterName && d.characterName !== 'Community Popular'));
-  } else if (activeCategory.value === 'character-gx') {
-    list = list.filter((d) => d.category === 'character-gx' || (d.series === 'GX' && d.characterName && d.characterName !== 'Community Popular'));
-  } else if (activeCategory.value === 'popular') {
-    list = list.filter((d) => d.category === 'popular-dm' || d.category === 'popular-gx' || d.id.startsWith('pop-') || d.characterName === 'Community Popular');
-  } else if (activeCategory.value === 'custom') {
-    list = list.filter((d) => !d.category || d.category === 'custom' || (!d.category.startsWith('character-') && !d.category.startsWith('popular-') && !d.id.startsWith('pop-') && !d.id.includes('_deck_')));
+  if (activeCategory.value !== 'ALL') {
+    list = list.filter((d) => getDeckCategory(d) === activeCategory.value);
   }
 
   // 2. Filter by search query (across deck name, archetype, duelist, AND cards inside deck)
@@ -156,6 +159,21 @@ watch(filteredDecks, () => {
   highlightedIndex.value = 0;
 });
 
+// Sync active category when selected deck changes (e.g. cloning a deck switches to "custom" tab)
+watch(
+  () => props.modelValue,
+  (newId) => {
+    const deck = props.decks.find((d) => d.id === newId);
+    if (deck) {
+      const cat = getDeckCategory(deck);
+      if (cat === 'custom' || activeCategory.value !== 'ALL') {
+        activeCategory.value = cat;
+      }
+    }
+  },
+  { immediate: true },
+);
+
 function initDropdownFocus(): void {
   const currentIdx = filteredDecks.value.findIndex((d) => d.id === props.modelValue);
   highlightedIndex.value = currentIdx >= 0 ? currentIdx : 0;
@@ -170,6 +188,9 @@ function toggleDropdown(): void {
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
     searchQuery.value = '';
+    if (activeDeck.value) {
+      activeCategory.value = getDeckCategory(activeDeck.value);
+    }
     initDropdownFocus();
   }
 }
@@ -178,6 +199,9 @@ function openDropdown(): void {
   if (props.disabled || isOpen.value) return;
   isOpen.value = true;
   searchQuery.value = '';
+  if (activeDeck.value) {
+    activeCategory.value = getDeckCategory(activeDeck.value);
+  }
   initDropdownFocus();
 }
 
