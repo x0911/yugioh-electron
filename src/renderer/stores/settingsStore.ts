@@ -276,6 +276,19 @@ export const useSettingsStore = defineStore('settings', {
       });
     },
 
+    async fetchAiModels(provider: string): Promise<{ success: boolean; models?: string[]; error?: string }> {
+      if (!window.settingsAPI) {
+        return { success: false, error: 'Settings API unavailable.' };
+      }
+      const apiKey = this.aiApiKeys?.[provider] || '';
+      const customEndpoint = this.aiCustomEndpoints?.[provider];
+      return window.settingsAPI.fetchAiModels({
+        provider,
+        apiKey,
+        customEndpoint,
+      });
+    },
+
     async persist(): Promise<void> {
       if (window.settingsAPI) {
         try {

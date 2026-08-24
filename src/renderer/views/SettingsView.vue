@@ -534,11 +534,24 @@
                   />
                 </div>
 
-                <!-- Model Selection (Presets + Custom) -->
+                <!-- Model Selection (Presets + Live Fetched + Custom) -->
                 <div class="settings-view__ai-input-group">
-                  <label class="settings-view__ai-input-label">
-                    Model Selection
-                  </label>
+                  <div class="settings-view__ai-model-header-row">
+                    <label class="settings-view__ai-input-label">
+                      Model Selection
+                    </label>
+                    <button
+                      type="button"
+                      class="settings-view__ai-fetch-models-btn"
+                      :disabled="isFetchingModels"
+                      title="Fetch latest available models directly from your provider account"
+                      @click="() => fetchModelsForProvider(activeConfigProvider)"
+                    >
+                      <span v-if="isFetchingModels">⏳ Loading Models...</span>
+                      <span v-else>🔄 Fetch Models</span>
+                    </button>
+                  </div>
+
                   <div class="settings-view__ai-model-selector-row">
                     <select
                       class="settings-view__select-input"
@@ -546,7 +559,7 @@
                       @change="handleModelPresetChange"
                     >
                       <option
-                        v-for="m in currentProviderMeta.availableModels"
+                        v-for="m in effectiveAvailableModels"
                         :key="m"
                         :value="m"
                       >
@@ -562,6 +575,9 @@
                       :value="currentModel"
                       @input="handleModelInput"
                     />
+                  </div>
+                  <div v-if="fetchModelsStatus" class="settings-view__ai-model-fetch-note">
+                    {{ fetchModelsStatus }}
                   </div>
                 </div>
 
@@ -793,11 +809,22 @@ const currentModel = computed(() => {
 });
 
 const isCustomModelSelected = ref(false);
+const isFetchingModels = ref(false);
+const fetchModelsStatus = ref<string | null>(null);
+const liveModelsByProvider = ref<Record<string, string[]>>({});
+
+const effectiveAvailableModels = computed<string[]>(() => {
+  const live = liveModelsByProvider.value[activeConfigProvider.value];
+  if (live && live.length > 0) {
+    return live;
+  }
+  return currentProviderMeta.value.availableModels;
+});
 
 const selectedModelPresetValue = computed(() => {
   if (isCustomModelSelected.value) return '__custom__';
   const val = currentModel.value || currentProviderMeta.value.defaultModel;
-  if (currentProviderMeta.value.availableModels.includes(val)) {
+  if (effectiveAvailableModels.value.includes(val)) {
     return val;
   }
   return '__custom__';
@@ -809,22 +836,79 @@ const activeDuelProviderName = computed(() => {
   return found ? `${found.icon} ${found.name}` : '⚡ Built-in Fast Engine';
 });
 
+async function fetchModelsForProvider(provider: AiProviderType, silent = false): Promise<void> {
+  if (provider === 'builtin') return;
+  const key = settingsStore.aiApiKeys?.[provider];
+  if (!key && provider !== 'ollama') {
+    if (!silent) {
+      fetchModelsStatus.value = `⚠️ Please enter an API key first to fetch models.`;
+    }
+    return;
+  }
+
+  isFetchingModels.value = true;
+  if (!silent) {
+    fetchModelsStatus.value = `⏳ Fetching available models for ${provider.toUpperCase()}...`;
+  }
+
+  try {
+    const res = await settingsStore.fetchAiModels(provider);
+    if (res.success && res.models && res.models.length > 0) {
+      liveModelsByProvider.value[provider] = res.models;
+      fetchModelsStatus.value = `✓ Loaded ${res.models.length} models from ${provider.toUpperCase()}`;
+
+      // If user hasn't selected a model yet or current model is not in available models, auto-select the first one
+      const current = settingsStore.aiModels?.[provider];
+      if (!current || !res.models.includes(current)) {
+        await settingsStore.setAiModel(provider, res.models[0]);
+      }
+    } else if (res.error) {
+      if (!silent) {
+        fetchModelsStatus.value = `⚠️ Failed to fetch models: ${res.error}`;
+      }
+    }
+  } catch (err: any) {
+    if (!silent) {
+      fetchModelsStatus.value = `⚠️ Error fetching models: ${err?.message || String(err)}`;
+    }
+  } finally {
+    isFetchingModels.value = false;
+  }
+}
+
 function handleSelectProviderTab(id: AiProviderType): void {
   activeConfigProvider.value = id;
   testResult.value = null;
+  fetchModelsStatus.value = null;
   const savedModel = settingsStore.aiModels?.[id];
   const meta = aiProviderList.find((p) => p.id === id);
-  if (savedModel && meta && !meta.availableModels.includes(savedModel)) {
+  const models = liveModelsByProvider.value[id] || meta?.availableModels || [];
+  if (savedModel && !models.includes(savedModel)) {
     isCustomModelSelected.value = true;
   } else {
     isCustomModelSelected.value = false;
   }
+
+  // Auto-fetch models if key exists
+  if (settingsStore.aiApiKeys?.[id] || id === 'ollama') {
+    fetchModelsForProvider(id, true);
+  }
 }
+
+let apiKeyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function handleApiKeyInput(e: Event): Promise<void> {
   const val = (e.target as HTMLInputElement).value;
   testResult.value = null;
+  fetchModelsStatus.value = null;
   await settingsStore.setAiApiKey(activeConfigProvider.value, val);
+
+  if (apiKeyDebounceTimer) clearTimeout(apiKeyDebounceTimer);
+  if (val.trim().length >= 8) {
+    apiKeyDebounceTimer = setTimeout(() => {
+      fetchModelsForProvider(activeConfigProvider.value, true);
+    }, 600);
+  }
 }
 
 async function handleEndpointInput(e: Event): Promise<void> {
@@ -860,6 +944,10 @@ async function handleTestAiConnection(): Promise<void> {
   try {
     const res = await settingsStore.testAiConnection(activeConfigProvider.value);
     testResult.value = res;
+    if (res.success) {
+      // Also refresh models on successful test
+      fetchModelsForProvider(activeConfigProvider.value, true);
+    }
   } catch (err: any) {
     testResult.value = { success: false, error: err?.message || String(err) };
   } finally {

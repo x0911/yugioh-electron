@@ -184,9 +184,14 @@ export function registerIpcHandlers(): void {
     return result || null;
   });
 
-  // AI Connection Test
+  // AI Connection Test & Model Fetching
   ipcMain.handle(IPC_CHANNELS.AI_TEST_CONNECTION, async (_event, payload: import('../../shared/types/ipc.js').AiTestConnectionPayload) => {
     const { llmDuelService } = await import('../ai/LLMDuelService.js');
     return llmDuelService.testConnection(payload.provider, payload.apiKey, payload.customEndpoint, payload.model);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AI_FETCH_MODELS, async (_event, payload: import('../../shared/types/ipc.js').AiFetchModelsPayload) => {
+    const { llmDuelService } = await import('../ai/LLMDuelService.js');
+    return llmDuelService.fetchAvailableModels(payload.provider, payload.apiKey, payload.customEndpoint);
   });
 }

@@ -43,6 +43,7 @@ export const IPC_CHANNELS = {
   CHARACTERS_GET_BY_ID: 'characters:get-by-id',
   CHARACTERS_GET_RANDOM_DECK: 'characters:get-random-deck',
   AI_TEST_CONNECTION: 'ai:test-connection',
+  AI_FETCH_MODELS: 'ai:fetch-models',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
@@ -57,6 +58,18 @@ export interface AiTestConnectionPayload {
 export interface AiTestConnectionResult {
   success: boolean;
   message?: string;
+  error?: string;
+}
+
+export interface AiFetchModelsPayload {
+  provider: string;
+  apiKey?: string;
+  customEndpoint?: string;
+}
+
+export interface AiFetchModelsResult {
+  success: boolean;
+  models?: string[];
   error?: string;
 }
 
@@ -111,6 +124,7 @@ export interface SettingsAPI {
   getCharacters: () => Promise<import('./character.js').CharacterData[]>;
   getRandomOpponentDeck: (characterId: string) => Promise<RandomOpponentDeckPayload | null>;
   testAiConnection: (payload: AiTestConnectionPayload) => Promise<AiTestConnectionResult>;
+  fetchAiModels: (payload: AiFetchModelsPayload) => Promise<AiFetchModelsResult>;
 }
 
 export interface AppAPI {

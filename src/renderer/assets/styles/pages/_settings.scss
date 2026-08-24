@@ -879,6 +879,45 @@
     gap: 4px;
   }
 
+  &__ai-model-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__ai-fetch-models-btn {
+    background: rgba(201, 162, 39, 0.15);
+    border: 1px solid rgba(201, 162, 39, 0.35);
+    color: $color-gold-300;
+    font-family: $font-mono;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: rgba(201, 162, 39, 0.3);
+      color: #fff;
+      border-color: $color-gold-300;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__ai-model-fetch-note {
+    font-family: $font-mono;
+    font-size: 0.72rem;
+    color: $color-gold-300;
+    margin-top: 2px;
+    opacity: 0.9;
+  }
+
   &__ai-model-selector-row {
     display: flex;
     flex-direction: column;

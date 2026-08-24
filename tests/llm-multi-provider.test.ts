@@ -132,6 +132,17 @@ async function runMultiProviderTests() {
   assert.equal(deepseekFail.success, false);
   console.log('  ✓ Missing API key validation working!\n');
 
+  // Test 2b: Dynamic Model Fetching
+  console.log('▶ Test 2b: Dynamic Model Fetching');
+  const geminiModels = await llmDuelService.fetchAvailableModels('gemini');
+  assert.equal(geminiModels.success, true);
+  assert(geminiModels.models && geminiModels.models.includes('gemini-2.5-flash'));
+
+  const groqNoKey = await llmDuelService.fetchAvailableModels('groq', '');
+  assert.equal(groqNoKey.success, false);
+  assert(groqNoKey.error?.includes('Key is required'));
+  console.log('  ✓ Dynamic model list resolution verified!\n');
+
   // Test 3: Built-in Heuristic Engine Passthrough
   console.log('▶ Test 3: Built-in Engine Passthrough in decideResponseAsync');
   const mockContext = createMockContext();

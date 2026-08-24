@@ -112,6 +112,10 @@ const settingsAPI: SettingsAPI = {
     const plainPayload = JSON.parse(JSON.stringify(payload));
     return ipcRenderer.invoke(IPC_CHANNELS.AI_TEST_CONNECTION, plainPayload);
   },
+  fetchAiModels: (payload) => {
+    const plainPayload = JSON.parse(JSON.stringify(payload));
+    return ipcRenderer.invoke(IPC_CHANNELS.AI_FETCH_MODELS, plainPayload);
+  },
 };
 
 const appAPI: AppAPI = {

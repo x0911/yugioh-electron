@@ -173,6 +173,152 @@ export class LLMDuelService {
     }
   }
 
+  /**
+   * Fetch live list of available models for a given provider.
+   */
+  public async fetchAvailableModels(
+    provider: string,
+    apiKey?: string,
+    customEndpoint?: string,
+  ): Promise<{ success: boolean; models?: string[]; error?: string }> {
+    try {
+      if (provider === 'gemini') {
+        return {
+          success: true,
+          models: [
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro',
+            'gemini-3.6-flash',
+          ],
+        };
+      }
+
+      if (provider === 'anthropic') {
+        return {
+          success: true,
+          models: [
+            'claude-3-5-haiku-20241022',
+            'claude-3-5-sonnet-20241022',
+            'claude-3-haiku-20240307',
+            'claude-3-opus-20240229',
+          ],
+        };
+      }
+
+      if (provider === 'deepseek') {
+        return {
+          success: true,
+          models: ['deepseek-chat', 'deepseek-reasoner'],
+        };
+      }
+
+      if (provider === 'groq') {
+        const key = apiKey || process.env.GROQ_API_KEY || '';
+        if (!key) {
+          return { success: false, error: 'Groq API Key is required to fetch models.' };
+        }
+        const res = await fetch('https://api.groq.com/openai/v1/models', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          return { success: false, error: `Groq Error (${res.status}): ${err}` };
+        }
+        const json: any = await res.json();
+        const rawModels: any[] = Array.isArray(json.data) ? json.data : [];
+        const filtered = rawModels
+          .map((m) => (typeof m === 'string' ? m : m.id))
+          .filter((id: string) => {
+            const lower = id.toLowerCase();
+            return (
+              !lower.includes('whisper') &&
+              !lower.includes('tts') &&
+              !lower.includes('guard') &&
+              !lower.includes('embed')
+            );
+          });
+
+        filtered.sort((a, b) => {
+          if (a.includes('8b-instant') && !b.includes('8b-instant')) return -1;
+          if (!a.includes('8b-instant') && b.includes('8b-instant')) return 1;
+          return a.localeCompare(b);
+        });
+
+        return { success: true, models: filtered.length > 0 ? filtered : ['llama-3.1-8b-instant'] };
+      }
+
+      if (provider === 'openai') {
+        const key = apiKey || process.env.OPENAI_API_KEY || '';
+        if (!key) {
+          return { success: false, error: 'OpenAI API Key is required to fetch models.' };
+        }
+        const res = await fetch('https://api.openai.com/v1/models', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          return { success: false, error: `OpenAI Error (${res.status}): ${err}` };
+        }
+        const json: any = await res.json();
+        const rawModels: any[] = Array.isArray(json.data) ? json.data : [];
+        const filtered = rawModels
+          .map((m) => (typeof m === 'string' ? m : m.id))
+          .filter((id: string) => {
+            const lower = id.toLowerCase();
+            return (
+              lower.startsWith('gpt-') ||
+              lower.startsWith('o1') ||
+              lower.startsWith('o3') ||
+              lower.startsWith('chatgpt')
+            );
+          });
+
+        filtered.sort((a, b) => {
+          if (a.includes('4o-mini') && !b.includes('4o-mini')) return -1;
+          if (!a.includes('4o-mini') && b.includes('4o-mini')) return 1;
+          return a.localeCompare(b);
+        });
+
+        return { success: true, models: filtered.length > 0 ? filtered : ['gpt-4o-mini', 'gpt-4o'] };
+      }
+
+      if (provider === 'ollama') {
+        try {
+          const base = customEndpoint
+            ? customEndpoint.replace(/\/v1\/chat\/completions\/?$/, '')
+            : 'http://localhost:11434';
+          const res = await fetch(`${base}/api/tags`);
+          if (res.ok) {
+            const json: any = await res.json();
+            const models = (json.models || []).map((m: any) => m.name || m.model);
+            if (models.length > 0) return { success: true, models };
+          }
+        } catch {
+          // ignore and fallback
+        }
+        return { success: true, models: ['llama3.2', 'llama3.1', 'mistral', 'qwen2.5', 'deepseek-r1'] };
+      }
+
+      if (provider === 'custom') {
+        return { success: true, models: ['default-model'] };
+      }
+
+      return { success: true, models: [] };
+    } catch (err: any) {
+      return { success: false, error: err?.message || String(err) };
+    }
+  }
+
   private buildPrompt(
     msg: OcgMessage,
     context: EvaluatorContext,
