@@ -198,6 +198,23 @@ async function copyLogsToClipboard(): Promise<void> {
     const engineLabel = provNames[activeProv] || 'Built-in Fast Engine';
     lines.push(`• Opponent AI Engine: ${engineLabel}`);
 
+    // Scan logs for AI Diagnostics and Dialogues
+    const diagnosticLogs = props.logs.filter((l) => l.type === 'AI_DIAGNOSTIC' || l.description.includes('[AI WARNING]'));
+    const dialogueLogs = props.logs.filter((l) => l.type === 'AI_DIALOGUE');
+
+    if (activeProv !== 'builtin') {
+      if (diagnosticLogs.length > 0) {
+        const lastDiag = diagnosticLogs[diagnosticLogs.length - 1].description;
+        lines.push(`• AI Engine Diagnostic: ⚠️ Fallback Triggered (${dialogueLogs.length} LLM moves succeeded, ${diagnosticLogs.length} fell back)`);
+        lines.push(`• Diagnostic Details: ${lastDiag}`);
+        lines.push(`• AI Troubleshooting: Open Settings > AI Duelist. Verify your API key and ensure the selected model exists (e.g. "gemini-2.5-flash" or "llama-3.1-8b-instant").`);
+      } else if (dialogueLogs.length > 0) {
+        lines.push(`• AI Engine Diagnostic: ✅ Operational (${dialogueLogs.length} live LLM decisions & dialogue lines resolved cleanly)`);
+      } else {
+        lines.push(`• AI Engine Diagnostic: ⚡ Local FastAI Engine active`);
+      }
+    }
+
     const userMonsters = uPf.monsterZones
       .map((m, i) => (m && m.code > 0 ? `[M${i + 1}: ${m.name} (${m.atk ?? '?'}/${m.def ?? '?'}, ${m.position})]` : null))
       .filter(Boolean);
@@ -452,6 +469,33 @@ watch(
     &--spell .log-badge {
       background: rgba(86, 204, 242, 0.2);
       color: #56ccf2;
+    }
+
+    &--ai_diagnostic {
+      background: rgba(230, 126, 34, 0.15) !important;
+      border-color: rgba(230, 126, 34, 0.4) !important;
+
+      .log-badge {
+        background: rgba(230, 126, 34, 0.3) !important;
+        color: #f39c12 !important;
+      }
+      .log-msg {
+        color: #fce7c8 !important;
+      }
+    }
+
+    &--ai_dialogue {
+      background: rgba(155, 89, 182, 0.15) !important;
+      border-color: rgba(155, 89, 182, 0.35) !important;
+
+      .log-badge {
+        background: rgba(155, 89, 182, 0.3) !important;
+        color: #9b59b6 !important;
+      }
+      .log-msg {
+        color: #f5eef8 !important;
+        font-style: italic;
+      }
     }
   }
 

@@ -42,8 +42,59 @@ export const DEFAULT_ENDPOINTS: Record<string, string> = {
   ollama: 'http://localhost:11434/v1/chat/completions',
 };
 
+export interface LLMCallResult {
+  result: LLMDecisionResult | null;
+  error?: string;
+  statusCode?: number;
+  durationMs?: number;
+}
+
 export class LLMDuelService {
   private timeoutMs = 10000;
+
+  /**
+   * Decide AI response with full error diagnostics so callers can surface connection issues.
+   */
+  public async decideResponseWithDiagnostics(
+    config: ProviderConfig,
+    msg: OcgMessage,
+    context: EvaluatorContext,
+    candidateActions?: ScoredAction[] | null,
+  ): Promise<LLMCallResult> {
+    if (config.provider === 'builtin') {
+      return { result: null };
+    }
+
+    const startTime = Date.now();
+    const promptData = this.buildPrompt(msg, context, candidateActions);
+    if (!promptData) {
+      return { result: null, error: 'No legal candidate actions to evaluate' };
+    }
+
+    try {
+      let timeoutId: any;
+      const timeoutPromise = new Promise<LLMCallResult>((resolve) => {
+        timeoutId = setTimeout(() => {
+          resolve({
+            result: null,
+            error: `API Call Timed Out (${this.timeoutMs / 1000}s). Network slow or provider endpoint unresponsive.`,
+          });
+        }, this.timeoutMs);
+      });
+
+      const callPromise = this.dispatchToProviderDetailed(config, promptData);
+      const callRes = await Promise.race([callPromise, timeoutPromise]);
+      clearTimeout(timeoutId);
+
+      const durationMs = Date.now() - startTime;
+      return { ...callRes, durationMs };
+    } catch (err: any) {
+      const durationMs = Date.now() - startTime;
+      const errorMsg = err?.message || String(err);
+      console.warn(`[LLMDuelService] ${config.provider} decision error:`, err);
+      return { result: null, error: errorMsg, durationMs };
+    }
+  }
 
   /**
    * Decide AI response using the configured LLM provider.
@@ -55,27 +106,8 @@ export class LLMDuelService {
     context: EvaluatorContext,
     candidateActions?: ScoredAction[] | null,
   ): Promise<LLMDecisionResult | null> {
-    if (config.provider === 'builtin') {
-      return null;
-    }
-
-    try {
-      const promptData = this.buildPrompt(msg, context, candidateActions);
-      if (!promptData) {
-        return null;
-      }
-
-      const timeoutPromise = new Promise<null>((resolve) =>
-        setTimeout(() => resolve(null), this.timeoutMs),
-      );
-
-      const decisionPromise = this.dispatchToProvider(config, promptData);
-      const result = await Promise.race([decisionPromise, timeoutPromise]);
-      return result;
-    } catch (err) {
-      console.warn(`[LLMDuelService] ${config.provider} decision error:`, err);
-      return null;
-    }
+    const diag = await this.decideResponseWithDiagnostics(config, msg, context, candidateActions);
+    return diag.result;
   }
 
   /**
@@ -394,97 +426,134 @@ Select the single best Option Index [0 to ${choices.length - 1}], provide your t
     return { systemInstruction, userPrompt, choices };
   }
 
-  private async dispatchToProvider(
+  private async dispatchToProviderDetailed(
     config: ProviderConfig,
     promptData: PromptPayload,
-  ): Promise<LLMDecisionResult | null> {
+  ): Promise<LLMCallResult> {
     const { provider } = config;
 
     if (provider === 'gemini') {
-      return this.callGemini(config, promptData);
+      return this.callGeminiDetailed(config, promptData);
     }
     if (provider === 'anthropic') {
-      return this.callAnthropic(config, promptData);
+      return this.callAnthropicDetailed(config, promptData);
     }
-    return this.callOpenAiCompatible(config, promptData);
+    return this.callOpenAiCompatibleDetailed(config, promptData);
   }
 
-  private async callGemini(
+  private async callGeminiDetailed(
     config: ProviderConfig,
     promptData: PromptPayload,
-  ): Promise<LLMDecisionResult | null> {
+  ): Promise<LLMCallResult> {
     const apiKey = config.apiKey || process.env.GEMINI_API_KEY || '';
-    if (!apiKey) return null;
+    if (!apiKey) {
+      return { result: null, error: 'Gemini API Key is missing. Enter your key in Settings > AI Duelist.' };
+    }
 
     const modelName = config.model || DEFAULT_MODELS.gemini;
     const ai = new GoogleGenAI({ apiKey });
 
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents: promptData.userPrompt,
-      config: {
-        systemInstruction: promptData.systemInstruction,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            selectedIndex: {
-              type: Type.INTEGER,
-              description: 'The option index number of your chosen legal action',
+    try {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: promptData.userPrompt,
+        config: {
+          systemInstruction: promptData.systemInstruction,
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              selectedIndex: {
+                type: Type.INTEGER,
+                description: 'The option index number of your chosen legal action',
+              },
+              reasoning: {
+                type: Type.STRING,
+                description: 'Brief 1-sentence tactical rationale for this move',
+              },
+              characterDialogue: {
+                type: Type.STRING,
+                description: '1 dramatic in-character voice line delivered to the opponent',
+              },
             },
-            reasoning: {
-              type: Type.STRING,
-              description: 'Brief 1-sentence tactical rationale for this move',
-            },
-            characterDialogue: {
-              type: Type.STRING,
-              description: '1 dramatic in-character voice line delivered to the opponent',
-            },
+            required: ['selectedIndex', 'reasoning', 'characterDialogue'],
           },
-          required: ['selectedIndex', 'reasoning', 'characterDialogue'],
         },
-      },
-    });
+      });
 
-    return this.parseJsonResponse(response.text, promptData, 'Gemini');
+      const parsed = this.parseJsonResponse(response.text, promptData, 'Gemini');
+      if (!parsed) {
+        return { result: null, error: `Invalid response format from Gemini model "${modelName}"` };
+      }
+      return { result: parsed };
+    } catch (err: any) {
+      let errMsg = err?.message || String(err);
+      if (errMsg.includes('404') || errMsg.toLowerCase().includes('not found')) {
+        errMsg = `HTTP 404 (Model Not Found: "${modelName}" is not available or does not exist. Choose e.g. gemini-2.5-flash or gemini-2.0-flash in Settings > AI Duelist)`;
+      } else if (errMsg.includes('401') || errMsg.includes('403') || errMsg.toLowerCase().includes('api_key_invalid')) {
+        errMsg = `HTTP 401/403 (Invalid or unauthorized API key for Gemini).`;
+      } else if (errMsg.includes('429') || errMsg.toLowerCase().includes('resource_exhausted')) {
+        errMsg = `HTTP 429 (Gemini Rate Limit / Quota Exceeded on free tier).`;
+      }
+      return { result: null, error: errMsg };
+    }
   }
 
-  private async callAnthropic(
+  private async callAnthropicDetailed(
     config: ProviderConfig,
     promptData: PromptPayload,
-  ): Promise<LLMDecisionResult | null> {
-    if (!config.apiKey) return null;
+  ): Promise<LLMCallResult> {
+    if (!config.apiKey) {
+      return { result: null, error: 'Anthropic API Key is missing. Enter your key in Settings > AI Duelist.' };
+    }
 
     const endpoint = config.customEndpoint || DEFAULT_ENDPOINTS.anthropic;
     const model = config.model || DEFAULT_MODELS.anthropic;
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': config.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 512,
-        system: promptData.systemInstruction,
-        messages: [{ role: 'user', content: promptData.userPrompt }],
-      }),
-    });
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 512,
+          system: promptData.systemInstruction,
+          messages: [{ role: 'user', content: promptData.userPrompt }],
+        }),
+      });
 
-    if (!res.ok) return null;
-    const data: any = await res.json();
-    const rawText = data?.content?.[0]?.text;
-    return this.parseJsonResponse(rawText, promptData, 'Anthropic');
+      if (!res.ok) {
+        let errText = await res.text();
+        try {
+          const j = JSON.parse(errText);
+          if (j.error?.message) errText = j.error.message;
+        } catch {}
+        return { result: null, error: `Anthropic Error HTTP ${res.status}: ${errText}`, statusCode: res.status };
+      }
+      const data: any = await res.json();
+      const rawText = data?.content?.[0]?.text;
+      const parsed = this.parseJsonResponse(rawText, promptData, 'Anthropic');
+      if (!parsed) {
+        return { result: null, error: `Invalid response format from Anthropic model "${model}"` };
+      }
+      return { result: parsed };
+    } catch (err: any) {
+      return { result: null, error: err?.message || String(err) };
+    }
   }
 
-  private async callOpenAiCompatible(
+  private async callOpenAiCompatibleDetailed(
     config: ProviderConfig,
     promptData: PromptPayload,
-  ): Promise<LLMDecisionResult | null> {
+  ): Promise<LLMCallResult> {
     const { provider, apiKey } = config;
-    if (provider !== 'ollama' && !apiKey) return null;
+    if (provider !== 'ollama' && !apiKey) {
+      return { result: null, error: `${provider.toUpperCase()} API Key is missing. Enter your key in Settings > AI Duelist.` };
+    }
 
     let endpoint = config.customEndpoint;
     if (!endpoint) {
@@ -499,24 +568,40 @@ Select the single best Option Index [0 to ${choices.length - 1}], provide your t
       headers['Authorization'] = `Bearer ${apiKey}`;
     }
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: promptData.systemInstruction },
-          { role: 'user', content: promptData.userPrompt },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.6,
-      }),
-    });
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: promptData.systemInstruction },
+            { role: 'user', content: promptData.userPrompt },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.6,
+        }),
+      });
 
-    if (!res.ok) return null;
-    const data: any = await res.json();
-    const rawText = data?.choices?.[0]?.message?.content;
-    return this.parseJsonResponse(rawText, promptData, provider.toUpperCase());
+      if (!res.ok) {
+        let errText = await res.text();
+        try {
+          const j = JSON.parse(errText);
+          if (j.error?.message) errText = j.error.message;
+        } catch {}
+        return { result: null, error: `${provider.toUpperCase()} Error HTTP ${res.status}: ${errText}`, statusCode: res.status };
+      }
+
+      const data: any = await res.json();
+      const rawText = data?.choices?.[0]?.message?.content;
+      const parsed = this.parseJsonResponse(rawText, promptData, provider.toUpperCase());
+      if (!parsed) {
+        return { result: null, error: `Invalid JSON response from ${provider.toUpperCase()} model "${model}"` };
+      }
+      return { result: parsed };
+    } catch (err: any) {
+      return { result: null, error: err?.message || String(err) };
+    }
   }
 
   private parseJsonResponse(

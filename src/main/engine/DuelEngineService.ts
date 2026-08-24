@@ -105,6 +105,13 @@ export class DuelEngineService {
   private aiSignatureCards: number[] = [];
   private aiDeckCards: number[] = [];
   private cardVideos: Record<string, CardVideoEntry> = {};
+  private aiDiagnostics = {
+    totalCalls: 0,
+    successfulCalls: 0,
+    fallbackCalls: 0,
+    lastError: null as string | null,
+    lastErrorTimestamp: null as number | null,
+  };
 
   // Tracked Board States for Player 0 and Player 1
   private player0Field: PlayerFieldState = this.createEmptyPlayerState(0, 'Player 0');
@@ -1400,19 +1407,38 @@ export class DuelEngineService {
       const model = settings.aiModels?.[this.aiProvider];
       const customEndpoint = settings.aiCustomEndpoints?.[this.aiProvider];
 
+      this.aiDiagnostics.totalCalls++;
       const result = await this.aiController.decideResponseAsync(msg, context, {
         provider: this.aiProvider,
         apiKey,
         model,
         customEndpoint,
       });
+
+      if (result.fallbackUsed) {
+        this.aiDiagnostics.fallbackCalls++;
+        if (result.error) {
+          this.aiDiagnostics.lastError = result.error;
+          this.aiDiagnostics.lastErrorTimestamp = Date.now();
+        }
+      } else {
+        this.aiDiagnostics.successfulCalls++;
+      }
+
       const delayMs = 200;
-      return { response: result.response, delayMs, dialogue: result.dialogue, reasoning: result.reasoning };
+      return {
+        response: result.response,
+        delayMs,
+        dialogue: result.dialogue,
+        reasoning: result.reasoning,
+        error: result.error,
+        fallbackUsed: result.fallbackUsed,
+      };
     }
 
     const response = this.aiController.decideResponse(msg, context);
     const delayMs = this.aiController.getThinkDelay(this.aiPersonality, OcgMessageType[msg.type]);
-    return { response, delayMs };
+    return { response, delayMs, fallbackUsed: false };
   }
 
   private convertPosition(position: number, isMonster: boolean): CardPositionState {
@@ -1598,11 +1624,25 @@ export class DuelEngineService {
           if (isOpponent || this.autoPlay) {
             if (this.aiProvider && this.aiProvider !== 'builtin') {
               this.getAiResponseAsync(lastMsg, promptPlayer)
-                .then(({ response, delayMs, dialogue, reasoning }) => {
+                .then(({ response, delayMs, dialogue, reasoning, error, fallbackUsed }) => {
+                  const settings = getPersistedSettings();
+                  const modelName = settings.aiModels?.[this.aiProvider] || this.aiProvider;
+                  const charName = this.aiCharacterName || (this.humanPlayerId === 0 ? this.player1Field.name : this.player0Field.name) || 'Opponent';
+
+                  if (fallbackUsed && error) {
+                    this.emitEvent({
+                      type: 'AI_DIAGNOSTIC' as any,
+                      characterId: this.aiCharacterId,
+                      characterName: charName,
+                      provider: this.aiProvider,
+                      model: modelName,
+                      status: 'fallback',
+                      error,
+                      description: `[AI WARNING] ${this.aiProvider.toUpperCase()} (${modelName}) API issue: ${error}. FastAI heuristic engine executed this move.`,
+                    } as any);
+                  }
+
                   if (dialogue) {
-                    const settings = getPersistedSettings();
-                    const modelName = settings.aiModels?.[this.aiProvider] || this.aiProvider;
-                    const charName = this.aiCharacterName || (this.humanPlayerId === 0 ? this.player1Field.name : this.player0Field.name) || 'Opponent';
                     this.emitEvent({
                       type: 'AI_DIALOGUE' as any,
                       characterId: this.aiCharacterId,

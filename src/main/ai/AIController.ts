@@ -29,17 +29,19 @@ import type { AiProviderType } from '../../shared/types/character.js';
 
 export class AIController {
   /**
-   * Decide response asynchronously, supporting multi-provider LLM reasoning and authentic dialogue.
+   * Decide response asynchronously, supporting multi-provider LLM reasoning, authentic dialogue, and error diagnostics.
    */
   public async decideResponseAsync(
     msg: OcgMessage,
     context: EvaluatorContext,
     providerInput: ProviderConfig | AiProviderType | 'builtin' | 'gemini' = 'builtin',
-  ): Promise<{ response: OcgResponse; dialogue?: string; reasoning?: string; provider?: string }> {
+  ): Promise<{ response: OcgResponse; dialogue?: string; reasoning?: string; provider?: string; model?: string; error?: string; fallbackUsed?: boolean }> {
     const config: ProviderConfig =
       typeof providerInput === 'string'
         ? { provider: providerInput as AiProviderType }
         : providerInput;
+
+    let lastError: string | undefined;
 
     if (config.provider && config.provider !== 'builtin') {
       try {
@@ -54,18 +56,35 @@ export class AIController {
         }
 
         if (candidates && candidates.length > 0) {
-          const result = await llmDuelService.decideResponse(config, msg, context, candidates);
-          if (result) {
-            return result;
+          const callResult = await llmDuelService.decideResponseWithDiagnostics(config, msg, context, candidates);
+          if (callResult.result) {
+            return {
+              response: callResult.result.response,
+              dialogue: callResult.result.dialogue,
+              reasoning: callResult.result.reasoning,
+              provider: callResult.result.provider || config.provider,
+              model: config.model,
+              fallbackUsed: false,
+            };
+          }
+          if (callResult.error) {
+            lastError = callResult.error;
           }
         }
-      } catch (err) {
+      } catch (err: any) {
+        lastError = err?.message || String(err);
         console.warn(`[AIController] ${config.provider} decision error, falling back to heuristic engine:`, err);
       }
     }
 
     const response = this.decideResponse(msg, context);
-    return { response };
+    return {
+      response,
+      fallbackUsed: config.provider !== 'builtin',
+      error: lastError,
+      provider: config.provider,
+      model: config.model,
+    };
   }
 
   /**

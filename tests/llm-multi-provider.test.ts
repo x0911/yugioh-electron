@@ -250,8 +250,30 @@ async function runMultiProviderTests() {
   loaded = getPersistedSettings();
   assert.equal(loaded.aiApiKeys?.groq, 'gsk_test_123456789', 'Existing Groq key must not be overwritten when adding OpenAI key');
   assert.equal(loaded.aiApiKeys?.openai, 'sk-test-openai-987654', 'OpenAI key must be saved');
+  console.log('  ✓ Multi-provider key persistence & reload integrity verified!');
 
-  console.log('  ✓ Multi-provider key persistence & reload integrity verified!\n');
+  // Test 7: Error Diagnostic Capture & Status Reporting
+  console.log('\n▶ Test 7: AI Connection Diagnostics & Error Reporting');
+  const diagResult = await llmDuelService.decideResponseWithDiagnostics(
+    { provider: 'gemini', apiKey: 'fake-invalid-key', model: 'invalid-model-name-xyz' },
+    mockIdleMsg,
+    mockContext,
+    candidateActions,
+  );
+  assert.strictEqual(diagResult.result, null, 'Must return null result on error');
+  assert.ok(diagResult.error && diagResult.error.length > 0, 'Must provide detailed error message');
+  console.log('  ✓ Captured diagnostic error:', diagResult.error);
+
+  const controllerDiag = await aiController.decideResponseAsync(
+    mockIdleMsg,
+    mockContext,
+    { provider: 'groq', apiKey: 'gsk_invalid_key_test', model: 'llama-invalid' },
+  );
+  assert.strictEqual(controllerDiag.fallbackUsed, true, 'Fallback flag must be set to true');
+  assert.ok(controllerDiag.error && controllerDiag.error.length > 0, 'Controller must surface provider error message');
+  console.log('  ✓ Controller surfaced fallback error:', controllerDiag.error);
+
+  console.log('  ✓ AI Diagnostic reporting verified!\n');
 
   console.log('🎉 ALL MULTI-PROVIDER AI TESTS PASSED 100%!');
 }

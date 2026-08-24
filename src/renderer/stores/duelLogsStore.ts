@@ -158,10 +158,11 @@ export const useDuelLogsStore = defineStore('duelLogs', {
         );
 
         let engineLabel = 'Built-in Fast Engine (Local Heuristics)';
+        let activeProv = 'builtin';
         try {
           const settingsStore = useSettingsStore();
           if (settingsStore) {
-            const activeProv = settingsStore.aiProvider || (settingsStore.aiEngineType as any) || 'builtin';
+            activeProv = settingsStore.aiProvider || (settingsStore.aiEngineType as any) || 'builtin';
             const activeModel = settingsStore.aiModels?.[activeProv];
             const provNames: Record<string, string> = {
               builtin: 'Built-in Fast Engine (Local Heuristics)',
@@ -179,6 +180,23 @@ export const useDuelLogsStore = defineStore('duelLogs', {
           // Unit test or offline mock fallback
         }
         lines.push(`• Opponent AI Engine: ${engineLabel}`);
+
+        // Scan logs for AI Diagnostics and Dialogues
+        const diagnosticLogs = logs.filter((l) => l.type === 'AI_DIAGNOSTIC' || l.description.includes('[AI WARNING]'));
+        const dialogueLogs = logs.filter((l) => l.type === 'AI_DIALOGUE');
+
+        if (activeProv !== 'builtin') {
+          if (diagnosticLogs.length > 0) {
+            const lastDiag = diagnosticLogs[diagnosticLogs.length - 1].description;
+            lines.push(`• AI Engine Diagnostic: ⚠️ Fallback Triggered (${dialogueLogs.length} LLM moves succeeded, ${diagnosticLogs.length} fell back)`);
+            lines.push(`• Diagnostic Details: ${lastDiag}`);
+            lines.push(`• AI Troubleshooting: Open Settings > AI Duelist. Verify your API key and ensure the selected model exists (e.g. "gemini-2.5-flash" or "llama-3.1-8b-instant").`);
+          } else if (dialogueLogs.length > 0) {
+            lines.push(`• AI Engine Diagnostic: ✅ Operational (${dialogueLogs.length} live LLM decisions & dialogue lines resolved cleanly)`);
+          } else {
+            lines.push(`• AI Engine Diagnostic: ⚡ Local FastAI Engine active`);
+          }
+        }
 
         if (options?.outcome) {
           lines.push(`• Final Duel Outcome: ${options.outcome.toUpperCase()}${options.winReason ? ` (${options.winReason})` : ''}`);
