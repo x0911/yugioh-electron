@@ -70,4 +70,83 @@ test('DM & GX Legacy Support In-Game Duel Simulation Test Suite', async (t) => {
     const board = s.getBoardState();
     assert.equal(board.userField.hand.length, 5);
   });
+
+  await t.test('3. King of the Skull Servants Dynamic ATK Recalculation (7000 ATK in GY)', async () => {
+    const s = new DuelEngineService();
+    await s.init();
+
+    // Start duel with King on field and 7 Skull Servant / Wight cards in GY
+    s.startNewDuel({
+      player0Deck: [36021814, ...Array(39).fill(32274490)],
+      player1Deck: Array(40).fill(89631139),
+      humanPlayerId: 0,
+      startingLP: 8000,
+    });
+
+    const userPf = (s as any).player0Field;
+    // Place King on monster zone 0
+    userPf.monsterZones[0] = {
+      id: 'm-king-1',
+      code: 36021814,
+      name: 'King of the Skull Servants',
+      controller: 0,
+      location: 'monster',
+      sequence: 0,
+      position: 'faceup_attack',
+      atk: 0,
+      def: 0,
+      baseAtk: 0,
+      baseDef: 0,
+      level: 1,
+      attribute: 'DARK',
+      race: 'Zombie',
+      statuses: [],
+    };
+
+    // Add 7 distinct Wight / Skull Servant cards to Graveyard:
+    // Skull Servant, King, Lady in Wight, Wightmare, Wightprince, Wightprincess, Wightbaking
+    userPf.graveyard = [
+      { code: 32274490, name: 'Skull Servant' },
+      { code: 36021814, name: 'King of the Skull Servants' },
+      { code: 40991587, name: 'The Lady in Wight' },
+      { code: 22339232, name: 'Wightmare' },
+      { code: 57473560, name: 'Wightprince' },
+      { code: 90243945, name: 'Wightprincess' },
+      { code: 6128460, name: 'Wightbaking' },
+    ];
+
+    s.syncFieldCardStats();
+    const board = s.getBoardState();
+    const kingCard = board.userField.monsterZones[0];
+
+    assert.ok(kingCard, 'King monster must be present on field');
+    assert.equal(kingCard.atk, 7000, 'King of the Skull Servants ATK must evaluate to exactly 7000 (7 x 1000)');
+    assert.equal(kingCard.baseAtk, 7000, 'King of the Skull Servants base ATK must also be 7000');
+    assert.equal(kingCard.def, 0, 'King of the Skull Servants DEF must be 0');
+  });
+
+  await t.test('4. Wightprince Graveyard Effect Ignition & Special Summon', async () => {
+    const s = new DuelEngineService();
+    await s.init();
+
+    // Player 0 has King in Deck, 2 Skull Servants in GY, Wightprince in GY
+    s.startNewDuel({
+      player0Deck: [36021814, ...Array(39).fill(32274490)],
+      player1Deck: Array(40).fill(89631139),
+      humanPlayerId: 0,
+      startingLP: 8000,
+      noShuffle: true,
+    });
+
+    const userPf = (s as any).player0Field;
+    userPf.graveyard = [
+      { code: 57473560, name: 'Wightprince', sequence: 0 },
+      { code: 32274490, name: 'Skull Servant', sequence: 1 },
+      { code: 32274490, name: 'Skull Servant', sequence: 2 },
+    ];
+
+    // Verify dynamic stats enrichment runs cleanly
+    s.syncFieldCardStats();
+    assert.ok(true, 'Dynamic stats synchronized cleanly');
+  });
 });

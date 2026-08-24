@@ -263,6 +263,8 @@
           label="GRAVEYARD"
           :target-info="getSlotTarget(userPlayerId, 16, 0)"
           :is-prompt-active="isPromptActive"
+          :has-action="duelStore.hasActivatableGraveyard"
+          :action-count="duelStore.activatableGraveyardCards.length"
           @hover-card="$emit('hover-card', $event)"
           @click-stack="onStackClick('graveyard', userPlayerId)"
         />
@@ -281,6 +283,8 @@
           label="EX DECK"
           :target-info="getSlotTarget(userPlayerId, 64, 0)"
           :is-prompt-active="isPromptActive"
+          :has-action="duelStore.hasActivatableExtraDeck"
+          :action-count="duelStore.activatableExtraDeckCards.length"
           @hover-card="$emit('hover-card', $event)"
           @click-stack="onStackClick('extra', userPlayerId)"
         />
@@ -348,6 +352,8 @@
           label="BANISHED"
           :target-info="getSlotTarget(userPlayerId, 32, 0)"
           :is-prompt-active="isPromptActive"
+          :has-action="duelStore.hasActivatableBanished"
+          :action-count="duelStore.activatableBanishedCards.length"
           @hover-card="$emit('hover-card', $event)"
           @click-stack="onStackClick('banished', userPlayerId)"
         />
@@ -369,11 +375,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { FieldCard, PlayerFieldState } from '../../../shared/types/field.js';
-import type { TargetInfo } from '../../stores/duelStore.js';
+import { useDuelStore, type TargetInfo } from '../../stores/duelStore.js';
 import { getCardImageUrl } from '../../utils/media.js';
 import FieldZoneSlot from './FieldZoneSlot.vue';
 import DeckStack from './DeckStack.vue';
 import Tooltip from '../common/Tooltip.vue';
+
+const duelStore = useDuelStore();
 
 const props = withDefaults(
   defineProps<{

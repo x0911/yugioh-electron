@@ -92,6 +92,41 @@
           />
         </div>
 
+        <!-- Floating Quick Zone Activations HUD Bar (Graveyard / Banished / Extra Deck) -->
+        <div
+          v-if="quickZoneActions.length > 0 && !duelStore.isVideoPlaying && !isObservingPrompt"
+          class="quick-zone-actions-bar glass-panel"
+        >
+          <div class="quick-actions-badge">
+            <span class="pulse-icon">⚡</span>
+            <span class="badge-title">ACTIVATION AVAILABLE</span>
+          </div>
+          <div class="quick-actions-list">
+            <button
+              v-for="item in quickZoneActions"
+              :key="`${item.zone}-${item.card.code}-${item.action.type}-${item.action.index}`"
+              type="button"
+              class="quick-action-pill"
+              :class="`quick-action-pill--${item.zone}`"
+              @click="onSelectCardAction(item.action)"
+              @mouseenter="onCardHover(item.card)"
+            >
+              <span class="zone-badge">{{ item.zoneLabel }}</span>
+              <img
+                :src="getCardImageUrl(item.card.code, 'mini')"
+                :alt="item.card.name"
+                class="quick-card-art"
+                @error="handleImageError"
+              />
+              <span class="card-name">{{ item.card.name }}</span>
+              <span class="action-btn-tag" :class="`action-btn-tag--${item.action.type}`">
+                <span class="tag-icon">{{ item.action.icon || '⚡' }}</span>
+                <span class="tag-label">{{ item.action.label }}</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
         <!-- User Hand Fan (Full Cards) -->
         <div class="user-hand-wrapper">
           <HandFan
@@ -275,6 +310,7 @@
       :owner="activeInspectStack.owner"
       :type="activeInspectStack.type"
       @hover-card="onCardHover"
+      @action="onSelectCardAction"
     />
     <!-- Slide-Out Duel Log Drawer -->
     <DuelLogPanel
@@ -322,7 +358,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import type { FieldCard, DuelBoardState } from '../../shared/types/field.js';
 import { type DuelEventPayload, type TossPayload, getGameOverSubtitle } from '../../shared/types/duel.js';
-import { getBackgroundUrl } from '../utils/media.js';
+import { getBackgroundUrl, getCardImageUrl, handleImageError } from '../utils/media.js';
 import { useDuelStore, type CardActionOption, type TargetInfo } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
 import { useDuelLogsStore } from '../stores/duelLogsStore.js';
@@ -509,6 +545,52 @@ const actionGuideInfo = computed(() => {
   );
 });
 
+// Quick Zone Activations (Instant 1-click access to Graveyard, Banished, and Extra Deck effects)
+const quickZoneActions = computed(() => {
+  if (isObservingPrompt.value || duelStore.isGameOver) return [];
+  const results: Array<{
+    zone: 'graveyard' | 'banished' | 'extra';
+    zoneLabel: string;
+    card: FieldCard;
+    action: CardActionOption;
+  }> = [];
+
+  for (const item of duelStore.activatableGraveyardCards) {
+    for (const action of item.actions) {
+      results.push({
+        zone: 'graveyard',
+        zoneLabel: '🪦 GY',
+        card: item.card,
+        action,
+      });
+    }
+  }
+
+  for (const item of duelStore.activatableBanishedCards) {
+    for (const action of item.actions) {
+      results.push({
+        zone: 'banished',
+        zoneLabel: '🌀 BANISHED',
+        card: item.card,
+        action,
+      });
+    }
+  }
+
+  for (const item of duelStore.activatableExtraDeckCards) {
+    for (const action of item.actions) {
+      results.push({
+        zone: 'extra',
+        zoneLabel: '⚡ EXTRA',
+        card: item.card,
+        action,
+      });
+    }
+  }
+
+  return results;
+});
+
 // Live Logs
 const duelLogs = ref<LogItem[]>([]);
 
@@ -635,6 +717,7 @@ function onTargetClick(targetInfo: TargetInfo): void {
 async function onSelectCardAction(action: CardActionOption): Promise<void> {
   if (duelStore.isVideoPlaying) return;
   closeCardActionMenu();
+  isInspectModalOpen.value = false;
   switch (action.type) {
     case 'summon':
       await duelStore.executeNormalSummon(action.index);
@@ -650,6 +733,9 @@ async function onSelectCardAction(action: CardActionOption): Promise<void> {
       break;
     case 'activate':
       await duelStore.executeActivate(action.index);
+      break;
+    case 'chain':
+      await duelStore.executeSelectChain(action.index);
       break;
     case 'pos_change':
       await duelStore.executePosChange(action.index);
@@ -1422,6 +1508,153 @@ onUnmounted(() => {
     flex: 1;
     display: flex;
     justify-content: center;
+  }
+}
+
+// Quick Zone Activations Floating Bar
+.quick-zone-actions-bar {
+  position: absolute;
+  top: -46px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  border-radius: 24px;
+  background: rgba(14, 18, 26, 0.92);
+  border: 1px solid rgba(246, 224, 94, 0.5);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.85),
+    0 0 20px rgba(236, 201, 75, 0.35);
+  z-index: 50;
+  animation: quick-bar-slide-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  .quick-actions-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Oxanium', monospace, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #f6e05e;
+    text-shadow: 0 0 8px rgba(246, 224, 94, 0.6);
+    white-space: nowrap;
+
+    .pulse-icon {
+      font-size: 0.85rem;
+      animation: pulse-quick-icon 1.2s infinite ease-in-out;
+    }
+  }
+
+  .quick-actions-list {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .quick-action-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 6px;
+    background: rgba(26, 32, 44, 0.95);
+    border: 1px solid rgba(246, 224, 94, 0.4);
+    border-radius: 18px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+
+    &:hover {
+      transform: translateY(-2px) scale(1.04);
+      background: rgba(45, 55, 72, 0.98);
+      border-color: #ecc94b;
+      box-shadow:
+        0 4px 14px rgba(0, 0, 0, 0.8),
+        0 0 16px rgba(236, 201, 75, 0.6);
+    }
+
+    .zone-badge {
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      background: rgba(236, 201, 75, 0.2);
+      color: #ecc94b;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    .quick-card-art {
+      width: 20px;
+      height: 28px;
+      border-radius: 2px;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .card-name {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #f7fafc;
+      white-space: nowrap;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .action-btn-tag {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      background: linear-gradient(135deg, #d69e2e, #b7791f);
+      border: 1px solid #ecc94b;
+      border-radius: 12px;
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: 0.04em;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+
+      &--sp_summon {
+        background: linear-gradient(135deg, #4299e1, #3182ce);
+        border-color: #63b3ed;
+        color: #fff;
+      }
+
+      &--chain {
+        background: linear-gradient(135deg, #9f7aea, #805ad5);
+        border-color: #b794f4;
+        color: #fff;
+      }
+    }
+  }
+}
+
+@keyframes quick-bar-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes pulse-quick-icon {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
   }
 }
 

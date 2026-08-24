@@ -1667,16 +1667,6 @@ export class DuelEngineService {
               if (!card.attribute && parsed.attribute) card.attribute = parsed.attribute;
               if (!card.race && parsed.race) card.race = parsed.race;
             }
-
-            stats.push({
-              controller: p,
-              sequence: seq,
-              atk: card.atk,
-              def: card.def,
-              level: card.level,
-              baseAtk: card.baseAtk,
-              baseDef: card.baseDef,
-            });
           }
         } catch {
           // Ignore transient ocgcore query errors during zone transitions
@@ -1702,34 +1692,83 @@ export class DuelEngineService {
       }
     }
 
+    this.enrichDynamicStatsForField(this.player0Field, this.player1Field);
+    this.enrichDynamicStatsForField(this.player1Field, this.player0Field);
+
+    for (const p of [0, 1] as const) {
+      const pf = this.getPlayerField(p);
+      for (let seq = 0; seq < pf.monsterZones.length; seq++) {
+        const card = pf.monsterZones[seq];
+        if (!card) continue;
+
+        stats.push({
+          controller: p,
+          sequence: seq,
+          atk: card.atk,
+          def: card.def,
+          level: card.level,
+          baseAtk: card.baseAtk,
+          baseDef: card.baseDef,
+        });
+      }
+    }
+
     return stats;
   }
 
-  private enrichDynamicStatsForField(pf: PlayerFieldState, oppPf: PlayerFieldState): void {
+  public enrichDynamicStatsForField(pf: PlayerFieldState, oppPf: PlayerFieldState): void {
     for (const card of pf.monsterZones) {
       if (!card || card.code <= 0) continue;
       // Slifer the Sky Dragon (10000020): gains 1000 ATK/DEF per card in hand
-      if (card.code === 10000020 && (card.atk === undefined || card.atk === 0)) {
+      if (card.code === 10000020) {
         card.atk = pf.hand.length * 1000;
         card.def = pf.hand.length * 1000;
+        card.baseAtk = card.atk;
+        card.baseDef = card.def;
       }
       // Tragoedia (98777992): gains 600 ATK/DEF per card in hand
-      else if (card.code === 98777992 && (card.atk === undefined || card.atk === 0)) {
+      else if (card.code === 98777992) {
         card.atk = pf.hand.length * 600;
         card.def = pf.hand.length * 600;
+        card.baseAtk = card.atk;
+        card.baseDef = card.def;
       }
       // Gren Maju Da Eiza (36584821): gains 400 ATK/DEF per banished card
-      else if (card.code === 36584821 && (card.atk === undefined || card.atk === 0)) {
+      else if (card.code === 36584821) {
         const totalBanished = pf.banished.length + oppPf.banished.length;
         card.atk = totalBanished * 400;
         card.def = totalBanished * 400;
+        card.baseAtk = card.atk;
+        card.baseDef = card.def;
       }
-      // King of the Skull Servants (36021814): 1000 ATK per Skull Servant / King in GY
-      else if (card.code === 36021814 && (card.atk === undefined || card.atk === 0)) {
-        const servCodes = [32274490, 36021814, 16638212, 78636495];
+      // King of the Skull Servants (36021814): 1000 ATK per "Skull Servant" / "King of the Skull Servants" in GY
+      else if (card.code === 36021814) {
+        const servCodes = [
+          32274490, // Skull Servant
+          32274491, // Skull Servant (Alt)
+          36021814, // King of the Skull Servants
+          40991587, // The Lady in Wight
+          22339232, // Wightmare
+          57473560, // Wightprince
+          90243945, // Wightprincess
+          6128460,  // Wightbaking
+          22970795, // Wightlord
+          39848658, // Wight Reanimator
+          16638212, // Wight Fan
+          78636495,
+        ];
         const count = pf.graveyard.filter((c) => servCodes.includes(c.code)).length;
         card.atk = count * 1000;
         card.def = 0;
+        card.baseAtk = count * 1000;
+        card.baseDef = 0;
+      }
+      // The Legendary Exodia Incarnate (13893596): gains 1000 ATK for each "Forbidden One" in GY
+      else if (card.code === 13893596) {
+        const exodiaCodes = [33396948, 7902349, 70903634, 44519536, 8124921];
+        const count = pf.graveyard.filter((c) => exodiaCodes.includes(c.code)).length;
+        card.atk = count * 1000;
+        card.baseAtk = count * 1000;
       }
     }
   }

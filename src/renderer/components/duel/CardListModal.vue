@@ -44,12 +44,21 @@
             {
               'card-list-tile--facedown':
                 card.position === 'facedown_defense' || card.position === 'facedown_spell',
+              'card-list-tile--activatable': getCardActions(card).length > 0,
             },
           ]"
           @mouseenter="onMouseEnter(card)"
           @mouseleave="onMouseLeave"
           @click="onCardClick(card)"
         >
+          <!-- Activatable Pulsing Aura Badge -->
+          <div
+            v-if="getCardActions(card).length > 0"
+            class="tile-activatable-badge"
+          >
+            ⚡ READY
+          </div>
+
           <!-- Order Badge (Top of Graveyard is Index 0 or 1) -->
           <div
             v-if="type === 'graveyard'"
@@ -104,6 +113,21 @@
                 {{ card.attribute === 'TRAP' ? 'TRAP' : 'SPELL' }}
               </span>
             </div>
+
+            <!-- Action Button Triggers (e.g. Activate from GY / Banished) -->
+            <div v-if="getCardActions(card).length > 0" class="tile-action-row">
+              <button
+                v-for="act in getCardActions(card)"
+                :key="act.type + act.index"
+                type="button"
+                class="btn-tile-activate"
+                :class="`btn-tile-activate--${act.type}`"
+                @click.stop="onActionClick(act)"
+              >
+                <span class="act-icon">{{ act.icon || '⚡' }}</span>
+                <span class="act-label">{{ act.label }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -123,7 +147,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { FieldCard } from '../../../shared/types/field.js';
-import { useDuelStore } from '../../stores/duelStore.js';
+import { useDuelStore, type CardActionOption } from '../../stores/duelStore.js';
 import YugiModal from '../common/YugiModal.vue';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
 import { formatCombatStat } from '../../utils/format.js';
@@ -147,9 +171,20 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void;
   (e: 'hover-card', card: FieldCard | null): void;
   (e: 'select-card', card: FieldCard): void;
+  (e: 'action', action: CardActionOption): void;
 }>();
 
 const duelStore = useDuelStore();
+
+function getCardActions(card: FieldCard): CardActionOption[] {
+  if (props.owner !== 'user' || !card.code || card.code <= 0) return [];
+  return duelStore.getLegalActionsForStackCard(card, props.type);
+}
+
+function onActionClick(action: CardActionOption): void {
+  emit('action', action);
+  emit('update:modelValue', false);
+}
 
 const enrichedCards = computed<FieldCard[]>(() => {
   return props.cards.map((card) => {
@@ -400,6 +435,22 @@ function onCardClick(card: FieldCard): void {
     }
   }
 
+  &--activatable {
+    border-color: #f6e05e;
+    background: linear-gradient(180deg, rgba(28, 38, 52, 0.95), rgba(35, 45, 20, 0.95));
+    box-shadow:
+      0 0 15px rgba(236, 201, 75, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.6);
+    animation: tile-activate-pulse 2s infinite ease-in-out;
+
+    &:hover {
+      border-color: #ecc94b;
+      box-shadow:
+        0 0 25px rgba(236, 201, 75, 0.7),
+        0 8px 24px rgba(0, 0, 0, 0.8);
+    }
+  }
+
   &--user:hover {
     border-color: #63b3ed;
     box-shadow:
@@ -412,6 +463,107 @@ function onCardClick(card: FieldCard): void {
     box-shadow:
       0 8px 24px rgba(0, 0, 0, 0.7),
       0 0 16px rgba(245, 101, 101, 0.4);
+  }
+}
+
+@keyframes tile-activate-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(236, 201, 75, 0.35), 0 4px 12px rgba(0, 0, 0, 0.6);
+    border-color: rgba(246, 224, 94, 0.8);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(236, 201, 75, 0.65), 0 6px 16px rgba(0, 0, 0, 0.8);
+    border-color: #ecc94b;
+  }
+}
+
+.tile-activatable-badge {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  font-family: $font-display;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #111;
+  background: linear-gradient(135deg, #f6e05e, #ecc94b);
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  z-index: 3;
+  box-shadow: 0 0 8px rgba(236, 201, 75, 0.8);
+  animation: badge-bounce 1.5s infinite ease-in-out;
+}
+
+@keyframes badge-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.tile-action-row {
+  margin-top: 0.35rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.btn-tile-activate {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.4rem;
+  background: linear-gradient(135deg, #d69e2e, #b7791f);
+  border: 1px solid #ecc94b;
+  border-radius: 4px;
+  color: #fff;
+  font-family: $font-display;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: all 0.15s ease;
+
+  &:hover {
+    transform: scale(1.04);
+    background: linear-gradient(135deg, #ecc94b, #d69e2e);
+    box-shadow: 0 0 12px rgba(236, 201, 75, 0.7);
+  }
+
+  &--sp_summon {
+    background: linear-gradient(135deg, #3182ce, #2b6cb0);
+    border-color: #63b3ed;
+
+    &:hover {
+      background: linear-gradient(135deg, #4299e1, #3182ce);
+      box-shadow: 0 0 12px rgba(66, 153, 225, 0.7);
+    }
+  }
+
+  &--chain {
+    background: linear-gradient(135deg, #805ad5, #6b46c1);
+    border-color: #b794f4;
+
+    &:hover {
+      background: linear-gradient(135deg, #9f7aea, #805ad5);
+      box-shadow: 0 0 12px rgba(159, 122, 234, 0.7);
+    }
+  }
+
+  .act-icon {
+    font-size: 0.75rem;
+  }
+
+  .act-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

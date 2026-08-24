@@ -63,10 +63,12 @@ const DEFAULT_USER_EXTRA_DECK = [
 ];
 
 export interface CardActionOption {
-  type: 'summon' | 'sp_summon' | 'monster_set' | 'spell_set' | 'activate' | 'pos_change' | 'attack';
+  type: 'summon' | 'sp_summon' | 'monster_set' | 'spell_set' | 'activate' | 'pos_change' | 'attack' | 'chain';
   index: number;
   label: string;
   icon?: string;
+  cardName?: string;
+  code?: number;
 }
 
 export interface DuelStoreState {
@@ -283,6 +285,57 @@ export const useDuelStore = defineStore('duel', {
       const min = state.activeSelectTribute?.min ?? state.activeSelectCard?.min ?? 1;
       const max = state.activeSelectTribute?.max ?? state.activeSelectCard?.max ?? 1;
       return state.selectedTargetIndices.length >= min && state.selectedTargetIndices.length <= max;
+    },
+
+    activatableGraveyardCards(): Array<{ card: FieldCard; actions: CardActionOption[] }> {
+      const pf = this.boardState.userField;
+      if (!pf || !pf.graveyard) return [];
+      const results: Array<{ card: FieldCard; actions: CardActionOption[] }> = [];
+      for (const card of pf.graveyard) {
+        const actions = (this as any).getLegalActionsForStackCard(card, 'graveyard');
+        if (actions.length > 0) {
+          results.push({ card, actions });
+        }
+      }
+      return results;
+    },
+
+    activatableBanishedCards(): Array<{ card: FieldCard; actions: CardActionOption[] }> {
+      const pf = this.boardState.userField;
+      if (!pf || !pf.banished) return [];
+      const results: Array<{ card: FieldCard; actions: CardActionOption[] }> = [];
+      for (const card of pf.banished) {
+        const actions = (this as any).getLegalActionsForStackCard(card, 'banished');
+        if (actions.length > 0) {
+          results.push({ card, actions });
+        }
+      }
+      return results;
+    },
+
+    activatableExtraDeckCards(): Array<{ card: FieldCard; actions: CardActionOption[] }> {
+      const pf = this.boardState.userField;
+      if (!pf || !pf.extraDeck) return [];
+      const results: Array<{ card: FieldCard; actions: CardActionOption[] }> = [];
+      for (const card of pf.extraDeck) {
+        const actions = (this as any).getLegalActionsForStackCard(card, 'extra');
+        if (actions.length > 0) {
+          results.push({ card, actions });
+        }
+      }
+      return results;
+    },
+
+    hasActivatableGraveyard(): boolean {
+      return (this as any).activatableGraveyardCards.length > 0;
+    },
+
+    hasActivatableBanished(): boolean {
+      return (this as any).activatableBanishedCards.length > 0;
+    },
+
+    hasActivatableExtraDeck(): boolean {
+      return (this as any).activatableExtraDeckCards.length > 0;
     },
   },
 
@@ -770,23 +823,50 @@ export const useDuelStore = defineStore('duel', {
     enrichDynamicStatsOnBoard(): void {
       const uPf = this.boardState.userField;
       const oPf = this.boardState.opponentField;
+      const servCodes = [
+        32274490, // Skull Servant
+        32274491, // Skull Servant (Alt)
+        36021814, // King of the Skull Servants
+        40991587, // The Lady in Wight
+        22339232, // Wightmare
+        57473560, // Wightprince
+        90243945, // Wightprincess
+        6128460,  // Wightbaking
+        22970795, // Wightlord
+        39848658, // Wight Reanimator
+        16638212, // Wight Fan
+        78636495,
+      ];
+      const exodiaCodes = [33396948, 7902349, 70903634, 44519536, 8124921];
+
       for (const card of uPf.monsterZones) {
         if (!card || card.code <= 0) continue;
         if (card.code === 10000020) {
           card.atk = uPf.hand.length * 1000;
           card.def = uPf.hand.length * 1000;
+          card.baseAtk = card.atk;
+          card.baseDef = card.def;
         } else if (card.code === 98777992) {
           card.atk = uPf.hand.length * 600;
           card.def = uPf.hand.length * 600;
+          card.baseAtk = card.atk;
+          card.baseDef = card.def;
         } else if (card.code === 36584821) {
           const totalBanished = uPf.banished.length + oPf.banished.length;
           card.atk = totalBanished * 400;
           card.def = totalBanished * 400;
+          card.baseAtk = card.atk;
+          card.baseDef = card.def;
         } else if (card.code === 36021814) {
-          const servCodes = [32274490, 36021814, 16638212, 78636495];
           const count = uPf.graveyard.filter((c) => servCodes.includes(c.code)).length;
           card.atk = count * 1000;
           card.def = 0;
+          card.baseAtk = count * 1000;
+          card.baseDef = 0;
+        } else if (card.code === 13893596) {
+          const count = uPf.graveyard.filter((c) => exodiaCodes.includes(c.code)).length;
+          card.atk = count * 1000;
+          card.baseAtk = count * 1000;
         }
       }
       for (const card of oPf.monsterZones) {
@@ -794,18 +874,29 @@ export const useDuelStore = defineStore('duel', {
         if (card.code === 10000020) {
           card.atk = oPf.hand.length * 1000;
           card.def = oPf.hand.length * 1000;
+          card.baseAtk = card.atk;
+          card.baseDef = card.def;
         } else if (card.code === 98777992) {
           card.atk = oPf.hand.length * 600;
           card.def = oPf.hand.length * 600;
+          card.baseAtk = card.atk;
+          card.baseDef = card.def;
         } else if (card.code === 36584821) {
           const totalBanished = uPf.banished.length + oPf.banished.length;
           card.atk = totalBanished * 400;
           card.def = totalBanished * 400;
+          card.baseAtk = card.atk;
+          card.baseDef = card.def;
         } else if (card.code === 36021814) {
-          const servCodes = [32274490, 36021814, 16638212, 78636495];
           const count = oPf.graveyard.filter((c) => servCodes.includes(c.code)).length;
           card.atk = count * 1000;
           card.def = 0;
+          card.baseAtk = count * 1000;
+          card.baseDef = 0;
+        } else if (card.code === 13893596) {
+          const count = oPf.graveyard.filter((c) => exodiaCodes.includes(c.code)).length;
+          card.atk = count * 1000;
+          card.baseAtk = count * 1000;
         }
       }
     },
@@ -1374,6 +1465,8 @@ export const useDuelStore = defineStore('duel', {
           this.clearPrompts();
         }
       }
+
+      this.enrichDynamicStatsOnBoard();
     },
 
     /**
@@ -1535,6 +1628,88 @@ export const useDuelStore = defineStore('duel', {
         });
         if (chainIdx >= 0) {
           actions.push({ type: 'activate', index: chainIdx, label: 'Activate Effect', icon: '⚡' });
+        }
+      }
+
+      return actions;
+    },
+
+    /**
+     * Resolves legal actions available for a card in Graveyard, Banished, Extra Deck, or Main Deck.
+     */
+    getLegalActionsForStackCard(
+      card: FieldCard,
+      stackType: 'graveyard' | 'banished' | 'extra' | 'deck',
+    ): CardActionOption[] {
+      const actions: CardActionOption[] = [];
+      const locationMap: Record<string, number> = {
+        deck: 1,
+        graveyard: 16,
+        banished: 32,
+        extra: 64,
+      };
+      const loc = locationMap[stackType] || 16;
+
+      // 1. In Main Phase (Idle Command)
+      if (this.activeIdleCmd && this.boardState.userField.isTurn) {
+        // Special Summon (e.g. Extra Deck or Graveyard revival)
+        if (this.activeIdleCmd.special_summons) {
+          for (let i = 0; i < this.activeIdleCmd.special_summons.length; i++) {
+            const s = this.activeIdleCmd.special_summons[i];
+            const locMatch = s.location === undefined || s.location === loc || (s.location & loc) !== 0;
+            const codeMatch = s.code === card.code;
+            const seqMatch = s.sequence === undefined || s.sequence === card.sequence;
+            if (locMatch && (codeMatch || seqMatch)) {
+              actions.push({
+                type: 'sp_summon',
+                index: i,
+                label: 'Special Summon',
+                icon: '✨',
+                cardName: card.name,
+                code: card.code,
+              });
+            }
+          }
+        }
+
+        // Activate Effect (e.g. Wightprince in GY, Mezuki in GY, Breakthrough Skill in GY)
+        if (this.activeIdleCmd.activates) {
+          for (let i = 0; i < this.activeIdleCmd.activates.length; i++) {
+            const a = this.activeIdleCmd.activates[i];
+            const locMatch = a.location === undefined || a.location === loc || (a.location & loc) !== 0;
+            const codeMatch = a.code === card.code;
+            const seqMatch = a.sequence === undefined || a.sequence === card.sequence;
+            if (locMatch && (codeMatch || seqMatch)) {
+              actions.push({
+                type: 'activate',
+                index: i,
+                label: 'Activate Effect',
+                icon: '⚡',
+                cardName: card.name,
+                code: card.code,
+              });
+            }
+          }
+        }
+      }
+
+      // 2. In Chain Response Window
+      if (this.activeSelectChain && this.activeSelectChain.chains) {
+        for (let i = 0; i < this.activeSelectChain.chains.length; i++) {
+          const c = this.activeSelectChain.chains[i];
+          const locMatch = c.location === undefined || c.location === loc || (c.location & loc) !== 0;
+          const codeMatch = c.code === card.code;
+          const seqMatch = c.sequence === undefined || c.sequence === card.sequence;
+          if (locMatch && (codeMatch || seqMatch)) {
+            actions.push({
+              type: 'chain',
+              index: i,
+              label: 'Chain Effect',
+              icon: '🔗',
+              cardName: card.name,
+              code: card.code,
+            });
+          }
         }
       }
 

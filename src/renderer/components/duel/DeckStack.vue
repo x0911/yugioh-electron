@@ -10,7 +10,8 @@
         'deck-stack--has-cards': count > 0,
         'deck-stack--selectable': targetInfo?.isSelectable,
         'deck-stack--selected': targetInfo?.isSelected,
-        'deck-stack--ineligible': isPromptActive && (!targetInfo || !targetInfo.isSelectable) && count > 0,
+        'deck-stack--has-action': hasAction,
+        'deck-stack--ineligible': isPromptActive && (!targetInfo || !targetInfo.isSelectable) && count > 0 && !hasAction,
       },
     ]"
     @mouseenter="onMouseEnter"
@@ -19,6 +20,11 @@
   >
     <Tooltip :content="tooltipContent" position="top">
       <div class="stack-container">
+        <!-- Activatable Effect Aura Badge -->
+        <div v-if="hasAction" class="stack-action-badge">
+          ⚡ ACTIVATE{{ actionCount && actionCount > 1 ? ` (${actionCount})` : '' }}
+        </div>
+
         <!-- 3D Stack Layer Offsets (Creates physical card deck depth) -->
         <div v-if="count >= 15" class="stack-layer stack-layer--3"></div>
         <div v-if="count >= 5" class="stack-layer stack-layer--2"></div>
@@ -119,12 +125,16 @@ const props = withDefaults(
     label?: string;
     targetInfo?: TargetInfo | null;
     isPromptActive?: boolean;
+    hasAction?: boolean;
+    actionCount?: number;
   }>(),
   {
     topCard: null,
     label: '',
     targetInfo: null,
     isPromptActive: false,
+    hasAction: false,
+    actionCount: 0,
   },
 );
 
@@ -419,12 +429,64 @@ function onClick(): void {
     }
   }
 
+  // Has Activatable Actions (e.g. Graveyard / Banished Effects)
+  &--has-action {
+    .stack-top-card {
+      border-color: #f6e05e !important;
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.9),
+        0 0 20px rgba(236, 201, 75, 0.7) !important;
+      animation: stack-activate-pulse 1.8s infinite ease-in-out;
+    }
+  }
+
   // Ineligible Target Stack (dimmed)
   &--ineligible {
     opacity: 0.45;
     filter: grayscale(0.25) brightness(0.75);
     transition: opacity 0.25s ease, filter 0.25s ease;
   }
+
+  .stack-action-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #f6e05e, #d69e2e);
+    color: #111;
+    font-family: 'Oxanium', monospace, sans-serif;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 50;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.8),
+      0 0 10px rgba(236, 201, 75, 0.9);
+    animation: stack-badge-bounce 1.6s infinite ease-in-out;
+  }
+
+@keyframes stack-activate-pulse {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9), 0 0 16px rgba(236, 201, 75, 0.5);
+    border-color: rgba(246, 224, 94, 0.8);
+  }
+  50% {
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.95), 0 0 26px rgba(236, 201, 75, 0.85);
+    border-color: #ecc94b;
+  }
+}
+
+@keyframes stack-badge-bounce {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-3px);
+  }
+}
 
   .stack-target-overlay {
     position: absolute;
