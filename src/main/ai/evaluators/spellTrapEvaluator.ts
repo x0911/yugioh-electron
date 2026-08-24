@@ -155,8 +155,13 @@ export function evaluateSpellActivation(
     const isSymmetric = code === 19613556 || code === 42703248 || cardName.includes('Heavy Storm') || cardName.includes('Giant Trunade');
     const oppBackrowCount = oppField.spellTrapZones.filter(Boolean).length;
     const aiBackrowCount = aiField.spellTrapZones.filter(Boolean).length;
+    const aiMonsterCount = aiField.monsterZones.filter(Boolean).length;
+    const hasPlayableMonsterInHand = aiField.hand.some((c) => {
+      const d = c.code > 0 ? context.cardReader.getCardDetail(c.code) : null;
+      return d?.isMonster && (d?.level ?? 4) <= 4;
+    });
 
-    if (oppBackrowCount === 0) {
+    if (oppBackrowCount === 0 && !oppField.fieldZone) {
       return {
         score: -8000,
         reason: `Hold ${cardName}: Opponent controls 0 Spells/Traps`,
@@ -190,6 +195,14 @@ export function evaluateSpellActivation(
           reason: `Hold ${cardName}: Would destroy more AI backrow (${aiBackrowCount}) than opponent (${oppBackrowCount})`,
         };
       }
+    }
+
+    // If opponent has only 1 backrow and AI has no monsters and cannot summon any monster this turn, hold Heavy Storm
+    if (oppBackrowCount === 1 && !oppField.fieldZone && aiMonsterCount === 0 && !hasPlayableMonsterInHand) {
+      return {
+        score: -2000,
+        reason: `[HOLD] Hold ${cardName}: AI has no monsters on field or playable in hand; save heavy storm for when ready to mount an offensive`,
+      };
     }
 
     const score = 1000 + oppBackrowCount * 500 * (personality.aggression + 0.4);
@@ -341,7 +354,7 @@ export function evaluateSpellActivation(
   if (
     code === 46130346 || // Hinotama (500)
     code === 19523799 || // Ookazi (800)
-    code === 5318639 || // Sparks (50)
+    code === 76103675 || // Sparks (50)
     code === 24068492 || // Just Desserts
     code === 46918794 // Tremendous Fire (1000)
   ) {
@@ -357,7 +370,241 @@ export function evaluateSpellActivation(
     };
   }
 
-  // 7. Combat Stat Doubler / Quick-Play: Limiter Removal (2317163)
+  // 7. Spot Spell & Trap Destruction (Mystical Space Typhoon: 5318639, Dust Tornado: 99518961, Twister: 284224)
+  if (
+    code === 5318639 || // Mystical Space Typhoon
+    code === 99518961 || // Dust Tornado
+    code === 284224 ||   // Twister
+    cardName.includes('Mystical Space Typhoon') ||
+    cardName.includes('Dust Tornado')
+  ) {
+    const oppBackrowCount = oppField.spellTrapZones.filter(Boolean).length;
+    const hasOppFieldSpell = !!oppField.fieldZone;
+    const oppFaceupContinuous = oppField.spellTrapZones.filter((s) => s && (s.position === 'faceup_spell' || s.position === 'faceup_attack'));
+
+    if (oppBackrowCount === 0 && !hasOppFieldSpell) {
+      return {
+        score: -8000,
+        reason: `[HOLD] Do not activate ${cardName}: opponent controls 0 Spell/Trap cards to target`,
+      };
+    }
+
+    if (oppFaceupContinuous.length > 0 || hasOppFieldSpell) {
+      const topTargetName = oppFaceupContinuous[0]?.name || oppField.fieldZone?.name || 'continuous card';
+      return {
+        score: 3500,
+        reason: `[PRIORITY TARGET] Activate ${cardName} to destroy opponent's active face-up ${topTargetName}`,
+      };
+    }
+
+    // During End Phase of opponent's turn, popping face-down backrow is optimal
+    const isOppEndPhase = !aiField.isTurn && boardState.currentPhase === 'EP';
+    if (isOppEndPhase && oppBackrowCount > 0) {
+      return {
+        score: 2200,
+        reason: `[END PHASE POP] Activate ${cardName} during opponent's End Phase to safely destroy set backrow`,
+      };
+    }
+
+    // In AI's main phase before making plays
+    if (aiField.isTurn && oppBackrowCount > 0) {
+      return {
+        score: 1400,
+        reason: `Activate ${cardName} to eliminate opponent set backrow before executing plays`,
+      };
+    }
+
+    return {
+      score: 500,
+      reason: `Activate ${cardName} to destroy opponent Spell/Trap card`,
+    };
+  }
+
+  // 8. Battle & Attack Response Traps
+  if (
+    code === 44095762 || // Mirror Force
+    code === 38199696 || // Sakuretsu Armor
+    code === 70342110 || // Dimensional Prison
+    code === 77754944 || // Widespread Ruin
+    code === 62279055 || // Magic Cylinder
+    code === 36368606 || // Threatening Roar
+    code === 12607053 || // Waboku
+    cardName.includes('Mirror Force') ||
+    cardName.includes('Sakuretsu') ||
+    cardName.includes('Dimensional Prison') ||
+    cardName.includes('Magic Cylinder') ||
+    cardName.includes('Threatening Roar') ||
+    cardName.includes('Waboku')
+  ) {
+    const isBattlePhase = boardState.currentPhase === 'BP' || boardState.currentPhase === 'BATTLE_START' || boardState.currentPhase === 'BATTLE_STEP';
+    if (!isBattlePhase) {
+      return {
+        score: -4000,
+        reason: `[HOLD] Hold ${cardName} for Battle Phase attack declaration`,
+      };
+    }
+
+    const oppAttackMonsters = oppField.monsterZones.filter((m) => m && m.position === 'faceup_attack');
+    const oppMaxAtk = Math.max(0, ...oppField.monsterZones.map((m) => m?.atk ?? 0));
+    const aiLp = aiField.currentLp;
+
+    // Mirror Force: Mass attack-position board wipe
+    if (code === 44095762 || cardName.includes('Mirror Force')) {
+      if (oppAttackMonsters.length >= 2) {
+        return {
+          score: 6000 + oppAttackMonsters.length * 1000,
+          reason: `[MASS WIPEOUT] Activate Mirror Force to destroy all ${oppAttackMonsters.length} attacking monsters!`,
+        };
+      }
+      if (oppMaxAtk >= 1500 || oppMaxAtk >= aiLp) {
+        return {
+          score: 3800,
+          reason: `Activate Mirror Force to destroy attacking ${oppMaxAtk} ATK threat`,
+        };
+      }
+      return {
+        score: 1500,
+        reason: `Activate Mirror Force against attacking monster`,
+      };
+    }
+
+    // Magic Cylinder: Reflect damage
+    if (code === 62279055 || cardName.includes('Magic Cylinder')) {
+      if (oppMaxAtk >= oppField.currentLp) {
+        return {
+          score: 35000,
+          reason: `[LETHAL REFLECT] Activate Magic Cylinder to reflect ${oppMaxAtk} damage for instant victory!`,
+        };
+      }
+      if (oppMaxAtk >= 1500) {
+        return {
+          score: 3500 + oppMaxAtk,
+          reason: `Activate Magic Cylinder to negate attack and inflict ${oppMaxAtk} damage to opponent`,
+        };
+      }
+      if (oppMaxAtk < 1000 && oppField.monsterZones.some((m) => (m?.atk ?? 0) > oppMaxAtk)) {
+        return {
+          score: -2000,
+          reason: `[HOLD] Hold Magic Cylinder: attacking monster only has ${oppMaxAtk} ATK; save for higher ATK attacker`,
+        };
+      }
+      return {
+        score: 1000,
+        reason: `Activate Magic Cylinder to negate attack`,
+      };
+    }
+
+    // Single Target Removal: Sakuretsu Armor, Dimensional Prison, Widespread Ruin
+    if (
+      code === 38199696 ||
+      code === 70342110 ||
+      code === 77754944 ||
+      cardName.includes('Sakuretsu') ||
+      cardName.includes('Dimensional Prison') ||
+      cardName.includes('Widespread')
+    ) {
+      if (oppMaxAtk >= aiLp) {
+        return {
+          score: 30000,
+          reason: `[LETHAL DEFENSE] Activate ${cardName} to stop fatal direct attack!`,
+        };
+      }
+      // If attacker is very weak (< 1000 ATK, e.g. 0 ATK Wightprince) while opponent has bigger monsters
+      const hasBiggerThreat = oppField.monsterZones.some((m) => (m?.atk ?? 0) >= 1500);
+      if (oppMaxAtk < 1000 && hasBiggerThreat && aiLp > 2000) {
+        return {
+          score: -3000,
+          reason: `[HOLD] Hold ${cardName}: attacking monster is weak (${oppMaxAtk} ATK); save removal for opponent's higher-ATK threats`,
+        };
+      }
+      if (oppMaxAtk >= 1500) {
+        return {
+          score: 3200 * (personality.defensiveness + 0.5),
+          reason: `Activate ${cardName} to remove attacking ${oppMaxAtk} ATK monster`,
+        };
+      }
+      return {
+        score: 1200,
+        reason: `Activate ${cardName} to destroy attacking monster`,
+      };
+    }
+
+    // Threatening Roar / Waboku: End battle phase / prevent damage
+    if (code === 36368606 || code === 12607053 || cardName.includes('Threatening Roar') || cardName.includes('Waboku')) {
+      const oppTotalAtk = oppField.monsterZones.reduce((sum, m) => sum + (m?.atk ?? 0), 0);
+      if (oppTotalAtk >= aiLp || oppAttackMonsters.length >= 2) {
+        return {
+          score: 4000,
+          reason: `Activate ${cardName} to prevent lethal battle damage and survive the turn`,
+        };
+      }
+      return {
+        score: 1800,
+        reason: `Activate ${cardName} to protect life points during battle`,
+      };
+    }
+  }
+
+  // 9. Summon Response Removal Traps
+  if (
+    code === 94192409 || // Compulsory Evacuation Device
+    code === 29401950 || // Bottomless Trap Hole
+    code === 53582587 || // Torrential Tribute
+    cardName.includes('Compulsory') ||
+    cardName.includes('Bottomless') ||
+    cardName.includes('Torrential')
+  ) {
+    const oppFaceupMonsters = oppField.monsterZones.filter((m) => m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'));
+    const oppMaxAtk = Math.max(0, ...oppFaceupMonsters.map((m) => m?.atk ?? 0));
+    const aiMonsterCount = aiField.monsterZones.filter(Boolean).length;
+
+    if (code === 53582587 || cardName.includes('Torrential')) {
+      if (aiMonsterCount > oppFaceupMonsters.length && aiMonsterCount >= 2) {
+        return {
+          score: -3500,
+          reason: `[HOLD] Hold Torrential Tribute: would destroy more AI monsters (${aiMonsterCount}) than opponent (${oppFaceupMonsters.length})`,
+        };
+      }
+      if (oppFaceupMonsters.length >= 2 || oppMaxAtk >= 2000) {
+        return {
+          score: 4200,
+          reason: `[BOARD WIPE] Activate Torrential Tribute to wipe ${oppFaceupMonsters.length} monsters (${oppMaxAtk} top ATK)`,
+        };
+      }
+      return {
+        score: 1200,
+        reason: `Activate Torrential Tribute on summon`,
+      };
+    }
+
+    if (code === 29401950 || cardName.includes('Bottomless')) {
+      if (oppMaxAtk >= 1500) {
+        return {
+          score: 3500,
+          reason: `[BANISH REMOVAL] Activate Bottomless Trap Hole to destroy & banish summoned monster (${oppMaxAtk} ATK)`,
+        };
+      }
+      return {
+        score: 800,
+        reason: `Activate Bottomless Trap Hole on summon`,
+      };
+    }
+
+    if (code === 94192409 || cardName.includes('Compulsory')) {
+      if (oppMaxAtk >= 1500) {
+        return {
+          score: 3200,
+          reason: `Activate Compulsory Evacuation Device to bounce summoned threat (${oppMaxAtk} ATK) back to hand`,
+        };
+      }
+      return {
+        score: 1000,
+        reason: `Activate Compulsory Evacuation Device to bounce target`,
+      };
+    }
+  }
+
+  // 10. Combat Stat Doubler / Quick-Play: Limiter Removal (2317163)
   if (code === 2317163 || cardName.includes('Limiter Removal')) {
     const isBattlePhase = boardState.currentPhase === 'BP' || boardState.currentPhase === 'BATTLE_START' || boardState.currentPhase === 'BATTLE_STEP';
     const machineMonsters = aiField.monsterZones.filter((m) => m && (m.race === 'Machine' || m.race === 'MACHINE' || m.position === 'faceup_attack'));
@@ -389,7 +636,7 @@ export function evaluateSpellActivation(
     };
   }
 
-  // 8. Combat Stat Modifiers / Quick-Plays (Shrink: 55713623, Rush Recklessly: 70046172)
+  // 11. Combat Stat Modifiers / Quick-Plays (Shrink: 55713623, Rush Recklessly: 70046172)
   if (code === 55713623 || cardName.includes('Shrink') || code === 70046172 || cardName.includes('Rush Recklessly')) {
     const isBattlePhase = boardState.currentPhase === 'BP' || boardState.currentPhase === 'BATTLE_START' || boardState.currentPhase === 'BATTLE_STEP';
     if (!isBattlePhase) {
@@ -404,7 +651,7 @@ export function evaluateSpellActivation(
     };
   }
 
-  // 9. Signature Card Priority
+  // 12. Signature Card Priority
   if (signatureCardIds.includes(code)) {
     return {
       score: 1000 * personality.signatureFavoritism,
@@ -515,16 +762,18 @@ export function evaluateSpellTrapSet(
     };
   }
 
-  // Setting normal spell (e.g. to save hand space or bluff)
-  if (aiField.hand.length > 5) {
+  // 5. Setting Normal Spell (Fissure, Raigeki, Dark Hole, Monster Reborn, Polymerization, Pot of Greed, etc.)
+  // Normal Spells CANNOT be activated on the opponent's turn. Setting them face-down provides ZERO defense,
+  // clogs backrow zones, and exposes them to destruction by Heavy Storm / MST.
+  if (aiField.hand.length > 6) {
     return {
-      score: 300,
-      reason: `Set spell ${cardName} to manage hand size and prevent discard`,
+      score: -200,
+      reason: `[BLUFF / DUMP] Set ${cardName} only to avoid discarding at End Phase hand limit`,
     };
   }
 
   return {
-    score: 150,
-    reason: `Set spell ${cardName} to backrow`,
+    score: -4500,
+    reason: `[HOLD IN HAND] Do not set Normal Spell ${cardName} face-down; Normal Spells cannot be activated on opponent's turn and clog backrow zones`,
   };
 }

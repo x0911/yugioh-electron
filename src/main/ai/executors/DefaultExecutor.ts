@@ -600,8 +600,13 @@ export class DefaultExecutor implements DeckExecutor {
       let score = 400;
       let reason = `Chain effect of ${name}`;
 
+      // Counter Traps & Omni-negates (Solemn Judgment, Solemn Strike, Dark Bribe, Magic Jammer)
+      if (code === 41420027 || code === 84749824 || code === 77414722 || name.includes('Solemn') || name.includes('Dark Bribe')) {
+        score = 2500 * (defensiveness + 0.5);
+        reason = `[COUNTER NEGATE] Activate counter trap ${name} to negate opponent action`;
+      }
       // Quick-play stat modifiers (Shrink: 55713623, Rush Recklessly: 70046172)
-      if (code === 55713623 || code === 70046172 || name.includes('Shrink') || name.includes('Rush Recklessly')) {
+      else if (code === 55713623 || code === 70046172 || name.includes('Shrink') || name.includes('Rush Recklessly')) {
         if (!isBattlePhase) {
           score = -3000;
           reason = `[HOLD] Hold ${name} for battle damage calculation (do not waste on phase exit)`;
@@ -620,30 +625,16 @@ export class DefaultExecutor implements DeckExecutor {
           reason = `[COMBAT] Activate Limiter Removal in Battle Phase`;
         }
       }
-      // Counter Traps & Omni-negates (Solemn Judgment, Solemn Strike, Dark Bribe, Magic Jammer)
-      else if (code === 41420027 || code === 84749824 || code === 77414722 || code === 77414722) {
-        score = 2500 * defensiveness;
-        reason = `[COUNTER NEGATE] Activate counter trap ${name} to negate opponent action`;
-      }
-      // Mass Removal & Removal Traps (Ring of Destruction, Mirror Force, Torrential Tribute, Dimensional Prison, Bottomless)
-      else if (
-        code === 83555666 ||
-        code === 44095762 ||
-        code === 53582587 ||
-        code === 29401950 ||
-        code === 70342110 ||
-        name.includes('Ring of Destruction') ||
-        name.includes('Mirror Force') ||
-        name.includes('Torrential')
-      ) {
-        const evalResult = evaluateSpellActivation(code, name, context);
-        score = evalResult.score;
-        reason = evalResult.reason;
-      }
       // Draw / Search quick triggers
       else if (code === 55144522 || code === 79571449) {
         score = 3000;
         reason = `[CHAIN DRAW] Resolve draw power ${name}`;
+      }
+      // Comprehensive Evaluator for Traps & Spells (Removal, Battle Traps, MST, Torrential, etc.)
+      else {
+        const evalResult = evaluateSpellActivation(code, name, context);
+        score = evalResult.score;
+        reason = evalResult.reason;
       }
 
       candidates.push({
@@ -658,14 +649,14 @@ export class DefaultExecutor implements DeckExecutor {
       });
     }
 
-    // Pass priority option (default safely to 800 when no critical chain triggers exist)
+    // Pass priority option (default to 1000 so marginal or negative plays pass cleanly)
     if (!msg.forced) {
       candidates.push({
         action: {
           type: OcgResponseType.SELECT_CHAIN,
           index: null,
         },
-        score: 800,
+        score: 1000,
         reason: 'Pass chain priority (save resources)',
       });
     }

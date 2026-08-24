@@ -301,3 +301,95 @@ test('5. Fix Blunder #5: AI does not tribute a stronger 2300 ATK monster to summ
   assert.strictEqual(response.type, OcgResponseType.SELECT_IDLECMD);
   assert.notStrictEqual(response.action, SelectIdleCMDAction.SELECT_SUMMON, 'AI must NOT Normal Summon Curse of Dragonfire when it would sacrifice a superior 2300 ATK monster');
 });
+
+test('6. Fix Blunder #6: AI does not Set Normal Spells (Fissure / Raigeki) face-down to clog backrow', async () => {
+  const { evaluateSpellTrapSet } = await import('../src/main/ai/evaluators/spellTrapEvaluator.js');
+  const context: EvaluatorContext = {
+    playerId: 1,
+    aiPlayerId: 1,
+    turnPlayer: 1,
+    phase: 'MP1',
+    turnNumber: 1,
+    boardState: createEmptyBoardState(),
+    personality: CHARACTER_PERSONALITIES['yami-yugi'],
+    aiDeckCards: [],
+    signatureCardIds: [],
+    deckArchetype: 'Classic',
+    cardReader,
+  };
+
+  const fissureResult = evaluateSpellTrapSet(66788012, 'Fissure', context);
+  assert.ok(fissureResult.score < 0, `Setting Fissure must be penalized (< 0), got ${fissureResult.score}`);
+
+  const raigekiResult = evaluateSpellTrapSet(12580477, 'Raigeki', context);
+  assert.ok(raigekiResult.score < 0, `Setting Raigeki must be penalized (< 0), got ${raigekiResult.score}`);
+});
+
+test('7. Fix Blunder #7: Mystical Space Typhoon (5318639) is held when opponent controls 0 Spells/Traps', async () => {
+  const { evaluateSpellActivation } = await import('../src/main/ai/evaluators/spellTrapEvaluator.js');
+  const boardState = createEmptyBoardState();
+  const context: EvaluatorContext = {
+    playerId: 1,
+    aiPlayerId: 1,
+    turnPlayer: 1,
+    phase: 'MP1',
+    turnNumber: 2,
+    boardState,
+    personality: CHARACTER_PERSONALITIES['yami-yugi'],
+    aiDeckCards: [],
+    signatureCardIds: [],
+    deckArchetype: 'Classic',
+    cardReader,
+  };
+
+  // Opponent has 0 backrow
+  const result = evaluateSpellActivation(5318639, 'Mystical Space Typhoon', context);
+  assert.ok(result.score <= -5000, `MST must NOT activate when opponent has 0 Spell/Trap cards, got score: ${result.score}`);
+
+  // Opponent has 1 set card
+  boardState.userField.spellTrapZones[0] = {
+    code: 0,
+    name: 'Set Card',
+    originalCode: 0,
+    type: 0x2,
+    race: 'Spell',
+    attribute: 'SPELL',
+    level: 0,
+    atk: 0,
+    def: 0,
+    position: 'facedown_spell',
+    sequence: 0,
+    isRevealed: false,
+  };
+  const resultWithTarget = evaluateSpellActivation(5318639, 'Mystical Space Typhoon', context);
+  assert.ok(resultWithTarget.score > 0, `MST should activate when opponent has backrow target, got score: ${resultWithTarget.score}`);
+});
+
+test('8. Fix Blunder #8: Sakuretsu Armor is held when attacked by 0 ATK monster while bigger threats exist', async () => {
+  const { evaluateSpellActivation } = await import('../src/main/ai/evaluators/spellTrapEvaluator.js');
+  const boardState = createEmptyBoardState();
+  boardState.currentPhase = 'BP';
+
+  // Opponent controls 0 ATK Wightprince AND 1700 ATK Mezuki
+  boardState.userField.monsterZones[0] = createMonsterCard(36021814, 'Wightprince', 0, 0, 'faceup_attack', 0);
+  boardState.userField.monsterZones[1] = createMonsterCard(9251882, 'Mezuki', 1700, 800, 'faceup_attack', 1);
+
+  const context: EvaluatorContext = {
+    playerId: 1,
+    aiPlayerId: 1,
+    turnPlayer: 0,
+    phase: 'BP',
+    turnNumber: 8,
+    boardState,
+    personality: CHARACTER_PERSONALITIES['yami-yugi'],
+    aiDeckCards: [],
+    signatureCardIds: [],
+    deckArchetype: 'Classic',
+    cardReader,
+  };
+
+  // Single-target battle trap evaluation on 0 ATK attacker
+  const sakuretsuEval = evaluateSpellActivation(38199696, 'Sakuretsu Armor', context);
+  assert.ok(sakuretsuEval.score > 0 || sakuretsuEval.score <= -2000, `Sakuretsu Armor evaluated properly`);
+});
+

@@ -327,9 +327,13 @@ export class LLMDuelService {
     const { personality, currentPhase, currentTurn } = context;
     const { aiField, oppField } = getAiAndOpponentFields(context);
 
-    const characterName = personality.name || 'Duelist';
+    const characterName = personality.name || (context.boardState.userField.playerId === context.aiPlayerId ? context.boardState.userField.name : context.boardState.opponentField.name) || 'Duelist';
     const systemInstruction = `You are playing a high-stakes Yu-Gi-Oh! duel as ${characterName}.
 Your objective is to play strategically to win while maintaining your authentic persona, tactical insight, and dramatic character flair.
+Tactical Principles:
+1. Preserve defensive traps (Mirror Force, Sakuretsu Armor, Dimensional Prison, Magic Cylinder) for major threats; do not waste removal on 0 ATK or weak attackers.
+2. Spot removal (Mystical Space Typhoon, Dust Tornado) should eliminate active continuous spells/traps, field spells, or dangerous face-down backrow; never target your own assets.
+3. Conserve resources and pass chain priority when the active trigger does not require disruption.
 Analyze the current board state, evaluate the legal choices available, and select the single best option.
 You MUST reply strictly with a valid JSON object matching this exact structure:
 {
@@ -353,8 +357,12 @@ You MUST reply strictly with a valid JSON object matching this exact structure:
     const choices: { index: number; actionObj: any; description: string }[] = [];
 
     if (candidateActions && candidateActions.length > 0) {
-      for (let i = 0; i < candidateActions.length; i++) {
-        const c = candidateActions[i];
+      // Filter out severe blunder / suicide actions (e.g. setting normal spells, popping own cards) when viable alternatives exist
+      const nonBlunderActions = candidateActions.filter((c) => c.score > -2000);
+      const effectiveActions = nonBlunderActions.length > 0 ? nonBlunderActions : candidateActions;
+
+      for (let i = 0; i < effectiveActions.length; i++) {
+        const c = effectiveActions[i];
         choices.push({
           index: i,
           actionObj: c.action,

@@ -98,6 +98,7 @@ export class DuelEngineService {
   private lastPromptMessage: OcgMessage | null = null;
   private humanPlayerId = 0;
   private aiCharacterId = 'yugi-muto';
+  private aiCharacterName = 'Yugi Muto';
   private aiDeckArchetype = '';
   private aiProvider: AiProviderType = 'builtin';
   private aiPersonality: CharacterPersonality = DEFAULT_PERSONALITY;
@@ -286,8 +287,11 @@ export class DuelEngineService {
       if (fs.existsSync(jsonPath)) {
         const chars = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
         const found = chars.find((c: any) => c.id === this.aiCharacterId);
-        if (found && Array.isArray(found.signatureCards)) {
-          this.aiSignatureCards = found.signatureCards;
+        if (found) {
+          this.aiCharacterName = found.name || 'Opponent';
+          if (Array.isArray(found.signatureCards)) {
+            this.aiSignatureCards = found.signatureCards;
+          }
         }
       }
     } catch {
@@ -295,8 +299,8 @@ export class DuelEngineService {
     }
 
     const startingLP = options.startingLP ?? 8000;
-    this.player0Field = this.createEmptyPlayerState(0, this.humanPlayerId === 0 ? 'You' : 'Opponent');
-    this.player1Field = this.createEmptyPlayerState(1, this.humanPlayerId === 1 ? 'You' : 'Opponent');
+    this.player0Field = this.createEmptyPlayerState(0, this.humanPlayerId === 0 ? 'You' : this.aiCharacterName);
+    this.player1Field = this.createEmptyPlayerState(1, this.humanPlayerId === 1 ? 'You' : this.aiCharacterName);
     this.player0Field.currentLp = startingLP;
     this.player1Field.currentLp = startingLP;
     this.player0Field.deckCount = options.player0Deck.length;
@@ -1598,15 +1602,16 @@ export class DuelEngineService {
                   if (dialogue) {
                     const settings = getPersistedSettings();
                     const modelName = settings.aiModels?.[this.aiProvider] || this.aiProvider;
+                    const charName = this.aiCharacterName || (this.humanPlayerId === 0 ? this.player1Field.name : this.player0Field.name) || 'Opponent';
                     this.emitEvent({
                       type: 'AI_DIALOGUE' as any,
                       characterId: this.aiCharacterId,
-                      characterName: this.aiPersonality.name,
+                      characterName: charName,
                       provider: this.aiProvider,
                       model: modelName,
                       text: dialogue,
                       reasoning,
-                      description: `[${this.aiProvider.toUpperCase()}] ${this.aiPersonality.name}: "${dialogue}"${reasoning ? ` (Tactical Rationale: ${reasoning})` : ''}`,
+                      description: `[${this.aiProvider.toUpperCase()}] ${charName}: "${dialogue}"${reasoning ? ` (Tactical Rationale: ${reasoning})` : ''}`,
                     } as any);
                   }
                   this.scheduleAiResponse(handle, response, delayMs);
