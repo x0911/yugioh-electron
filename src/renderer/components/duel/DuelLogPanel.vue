@@ -182,6 +182,22 @@ async function copyLogsToClipboard(): Promise<void> {
     lines.push(`• Turn: ${props.boardState.turnNumber} | Phase: ${props.boardState.currentPhase} | Turn Player: ${uPf.isTurn ? 'Player (You)' : 'Opponent'}`);
     lines.push(`• Player LP: ${uPf.currentLp}/${uPf.maxLp} | Opponent LP: ${oPf.currentLp}/${oPf.maxLp} (${oPf.name || 'Opponent'})`);
 
+    const settingsStore = useSettingsStore();
+    const activeProv = settingsStore.aiProvider || (settingsStore.aiEngineType as any) || 'builtin';
+    const activeModel = settingsStore.aiModels?.[activeProv];
+    const provNames: Record<string, string> = {
+      builtin: 'Built-in Fast Engine (Local Heuristics)',
+      gemini: `Google Gemini (${activeModel || 'gemini-2.5-flash'})`,
+      openai: `OpenAI ChatGPT (${activeModel || 'gpt-4o-mini'})`,
+      deepseek: `DeepSeek AI (${activeModel || 'deepseek-chat'})`,
+      anthropic: `Anthropic Claude (${activeModel || 'claude-3-5-haiku-20241022'})`,
+      groq: `Groq Cloud (${activeModel || 'llama-3.1-8b-instant'})`,
+      ollama: `Ollama Local LLM (${activeModel || 'llama3.2'})`,
+      custom: `Custom Endpoint (${activeModel || 'default-model'})`,
+    };
+    const engineLabel = provNames[activeProv] || 'Built-in Fast Engine';
+    lines.push(`• Opponent AI Engine: ${engineLabel}`);
+
     const userMonsters = uPf.monsterZones
       .map((m, i) => (m && m.code > 0 ? `[M${i + 1}: ${m.name} (${m.atk ?? '?'}/${m.def ?? '?'}, ${m.position})]` : null))
       .filter(Boolean);

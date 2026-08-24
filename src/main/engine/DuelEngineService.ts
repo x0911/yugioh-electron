@@ -1594,13 +1594,19 @@ export class DuelEngineService {
           if (isOpponent || this.autoPlay) {
             if (this.aiProvider && this.aiProvider !== 'builtin') {
               this.getAiResponseAsync(lastMsg, promptPlayer)
-                .then(({ response, delayMs, dialogue }) => {
+                .then(({ response, delayMs, dialogue, reasoning }) => {
                   if (dialogue) {
+                    const settings = getPersistedSettings();
+                    const modelName = settings.aiModels?.[this.aiProvider] || this.aiProvider;
                     this.emitEvent({
                       type: 'AI_DIALOGUE' as any,
                       characterId: this.aiCharacterId,
                       characterName: this.aiPersonality.name,
+                      provider: this.aiProvider,
+                      model: modelName,
                       text: dialogue,
+                      reasoning,
+                      description: `[${this.aiProvider.toUpperCase()}] ${this.aiPersonality.name}: "${dialogue}"${reasoning ? ` (Tactical Rationale: ${reasoning})` : ''}`,
                     } as any);
                   }
                   this.scheduleAiResponse(handle, response, delayMs);

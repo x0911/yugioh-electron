@@ -230,7 +230,7 @@ export const useDuelStore = defineStore('duel', {
     isMutedForCurrentPhase: false,
     lastDeclinedChainFingerprint: null,
     lastChainedCode: null,
-    aiDialogue: null as { text: string; characterName: string; characterId?: string; timestamp: number } | null,
+    aiDialogue: null as { text: string; characterName: string; characterId?: string; provider?: string; timestamp: number } | null,
     activeAiEngineType: 'builtin' as 'builtin' | 'gemini',
     activeAiProvider: 'builtin' as import('../../shared/types/character.js').AiProviderType,
   }),
@@ -1455,6 +1455,7 @@ export const useDuelStore = defineStore('duel', {
           text: (event as any).text,
           characterName: (event as any).characterName || this.selectedOpponent?.name || 'Opponent',
           characterId: (event as any).characterId || this.selectedOpponent?.id,
+          provider: (event as any).provider || this.activeAiProvider,
           timestamp: Date.now(),
         };
         setTimeout(() => {

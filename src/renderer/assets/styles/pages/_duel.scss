@@ -160,4 +160,128 @@
       }
     }
   }
+
+  // Opponent AI Live Character Speech Bubble
+  .opponent-lp-wrapper {
+    position: relative;
+  }
+
+  .ai-speech-bubble {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 250;
+    min-width: 240px;
+    max-width: 360px;
+    background: rgba(16, 20, 28, 0.95);
+    border: 1px solid rgba(201, 162, 39, 0.5);
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 12px rgba(201, 162, 39, 0.2);
+    backdrop-filter: blur(10px);
+    pointer-events: none;
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    &__speaker {
+      font-family: $font-mono;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: $color-gold-300;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    &__badge {
+      font-family: $font-mono;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(201, 162, 39, 0.2);
+      border: 1px solid rgba(201, 162, 39, 0.4);
+      color: #fff;
+    }
+
+    &__body {
+      font-family: $font-body;
+      font-size: 0.82rem;
+      font-style: italic;
+      color: #f0ece1;
+      line-height: 1.35;
+      margin: 0;
+    }
+
+    &--groq {
+      border-color: rgba(245, 80, 54, 0.6);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 14px rgba(245, 80, 54, 0.3);
+      .ai-speech-bubble__badge {
+        background: rgba(245, 80, 54, 0.25);
+        border-color: rgba(245, 80, 54, 0.6);
+        color: #ff8a7a;
+      }
+    }
+
+    &--gemini {
+      border-color: rgba(168, 85, 247, 0.6);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 14px rgba(168, 85, 247, 0.3);
+      .ai-speech-bubble__badge {
+        background: rgba(168, 85, 247, 0.25);
+        border-color: rgba(168, 85, 247, 0.6);
+        color: #c084fc;
+      }
+    }
+
+    &--openai {
+      border-color: rgba(16, 185, 129, 0.6);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 14px rgba(16, 185, 129, 0.3);
+      .ai-speech-bubble__badge {
+        background: rgba(16, 185, 129, 0.25);
+        border-color: rgba(16, 185, 129, 0.6);
+        color: #34d399;
+      }
+    }
+
+    &--deepseek {
+      border-color: rgba(14, 165, 233, 0.6);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 14px rgba(14, 165, 233, 0.3);
+      .ai-speech-bubble__badge {
+        background: rgba(14, 165, 233, 0.25);
+        border-color: rgba(14, 165, 233, 0.6);
+        color: #38bdf8;
+      }
+    }
+
+    &--anthropic {
+      border-color: rgba(245, 158, 11, 0.6);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 14px rgba(245, 158, 11, 0.3);
+      .ai-speech-bubble__badge {
+        background: rgba(245, 158, 11, 0.25);
+        border-color: rgba(245, 158, 11, 0.6);
+        color: #fbbf24;
+      }
+    }
+  }
+
+  // Animation for dialogue pop
+  .dialogue-pop-enter-active,
+  .dialogue-pop-leave-active {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .dialogue-pop-enter-from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+
+  .dialogue-pop-leave-to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
 }

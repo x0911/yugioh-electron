@@ -61,12 +61,16 @@
             :ai-provider="duelStore.activeAiProvider"
           />
 
-          <!-- Live Character Dialogue Banner (Gemini AI Speech) -->
+          <!-- Live Character Dialogue Banner (LLM AI Speech) -->
           <transition name="dialogue-pop">
-            <div v-if="duelStore.aiDialogue" class="ai-speech-bubble">
+            <div
+              v-if="duelStore.aiDialogue"
+              class="ai-speech-bubble"
+              :class="`ai-speech-bubble--${duelStore.aiDialogue.provider || duelStore.activeAiProvider || 'builtin'}`"
+            >
               <div class="ai-speech-bubble__header">
                 <span class="ai-speech-bubble__speaker">{{ duelStore.aiDialogue.characterName }}</span>
-                <span class="ai-speech-bubble__badge">✨ Gemini AI</span>
+                <span class="ai-speech-bubble__badge">{{ aiDialogueBadgeLabel }}</span>
               </div>
               <p class="ai-speech-bubble__body">"{{ duelStore.aiDialogue.text }}"</p>
             </div>
@@ -492,6 +496,21 @@ async function onOpenPostMatchReview(): Promise<void> {
     isReviewLoading.value = false;
   }
 }
+
+const aiDialogueBadgeLabel = computed(() => {
+  const prov = duelStore.aiDialogue?.provider || duelStore.activeAiProvider || 'builtin';
+  const labels: Record<string, string> = {
+    groq: '⚡ Groq Cloud',
+    gemini: '✨ Gemini AI',
+    openai: '🤖 OpenAI',
+    deepseek: '🌌 DeepSeek',
+    anthropic: '🧠 Claude',
+    ollama: '🦙 Ollama',
+    custom: '⚙️ Custom LLM',
+    builtin: '⚡ Fast AI',
+  };
+  return labels[prov] || '⚡ AI';
+});
 
 const hasAnyActivePrompt = computed(() => {
   return (

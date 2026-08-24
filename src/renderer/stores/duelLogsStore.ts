@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import type { DuelBoardState } from '../../shared/types/field.js';
+import { useSettingsStore } from './settingsStore.js';
 
 export interface LogItem {
   time: string;
@@ -155,6 +156,29 @@ export const useDuelLogsStore = defineStore('duelLogs', {
         lines.push(
           `• Player LP: ${uPf.currentLp}/${uPf.maxLp} | Opponent LP: ${oPf.currentLp}/${oPf.maxLp} (${oPf.name || 'Opponent'})`,
         );
+
+        let engineLabel = 'Built-in Fast Engine (Local Heuristics)';
+        try {
+          const settingsStore = useSettingsStore();
+          if (settingsStore) {
+            const activeProv = settingsStore.aiProvider || (settingsStore.aiEngineType as any) || 'builtin';
+            const activeModel = settingsStore.aiModels?.[activeProv];
+            const provNames: Record<string, string> = {
+              builtin: 'Built-in Fast Engine (Local Heuristics)',
+              gemini: `Google Gemini (${activeModel || 'gemini-2.5-flash'})`,
+              openai: `OpenAI ChatGPT (${activeModel || 'gpt-4o-mini'})`,
+              deepseek: `DeepSeek AI (${activeModel || 'deepseek-chat'})`,
+              anthropic: `Anthropic Claude (${activeModel || 'claude-3-5-haiku-20241022'})`,
+              groq: `Groq Cloud (${activeModel || 'llama-3.1-8b-instant'})`,
+              ollama: `Ollama Local LLM (${activeModel || 'llama3.2'})`,
+              custom: `Custom Endpoint (${activeModel || 'default-model'})`,
+            };
+            engineLabel = provNames[activeProv] || 'Built-in Fast Engine';
+          }
+        } catch {
+          // Unit test or offline mock fallback
+        }
+        lines.push(`• Opponent AI Engine: ${engineLabel}`);
 
         if (options?.outcome) {
           lines.push(`• Final Duel Outcome: ${options.outcome.toUpperCase()}${options.winReason ? ` (${options.winReason})` : ''}`);
