@@ -61,13 +61,43 @@ export const appStore = new Store<AppStoreSchema>({
 });
 
 export function getPersistedSettings(): SettingsConfig {
-  const current = appStore.get('settings');
-  return { ...defaultSettings, ...(current || {}) };
+  const current = (appStore.get('settings') || {}) as Partial<SettingsConfig>;
+  return {
+    ...defaultSettings,
+    ...current,
+    aiApiKeys: {
+      ...(defaultSettings.aiApiKeys || {}),
+      ...(current.aiApiKeys || {}),
+    },
+    aiModels: {
+      ...(defaultSettings.aiModels || {}),
+      ...(current.aiModels || {}),
+    },
+    aiCustomEndpoints: {
+      ...(defaultSettings.aiCustomEndpoints || {}),
+      ...(current.aiCustomEndpoints || {}),
+    },
+  };
 }
 
 export function savePersistedSettings(settings: Partial<SettingsConfig>): SettingsConfig {
   const current = getPersistedSettings();
-  const updated: SettingsConfig = { ...current, ...settings };
+  const updated: SettingsConfig = {
+    ...current,
+    ...settings,
+    aiApiKeys: {
+      ...(current.aiApiKeys || {}),
+      ...(settings.aiApiKeys || {}),
+    },
+    aiModels: {
+      ...(current.aiModels || {}),
+      ...(settings.aiModels || {}),
+    },
+    aiCustomEndpoints: {
+      ...(current.aiCustomEndpoints || {}),
+      ...(settings.aiCustomEndpoints || {}),
+    },
+  };
   appStore.set('settings', updated);
   return updated;
 }

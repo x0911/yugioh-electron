@@ -508,6 +508,7 @@
                       :placeholder="`Enter your ${currentProviderMeta.name} API Key...`"
                       :value="currentApiKey"
                       @input="handleApiKeyInput"
+                      @change="handleApiKeyChange"
                     />
                     <button
                       type="button"
@@ -628,7 +629,7 @@
         <YugiButton variant="ghost" size="md" @click="handleReset">
           Reset Settings to Default
         </YugiButton>
-        <YugiButton variant="primary" size="md" icon="←" to="/main-menu">
+        <YugiButton variant="primary" size="md" icon="←" @click="handleSaveAndReturn">
           Save & Return to Main Menu
         </YugiButton>
       </footer>
@@ -641,6 +642,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useSettingsStore } from '../stores/settingsStore.js';
 import { BGM_THEMES, audioManager, type DuckingIntensity } from '../audio/index.js';
 import GlassPanel from '../components/common/GlassPanel.vue';
@@ -651,6 +653,7 @@ import OpponentCarousel from '../components/settings/OpponentCarousel.vue';
 
 import type { AiProviderType } from '../../shared/types/character.js';
 
+const router = useRouter();
 const settingsStore = useSettingsStore();
 const avatarFailed = ref(false);
 const showAboutModal = ref(false);
@@ -909,6 +912,16 @@ async function handleApiKeyInput(e: Event): Promise<void> {
       fetchModelsForProvider(activeConfigProvider.value, true);
     }, 600);
   }
+}
+
+async function handleApiKeyChange(e: Event): Promise<void> {
+  const val = (e.target as HTMLInputElement).value;
+  await settingsStore.setAiApiKey(activeConfigProvider.value, val);
+}
+
+async function handleSaveAndReturn(): Promise<void> {
+  await settingsStore.persist();
+  router.push('/main-menu');
 }
 
 async function handleEndpointInput(e: Event): Promise<void> {

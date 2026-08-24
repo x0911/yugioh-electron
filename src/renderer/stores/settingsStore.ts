@@ -35,7 +35,24 @@ export const defaultSettings: SettingsConfig = {
 
 export const useSettingsStore = defineStore('settings', {
   state: (): SettingsState => ({
-    ...defaultSettings,
+    selectedBgmTheme: defaultSettings.selectedBgmTheme,
+    masterVolume: defaultSettings.masterVolume,
+    bgmVolume: defaultSettings.bgmVolume,
+    sfxVolume: defaultSettings.sfxVolume,
+    isMasterMuted: defaultSettings.isMasterMuted,
+    isBgmMuted: defaultSettings.isBgmMuted,
+    isSfxMuted: defaultSettings.isSfxMuted,
+    duckingIntensity: defaultSettings.duckingIntensity,
+    selectedOpponentId: defaultSettings.selectedOpponentId,
+    selectedSeriesFilter: defaultSettings.selectedSeriesFilter,
+    devMode: defaultSettings.devMode,
+    skipPreDuelVideo: defaultSettings.skipPreDuelVideo,
+    chainConfirmationMode: defaultSettings.chainConfirmationMode,
+    aiEngineType: defaultSettings.aiEngineType,
+    aiProvider: defaultSettings.aiProvider,
+    aiApiKeys: {},
+    aiModels: {},
+    aiCustomEndpoints: {},
     characters: [],
     isLoading: false,
     isInitialized: false,
@@ -73,7 +90,7 @@ export const useSettingsStore = defineStore('settings', {
 
   actions: {
     async initializeSettings(): Promise<void> {
-      if (this.isInitialized) return;
+      if (this.isInitialized && !this.isLoading) return;
       this.isLoading = true;
 
       try {
@@ -99,9 +116,9 @@ export const useSettingsStore = defineStore('settings', {
               saved.chainConfirmationMode || defaultSettings.chainConfirmationMode;
             this.aiEngineType = saved.aiEngineType || defaultSettings.aiEngineType;
             this.aiProvider = saved.aiProvider || (saved.aiEngineType as any) || defaultSettings.aiProvider;
-            this.aiApiKeys = saved.aiApiKeys || {};
-            this.aiModels = saved.aiModels || {};
-            this.aiCustomEndpoints = saved.aiCustomEndpoints || {};
+            this.aiApiKeys = { ...(saved.aiApiKeys || {}) };
+            this.aiModels = { ...(saved.aiModels || {}) };
+            this.aiCustomEndpoints = { ...(saved.aiCustomEndpoints || {}) };
           }
 
           // Apply saved volume settings to audioManager
@@ -241,20 +258,26 @@ export const useSettingsStore = defineStore('settings', {
     },
 
     async setAiApiKey(provider: string, key: string): Promise<void> {
-      if (!this.aiApiKeys) this.aiApiKeys = {};
-      this.aiApiKeys[provider] = key;
+      this.aiApiKeys = {
+        ...(this.aiApiKeys || {}),
+        [provider]: key,
+      };
       await this.persist();
     },
 
     async setAiModel(provider: string, model: string): Promise<void> {
-      if (!this.aiModels) this.aiModels = {};
-      this.aiModels[provider] = model;
+      this.aiModels = {
+        ...(this.aiModels || {}),
+        [provider]: model,
+      };
       await this.persist();
     },
 
     async setAiCustomEndpoint(provider: string, endpoint: string): Promise<void> {
-      if (!this.aiCustomEndpoints) this.aiCustomEndpoints = {};
-      this.aiCustomEndpoints[provider] = endpoint;
+      this.aiCustomEndpoints = {
+        ...(this.aiCustomEndpoints || {}),
+        [provider]: endpoint,
+      };
       await this.persist();
     },
 
@@ -308,9 +331,9 @@ export const useSettingsStore = defineStore('settings', {
             chainConfirmationMode: this.chainConfirmationMode,
             aiEngineType: this.aiEngineType,
             aiProvider: this.aiProvider,
-            aiApiKeys: this.aiApiKeys,
-            aiModels: this.aiModels,
-            aiCustomEndpoints: this.aiCustomEndpoints,
+            aiApiKeys: { ...(this.aiApiKeys || {}) },
+            aiModels: { ...(this.aiModels || {}) },
+            aiCustomEndpoints: { ...(this.aiCustomEndpoints || {}) },
           });
         } catch (err) {
           console.error('[SettingsStore] Failed to save settings to IPC:', err);

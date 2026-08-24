@@ -214,7 +214,44 @@ async function runMultiProviderTests() {
     apiKey: 'sk-invalid-fake-key',
   });
   assert(fallbackResult.response !== undefined, 'Must fall back to heuristic decision');
-  console.log('  ✓ Seamless fallback executed!\n');
+  console.log('  ✓ Seamless fallback executed!');
+
+  // Test 6: API Key & Model Persistence with Partial Updates
+  console.log('\n▶ Test 6: API Key & Model Persistence across Partial Updates & Reloads');
+  const { savePersistedSettings, getPersistedSettings } = await import('../src/main/persistence/store.js');
+
+  // Save Groq key
+  savePersistedSettings({
+    aiProvider: 'groq',
+    aiApiKeys: { groq: 'gsk_test_123456789' },
+    aiModels: { groq: 'llama-3.1-8b-instant' },
+  });
+
+  let loaded = getPersistedSettings();
+  assert.equal(loaded.aiApiKeys?.groq, 'gsk_test_123456789', 'Groq key must be persisted');
+  assert.equal(loaded.aiModels?.groq, 'llama-3.1-8b-instant', 'Groq model must be persisted');
+
+  // Perform partial update (e.g. user changes volume slider or theme)
+  savePersistedSettings({
+    masterVolume: 75,
+    selectedBgmTheme: 'passionate',
+  });
+
+  loaded = getPersistedSettings();
+  assert.equal(loaded.masterVolume, 75, 'Volume must update to 75');
+  assert.equal(loaded.aiApiKeys?.groq, 'gsk_test_123456789', 'Groq key must survive partial volume updates');
+  assert.equal(loaded.aiModels?.groq, 'llama-3.1-8b-instant', 'Groq model must survive partial volume updates');
+
+  // Add another provider key (OpenAI) without wiping Groq
+  savePersistedSettings({
+    aiApiKeys: { openai: 'sk-test-openai-987654' },
+  });
+
+  loaded = getPersistedSettings();
+  assert.equal(loaded.aiApiKeys?.groq, 'gsk_test_123456789', 'Existing Groq key must not be overwritten when adding OpenAI key');
+  assert.equal(loaded.aiApiKeys?.openai, 'sk-test-openai-987654', 'OpenAI key must be saved');
+
+  console.log('  ✓ Multi-provider key persistence & reload integrity verified!\n');
 
   console.log('🎉 ALL MULTI-PROVIDER AI TESTS PASSED 100%!');
 }
