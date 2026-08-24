@@ -123,6 +123,11 @@ export interface DuelStoreState {
   // Card Selection Modal State
   isCardSelectionModalOpen: boolean;
 
+  // Chain Confirmation & Fast Effect Mode
+  chainMode: 'auto' | 'on' | 'off';
+  isMutedForCurrentPhase: boolean;
+  lastDeclinedChainFingerprint: string | null;
+
   // Chain Loop Deduplication
   lastChainedCode: number | null;
 }
@@ -221,6 +226,9 @@ export const useDuelStore = defineStore('duel', {
     activeVideoPayload: null,
 
     isCardSelectionModalOpen: false,
+    chainMode: 'auto',
+    isMutedForCurrentPhase: false,
+    lastDeclinedChainFingerprint: null,
     lastChainedCode: null,
   }),
 
@@ -715,6 +723,11 @@ export const useDuelStore = defineStore('duel', {
       }
 
       this.clearPrompts();
+      const settingsStore = useSettingsStore();
+      this.chainMode = settingsStore.chainConfirmationMode || 'auto';
+      this.isMutedForCurrentPhase = false;
+      this.lastDeclinedChainFingerprint = null;
+
       this.boardState = {
         userField: createEmptyPlayerField(this.userPlayerId, 'You'),
         opponentField: createEmptyPlayerField(this.opponentPlayerId, this.opponentName),
@@ -1273,6 +1286,27 @@ export const useDuelStore = defineStore('duel', {
         const turnPlayer = event.player as 0 | 1;
         this.boardState.userField.isTurn = turnPlayer === this.userPlayerId;
         this.boardState.opponentField.isTurn = turnPlayer !== this.userPlayerId;
+        this.isMutedForCurrentPhase = false;
+        this.lastDeclinedChainFingerprint = null;
+      }
+      if (event.type === 'NEW_PHASE') {
+        this.isMutedForCurrentPhase = false;
+        this.lastDeclinedChainFingerprint = null;
+      }
+      if (
+        event.type === 'MOVE' ||
+        event.type === 'SUMMONING' ||
+        event.type === 'SUMMONED' ||
+        event.type === 'SPSUMMONING' ||
+        event.type === 'SPSUMMONED' ||
+        event.type === 'FLIPSUMMONING' ||
+        event.type === 'FLIPSUMMONED' ||
+        event.type === 'CHAINING' ||
+        event.type === 'CHAINED' ||
+        event.type === 'ATTACK' ||
+        event.type === 'DAMAGE'
+      ) {
+        this.lastDeclinedChainFingerprint = null;
       }
       if (event.type === 'WIN') {
         this.boardState.winner = (event.player as 0 | 1) ?? null;
@@ -1463,8 +1497,28 @@ export const useDuelStore = defineStore('duel', {
           const chainPayload = event.promptData as SelectChainPayload;
           let availableSelects = chainPayload.selects || [];
 
-          // Deduplicate continuous trap self-chain loops (e.g. Ultimate Offering chaining into itself)
-          if (!chainPayload.forced && this.lastChainedCode && availableSelects.length > 0) {
+          // 1. Mandatory/Forced triggers MUST ALWAYS prompt the player
+          if (chainPayload.forced) {
+            this.activeSelectChain = chainPayload;
+            return;
+          }
+
+          // 2. Chain Confirmation Mode is OFF -> Auto-pass all optional chains immediately
+          if (this.chainMode === 'off') {
+            this.isPromptWaiting = false;
+            await this.executeSelectChain(null);
+            return;
+          }
+
+          // 3. User muted optional chains for current phase -> Auto-pass immediately
+          if (this.isMutedForCurrentPhase) {
+            this.isPromptWaiting = false;
+            await this.executeSelectChain(null);
+            return;
+          }
+
+          // 4. Deduplicate continuous trap self-chain loops (e.g. Ultimate Offering chaining into itself)
+          if (this.lastChainedCode && availableSelects.length > 0) {
             const filtered = availableSelects.filter((s) => s.code !== this.lastChainedCode);
             if (filtered.length === 0) {
               // Only option is redundant self-chain on the same chain link — auto-pass to let chain resolve
@@ -1475,19 +1529,32 @@ export const useDuelStore = defineStore('duel', {
             availableSelects = filtered;
           }
 
-          if (availableSelects.length > 0) {
-            this.activeSelectChain = {
-              ...chainPayload,
-              selects: availableSelects,
-            };
-          } else if (!chainPayload.forced) {
+          if (availableSelects.length === 0) {
             // Nothing to chain — auto-pass immediately without showing dialog
             this.isPromptWaiting = false;
             await this.executeSelectChain(null);
             return;
-          } else {
-            this.activeSelectChain = chainPayload;
           }
+
+          // 5. In AUTO mode: Check if user already declined this exact set of chain options in this unchanged step
+          if (this.chainMode === 'auto') {
+            const currentFingerprint = availableSelects
+              .map((s) => `${s.code}-${s.location || 0}-${s.sequence || 0}`)
+              .sort()
+              .join('|');
+
+            if (this.lastDeclinedChainFingerprint === currentFingerprint) {
+              // User already declined these exact fast effects without a new action happening -> auto-pass!
+              this.isPromptWaiting = false;
+              await this.executeSelectChain(null);
+              return;
+            }
+          }
+
+          this.activeSelectChain = {
+            ...chainPayload,
+            selects: availableSelects,
+          };
         } else if (event.promptType === 'SELECT_POSITION') {
           this.activeSelectPosition = event.promptData as SelectPositionPayload;
         } else if (event.promptType === 'SELECT_EFFECTYN' || event.promptType === 'SELECT_YESNO') {
@@ -2207,13 +2274,36 @@ export const useDuelStore = defineStore('duel', {
     },
 
     async executeSelectChain(chainIndex: number | null): Promise<boolean> {
-      if (chainIndex !== null && this.activeSelectChain?.selects?.[chainIndex]) {
+      if ((chainIndex === null || chainIndex === -1) && this.activeSelectChain?.selects) {
+        // Record fingerprint of declined chain options to avoid spamming in AUTO mode
+        this.lastDeclinedChainFingerprint = this.activeSelectChain.selects
+          .map((s) => `${s.code}-${s.location || 0}-${s.sequence || 0}`)
+          .sort()
+          .join('|');
+      } else if (chainIndex !== null && this.activeSelectChain?.selects?.[chainIndex]) {
         this.lastChainedCode = this.activeSelectChain.selects[chainIndex].code;
+        this.lastDeclinedChainFingerprint = null;
       }
       return this.sendCommand({
         type: 8, // SELECT_CHAIN
         index: chainIndex,
       });
+    },
+
+    toggleChainMode(): void {
+      const modes: ('auto' | 'on' | 'off')[] = ['auto', 'on', 'off'];
+      const currentIdx = modes.indexOf(this.chainMode);
+      this.chainMode = modes[(currentIdx + 1) % modes.length];
+    },
+
+    setChainMode(mode: 'auto' | 'on' | 'off'): void {
+      this.chainMode = mode;
+    },
+
+    muteChainsForCurrentPhase(): void {
+      this.isMutedForCurrentPhase = true;
+      this.lastDeclinedChainFingerprint = null;
+      this.executeSelectChain(null);
     },
 
     async executeSelectEffectYn(yes: boolean): Promise<boolean> {

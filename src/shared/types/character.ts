@@ -55,5 +55,6 @@ export interface SettingsConfig {
   selectedSeriesFilter: 'ALL' | 'DM' | 'GX';
   devMode: boolean;
   skipPreDuelVideo: boolean;
+  chainConfirmationMode?: 'auto' | 'on' | 'off';
 }
 

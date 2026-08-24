@@ -369,6 +369,25 @@
           <GlassPanel class="settings-view__setting-group" accent="none">
             <h3 class="settings-view__setting-group-title">Preferences</h3>
 
+            <!-- Chain Confirmation Timing -->
+            <div class="settings-view__toggle-row">
+              <div class="settings-view__toggle-info">
+                <span class="settings-view__toggle-label">Chain Confirmation Mode</span>
+                <span class="settings-view__toggle-desc">
+                  Controls how frequently the duel engine prompts you to activate Quick Effects, Spells, and Traps.
+                </span>
+              </div>
+              <select
+                class="settings-view__select-input"
+                :value="settingsStore.chainConfirmationMode || 'auto'"
+                @change="handleChainModeChange"
+              >
+                <option value="auto">Auto (Smart - Auto-skips repetitive prompts)</option>
+                <option value="on">Always On (Strict Tournament Rules)</option>
+                <option value="off">Off (Auto-pass optional chains)</option>
+              </select>
+            </div>
+
             <!-- Skip Video Toggle -->
             <div class="settings-view__toggle-row">
               <div class="settings-view__toggle-info">
@@ -489,6 +508,11 @@ function handleSfxInput(e: Event): void {
 function handleDuckingChange(e: Event): void {
   const val = (e.target as HTMLSelectElement).value as DuckingIntensity;
   settingsStore.setDuckingIntensity(val);
+}
+
+function handleChainModeChange(e: Event): void {
+  const val = (e.target as HTMLSelectElement).value as 'auto' | 'on' | 'off';
+  settingsStore.setChainConfirmationMode(val);
 }
 
 async function handleReset(): Promise<void> {

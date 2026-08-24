@@ -71,16 +71,18 @@
 
     <!-- Right: HUD Controls -->
     <div class="hud-controls">
-      <!-- 1. Activation Confirmation (Coming Soon) -->
-      <Tooltip content="Activation Confirmation (Reserved for future release)" position="bottom">
-        <button class="hud-btn hud-btn--inert" aria-label="Activation Confirmation">
-          <img
-            :src="getUiIconUrl('hud-activation-confirm')"
-            alt="Activation Confirmation"
-            class="hud-btn-icon"
-            @error="handleIconFallback($event, '💎')"
-          />
-          <span class="hud-btn-label">Auto</span>
+      <!-- 1. Activation Confirmation / Chain Mode Toggle -->
+      <Tooltip :content="chainModeTooltip" position="bottom">
+        <button
+          class="hud-btn hud-btn--chain"
+          :class="`hud-btn--chain-${chainMode}`"
+          aria-label="Chain Confirmation Mode"
+          @click="$emit('toggle-chain-mode')"
+        >
+          <span class="chain-mode-badge" :class="`chain-mode-badge--${chainMode}`">
+            {{ chainMode.toUpperCase() }}
+          </span>
+          <span class="hud-btn-label">Chain</span>
         </button>
       </Tooltip>
 
@@ -115,18 +117,18 @@
         </button>
       </Tooltip>
 
-      <!-- 4. Menu Button -->
-      <Tooltip content="In-Duel Menu & Settings" position="bottom">
+      <!-- 4. Duel Menu Button -->
+      <Tooltip content="Open Duel Options & Surrender Menu" position="bottom">
         <button
           class="hud-btn hud-btn--primary"
-          aria-label="Open In-Duel Menu"
+          aria-label="Open Duel Menu"
           @click="$emit('open-menu')"
         >
           <img
             :src="getUiIconUrl('hud-menu')"
             alt="Menu"
             class="hud-btn-icon"
-            @error="handleIconFallback($event, '☰')"
+            @error="handleIconFallback($event, '⚙️')"
           />
           <span class="hud-btn-label">Menu</span>
         </button>
@@ -152,6 +154,7 @@ const props = withDefaults(
     canGoToBattlePhase?: boolean;
     canGoToMainPhase2?: boolean;
     canEndTurn?: boolean;
+    chainMode?: 'auto' | 'on' | 'off';
   }>(),
   {
     guideText: '',
@@ -160,6 +163,7 @@ const props = withDefaults(
     canGoToBattlePhase: false,
     canGoToMainPhase2: false,
     canEndTurn: false,
+    chainMode: 'auto',
   },
 );
 
@@ -169,7 +173,18 @@ defineEmits<{
   (e: 'to-battle-phase'): void;
   (e: 'to-main-phase2'): void;
   (e: 'to-end-phase'): void;
+  (e: 'toggle-chain-mode'): void;
 }>();
+
+const chainModeTooltip = computed(() => {
+  if (props.chainMode === 'auto') {
+    return 'Chain: AUTO (Smart Confirmation - Prompts on key opponent actions/attacks, auto-skips repetitive prompts)';
+  } else if (props.chainMode === 'on') {
+    return 'Chain: ALWAYS ON (Strict Tournament Mode - Prompts at every legal window)';
+  } else {
+    return 'Chain: OFF (Auto-Pass - Skips optional chains; forced triggers still prompt)';
+  }
+});
 
 const phases = [
   { id: 'DP', name: 'Draw' },
@@ -513,6 +528,44 @@ function handleIconFallback(event: Event, fallbackEmoji: string): void {
         color: #f5f1e6;
         transform: none;
         box-shadow: none;
+      }
+    }
+
+    &--chain {
+      padding: 5px 10px;
+
+      .chain-mode-badge {
+        font-family: 'Oxanium', monospace, sans-serif;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        padding: 2px 6px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+
+        &--auto {
+          background: rgba(47, 128, 237, 0.3);
+          border: 1px solid #2f80ed;
+          color: #63b3ed;
+          text-shadow: 0 0 6px rgba(47, 128, 237, 0.6);
+        }
+
+        &--on {
+          background: rgba(235, 87, 87, 0.3);
+          border: 1px solid #eb5757;
+          color: #feb2b2;
+          text-shadow: 0 0 6px rgba(235, 87, 87, 0.6);
+        }
+
+        &--off {
+          background: rgba(113, 128, 150, 0.25);
+          border: 1px solid #718096;
+          color: #a0aec0;
+        }
+      }
+
+      &:hover {
+        border-color: rgba(246, 224, 94, 0.6);
       }
     }
   }

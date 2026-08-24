@@ -23,8 +23,10 @@
         :can-go-to-battle-phase="duelStore.canGoToBattlePhase"
         :can-go-to-main-phase2="duelStore.canGoToMainPhase2"
         :can-end-turn="duelStore.canEndTurn"
+        :chain-mode="duelStore.chainMode"
         @open-menu="isMenuOpen = true"
         @toggle-log="isDuelLogOpen = !isDuelLogOpen"
+        @toggle-chain-mode="duelStore.toggleChainMode"
         @to-battle-phase="duelStore.executeToBattlePhase"
         @to-main-phase2="duelStore.executeToMainPhase2"
         @to-end-phase="duelStore.executeToEndPhase"
@@ -192,6 +194,7 @@
       @announce-number="(n) => { isObservingPrompt = false; duelStore.executeAnnounceNumber(n); }"
       @observe-field="isObservingPrompt = true"
       @hover-card="onCardHover"
+      @mute-phase="duelStore.muteChainsForCurrentPhase()"
     />
 
     <!-- Floating Prompt Observation Mode Banner -->

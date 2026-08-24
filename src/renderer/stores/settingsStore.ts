@@ -25,6 +25,7 @@ export const defaultSettings: SettingsConfig = {
   selectedSeriesFilter: 'ALL',
   devMode: true,
   skipPreDuelVideo: false,
+  chainConfirmationMode: 'auto',
 };
 
 export const useSettingsStore = defineStore('settings', {
@@ -70,6 +71,8 @@ export const useSettingsStore = defineStore('settings', {
               saved.selectedSeriesFilter || defaultSettings.selectedSeriesFilter;
             this.devMode = saved.devMode ?? defaultSettings.devMode;
             this.skipPreDuelVideo = saved.skipPreDuelVideo ?? defaultSettings.skipPreDuelVideo;
+            this.chainConfirmationMode =
+              saved.chainConfirmationMode || defaultSettings.chainConfirmationMode;
           }
 
           // Apply saved volume settings to audioManager
@@ -163,6 +166,11 @@ export const useSettingsStore = defineStore('settings', {
       await this.persist();
     },
 
+    async setChainConfirmationMode(mode: 'auto' | 'on' | 'off'): Promise<void> {
+      this.chainConfirmationMode = mode;
+      await this.persist();
+    },
+
     async resetToDefaults(): Promise<void> {
       this.selectedBgmTheme = defaultSettings.selectedBgmTheme;
       this.masterVolume = defaultSettings.masterVolume;
@@ -176,6 +184,7 @@ export const useSettingsStore = defineStore('settings', {
       this.selectedSeriesFilter = defaultSettings.selectedSeriesFilter;
       this.devMode = defaultSettings.devMode;
       this.skipPreDuelVideo = defaultSettings.skipPreDuelVideo;
+      this.chainConfirmationMode = defaultSettings.chainConfirmationMode;
 
       audioManager.setMasterVolume(this.masterVolume);
       audioManager.setBgmVolume(this.bgmVolume);
@@ -205,6 +214,7 @@ export const useSettingsStore = defineStore('settings', {
             selectedSeriesFilter: this.selectedSeriesFilter,
             devMode: this.devMode,
             skipPreDuelVideo: this.skipPreDuelVideo,
+            chainConfirmationMode: this.chainConfirmationMode,
           });
         } catch (err) {
           console.error('[SettingsStore] Failed to save settings to IPC:', err);

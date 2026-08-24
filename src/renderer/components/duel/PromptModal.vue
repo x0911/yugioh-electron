@@ -213,6 +213,16 @@
           <button
             v-if="!selectChain.forced"
             type="button"
+            class="action-btn action-btn--mute-phase"
+            title="Pass priority and mute all non-forced chain prompts for the remainder of this phase"
+            @click="$emit('mute-phase')"
+          >
+            <span class="btn-icon">🔇</span>
+            <span>Mute for this Phase</span>
+          </button>
+          <button
+            v-if="!selectChain.forced"
+            type="button"
             class="action-btn action-btn--pass"
             @click="$emit('select-chain', null)"
           >
@@ -594,6 +604,7 @@ const emit = defineEmits<{
   (e: 'announce-number', value: number): void;
   (e: 'observe-field'): void;
   (e: 'hover-card', card: FieldCard | null): void;
+  (e: 'mute-phase'): void;
 }>();
 
 const duelStore = useDuelStore();
@@ -1739,6 +1750,20 @@ function toRomanNumeral(num: number): string {
       background: rgba(40, 48, 64, 0.95);
       border-color: $color-gold-300;
       color: #fff;
+    }
+  }
+
+  &--mute-phase {
+    background: rgba(20, 24, 34, 0.85);
+    border: 1.5px solid rgba(113, 128, 150, 0.35);
+    color: #a0aec0;
+    font-size: 0.82rem;
+    padding: 10px 18px;
+
+    &:hover {
+      background: rgba(45, 55, 72, 0.95);
+      border-color: #cbd5e0;
+      color: #edf2f7;
     }
   }
 
