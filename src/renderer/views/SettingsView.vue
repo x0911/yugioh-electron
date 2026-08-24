@@ -534,18 +534,35 @@
                   />
                 </div>
 
-                <!-- Model Override Input (Optional) -->
+                <!-- Model Selection (Presets + Custom) -->
                 <div class="settings-view__ai-input-group">
                   <label class="settings-view__ai-input-label">
-                    Model Identifier (Optional Override)
+                    Model Selection
                   </label>
-                  <input
-                    type="text"
-                    class="settings-view__ai-text-input"
-                    :placeholder="`Default: ${currentProviderMeta.defaultModel}`"
-                    :value="currentModel"
-                    @input="handleModelInput"
-                  />
+                  <div class="settings-view__ai-model-selector-row">
+                    <select
+                      class="settings-view__select-input"
+                      :value="selectedModelPresetValue"
+                      @change="handleModelPresetChange"
+                    >
+                      <option
+                        v-for="m in currentProviderMeta.availableModels"
+                        :key="m"
+                        :value="m"
+                      >
+                        {{ m }} {{ m === currentProviderMeta.defaultModel ? '(Default)' : '' }}
+                      </option>
+                      <option value="__custom__">⚙️ Custom Model Name...</option>
+                    </select>
+                    <input
+                      v-if="isCustomModelSelected"
+                      type="text"
+                      class="settings-view__ai-text-input"
+                      placeholder="Enter custom model identifier (e.g. llama-3.1-8b-instant)..."
+                      :value="currentModel"
+                      @input="handleModelInput"
+                    />
+                  </div>
                 </div>
 
                 <!-- Test Connection & Active Status Row -->
@@ -636,6 +653,7 @@ interface ProviderMeta {
   icon: string;
   modelTag: string;
   defaultModel: string;
+  availableModels: string[];
   defaultEndpoint?: string;
   description: string;
   portalUrl?: string;
@@ -648,14 +666,22 @@ const aiProviderList: ProviderMeta[] = [
     icon: '⚡',
     modelTag: 'Local Heuristic Engine',
     defaultModel: 'Local Heuristics',
+    availableModels: ['Local Heuristics'],
     description: 'Instant local decision making and tactical evaluation with no external network calls.',
   },
   {
     id: 'gemini',
     name: 'Google Gemini',
     icon: '✨',
-    modelTag: 'gemini-3.6-flash',
-    defaultModel: 'gemini-3.6-flash',
+    modelTag: 'gemini-2.5-flash',
+    defaultModel: 'gemini-2.5-flash',
+    availableModels: [
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-3.6-flash',
+    ],
     description: 'Google’s next-gen multimodal reasoning model for strategic dueling and dramatic voice dialogue.',
     portalUrl: 'https://aistudio.google.com/app/apikey',
   },
@@ -665,6 +691,12 @@ const aiProviderList: ProviderMeta[] = [
     icon: '🤖',
     modelTag: 'gpt-4o-mini',
     defaultModel: 'gpt-4o-mini',
+    availableModels: [
+      'gpt-4o-mini',
+      'gpt-4o',
+      'gpt-4-turbo',
+      'gpt-3.5-turbo',
+    ],
     description: 'OpenAI GPT models with JSON schema reasoning and high-level card game strategy.',
     portalUrl: 'https://platform.openai.com/api-keys',
   },
@@ -674,6 +706,10 @@ const aiProviderList: ProviderMeta[] = [
     icon: '🌌',
     modelTag: 'deepseek-chat',
     defaultModel: 'deepseek-chat',
+    availableModels: [
+      'deepseek-chat',
+      'deepseek-reasoner',
+    ],
     description: 'DeepSeek advanced reasoning model with low API cost and high strategic performance.',
     portalUrl: 'https://platform.deepseek.com/api_keys',
   },
@@ -683,6 +719,11 @@ const aiProviderList: ProviderMeta[] = [
     icon: '🧠',
     modelTag: 'claude-3-5-haiku',
     defaultModel: 'claude-3-5-haiku-20241022',
+    availableModels: [
+      'claude-3-5-haiku-20241022',
+      'claude-3-5-sonnet-20241022',
+      'claude-3-haiku-20240307',
+    ],
     description: 'Anthropic Claude 3.5 Haiku/Sonnet for character-faithful dialogue and tactical planning.',
     portalUrl: 'https://console.anthropic.com/settings/keys',
   },
@@ -690,9 +731,16 @@ const aiProviderList: ProviderMeta[] = [
     id: 'groq',
     name: 'Groq Cloud',
     icon: '⚡',
-    modelTag: 'llama-3.3-70b',
-    defaultModel: 'llama-3.3-70b-versatile',
-    description: 'Ultra-low-latency Llama 3.3 models running on Groq LPU hardware.',
+    modelTag: 'llama-3.1-8b',
+    defaultModel: 'llama-3.1-8b-instant',
+    availableModels: [
+      'llama-3.1-8b-instant',
+      'llama-3.3-70b-versatile',
+      'llama-3.1-70b-versatile',
+      'mixtral-8x7b-32768',
+      'gemma2-9b-it',
+    ],
+    description: 'Ultra-low-latency Llama 3 models running on Groq LPU hardware.',
     portalUrl: 'https://console.groq.com/keys',
   },
   {
@@ -701,6 +749,13 @@ const aiProviderList: ProviderMeta[] = [
     icon: '🦙',
     modelTag: 'llama3.2',
     defaultModel: 'llama3.2',
+    availableModels: [
+      'llama3.2',
+      'llama3.1',
+      'mistral',
+      'qwen2.5',
+      'deepseek-r1',
+    ],
     defaultEndpoint: 'http://localhost:11434/v1/chat/completions',
     description: 'Run open-source models completely locally on your own machine via Ollama.',
     portalUrl: 'https://ollama.com',
@@ -711,6 +766,7 @@ const aiProviderList: ProviderMeta[] = [
     icon: '⚙️',
     modelTag: 'OpenAI-Compatible',
     defaultModel: 'default-model',
+    availableModels: ['default-model'],
     defaultEndpoint: 'https://api.your-endpoint.com/v1/chat/completions',
     description: 'Connect any OpenAI-compatible LLM proxy or local inference server.',
   },
@@ -736,6 +792,17 @@ const currentModel = computed(() => {
   return settingsStore.aiModels?.[activeConfigProvider.value] || '';
 });
 
+const isCustomModelSelected = ref(false);
+
+const selectedModelPresetValue = computed(() => {
+  if (isCustomModelSelected.value) return '__custom__';
+  const val = currentModel.value || currentProviderMeta.value.defaultModel;
+  if (currentProviderMeta.value.availableModels.includes(val)) {
+    return val;
+  }
+  return '__custom__';
+});
+
 const activeDuelProviderName = computed(() => {
   const activeId = settingsStore.aiProvider || (settingsStore.aiEngineType as any) || 'builtin';
   const found = aiProviderList.find((p) => p.id === activeId);
@@ -745,6 +812,13 @@ const activeDuelProviderName = computed(() => {
 function handleSelectProviderTab(id: AiProviderType): void {
   activeConfigProvider.value = id;
   testResult.value = null;
+  const savedModel = settingsStore.aiModels?.[id];
+  const meta = aiProviderList.find((p) => p.id === id);
+  if (savedModel && meta && !meta.availableModels.includes(savedModel)) {
+    isCustomModelSelected.value = true;
+  } else {
+    isCustomModelSelected.value = false;
+  }
 }
 
 async function handleApiKeyInput(e: Event): Promise<void> {
@@ -757,6 +831,17 @@ async function handleEndpointInput(e: Event): Promise<void> {
   const val = (e.target as HTMLInputElement).value;
   testResult.value = null;
   await settingsStore.setAiCustomEndpoint(activeConfigProvider.value, val);
+}
+
+async function handleModelPresetChange(e: Event): Promise<void> {
+  const val = (e.target as HTMLSelectElement).value;
+  testResult.value = null;
+  if (val === '__custom__') {
+    isCustomModelSelected.value = true;
+  } else {
+    isCustomModelSelected.value = false;
+    await settingsStore.setAiModel(activeConfigProvider.value, val);
+  }
 }
 
 async function handleModelInput(e: Event): Promise<void> {

@@ -25,11 +25,11 @@ export interface PromptPayload {
 }
 
 export const DEFAULT_MODELS: Record<string, string> = {
-  gemini: 'gemini-3.6-flash',
+  gemini: 'gemini-2.5-flash',
   openai: 'gpt-4o-mini',
   deepseek: 'deepseek-chat',
   anthropic: 'claude-3-5-haiku-20241022',
-  groq: 'llama-3.3-70b-versatile',
+  groq: 'llama-3.1-8b-instant',
   ollama: 'llama3.2',
   custom: 'default-model',
 };

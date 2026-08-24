@@ -108,11 +108,11 @@ async function runMultiProviderTests() {
 
   // Test 1: Verify Provider Defaults
   console.log('▶ Test 1: Verify Provider Model and Endpoint Defaults');
-  assert.equal(DEFAULT_MODELS.gemini, 'gemini-3.6-flash');
+  assert.equal(DEFAULT_MODELS.gemini, 'gemini-2.5-flash');
   assert.equal(DEFAULT_MODELS.openai, 'gpt-4o-mini');
   assert.equal(DEFAULT_MODELS.deepseek, 'deepseek-chat');
   assert.equal(DEFAULT_MODELS.anthropic, 'claude-3-5-haiku-20241022');
-  assert.equal(DEFAULT_MODELS.groq, 'llama-3.3-70b-versatile');
+  assert.equal(DEFAULT_MODELS.groq, 'llama-3.1-8b-instant');
   assert.equal(DEFAULT_MODELS.ollama, 'llama3.2');
   assert.equal(DEFAULT_ENDPOINTS.deepseek, 'https://api.deepseek.com/chat/completions');
   assert.equal(DEFAULT_ENDPOINTS.groq, 'https://api.groq.com/openai/v1/chat/completions');
