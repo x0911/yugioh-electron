@@ -23,6 +23,8 @@ export const defaultSettings: SettingsConfig = {
   selectedSeriesFilter: 'ALL',
   devMode: true,
   skipPreDuelVideo: false,
+  chainConfirmationMode: 'auto',
+  aiEngineType: 'builtin',
 };
 
 function loadAllPrebuiltDecks(): Record<string, CustomDeck> {

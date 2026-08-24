@@ -253,6 +253,64 @@
     width: 100%;
   }
 
+  &__engine-selector {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-2 $space-4;
+    background: rgba(14, 18, 28, 0.85);
+    border: 1px solid rgba($color-gold-500, 0.35);
+    border-radius: 9999px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  }
+
+  &__engine-label {
+    font-family: $font-mono;
+    font-size: $font-size-xs;
+    font-weight: 700;
+    color: $color-gold-300;
+    letter-spacing: 0.05em;
+  }
+
+  &__engine-pills {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__engine-pill {
+    font-family: $font-mono;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background: rgba(30, 36, 48, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &:hover:not(&--active) {
+      background: rgba(201, 162, 39, 0.15);
+      border-color: rgba(201, 162, 39, 0.4);
+      color: #f5f1e6;
+    }
+
+    &--active {
+      background: rgba(201, 162, 39, 0.25);
+      border-color: $color-gold-300;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(201, 162, 39, 0.4);
+    }
+
+    &--gemini.coin-toss-view__engine-pill--active {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
+      border-color: rgba(168, 85, 247, 0.85);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+    }
+  }
+
   &__prompt-text {
     font-family: $font-display;
     font-size: $font-size-lg;

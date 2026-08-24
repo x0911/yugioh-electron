@@ -231,6 +231,7 @@ export const useDuelStore = defineStore('duel', {
     lastDeclinedChainFingerprint: null,
     lastChainedCode: null,
     aiDialogue: null as { text: string; characterName: string; characterId?: string; timestamp: number } | null,
+    activeAiEngineType: 'builtin' as 'builtin' | 'gemini',
   }),
 
   getters: {
@@ -726,6 +727,7 @@ export const useDuelStore = defineStore('duel', {
       this.clearPrompts();
       const settingsStore = useSettingsStore();
       this.chainMode = settingsStore.chainConfirmationMode || 'auto';
+      this.activeAiEngineType = settingsStore.aiEngineType || 'builtin';
       this.isMutedForCurrentPhase = false;
       this.lastDeclinedChainFingerprint = null;
 

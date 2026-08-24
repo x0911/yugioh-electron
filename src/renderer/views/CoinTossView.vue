@@ -66,6 +66,29 @@
 
       <!-- State 1: Choose Heads or Tails -->
       <div v-if="!isFlipping && !hasLanded" class="coin-toss-view__choice-container">
+        <!-- Opponent AI Engine Toggle Pill -->
+        <div class="coin-toss-view__engine-selector">
+          <span class="coin-toss-view__engine-label">Opponent Engine:</span>
+          <div class="coin-toss-view__engine-pills">
+            <button
+              type="button"
+              class="coin-toss-view__engine-pill"
+              :class="{ 'coin-toss-view__engine-pill--active': settingsStore.aiEngineType === 'builtin' }"
+              @click="settingsStore.setAiEngineType('builtin')"
+            >
+              ⚡ Local Fast AI
+            </button>
+            <button
+              type="button"
+              class="coin-toss-view__engine-pill coin-toss-view__engine-pill--gemini"
+              :class="{ 'coin-toss-view__engine-pill--active': settingsStore.aiEngineType === 'gemini' }"
+              @click="settingsStore.setAiEngineType('gemini')"
+            >
+              ✨ Gemini AI (Cloud LLM)
+            </button>
+          </div>
+        </div>
+
         <p class="coin-toss-view__prompt-text">
           Call the coin toss to decide who takes the first turn:
         </p>

@@ -45,6 +45,15 @@
       <div class="lp-meter__content">
         <div class="lp-meter__header">
           <span class="player-name" :title="name">{{ name }}</span>
+          <span
+            v-if="player === 'ai'"
+            class="ai-engine-badge"
+            :class="aiEngineType === 'gemini' ? 'ai-engine-badge--gemini' : 'ai-engine-badge--builtin'"
+            :title="aiEngineType === 'gemini' ? 'Controlled by Gemini Cloud LLM' : 'Controlled by Built-in Heuristic Engine'"
+          >
+            {{ aiEngineType === 'gemini' ? '✨ Gemini AI' : '⚡ Local AI' }}
+          </span>
+          <span v-else-if="title" class="player-title" :title="title">{{ title }}</span>
         </div>
 
         <!-- Huge Oxanium LP Counter (Tweened Countdown) -->
@@ -82,6 +91,7 @@ const props = withDefaults(
     currentLp: number;
     maxLp?: number;
     isTurn?: boolean;
+    aiEngineType?: 'builtin' | 'gemini';
   }>(),
   {
     title: '',
@@ -90,6 +100,7 @@ const props = withDefaults(
     characterId: '',
     maxLp: 8000,
     isTurn: false,
+    aiEngineType: 'builtin',
   },
 );
 
@@ -378,6 +389,31 @@ const lpHealthTier = computed(() => {
       overflow: hidden;
       white-space: nowrap;
       text-align: right;
+    }
+
+    .ai-engine-badge {
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+
+      &--gemini {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(168, 85, 247, 0.4));
+        border: 1px solid rgba(168, 85, 247, 0.75);
+        color: #f1f5f9;
+        box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+      }
+
+      &--builtin {
+        background: rgba(201, 162, 39, 0.2);
+        border: 1px solid rgba(201, 162, 39, 0.6);
+        color: #f7e4a8;
+      }
     }
   }
 

@@ -738,15 +738,25 @@ export class AIController {
       const isAiCard = c.controller === aiPlayerId;
 
       let score = 0;
-      if (isAiCard) {
-        // If selecting own card to keep / protect / search: prefer signature / high ATK
+      const isGyOrDeck = c.location === 0x10 || c.location === 16 || c.location === 0x1 || c.location === 1 || c.location === 0x20 || c.location === 32;
+
+      if (isGyOrDeck) {
+        // Graveyard/Deck/Banished Selection (e.g. Monster Reborn, Foolish Burial, Searchers):
         const isGodCard = code === 10000000 || code === 10000020 || code === 10000010;
         const isTurn1GyRevival = boardState.turnNumber === 1 && (c.location === 0x10 || c.location === 16);
         if (isGodCard && isTurn1GyRevival) {
-          score = -25000; // Egyptian God cards self-destruct at Turn 1 End Phase without attacking!
+          score = -25000;
         } else {
-          score = atk + (signatureCardIds.includes(code) ? 1000 : 0);
+          // Score by monster ATK; heavily penalize 0-ATK fodder unless it has dynamic ATK
+          if (atk === 0 && code !== 36021814) {
+            score = -3000;
+          } else {
+            score = atk + (signatureCardIds.includes(code) ? 1500 : 0);
+          }
         }
+      } else if (isAiCard) {
+        // If selecting own on-field card to keep / protect:
+        score = atk + (signatureCardIds.includes(code) ? 1000 : 0);
       } else {
         // If selecting opponent card to target / destroy / attack:
         const isBattleImmuneDef =

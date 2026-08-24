@@ -57,6 +57,7 @@
             :current-lp="currentBoardState.opponentField.currentLp"
             :max-lp="currentBoardState.opponentField.maxLp"
             :is-turn="currentBoardState.opponentField.isTurn"
+            :ai-engine-type="duelStore.activeAiEngineType"
           />
 
           <!-- Live Character Dialogue Banner (Gemini AI Speech) -->
