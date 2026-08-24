@@ -388,24 +388,6 @@
               </select>
             </div>
 
-            <!-- AI Opponent Engine -->
-            <div class="settings-view__toggle-row">
-              <div class="settings-view__toggle-info">
-                <span class="settings-view__toggle-label">AI Opponent Engine (POC)</span>
-                <span class="settings-view__toggle-desc">
-                  Choose between the built-in fast offline engine or Gemini Cloud LLM for strategic reasoning and authentic character dialogue.
-                </span>
-              </div>
-              <select
-                class="settings-view__select-input"
-                :value="settingsStore.aiEngineType || 'builtin'"
-                @change="handleAiEngineChange"
-              >
-                <option value="builtin">⚡ Built-in Fast Engine (Instant Local Heuristics)</option>
-                <option value="gemini">✨ Gemini AI (Cloud LLM - Strategic & Dramatic Dialogue)</option>
-              </select>
-            </div>
-
             <!-- Skip Video Toggle -->
             <div class="settings-view__toggle-row">
               <div class="settings-view__toggle-info">
@@ -442,6 +424,169 @@
               </label>
             </div>
           </GlassPanel>
+
+          <!-- AI Opponent & LLM Provider Configuration Card -->
+          <GlassPanel class="settings-view__setting-group settings-view__ai-card" accent="gold">
+            <div class="settings-view__ai-card-header">
+              <div>
+                <h3 class="settings-view__setting-group-title">AI Opponent & LLM Provider</h3>
+                <p class="settings-view__ai-card-subtitle">
+                  Choose your AI opponent's brain engine and configure your own API keys. Keys are saved locally on your device.
+                </p>
+              </div>
+              <span
+                class="settings-view__ai-status-pill"
+                :class="settingsStore.hasKeyForProvider(activeConfigProvider) ? 'settings-view__ai-status-pill--ready' : 'settings-view__ai-status-pill--pending'"
+              >
+                {{ settingsStore.hasKeyForProvider(activeConfigProvider) ? '✓ Key Saved & Ready' : '⚪ Key Required' }}
+              </span>
+            </div>
+
+            <!-- Provider Selection Tabs / Grid -->
+            <div class="settings-view__ai-providers-grid">
+              <button
+                v-for="provider in aiProviderList"
+                :key="provider.id"
+                type="button"
+                class="settings-view__ai-provider-btn"
+                :class="{
+                  'settings-view__ai-provider-btn--active': activeConfigProvider === provider.id,
+                  'settings-view__ai-provider-btn--configured': settingsStore.hasKeyForProvider(provider.id)
+                }"
+                @click="handleSelectProviderTab(provider.id)"
+              >
+                <span class="settings-view__ai-provider-icon">{{ provider.icon }}</span>
+                <div class="settings-view__ai-provider-text">
+                  <span class="settings-view__ai-provider-name">{{ provider.name }}</span>
+                  <span class="settings-view__ai-provider-model">{{ provider.modelTag }}</span>
+                </div>
+                <span
+                  v-if="settingsStore.hasKeyForProvider(provider.id)"
+                  class="settings-view__ai-provider-saved-dot"
+                  title="API Key Saved"
+                >✓</span>
+              </button>
+            </div>
+
+            <!-- Active Provider Details & Credentials Form -->
+            <div class="settings-view__ai-config-body">
+              <!-- Built-in Heuristics Engine Message -->
+              <div v-if="activeConfigProvider === 'builtin'" class="settings-view__ai-builtin-notice">
+                <span class="settings-view__ai-notice-icon">⚡</span>
+                <div class="settings-view__ai-notice-content">
+                  <strong>Built-in Offline Heuristic AI Engine</strong>
+                  <p>
+                    Runs 100% locally on your computer with instant sub-millisecond decisions, simulated human think delays, and legendary DM/GX character tactics. No internet connection or API keys required!
+                  </p>
+                </div>
+              </div>
+
+              <!-- Cloud LLM / Ollama Credentials Form -->
+              <div v-else class="settings-view__ai-credentials-form">
+                <!-- Info & API Console Link -->
+                <div class="settings-view__ai-info-row">
+                  <span class="settings-view__ai-desc">{{ currentProviderMeta.description }}</span>
+                  <a
+                    v-if="currentProviderMeta.portalUrl"
+                    :href="currentProviderMeta.portalUrl"
+                    target="_blank"
+                    class="settings-view__ai-key-link"
+                  >
+                    🔑 Get {{ currentProviderMeta.name }} API Key ↗
+                  </a>
+                </div>
+
+                <!-- API Key Input Field (Except Ollama) -->
+                <div v-if="activeConfigProvider !== 'ollama'" class="settings-view__ai-input-group">
+                  <label class="settings-view__ai-input-label">
+                    {{ currentProviderMeta.name }} API Key
+                  </label>
+                  <div class="settings-view__ai-key-input-wrapper">
+                    <input
+                      :type="showApiKey ? 'text' : 'password'"
+                      class="settings-view__ai-text-input"
+                      :placeholder="`Enter your ${currentProviderMeta.name} API Key...`"
+                      :value="currentApiKey"
+                      @input="handleApiKeyInput"
+                    />
+                    <button
+                      type="button"
+                      class="settings-view__ai-show-key-btn"
+                      :title="showApiKey ? 'Hide Key' : 'Show Key'"
+                      @click="showApiKey = !showApiKey"
+                    >
+                      {{ showApiKey ? '👁️' : '🔒' }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Custom Endpoint (Ollama or Custom) -->
+                <div v-if="activeConfigProvider === 'ollama' || activeConfigProvider === 'custom'" class="settings-view__ai-input-group">
+                  <label class="settings-view__ai-input-label">
+                    Base URL / API Endpoint
+                  </label>
+                  <input
+                    type="text"
+                    class="settings-view__ai-text-input"
+                    :placeholder="currentProviderMeta.defaultEndpoint || 'http://localhost:11434/v1/chat/completions'"
+                    :value="currentEndpoint"
+                    @input="handleEndpointInput"
+                  />
+                </div>
+
+                <!-- Model Override Input (Optional) -->
+                <div class="settings-view__ai-input-group">
+                  <label class="settings-view__ai-input-label">
+                    Model Identifier (Optional Override)
+                  </label>
+                  <input
+                    type="text"
+                    class="settings-view__ai-text-input"
+                    :placeholder="`Default: ${currentProviderMeta.defaultModel}`"
+                    :value="currentModel"
+                    @input="handleModelInput"
+                  />
+                </div>
+
+                <!-- Test Connection & Active Status Row -->
+                <div class="settings-view__ai-test-row">
+                  <button
+                    type="button"
+                    class="settings-view__ai-test-btn"
+                    :disabled="isTestingConnection"
+                    @click="handleTestAiConnection"
+                  >
+                    <span v-if="isTestingConnection">⏳ Testing Connection...</span>
+                    <span v-else>🧪 Test Connection & Verify Key</span>
+                  </button>
+
+                  <div v-if="testResult" class="settings-view__ai-test-result" :class="testResult.success ? 'settings-view__ai-test-result--success' : 'settings-view__ai-test-result--error'">
+                    <span class="settings-view__ai-result-icon">{{ testResult.success ? '🟢' : '🔴' }}</span>
+                    <span class="settings-view__ai-result-text">{{ testResult.message || testResult.error }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Set as Active AI Button -->
+              <div class="settings-view__ai-activate-bar">
+                <span class="settings-view__ai-active-indicator">
+                  Active in Duels:
+                  <strong>{{ activeDuelProviderName }}</strong>
+                </span>
+                <YugiButton
+                  v-if="settingsStore.aiProvider !== activeConfigProvider"
+                  variant="gold"
+                  size="sm"
+                  @click="handleActivateCurrentProvider"
+                >
+                  Set as Active AI Opponent
+                </YugiButton>
+                <span v-else class="settings-view__ai-currently-active-badge">
+                  ✓ Currently Selected AI
+                </span>
+              </div>
+            </div>
+          </GlassPanel>
         </div>
       </section>
 
@@ -471,12 +616,171 @@ import LoadingSpinner from '../components/common/LoadingSpinner.vue';
 import AboutModal from '../components/common/AboutModal.vue';
 import OpponentCarousel from '../components/settings/OpponentCarousel.vue';
 
+import type { AiProviderType } from '../../shared/types/character.js';
+
 const settingsStore = useSettingsStore();
 const avatarFailed = ref(false);
 const showAboutModal = ref(false);
 const activePreviewId = ref<string | null>(null);
 
+const activeConfigProvider = ref<AiProviderType>(
+  settingsStore.aiProvider || (settingsStore.aiEngineType as any) || 'builtin',
+);
+const showApiKey = ref(false);
+const isTestingConnection = ref(false);
+const testResult = ref<{ success: boolean; message?: string; error?: string } | null>(null);
+
+interface ProviderMeta {
+  id: AiProviderType;
+  name: string;
+  icon: string;
+  modelTag: string;
+  defaultModel: string;
+  defaultEndpoint?: string;
+  description: string;
+  portalUrl?: string;
+}
+
+const aiProviderList: ProviderMeta[] = [
+  {
+    id: 'builtin',
+    name: 'Built-in Fast AI',
+    icon: '⚡',
+    modelTag: 'Local Heuristic Engine',
+    defaultModel: 'Local Heuristics',
+    description: 'Instant local decision making and tactical evaluation with no external network calls.',
+  },
+  {
+    id: 'gemini',
+    name: 'Google Gemini',
+    icon: '✨',
+    modelTag: 'gemini-3.6-flash',
+    defaultModel: 'gemini-3.6-flash',
+    description: 'Google’s next-gen multimodal reasoning model for strategic dueling and dramatic voice dialogue.',
+    portalUrl: 'https://aistudio.google.com/app/apikey',
+  },
+  {
+    id: 'openai',
+    name: 'OpenAI ChatGPT',
+    icon: '🤖',
+    modelTag: 'gpt-4o-mini',
+    defaultModel: 'gpt-4o-mini',
+    description: 'OpenAI GPT models with JSON schema reasoning and high-level card game strategy.',
+    portalUrl: 'https://platform.openai.com/api-keys',
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek AI',
+    icon: '🌌',
+    modelTag: 'deepseek-chat',
+    defaultModel: 'deepseek-chat',
+    description: 'DeepSeek advanced reasoning model with low API cost and high strategic performance.',
+    portalUrl: 'https://platform.deepseek.com/api_keys',
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic Claude',
+    icon: '🧠',
+    modelTag: 'claude-3-5-haiku',
+    defaultModel: 'claude-3-5-haiku-20241022',
+    description: 'Anthropic Claude 3.5 Haiku/Sonnet for character-faithful dialogue and tactical planning.',
+    portalUrl: 'https://console.anthropic.com/settings/keys',
+  },
+  {
+    id: 'groq',
+    name: 'Groq Cloud',
+    icon: '⚡',
+    modelTag: 'llama-3.3-70b',
+    defaultModel: 'llama-3.3-70b-versatile',
+    description: 'Ultra-low-latency Llama 3.3 models running on Groq LPU hardware.',
+    portalUrl: 'https://console.groq.com/keys',
+  },
+  {
+    id: 'ollama',
+    name: 'Ollama (Local LLM)',
+    icon: '🦙',
+    modelTag: 'llama3.2',
+    defaultModel: 'llama3.2',
+    defaultEndpoint: 'http://localhost:11434/v1/chat/completions',
+    description: 'Run open-source models completely locally on your own machine via Ollama.',
+    portalUrl: 'https://ollama.com',
+  },
+  {
+    id: 'custom',
+    name: 'Custom Endpoint',
+    icon: '⚙️',
+    modelTag: 'OpenAI-Compatible',
+    defaultModel: 'default-model',
+    defaultEndpoint: 'https://api.your-endpoint.com/v1/chat/completions',
+    description: 'Connect any OpenAI-compatible LLM proxy or local inference server.',
+  },
+];
+
 const selectedChar = computed(() => settingsStore.selectedCharacter);
+
+const currentProviderMeta = computed<ProviderMeta>(() => {
+  return (
+    aiProviderList.find((p) => p.id === activeConfigProvider.value) || aiProviderList[0]
+  );
+});
+
+const currentApiKey = computed(() => {
+  return settingsStore.aiApiKeys?.[activeConfigProvider.value] || '';
+});
+
+const currentEndpoint = computed(() => {
+  return settingsStore.aiCustomEndpoints?.[activeConfigProvider.value] || '';
+});
+
+const currentModel = computed(() => {
+  return settingsStore.aiModels?.[activeConfigProvider.value] || '';
+});
+
+const activeDuelProviderName = computed(() => {
+  const activeId = settingsStore.aiProvider || (settingsStore.aiEngineType as any) || 'builtin';
+  const found = aiProviderList.find((p) => p.id === activeId);
+  return found ? `${found.icon} ${found.name}` : '⚡ Built-in Fast Engine';
+});
+
+function handleSelectProviderTab(id: AiProviderType): void {
+  activeConfigProvider.value = id;
+  testResult.value = null;
+}
+
+async function handleApiKeyInput(e: Event): Promise<void> {
+  const val = (e.target as HTMLInputElement).value;
+  testResult.value = null;
+  await settingsStore.setAiApiKey(activeConfigProvider.value, val);
+}
+
+async function handleEndpointInput(e: Event): Promise<void> {
+  const val = (e.target as HTMLInputElement).value;
+  testResult.value = null;
+  await settingsStore.setAiCustomEndpoint(activeConfigProvider.value, val);
+}
+
+async function handleModelInput(e: Event): Promise<void> {
+  const val = (e.target as HTMLInputElement).value;
+  testResult.value = null;
+  await settingsStore.setAiModel(activeConfigProvider.value, val);
+}
+
+async function handleActivateCurrentProvider(): Promise<void> {
+  await settingsStore.setAiProvider(activeConfigProvider.value);
+}
+
+async function handleTestAiConnection(): Promise<void> {
+  isTestingConnection.value = true;
+  testResult.value = null;
+  try {
+    const res = await settingsStore.testAiConnection(activeConfigProvider.value);
+    testResult.value = res;
+  } catch (err: any) {
+    testResult.value = { success: false, error: err?.message || String(err) };
+  } finally {
+    isTestingConnection.value = false;
+  }
+}
 
 function handleSelectOpponent(id: string): void {
   avatarFailed.value = false;
@@ -533,19 +837,19 @@ function handleChainModeChange(e: Event): void {
   settingsStore.setChainConfirmationMode(val);
 }
 
-function handleAiEngineChange(e: Event): void {
-  const val = (e.target as HTMLSelectElement).value as 'builtin' | 'gemini';
-  settingsStore.setAiEngineType(val);
-}
-
 async function handleReset(): Promise<void> {
   audioManager.stopPreview();
   activePreviewId.value = null;
   await settingsStore.resetToDefaults();
+  activeConfigProvider.value = 'builtin';
+  testResult.value = null;
 }
 
 onMounted(async () => {
   await settingsStore.initializeSettings();
+  if (settingsStore.aiProvider) {
+    activeConfigProvider.value = settingsStore.aiProvider;
+  }
 });
 
 onUnmounted(() => {

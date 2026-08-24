@@ -183,4 +183,10 @@ export function registerIpcHandlers(): void {
     const result = getRandomDeckForCharacter(characterId);
     return result || null;
   });
+
+  // AI Connection Test
+  ipcMain.handle(IPC_CHANNELS.AI_TEST_CONNECTION, async (_event, payload: import('../../shared/types/ipc.js').AiTestConnectionPayload) => {
+    const { llmDuelService } = await import('../ai/LLMDuelService.js');
+    return llmDuelService.testConnection(payload.provider, payload.apiKey, payload.customEndpoint, payload.model);
+  });
 }

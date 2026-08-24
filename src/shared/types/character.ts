@@ -42,6 +42,16 @@ export interface CharacterData {
   personality?: CharacterPersonality;
 }
 
+export type AiProviderType =
+  | 'builtin'
+  | 'gemini'
+  | 'openai'
+  | 'anthropic'
+  | 'deepseek'
+  | 'groq'
+  | 'ollama'
+  | 'custom';
+
 export interface SettingsConfig {
   selectedBgmTheme: string;
   masterVolume: number;
@@ -57,5 +67,9 @@ export interface SettingsConfig {
   skipPreDuelVideo: boolean;
   chainConfirmationMode?: 'auto' | 'on' | 'off';
   aiEngineType?: 'builtin' | 'gemini';
+  aiProvider?: AiProviderType;
+  aiApiKeys?: Record<string, string>;
+  aiModels?: Record<string, string>;
+  aiCustomEndpoints?: Record<string, string>;
 }
 

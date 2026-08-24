@@ -28,7 +28,8 @@ import {
   type EvaluatorContext,
 } from '../ai/index.js';
 import { parseTrapMonsterStats } from '../../shared/utils/cardStats.js';
-import type { CharacterPersonality } from '../../shared/types/character.js';
+import type { CharacterPersonality, AiProviderType } from '../../shared/types/character.js';
+import { getPersistedSettings } from '../persistence/store.js';
 
 import type {
   CardPositionState,
@@ -68,6 +69,7 @@ export interface DuelOptions {
   aiCharacterId?: string;
   aiDeckArchetype?: string;
   aiEngineType?: 'builtin' | 'gemini';
+  aiProvider?: AiProviderType;
 }
 
 export interface DuelState {
@@ -97,7 +99,7 @@ export class DuelEngineService {
   private humanPlayerId = 0;
   private aiCharacterId = 'yugi-muto';
   private aiDeckArchetype = '';
-  private aiEngineType: 'builtin' | 'gemini' = 'builtin';
+  private aiProvider: AiProviderType = 'builtin';
   private aiPersonality: CharacterPersonality = DEFAULT_PERSONALITY;
   private aiSignatureCards: number[] = [];
   private aiDeckCards: number[] = [];
@@ -273,7 +275,7 @@ export class DuelEngineService {
     this.isVideoPlaying = false;
     this.aiCharacterId = options.aiCharacterId ?? 'yugi-muto';
     this.aiDeckArchetype = options.aiDeckArchetype ?? '';
-    this.aiEngineType = options.aiEngineType ?? 'builtin';
+    this.aiProvider = options.aiProvider || (options.aiEngineType as any) || 'builtin';
     this.aiPersonality = getPersonalityForCharacter(this.aiCharacterId);
     this.aiSignatureCards = [];
     const aiDeck = this.humanPlayerId === 0 ? options.player1Deck : options.player0Deck;
@@ -1388,8 +1390,18 @@ export class DuelEngineService {
       aiDeckCards: this.aiDeckCards,
     };
 
-    if (this.aiEngineType === 'gemini') {
-      const result = await this.aiController.decideResponseAsync(msg, context, 'gemini');
+    if (this.aiProvider && this.aiProvider !== 'builtin') {
+      const settings = getPersistedSettings();
+      const apiKey = settings.aiApiKeys?.[this.aiProvider] || '';
+      const model = settings.aiModels?.[this.aiProvider];
+      const customEndpoint = settings.aiCustomEndpoints?.[this.aiProvider];
+
+      const result = await this.aiController.decideResponseAsync(msg, context, {
+        provider: this.aiProvider,
+        apiKey,
+        model,
+        customEndpoint,
+      });
       const delayMs = 200;
       return { response: result.response, delayMs, dialogue: result.dialogue, reasoning: result.reasoning };
     }
@@ -1580,7 +1592,7 @@ export class DuelEngineService {
           const isOpponent = promptPlayer !== this.humanPlayerId;
           // If opponent player (AI) or autoPlay is active: schedule evaluated AI response
           if (isOpponent || this.autoPlay) {
-            if (this.aiEngineType === 'gemini') {
+            if (this.aiProvider && this.aiProvider !== 'builtin') {
               this.getAiResponseAsync(lastMsg, promptPlayer)
                 .then(({ response, delayMs, dialogue }) => {
                   if (dialogue) {

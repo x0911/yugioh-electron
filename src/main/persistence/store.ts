@@ -25,6 +25,10 @@ export const defaultSettings: SettingsConfig = {
   skipPreDuelVideo: false,
   chainConfirmationMode: 'auto',
   aiEngineType: 'builtin',
+  aiProvider: 'builtin',
+  aiApiKeys: {},
+  aiModels: {},
+  aiCustomEndpoints: {},
 };
 
 function loadAllPrebuiltDecks(): Record<string, CustomDeck> {

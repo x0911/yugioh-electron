@@ -24,17 +24,24 @@ import { resolveArchetypePlan } from './strategies/archetypeStrategy.js';
 import { assertAiStateSanitized } from './antiCheatAssert.js';
 import { getExecutorForDeck } from './executors/index.js';
 import { geminiDuelService } from './GeminiDuelService.js';
+import { llmDuelService, type ProviderConfig } from './LLMDuelService.js';
+import type { AiProviderType } from '../../shared/types/character.js';
 
 export class AIController {
   /**
-   * Decide response asynchronously, with optional Gemini LLM reasoning and dialogue.
+   * Decide response asynchronously, supporting multi-provider LLM reasoning and authentic dialogue.
    */
   public async decideResponseAsync(
     msg: OcgMessage,
     context: EvaluatorContext,
-    engineType: 'builtin' | 'gemini' = 'builtin',
-  ): Promise<{ response: OcgResponse; dialogue?: string; reasoning?: string }> {
-    if (engineType === 'gemini' && geminiDuelService.isAvailable()) {
+    providerInput: ProviderConfig | AiProviderType | 'builtin' | 'gemini' = 'builtin',
+  ): Promise<{ response: OcgResponse; dialogue?: string; reasoning?: string; provider?: string }> {
+    const config: ProviderConfig =
+      typeof providerInput === 'string'
+        ? { provider: providerInput as AiProviderType }
+        : providerInput;
+
+    if (config.provider && config.provider !== 'builtin') {
       try {
         const executor = getExecutorForDeck(context, context.aiDeckCards);
         let candidates: ScoredAction[] | null = null;
@@ -47,13 +54,13 @@ export class AIController {
         }
 
         if (candidates && candidates.length > 0) {
-          const geminiResult = await geminiDuelService.decideResponse(msg, context, candidates);
-          if (geminiResult) {
-            return geminiResult;
+          const result = await llmDuelService.decideResponse(config, msg, context, candidates);
+          if (result) {
+            return result;
           }
         }
       } catch (err) {
-        console.warn('[AIController] Gemini decision error, falling back to heuristic engine:', err);
+        console.warn(`[AIController] ${config.provider} decision error, falling back to heuristic engine:`, err);
       }
     }
 

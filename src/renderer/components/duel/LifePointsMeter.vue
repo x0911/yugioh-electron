@@ -48,10 +48,10 @@
           <span
             v-if="player === 'ai'"
             class="ai-engine-badge"
-            :class="aiEngineType === 'gemini' ? 'ai-engine-badge--gemini' : 'ai-engine-badge--builtin'"
-            :title="aiEngineType === 'gemini' ? 'Controlled by Gemini Cloud LLM' : 'Controlled by Built-in Heuristic Engine'"
+            :class="`ai-engine-badge--${activeAiBadgeClass}`"
+            :title="activeAiBadgeTitle"
           >
-            {{ aiEngineType === 'gemini' ? '✨ Gemini AI' : '⚡ Local AI' }}
+            {{ activeAiBadgeLabel }}
           </span>
           <span v-else-if="title" class="player-title" :title="title">{{ title }}</span>
         </div>
@@ -79,6 +79,7 @@
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { getCharacterAvatarUrl, getCharacterPortraitUrl } from '../../utils/media.js';
 import { audioManager } from '../../audio/index.js';
+import type { AiProviderType } from '../../../shared/types/character.js';
 
 const props = withDefaults(
   defineProps<{
@@ -92,6 +93,7 @@ const props = withDefaults(
     maxLp?: number;
     isTurn?: boolean;
     aiEngineType?: 'builtin' | 'gemini';
+    aiProvider?: AiProviderType;
   }>(),
   {
     title: '',
@@ -101,8 +103,47 @@ const props = withDefaults(
     maxLp: 8000,
     isTurn: false,
     aiEngineType: 'builtin',
+    aiProvider: 'builtin',
   },
 );
+
+const effectiveProvider = computed(() => {
+  if (props.aiProvider && props.aiProvider !== 'builtin') return props.aiProvider;
+  if (props.aiEngineType === 'gemini') return 'gemini';
+  return 'builtin';
+});
+
+const activeAiBadgeClass = computed(() => {
+  return effectiveProvider.value;
+});
+
+const activeAiBadgeLabel = computed(() => {
+  switch (effectiveProvider.value) {
+    case 'gemini':
+      return '✨ Gemini AI';
+    case 'openai':
+      return '🤖 OpenAI';
+    case 'deepseek':
+      return '🌌 DeepSeek';
+    case 'anthropic':
+      return '🧠 Claude';
+    case 'groq':
+      return '⚡ Groq';
+    case 'ollama':
+      return '🦙 Ollama';
+    case 'custom':
+      return '⚙️ Custom AI';
+    default:
+      return '⚡ Local AI';
+  }
+});
+
+const activeAiBadgeTitle = computed(() => {
+  if (effectiveProvider.value === 'builtin') {
+    return 'Controlled by Built-in Fast Heuristic Engine';
+  }
+  return `Controlled by ${activeAiBadgeLabel.value} LLM reasoning`;
+});
 
 const avatarFailed = ref(false);
 const displayLp = ref(props.currentLp);
@@ -407,6 +448,47 @@ const lpHealthTier = computed(() => {
         border: 1px solid rgba(168, 85, 247, 0.75);
         color: #f1f5f9;
         box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+      }
+
+      &--openai {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(6, 95, 70, 0.5));
+        border: 1px solid rgba(16, 185, 129, 0.75);
+        color: #ecfdf5;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+      }
+
+      &--deepseek {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(30, 58, 138, 0.5));
+        border: 1px solid rgba(96, 165, 250, 0.75);
+        color: #eff6ff;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+      }
+
+      &--anthropic {
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.35), rgba(180, 83, 9, 0.5));
+        border: 1px solid rgba(245, 158, 11, 0.75);
+        color: #fffbeb;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+      }
+
+      &--groq {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.35), rgba(185, 28, 28, 0.5));
+        border: 1px solid rgba(248, 113, 113, 0.75);
+        color: #fef2f2;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+      }
+
+      &--ollama {
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.35), rgba(3, 105, 161, 0.5));
+        border: 1px solid rgba(56, 189, 248, 0.75);
+        color: #f0f9ff;
+        box-shadow: 0 0 10px rgba(14, 165, 233, 0.4);
+      }
+
+      &--custom {
+        background: rgba(147, 51, 234, 0.3);
+        border: 1px solid rgba(168, 85, 247, 0.6);
+        color: #fae8ff;
       }
 
       &--builtin {

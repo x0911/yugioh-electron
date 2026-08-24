@@ -109,6 +109,8 @@ export interface DuelFieldState {
   isUserTurn: boolean;
 }
 
+import type { AiProviderType } from './character.js';
+
 export interface DuelInitOptions {
   player0Deck: number[];
   player1Deck: number[];
@@ -127,6 +129,7 @@ export interface DuelInitOptions {
   aiCharacterId?: string;
   aiDeckArchetype?: string;
   aiEngineType?: 'builtin' | 'gemini';
+  aiProvider?: AiProviderType;
 }
 
 export type CoinChoice = 'heads' | 'tails';

@@ -27,6 +27,10 @@ export const defaultSettings: SettingsConfig = {
   skipPreDuelVideo: false,
   chainConfirmationMode: 'auto',
   aiEngineType: 'builtin',
+  aiProvider: 'builtin',
+  aiApiKeys: {},
+  aiModels: {},
+  aiCustomEndpoints: {},
 };
 
 export const useSettingsStore = defineStore('settings', {
@@ -45,6 +49,26 @@ export const useSettingsStore = defineStore('settings', {
       const char =
         state.characters.find((c) => c.id === state.selectedOpponentId) || state.characters[0];
       return char ? char.decks : [];
+    },
+    hasKeyForProvider: (state) => (provider: string): boolean => {
+      if (provider === 'builtin' || provider === 'ollama') return true;
+      if (provider === 'gemini') return true; // Has fallback key or user key
+      return !!(state.aiApiKeys && state.aiApiKeys[provider] && state.aiApiKeys[provider].trim().length > 0);
+    },
+    configuredProviders(state): { id: string; name: string; icon: string }[] {
+      const all = [
+        { id: 'builtin', name: 'Built-in Fast Engine', icon: '⚡' },
+        { id: 'gemini', name: 'Google Gemini', icon: '✨' },
+        { id: 'openai', name: 'OpenAI ChatGPT', icon: '🤖' },
+        { id: 'deepseek', name: 'DeepSeek AI', icon: '🌌' },
+        { id: 'anthropic', name: 'Anthropic Claude', icon: '🧠' },
+        { id: 'groq', name: 'Groq Cloud', icon: '⚡' },
+        { id: 'ollama', name: 'Ollama (Local LLM)', icon: '🦙' },
+      ];
+      return all.filter((p) => {
+        if (p.id === 'builtin' || p.id === 'gemini' || p.id === 'ollama') return true;
+        return !!(state.aiApiKeys && state.aiApiKeys[p.id] && state.aiApiKeys[p.id].trim().length > 0);
+      });
     },
   },
 
@@ -75,6 +99,10 @@ export const useSettingsStore = defineStore('settings', {
             this.chainConfirmationMode =
               saved.chainConfirmationMode || defaultSettings.chainConfirmationMode;
             this.aiEngineType = saved.aiEngineType || defaultSettings.aiEngineType;
+            this.aiProvider = saved.aiProvider || (saved.aiEngineType as any) || defaultSettings.aiProvider;
+            this.aiApiKeys = saved.aiApiKeys || {};
+            this.aiModels = saved.aiModels || {};
+            this.aiCustomEndpoints = saved.aiCustomEndpoints || {};
           }
 
           // Apply saved volume settings to audioManager
@@ -203,7 +231,50 @@ export const useSettingsStore = defineStore('settings', {
 
     async setAiEngineType(type: 'builtin' | 'gemini'): Promise<void> {
       this.aiEngineType = type;
+      this.aiProvider = type;
       await this.persist();
+    },
+
+    async setAiProvider(provider: import('../../shared/types/character.js').AiProviderType): Promise<void> {
+      this.aiProvider = provider;
+      this.aiEngineType = provider === 'gemini' ? 'gemini' : 'builtin';
+      await this.persist();
+    },
+
+    async setAiApiKey(provider: string, key: string): Promise<void> {
+      if (!this.aiApiKeys) this.aiApiKeys = {};
+      this.aiApiKeys[provider] = key;
+      await this.persist();
+    },
+
+    async setAiModel(provider: string, model: string): Promise<void> {
+      if (!this.aiModels) this.aiModels = {};
+      this.aiModels[provider] = model;
+      await this.persist();
+    },
+
+    async setAiCustomEndpoint(provider: string, endpoint: string): Promise<void> {
+      if (!this.aiCustomEndpoints) this.aiCustomEndpoints = {};
+      this.aiCustomEndpoints[provider] = endpoint;
+      await this.persist();
+    },
+
+    async testAiConnection(provider: string): Promise<{ success: boolean; message?: string; error?: string }> {
+      if (provider === 'builtin') {
+        return { success: true, message: 'Built-in local heuristic engine is always available offline!' };
+      }
+      if (!window.settingsAPI) {
+        return { success: false, error: 'Settings API unavailable.' };
+      }
+      const apiKey = this.aiApiKeys?.[provider] || '';
+      const customEndpoint = this.aiCustomEndpoints?.[provider];
+      const model = this.aiModels?.[provider];
+      return window.settingsAPI.testAiConnection({
+        provider,
+        apiKey,
+        customEndpoint,
+        model,
+      });
     },
 
     async persist(): Promise<void> {
@@ -224,6 +295,10 @@ export const useSettingsStore = defineStore('settings', {
             skipPreDuelVideo: this.skipPreDuelVideo,
             chainConfirmationMode: this.chainConfirmationMode,
             aiEngineType: this.aiEngineType,
+            aiProvider: this.aiProvider,
+            aiApiKeys: this.aiApiKeys,
+            aiModels: this.aiModels,
+            aiCustomEndpoints: this.aiCustomEndpoints,
           });
         } catch (err) {
           console.error('[SettingsStore] Failed to save settings to IPC:', err);

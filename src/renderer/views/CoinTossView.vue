@@ -68,24 +68,28 @@
       <div v-if="!isFlipping && !hasLanded" class="coin-toss-view__choice-container">
         <!-- Opponent AI Engine Toggle Pill -->
         <div class="coin-toss-view__engine-selector">
-          <span class="coin-toss-view__engine-label">Opponent Engine:</span>
+          <span class="coin-toss-view__engine-label">Opponent AI:</span>
           <div class="coin-toss-view__engine-pills">
             <button
+              v-for="prov in settingsStore.configuredProviders"
+              :key="prov.id"
               type="button"
               class="coin-toss-view__engine-pill"
-              :class="{ 'coin-toss-view__engine-pill--active': settingsStore.aiEngineType === 'builtin' }"
-              @click="settingsStore.setAiEngineType('builtin')"
+              :class="[
+                `coin-toss-view__engine-pill--${prov.id}`,
+                { 'coin-toss-view__engine-pill--active': currentActiveProvider === prov.id }
+              ]"
+              @click="settingsStore.setAiProvider(prov.id as any)"
             >
-              ⚡ Local Fast AI
+              {{ prov.icon }} {{ prov.name }}
             </button>
-            <button
-              type="button"
-              class="coin-toss-view__engine-pill coin-toss-view__engine-pill--gemini"
-              :class="{ 'coin-toss-view__engine-pill--active': settingsStore.aiEngineType === 'gemini' }"
-              @click="settingsStore.setAiEngineType('gemini')"
+            <router-link
+              to="/settings"
+              class="coin-toss-view__engine-config-link"
+              title="Configure API Keys & LLM Providers"
             >
-              ✨ Gemini AI (Cloud LLM)
-            </button>
+              ⚙️ Add More AIs
+            </router-link>
           </div>
         </div>
 
@@ -252,6 +256,9 @@ let autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const opponentName = computed(() => duelStore.opponentName);
 const opponentSeries = computed(() => duelStore.opponentSeries);
+const currentActiveProvider = computed(() => {
+  return settingsStore.aiProvider || (settingsStore.aiEngineType as any) || 'builtin';
+});
 const opponentDeckLabel = computed(() => {
   if (duelStore.isOpponentDeckManual && duelStore.selectedOpponentDeck) {
     return duelStore.selectedOpponentDeck.name;

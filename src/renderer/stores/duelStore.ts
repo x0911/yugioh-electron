@@ -232,6 +232,7 @@ export const useDuelStore = defineStore('duel', {
     lastChainedCode: null,
     aiDialogue: null as { text: string; characterName: string; characterId?: string; timestamp: number } | null,
     activeAiEngineType: 'builtin' as 'builtin' | 'gemini',
+    activeAiProvider: 'builtin' as import('../../shared/types/character.js').AiProviderType,
   }),
 
   getters: {
@@ -727,7 +728,8 @@ export const useDuelStore = defineStore('duel', {
       this.clearPrompts();
       const settingsStore = useSettingsStore();
       this.chainMode = settingsStore.chainConfirmationMode || 'auto';
-      this.activeAiEngineType = settingsStore.aiEngineType || 'builtin';
+      this.activeAiProvider = settingsStore.aiProvider || (settingsStore.aiEngineType as any) || 'builtin';
+      this.activeAiEngineType = this.activeAiProvider === 'gemini' ? 'gemini' : 'builtin';
       this.isMutedForCurrentPhase = false;
       this.lastDeclinedChainFingerprint = null;
 
@@ -769,7 +771,8 @@ export const useDuelStore = defineStore('duel', {
             humanPlayerId: Number(humanPlayerId),
             aiCharacterId: this.selectedOpponent?.id,
             aiDeckArchetype: this.selectedOpponentDeck?.archetype,
-            aiEngineType: useSettingsStore().aiEngineType || 'builtin',
+            aiEngineType: this.activeAiEngineType,
+            aiProvider: this.activeAiProvider,
           });
           this.isDuelActive = success;
           return success;

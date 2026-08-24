@@ -108,6 +108,10 @@ const settingsAPI: SettingsAPI = {
   getRandomOpponentDeck: (characterId: string) => {
     return ipcRenderer.invoke(IPC_CHANNELS.CHARACTERS_GET_RANDOM_DECK, characterId);
   },
+  testAiConnection: (payload) => {
+    const plainPayload = JSON.parse(JSON.stringify(payload));
+    return ipcRenderer.invoke(IPC_CHANNELS.AI_TEST_CONNECTION, plainPayload);
+  },
 };
 
 const appAPI: AppAPI = {
