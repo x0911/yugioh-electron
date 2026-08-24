@@ -161,6 +161,7 @@ import type { FieldCard, CardStatusType } from '../../../shared/types/field.js';
 import { useDuelStore } from '../../stores/duelStore.js';
 import { getCardImageUrl, getCardBackUrl, handleImageError, preloadCardImage } from '../../utils/media.js';
 import { formatCombatStat } from '../../utils/format.js';
+import { parseTrapMonsterStats, isTreatedAsMonster } from '../../../shared/utils/cardStats.js';
 import IconIndicator from '../common/IconIndicator.vue';
 
 const props = withDefaults(
@@ -182,39 +183,66 @@ defineEmits<{
 
 const duelStore = useDuelStore();
 
+const isMonster = computed(() => {
+  if (!props.card || props.card.code <= 0) return false;
+  const detail = duelStore.getCardDetail(props.card.code);
+  return isTreatedAsMonster(props.card.location, detail?.isMonster ?? false);
+});
+
 const effectiveCard = computed<FieldCard | null>(() => {
   if (!props.card) return null;
   if (props.card.code <= 0) return props.card;
   const detail = duelStore.getCardDetail(props.card.code);
   if (!detail) return props.card;
+
+  const isMonsterZone = props.card.location === 'monster' || props.card.location === 'extra-monster';
+  const isMon = isTreatedAsMonster(props.card.location, detail.isMonster);
+
+  let atk: number | undefined = undefined;
+  let def: number | undefined = undefined;
+  let baseAtk: number | undefined = undefined;
+  let baseDef: number | undefined = undefined;
+  let level: number | undefined = undefined;
+
+  if (isMon) {
+    atk = props.card.atk !== undefined ? props.card.atk : (detail.isMonster ? detail.atk : undefined);
+    def = props.card.def !== undefined ? props.card.def : (detail.isMonster ? detail.def : undefined);
+    baseAtk = props.card.baseAtk !== undefined ? props.card.baseAtk : (detail.isMonster ? detail.atk : undefined);
+    baseDef = props.card.baseDef !== undefined ? props.card.baseDef : (detail.isMonster ? detail.def : undefined);
+    level = props.card.level !== undefined ? props.card.level : (detail.isMonster ? detail.level : undefined);
+
+    if (isMonsterZone && (atk === undefined || def === undefined || level === undefined)) {
+      const parsed = parseTrapMonsterStats(detail.desc || props.card.description || '');
+      if (atk === undefined) atk = parsed.atk;
+      if (def === undefined) def = parsed.def;
+      if (baseAtk === undefined) baseAtk = parsed.atk;
+      if (baseDef === undefined) baseDef = parsed.def;
+      if (level === undefined) level = parsed.level;
+    }
+  }
+
+  let attribute = isMon ? (props.card.attribute || (detail.isMonster ? detail.attributeName : undefined)) : detail.attributeName;
+  let race = isMon ? (props.card.race || (detail.isMonster ? detail.raceName : undefined)) : detail.raceName;
+
+  if (isMonsterZone && (!attribute || !race)) {
+    const parsed = parseTrapMonsterStats(detail.desc || props.card.description || '');
+    if (!attribute) attribute = parsed.attribute;
+    if (!race) race = parsed.race;
+  }
+
   return {
     ...props.card,
     name:
       props.card.name && props.card.name !== 'Card' && !props.card.name.startsWith('[Card #')
         ? props.card.name
         : detail.name,
-    atk: props.card.atk !== undefined ? props.card.atk : detail.isMonster ? detail.atk : undefined,
-    def: props.card.def !== undefined ? props.card.def : detail.isMonster ? detail.def : undefined,
-    baseAtk:
-      props.card.baseAtk !== undefined
-        ? props.card.baseAtk
-        : detail.isMonster
-          ? detail.atk
-          : undefined,
-    baseDef:
-      props.card.baseDef !== undefined
-        ? props.card.baseDef
-        : detail.isMonster
-          ? detail.def
-          : undefined,
-    level:
-      props.card.level !== undefined
-        ? props.card.level
-        : detail.isMonster
-          ? detail.level
-          : undefined,
-    attribute: props.card.attribute || detail.attributeName,
-    race: props.card.race || detail.raceName,
+    atk,
+    def,
+    baseAtk,
+    baseDef,
+    level,
+    attribute,
+    race,
     description: props.card.description || detail.desc,
   };
 });
@@ -228,13 +256,6 @@ watch(
   },
   { immediate: true },
 );
-
-const isMonster = computed(() => {
-  if (!effectiveCard.value || effectiveCard.value.code <= 0) return false;
-  const detail = duelStore.getCardDetail(effectiveCard.value.code);
-  if (detail) return detail.isMonster;
-  return effectiveCard.value.attribute !== 'SPELL' && effectiveCard.value.attribute !== 'TRAP';
-});
 
 const isAtkBoosted = computed(() => {
   if (!effectiveCard.value) return false;

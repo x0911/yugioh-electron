@@ -195,6 +195,7 @@ import { useDuelStore } from '../../stores/duelStore.js';
 import YugiModal from '../common/YugiModal.vue';
 import { getCardImageUrl, handleImageError } from '../../utils/media.js';
 import { formatCombatStat } from '../../utils/format.js';
+import { parseTrapMonsterStats, isTreatedAsMonster } from '../../../shared/utils/cardStats.js';
 
 interface EnrichedSelectCard {
   selectIndex: number;
@@ -282,7 +283,23 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
     const loc = item.location || 16;
     const locName = getLocationName(loc);
     const owner = item.controller === duelStore.userPlayerId ? 'user' : 'ai';
-    const isMonster = detail?.isMonster ?? (detail?.atk !== undefined || (detail?.level ?? 0) > 0);
+    const locStr = loc === 4 ? 'monster' : loc === 8 ? 'spell-trap' : 'grave';
+    const isMonster = isTreatedAsMonster(locStr, detail?.isMonster ?? false);
+
+    let atk = isMonster ? detail?.atk : undefined;
+    let def = isMonster ? detail?.def : undefined;
+    let level = isMonster ? detail?.level : undefined;
+    let attribute = isMonster ? detail?.attributeName : undefined;
+    let race = isMonster ? detail?.raceName : undefined;
+
+    if (isMonster && (loc === 4) && (!detail?.isMonster || atk === undefined || def === undefined)) {
+      const parsed = parseTrapMonsterStats(detail?.desc);
+      if (atk === undefined) atk = parsed.atk;
+      if (def === undefined) def = parsed.def;
+      if (level === undefined) level = parsed.level;
+      if (!attribute) attribute = parsed.attribute;
+      if (!race) race = parsed.race;
+    }
 
     result.push({
       selectIndex: selectCards.length + unselectIdx,
@@ -295,11 +312,11 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
       controller: item.controller,
       owner,
       isMonster,
-      atk: detail?.atk,
-      def: detail?.def,
-      level: detail?.level,
-      attribute: detail?.attributeName,
-      race: detail?.raceName,
+      atk,
+      def,
+      level,
+      attribute,
+      race,
       type: detail?.type,
       desc: detail?.desc,
       isSelected: true,
@@ -342,7 +359,23 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
 
     const isSelected = props.selectedIndices.includes(originalIndex);
     const orderIdx = props.selectedIndices.indexOf(originalIndex);
-    const isMonster = detail?.isMonster ?? (detail?.atk !== undefined || (detail?.level ?? 0) > 0);
+    const locStr = loc === 4 ? 'monster' : loc === 8 ? 'spell-trap' : 'grave';
+    const isMonster = isTreatedAsMonster(locStr, detail?.isMonster ?? false);
+
+    let atk = isMonster ? detail?.atk : undefined;
+    let def = isMonster ? detail?.def : undefined;
+    let level = isMonster ? detail?.level : undefined;
+    let attribute = isMonster ? detail?.attributeName : undefined;
+    let race = isMonster ? detail?.raceName : undefined;
+
+    if (isMonster && (loc === 4) && (!detail?.isMonster || atk === undefined || def === undefined)) {
+      const parsed = parseTrapMonsterStats(detail?.desc);
+      if (atk === undefined) atk = parsed.atk;
+      if (def === undefined) def = parsed.def;
+      if (level === undefined) level = parsed.level;
+      if (!attribute) attribute = parsed.attribute;
+      if (!race) race = parsed.race;
+    }
 
     result.push({
       selectIndex: originalIndex,
@@ -355,11 +388,11 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
       controller: item.controller,
       owner,
       isMonster: isHiddenOpponentCard ? false : isMonster,
-      atk: isHiddenOpponentCard ? undefined : detail?.atk,
-      def: isHiddenOpponentCard ? undefined : detail?.def,
-      level: isHiddenOpponentCard ? undefined : detail?.level,
-      attribute: isHiddenOpponentCard ? undefined : detail?.attributeName,
-      race: isHiddenOpponentCard ? undefined : detail?.raceName,
+      atk: isHiddenOpponentCard ? undefined : atk,
+      def: isHiddenOpponentCard ? undefined : def,
+      level: isHiddenOpponentCard ? undefined : level,
+      attribute: isHiddenOpponentCard ? undefined : attribute,
+      race: isHiddenOpponentCard ? undefined : race,
       type: isHiddenOpponentCard ? undefined : detail?.type,
       desc: isHiddenOpponentCard ? undefined : detail?.desc,
       isSelected,

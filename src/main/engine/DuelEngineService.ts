@@ -27,6 +27,7 @@ import {
   DEFAULT_PERSONALITY,
   type EvaluatorContext,
 } from '../ai/index.js';
+import { parseTrapMonsterStats } from '../../shared/utils/cardStats.js';
 import type { CharacterPersonality } from '../../shared/types/character.js';
 
 import type {
@@ -813,8 +814,15 @@ export class DuelEngineService {
           card.level = detail.level;
           card.attribute = detail.attributeName;
           card.race = detail.raceName;
-          card.description = detail.desc;
+        } else if (detail?.desc) {
+          const parsed = parseTrapMonsterStats(detail.desc);
+          if (parsed.atk !== undefined && card.atk === undefined) card.atk = parsed.atk;
+          if (parsed.def !== undefined && card.def === undefined) card.def = parsed.def;
+          if (parsed.level !== undefined && card.level === undefined) card.level = parsed.level;
+          if (parsed.attribute && !card.attribute) card.attribute = parsed.attribute;
+          if (parsed.race && !card.race) card.race = parsed.race;
         }
+        card.description = detail?.desc ?? card.description;
         card.statuses = this.computeCardStatuses(card);
       }
     } else if (rawType === OcgMessageType.POS_CHANGE && 'position' in msg) {
@@ -830,14 +838,29 @@ export class DuelEngineService {
           card.code = code;
           const detail = this.cardReader.getCardDetail(code);
           card.name = detail?.name ?? this.cardReader.getCardName(code);
-          if (detail?.isMonster) {
-            card.atk = detail.atk;
-            card.def = detail.def;
-            card.level = detail.level;
-            card.attribute = detail.attributeName;
-            card.race = detail.raceName;
-            card.description = detail.desc;
+          if (isMonsterZone) {
+            if (detail?.isMonster) {
+              card.atk = detail.atk;
+              card.def = detail.def;
+              card.level = detail.level;
+              card.attribute = detail.attributeName;
+              card.race = detail.raceName;
+            } else if (detail?.desc) {
+              const parsed = parseTrapMonsterStats(detail.desc);
+              if (parsed.atk !== undefined && card.atk === undefined) card.atk = parsed.atk;
+              if (parsed.def !== undefined && card.def === undefined) card.def = parsed.def;
+              if (parsed.level !== undefined && card.level === undefined) card.level = parsed.level;
+              if (parsed.attribute && !card.attribute) card.attribute = parsed.attribute;
+              if (parsed.race && !card.race) card.race = parsed.race;
+            }
+          } else {
+            card.atk = undefined;
+            card.def = undefined;
+            card.level = undefined;
+            card.baseAtk = undefined;
+            card.baseDef = undefined;
           }
+          card.description = detail?.desc ?? card.description;
         }
         card.statuses = this.computeCardStatuses(card);
       }
@@ -965,20 +988,40 @@ export class DuelEngineService {
     const detail = finalCode > 0 ? this.cardReader.getCardDetail(finalCode) : null;
     const cardName = detail?.name ?? (finalCode > 0 ? this.cardReader.getCardName(finalCode) : 'Card');
 
+    const isMovingToMonsterZone = to.location === OcgLocation.MZONE;
+    const isMovingToSpellTrapZone = to.location === OcgLocation.SZONE || to.location === OcgLocation.FZONE;
+
     if (!movedCard) {
+      let initAtk = isMovingToMonsterZone ? (detail?.isMonster ? detail.atk : undefined) : undefined;
+      let initDef = isMovingToMonsterZone ? (detail?.isMonster ? detail.def : undefined) : undefined;
+      let initLevel = isMovingToMonsterZone ? (detail?.isMonster ? detail.level : undefined) : undefined;
+      let initAttr = detail?.attributeName;
+      let initRace = detail?.raceName;
+
+      if (isMovingToMonsterZone && detail?.desc && (initAtk === undefined || initDef === undefined || initLevel === undefined || !initAttr || !initRace)) {
+        const parsed = parseTrapMonsterStats(detail.desc);
+        if (initAtk === undefined) initAtk = parsed.atk;
+        if (initDef === undefined) initDef = parsed.def;
+        if (initLevel === undefined) initLevel = parsed.level;
+        if (!initAttr) initAttr = parsed.attribute;
+        if (!initRace) initRace = parsed.race;
+      }
+
       movedCard = {
         id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         code: finalCode,
         name: cardName,
         controller: to.controller as 0 | 1,
-        location: 'monster',
+        location: isMovingToSpellTrapZone ? 'spell-trap' : 'monster',
         sequence: to.sequence,
         position: 'faceup_attack',
-        atk: detail?.isMonster ? detail.atk : undefined,
-        def: detail?.isMonster ? detail.def : undefined,
-        level: detail?.isMonster ? detail.level : undefined,
-        attribute: detail?.attributeName,
-        race: detail?.raceName,
+        atk: initAtk,
+        def: initDef,
+        baseAtk: initAtk,
+        baseDef: initDef,
+        level: initLevel,
+        attribute: initAttr,
+        race: initRace,
         description: detail?.desc,
         statuses: [],
       };
@@ -987,17 +1030,51 @@ export class DuelEngineService {
       movedCard.name = cardName;
       movedCard.controller = to.controller as 0 | 1;
       if (detail) {
-        if (detail.isMonster) {
+        if (isMovingToMonsterZone) {
+          if (detail.isMonster) {
+            movedCard.atk = detail.atk;
+            movedCard.def = detail.def;
+            movedCard.baseAtk = detail.atk;
+            movedCard.baseDef = detail.def;
+            movedCard.level = detail.level;
+            movedCard.attribute = detail.attributeName;
+            movedCard.race = detail.raceName;
+          } else if (detail.desc) {
+            const parsed = parseTrapMonsterStats(detail.desc);
+            if (parsed.atk !== undefined && movedCard.atk === undefined) movedCard.atk = parsed.atk;
+            if (parsed.def !== undefined && movedCard.def === undefined) movedCard.def = parsed.def;
+            if (parsed.atk !== undefined && movedCard.baseAtk === undefined) movedCard.baseAtk = parsed.atk;
+            if (parsed.def !== undefined && movedCard.baseDef === undefined) movedCard.baseDef = parsed.def;
+            if (parsed.level !== undefined && movedCard.level === undefined) movedCard.level = parsed.level;
+            if (parsed.attribute && !movedCard.attribute) movedCard.attribute = parsed.attribute;
+            if (parsed.race && !movedCard.race) movedCard.race = parsed.race;
+          }
+        } else if (isMovingToSpellTrapZone) {
+          // If moving into spell/trap zone (e.g. monster equipped or placed in SZONE), clear monster combat stats
+          movedCard.atk = undefined;
+          movedCard.def = undefined;
+          movedCard.level = undefined;
+          movedCard.baseAtk = undefined;
+          movedCard.baseDef = undefined;
+          movedCard.attribute = detail.attributeName;
+          movedCard.race = detail.raceName;
+        } else if (detail.isMonster) {
           movedCard.atk = detail.atk;
           movedCard.def = detail.def;
+          movedCard.baseAtk = detail.atk;
+          movedCard.baseDef = detail.def;
           movedCard.level = detail.level;
+          movedCard.attribute = detail.attributeName;
+          movedCard.race = detail.raceName;
         } else {
           movedCard.atk = undefined;
           movedCard.def = undefined;
           movedCard.level = undefined;
+          movedCard.baseAtk = undefined;
+          movedCard.baseDef = undefined;
+          movedCard.attribute = detail.attributeName;
+          movedCard.race = detail.raceName;
         }
-        movedCard.attribute = detail.attributeName;
-        movedCard.race = detail.raceName;
         movedCard.description = detail.desc;
       }
     }
@@ -1584,6 +1661,13 @@ export class DuelEngineService {
               card.level = query.level;
             }
 
+            // If card in MZONE has missing attribute or race (e.g. Trap Monster), parse from description
+            if ((!card.attribute || !card.race) && card.description) {
+              const parsed = parseTrapMonsterStats(card.description);
+              if (!card.attribute && parsed.attribute) card.attribute = parsed.attribute;
+              if (!card.race && parsed.race) card.race = parsed.race;
+            }
+
             stats.push({
               controller: p,
               sequence: seq,
@@ -1597,6 +1681,24 @@ export class DuelEngineService {
         } catch {
           // Ignore transient ocgcore query errors during zone transitions
         }
+      }
+
+      // Ensure Spell/Trap and Field zones never leak monster combat stats
+      for (const st of pf.spellTrapZones) {
+        if (st) {
+          st.atk = undefined;
+          st.def = undefined;
+          st.level = undefined;
+          st.baseAtk = undefined;
+          st.baseDef = undefined;
+        }
+      }
+      if (pf.fieldZone) {
+        pf.fieldZone.atk = undefined;
+        pf.fieldZone.def = undefined;
+        pf.fieldZone.level = undefined;
+        pf.fieldZone.baseAtk = undefined;
+        pf.fieldZone.baseDef = undefined;
       }
     }
 

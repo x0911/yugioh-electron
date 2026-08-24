@@ -192,13 +192,49 @@ export class DefaultExecutor implements DeckExecutor {
           continue;
         }
 
-        // Avoid summoning weak monsters in Attack Position into opponent's high-ATK boss monsters
+        // Avoid summoning weak monsters in Attack Position into opponent's higher-ATK monsters
+        const oppMonsters = oppField.monsterZones.filter((m) => !!m);
         const oppMaxAtk = Math.max(
           0,
           ...oppField.monsterZones
             .filter((m) => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'))
             .map((m) => m?.atk ?? 0),
         );
+
+        // Check for Spirit monsters (e.g. Yata-Garasu, Tsukuyomi) that return to hand in End Phase
+        const isSpirit = detail?.desc?.includes('returns to the hand during the End Phase') || detail?.desc?.includes('return to the hand');
+        if (isSpirit && oppMonsters.length > 0 && atk <= 1000 && atk < oppMaxAtk) {
+          candidates.push({
+            action: {
+              type: OcgResponseType.SELECT_IDLECMD,
+              action: SelectIdleCMDAction.SELECT_SUMMON,
+              index: i,
+            },
+            score: -4500,
+            reason: `[AVOID] Do not waste Normal Summon on Spirit monster ${name} (${atk} ATK) when opponent controls superior ${oppMaxAtk} ATK monsters`,
+            cardCode: code,
+            cardName: name,
+          });
+          continue;
+        }
+
+        // Avoid summoning extremely weak monsters (<= 500 ATK, e.g. Kuriboh) in Attack Position when opponent has active monsters
+        if (atk <= 500 && oppMaxAtk >= 1000) {
+          candidates.push({
+            action: {
+              type: OcgResponseType.SELECT_IDLECMD,
+              action: SelectIdleCMDAction.SELECT_SUMMON,
+              index: i,
+            },
+            score: -3500,
+            reason: `[AVOID] Avoid Normal Summoning weak ${name} (${atk} ATK) in Attack Position into opponent's ${oppMaxAtk} ATK monster`,
+            cardCode: code,
+            cardName: name,
+          });
+          continue;
+        }
+
+        // Avoid summoning weak monsters in Attack Position into opponent's high-ATK boss monsters
         if (oppMaxAtk >= 1900 && atk < oppMaxAtk && atk <= 1600) {
           candidates.push({
             action: {

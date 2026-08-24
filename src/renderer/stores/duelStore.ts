@@ -31,6 +31,7 @@ import type {
 } from '../../shared/types/field.js';
 import { useSettingsStore } from './settingsStore.js';
 import { useDeckEditStore } from './deckEditStore.js';
+import { parseTrapMonsterStats, isTreatedAsMonster } from '../../shared/utils/cardStats.js';
 
 // Default tournament-legal 40-card Starter Deck if no user custom deck is selected
 const DEFAULT_USER_MAIN_DECK = [
@@ -324,15 +325,54 @@ export const useDuelStore = defineStore('duel', {
           id: cardId,
         };
       }
+
+      const isMonsterZone = card.location === 'monster' || card.location === 'extra-monster';
+      const isSpellTrapZone = card.location === 'spell-trap' || card.location === 'field';
+      const isMon = isTreatedAsMonster(card.location, detail.isMonster);
+
+      let atk: number | undefined = undefined;
+      let def: number | undefined = undefined;
+      let baseAtk: number | undefined = undefined;
+      let baseDef: number | undefined = undefined;
+      let level: number | undefined = undefined;
+
+      if (isMon) {
+        atk = card.atk !== undefined ? card.atk : (detail.isMonster ? detail.atk : undefined);
+        def = card.def !== undefined ? card.def : (detail.isMonster ? detail.def : undefined);
+        baseAtk = card.baseAtk !== undefined ? card.baseAtk : (detail.isMonster ? detail.atk : undefined);
+        baseDef = card.baseDef !== undefined ? card.baseDef : (detail.isMonster ? detail.def : undefined);
+        level = card.level !== undefined ? card.level : (detail.isMonster ? detail.level : undefined);
+
+        if (isMonsterZone && (atk === undefined || def === undefined || level === undefined)) {
+          const parsed = parseTrapMonsterStats(detail.desc || card.description || '');
+          if (atk === undefined) atk = parsed.atk;
+          if (def === undefined) def = parsed.def;
+          if (baseAtk === undefined) baseAtk = parsed.atk;
+          if (baseDef === undefined) baseDef = parsed.def;
+          if (level === undefined) level = parsed.level;
+        }
+      }
+
+      let attribute = isMon ? (card.attribute || (detail.isMonster ? detail.attributeName : undefined)) : detail.attributeName;
+      let race = isMon ? (card.race || (detail.isMonster ? detail.raceName : undefined)) : detail.raceName;
+
+      if (isMonsterZone && (!attribute || !race)) {
+        const parsed = parseTrapMonsterStats(detail.desc || card.description || '');
+        if (!attribute) attribute = parsed.attribute;
+        if (!race) race = parsed.race;
+      }
+
       return {
         ...card,
         id: cardId,
         name: card.name && card.name !== 'Card' && !card.name.startsWith('[Card #') ? card.name : detail.name,
-        atk: detail.isMonster ? (card.atk !== undefined ? card.atk : detail.atk) : undefined,
-        def: detail.isMonster ? (card.def !== undefined ? card.def : detail.def) : undefined,
-        level: detail.isMonster ? (card.level !== undefined ? card.level : detail.level) : undefined,
-        attribute: card.attribute || detail.attributeName,
-        race: card.race || detail.raceName,
+        atk,
+        def,
+        baseAtk,
+        baseDef,
+        level,
+        attribute,
+        race,
         description: card.description || detail.desc,
       };
     },
@@ -881,20 +921,40 @@ export const useDuelStore = defineStore('duel', {
       const detail = finalCode > 0 ? this.cardMap.get(finalCode) : null;
       const cardName = moveEvt.cardName || detail?.name || card?.name || 'Card';
 
+      const isMovingToMonster = toLoc === 4;
+      const isMovingToSpellTrap = toLoc === 8;
+
       if (!card) {
+        let initAtk = isMovingToMonster ? (detail?.isMonster ? detail.atk : undefined) : undefined;
+        let initDef = isMovingToMonster ? (detail?.isMonster ? detail.def : undefined) : undefined;
+        let initLevel = isMovingToMonster ? (detail?.isMonster ? detail.level : undefined) : undefined;
+        let initAttr = detail?.attributeName;
+        let initRace = detail?.raceName;
+
+        if (isMovingToMonster && detail?.desc && (initAtk === undefined || initDef === undefined || initLevel === undefined || !initAttr || !initRace)) {
+          const parsed = parseTrapMonsterStats(detail.desc);
+          if (initAtk === undefined) initAtk = parsed.atk;
+          if (initDef === undefined) initDef = parsed.def;
+          if (initLevel === undefined) initLevel = parsed.level;
+          if (!initAttr) initAttr = parsed.attribute;
+          if (!initRace) initRace = parsed.race;
+        }
+
         card = {
           id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           code: finalCode,
           name: cardName,
           controller,
-          location: 'monster',
+          location: isMovingToSpellTrap ? 'spell-trap' : 'monster',
           sequence: toSeq,
           position: 'faceup_attack',
-          atk: detail?.isMonster ? detail.atk : undefined,
-          def: detail?.isMonster ? detail.def : undefined,
-          level: detail?.isMonster ? detail.level : undefined,
-          attribute: detail?.attributeName,
-          race: detail?.raceName,
+          atk: initAtk,
+          def: initDef,
+          baseAtk: initAtk,
+          baseDef: initDef,
+          level: initLevel,
+          attribute: initAttr,
+          race: initRace,
           description: detail?.desc,
           statuses: [],
         };
@@ -903,13 +963,50 @@ export const useDuelStore = defineStore('duel', {
         card.name = cardName;
         card.controller = controller;
         if (detail) {
-          if (detail.isMonster) {
+          if (isMovingToMonster) {
+            if (detail.isMonster) {
+              card.atk = detail.atk;
+              card.def = detail.def;
+              card.baseAtk = detail.atk;
+              card.baseDef = detail.def;
+              card.level = detail.level;
+              card.attribute = detail.attributeName;
+              card.race = detail.raceName;
+            } else if (detail.desc) {
+              const parsed = parseTrapMonsterStats(detail.desc);
+              if (parsed.atk !== undefined && card.atk === undefined) card.atk = parsed.atk;
+              if (parsed.def !== undefined && card.def === undefined) card.def = parsed.def;
+              if (parsed.atk !== undefined && card.baseAtk === undefined) card.baseAtk = parsed.atk;
+              if (parsed.def !== undefined && card.baseDef === undefined) card.baseDef = parsed.def;
+              if (parsed.level !== undefined && card.level === undefined) card.level = parsed.level;
+              if (parsed.attribute && !card.attribute) card.attribute = parsed.attribute;
+              if (parsed.race && !card.race) card.race = parsed.race;
+            }
+          } else if (isMovingToSpellTrap) {
+            card.atk = undefined;
+            card.def = undefined;
+            card.level = undefined;
+            card.baseAtk = undefined;
+            card.baseDef = undefined;
+            card.attribute = detail.attributeName;
+            card.race = detail.raceName;
+          } else if (detail.isMonster) {
             card.atk = detail.atk;
             card.def = detail.def;
+            card.baseAtk = detail.atk;
+            card.baseDef = detail.def;
             card.level = detail.level;
+            card.attribute = detail.attributeName;
+            card.race = detail.raceName;
+          } else {
+            card.atk = undefined;
+            card.def = undefined;
+            card.level = undefined;
+            card.baseAtk = undefined;
+            card.baseDef = undefined;
+            card.attribute = detail.attributeName;
+            card.race = detail.raceName;
           }
-          card.attribute = detail.attributeName;
-          card.race = detail.raceName;
           card.description = detail.desc;
         }
       }
@@ -1087,11 +1184,22 @@ export const useDuelStore = defineStore('duel', {
             if (detail?.isMonster) {
               card.atk = detail.atk;
               card.def = detail.def;
+              card.baseAtk = detail.atk;
+              card.baseDef = detail.def;
               card.level = detail.level;
               card.attribute = detail.attributeName;
               card.race = detail.raceName;
-              card.description = detail.desc;
+            } else if (detail?.desc) {
+              const parsed = parseTrapMonsterStats(detail.desc);
+              if (parsed.atk !== undefined && card.atk === undefined) card.atk = parsed.atk;
+              if (parsed.def !== undefined && card.def === undefined) card.def = parsed.def;
+              if (parsed.atk !== undefined && card.baseAtk === undefined) card.baseAtk = parsed.atk;
+              if (parsed.def !== undefined && card.baseDef === undefined) card.baseDef = parsed.def;
+              if (parsed.level !== undefined && card.level === undefined) card.level = parsed.level;
+              if (parsed.attribute && !card.attribute) card.attribute = parsed.attribute;
+              if (parsed.race && !card.race) card.race = parsed.race;
             }
+            card.description = detail?.desc ?? card.description;
           }
           if (event.type === 'FLIPSUMMONING' || (event.position && (event.position & 0x1) !== 0)) {
             card.position = 'faceup_attack';

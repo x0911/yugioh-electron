@@ -127,6 +127,7 @@ import { useDuelStore } from '../../stores/duelStore.js';
 import YugiModal from '../common/YugiModal.vue';
 import { getCardImageUrl, getCardBackUrl, handleImageError } from '../../utils/media.js';
 import { formatCombatStat } from '../../utils/format.js';
+import { parseTrapMonsterStats, isTreatedAsMonster } from '../../../shared/utils/cardStats.js';
 
 const props = withDefaults(
   defineProps<{
@@ -155,23 +156,63 @@ const enrichedCards = computed<FieldCard[]>(() => {
     if (!card.code || card.code <= 0) return card;
     const detail = duelStore.getCardDetail(card.code);
     if (!detail) return card;
+
+    const isMonsterZone = card.location === 'monster' || card.location === 'extra-monster';
+    const isMon = isTreatedAsMonster(card.location, detail.isMonster);
+
+    let atk: number | undefined = undefined;
+    let def: number | undefined = undefined;
+    let baseAtk: number | undefined = undefined;
+    let baseDef: number | undefined = undefined;
+    let level: number | undefined = undefined;
+
+    if (isMon) {
+      atk = card.atk !== undefined ? card.atk : (detail.isMonster ? detail.atk : undefined);
+      def = card.def !== undefined ? card.def : (detail.isMonster ? detail.def : undefined);
+      baseAtk = card.baseAtk !== undefined ? card.baseAtk : (detail.isMonster ? detail.atk : undefined);
+      baseDef = card.baseDef !== undefined ? card.baseDef : (detail.isMonster ? detail.def : undefined);
+      level = card.level !== undefined ? card.level : (detail.isMonster ? detail.level : undefined);
+
+      if (isMonsterZone && (atk === undefined || def === undefined || level === undefined)) {
+        const parsed = parseTrapMonsterStats(detail.desc || card.description || '');
+        if (atk === undefined) atk = parsed.atk;
+        if (def === undefined) def = parsed.def;
+        if (baseAtk === undefined) baseAtk = parsed.atk;
+        if (baseDef === undefined) baseDef = parsed.def;
+        if (level === undefined) level = parsed.level;
+      }
+    }
+
+    let attribute = isMon ? (card.attribute || (detail.isMonster ? detail.attributeName : undefined)) : detail.attributeName;
+    let race = isMon ? (card.race || (detail.isMonster ? detail.raceName : undefined)) : detail.raceName;
+
+    if (isMonsterZone && (!attribute || !race)) {
+      const parsed = parseTrapMonsterStats(detail.desc || card.description || '');
+      if (!attribute) attribute = parsed.attribute;
+      if (!race) race = parsed.race;
+    }
+
     return {
       ...card,
       name:
         card.name && card.name !== 'Card' && !card.name.startsWith('[Card #')
           ? card.name
           : detail.name,
-      atk: card.atk !== undefined ? card.atk : detail.isMonster ? detail.atk : undefined,
-      def: card.def !== undefined ? card.def : detail.isMonster ? detail.def : undefined,
-      level: card.level !== undefined ? card.level : detail.isMonster ? detail.level : undefined,
-      attribute: card.attribute || detail.attributeName,
-      race: card.race || detail.raceName,
+      atk,
+      def,
+      baseAtk,
+      baseDef,
+      level,
+      attribute,
+      race,
       description: card.description || detail.desc,
     };
   });
 });
 
 function isMonsterCard(card: FieldCard): boolean {
+  if (card.location === 'monster' || card.location === 'extra-monster') return true;
+  if (card.location === 'spell-trap' || card.location === 'field') return false;
   if (card.atk !== undefined || card.def !== undefined || (card.level && card.level > 0))
     return true;
   const detail = duelStore.getCardDetail(card.code);
