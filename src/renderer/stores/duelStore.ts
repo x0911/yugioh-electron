@@ -230,6 +230,7 @@ export const useDuelStore = defineStore('duel', {
     isMutedForCurrentPhase: false,
     lastDeclinedChainFingerprint: null,
     lastChainedCode: null,
+    aiDialogue: null as { text: string; characterName: string; characterId?: string; timestamp: number } | null,
   }),
 
   getters: {
@@ -766,6 +767,7 @@ export const useDuelStore = defineStore('duel', {
             humanPlayerId: Number(humanPlayerId),
             aiCharacterId: this.selectedOpponent?.id,
             aiDeckArchetype: this.selectedOpponentDeck?.archetype,
+            aiEngineType: useSettingsStore().aiEngineType || 'builtin',
           });
           this.isDuelActive = success;
           return success;
@@ -1443,6 +1445,18 @@ export const useDuelStore = defineStore('duel', {
         pf.currentLp = (event as any).lp as number;
       } else if (event.type === 'CHAIN_END' || event.type === 'NEW_TURN' || event.type === 'NEW_PHASE') {
         this.lastChainedCode = null;
+      } else if (event.type === 'AI_DIALOGUE' && (event as any).text) {
+        this.aiDialogue = {
+          text: (event as any).text,
+          characterName: (event as any).characterName || this.selectedOpponent?.name || 'Opponent',
+          characterId: (event as any).characterId || this.selectedOpponent?.id,
+          timestamp: Date.now(),
+        };
+        setTimeout(() => {
+          if (this.aiDialogue && Date.now() - this.aiDialogue.timestamp >= 5800) {
+            this.aiDialogue = null;
+          }
+        }, 6000);
       }
 
       // If this event is a prompt for the human player:

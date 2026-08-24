@@ -67,6 +67,7 @@ export interface DuelOptions {
   humanPlayerId?: number; // 0 or 1, default 0
   aiCharacterId?: string;
   aiDeckArchetype?: string;
+  aiEngineType?: 'builtin' | 'gemini';
 }
 
 export interface DuelState {
@@ -96,6 +97,7 @@ export class DuelEngineService {
   private humanPlayerId = 0;
   private aiCharacterId = 'yugi-muto';
   private aiDeckArchetype = '';
+  private aiEngineType: 'builtin' | 'gemini' = 'builtin';
   private aiPersonality: CharacterPersonality = DEFAULT_PERSONALITY;
   private aiSignatureCards: number[] = [];
   private aiDeckCards: number[] = [];
@@ -271,6 +273,7 @@ export class DuelEngineService {
     this.isVideoPlaying = false;
     this.aiCharacterId = options.aiCharacterId ?? 'yugi-muto';
     this.aiDeckArchetype = options.aiDeckArchetype ?? '';
+    this.aiEngineType = options.aiEngineType ?? 'builtin';
     this.aiPersonality = getPersonalityForCharacter(this.aiCharacterId);
     this.aiSignatureCards = [];
     const aiDeck = this.humanPlayerId === 0 ? options.player1Deck : options.player0Deck;
@@ -1345,6 +1348,57 @@ export class DuelEngineService {
     return { response, delayMs };
   }
 
+  private async getAiResponseAsync(
+    msg: OcgMessage,
+    promptPlayer: number,
+  ): Promise<{ response: OcgResponse; delayMs: number; dialogue?: string; reasoning?: string }> {
+    const aiPlayerId = promptPlayer;
+    const humanPlayerId = 1 - aiPlayerId;
+
+    this.enrichStatusesForField(this.player0Field);
+    this.enrichStatusesForField(this.player1Field);
+    this.syncFieldCardStats();
+    this.enrichDynamicStatsForField(this.player0Field, this.player1Field);
+    this.enrichDynamicStatsForField(this.player1Field, this.player0Field);
+
+    const aiBoardState: DuelBoardState = {
+      userField: this.viewFilter.filterPlayerFieldForViewer(this.player0Field, aiPlayerId),
+      opponentField: this.viewFilter.filterPlayerFieldForViewer(this.player1Field, aiPlayerId),
+      extraMonsterZones: [null, null],
+      turnNumber: this.state.currentTurn,
+      currentPhase: this.state.currentPhase,
+      activePrompt: null,
+      phaseGuideText: '',
+      winner: this.state.winner,
+      winReason: this.state.winReason,
+    };
+
+    assertAiStateSanitized(aiBoardState, aiPlayerId);
+
+    const context: EvaluatorContext = {
+      aiPlayerId,
+      humanPlayerId,
+      boardState: aiBoardState,
+      personality: this.aiPersonality,
+      cardReader: this.cardReader,
+      currentPhase: this.state.currentPhase,
+      currentTurn: this.state.currentTurn,
+      signatureCardIds: this.aiSignatureCards,
+      deckArchetype: this.aiDeckArchetype,
+      aiDeckCards: this.aiDeckCards,
+    };
+
+    if (this.aiEngineType === 'gemini') {
+      const result = await this.aiController.decideResponseAsync(msg, context, 'gemini');
+      const delayMs = 200;
+      return { response: result.response, delayMs, dialogue: result.dialogue, reasoning: result.reasoning };
+    }
+
+    const response = this.aiController.decideResponse(msg, context);
+    const delayMs = this.aiController.getThinkDelay(this.aiPersonality, OcgMessageType[msg.type]);
+    return { response, delayMs };
+  }
+
   private convertPosition(position: number, isMonster: boolean): CardPositionState {
     if (isMonster) {
       if ((position & OcgPosition.FACEDOWN_DEFENSE) !== 0) return 'facedown_defense';
@@ -1526,8 +1580,28 @@ export class DuelEngineService {
           const isOpponent = promptPlayer !== this.humanPlayerId;
           // If opponent player (AI) or autoPlay is active: schedule evaluated AI response
           if (isOpponent || this.autoPlay) {
-            const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
-            this.scheduleAiResponse(handle, response, delayMs);
+            if (this.aiEngineType === 'gemini') {
+              this.getAiResponseAsync(lastMsg, promptPlayer)
+                .then(({ response, delayMs, dialogue }) => {
+                  if (dialogue) {
+                    this.emitEvent({
+                      type: 'AI_DIALOGUE' as any,
+                      characterId: this.aiCharacterId,
+                      characterName: this.aiPersonality.name,
+                      text: dialogue,
+                    } as any);
+                  }
+                  this.scheduleAiResponse(handle, response, delayMs);
+                })
+                .catch((err) => {
+                  console.warn('[DuelEngineService] getAiResponseAsync error, using fast fallback:', err);
+                  const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
+                  this.scheduleAiResponse(handle, response, delayMs);
+                });
+            } else {
+              const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
+              this.scheduleAiResponse(handle, response, delayMs);
+            }
             break;
           }
         }

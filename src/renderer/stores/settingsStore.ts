@@ -26,6 +26,7 @@ export const defaultSettings: SettingsConfig = {
   devMode: true,
   skipPreDuelVideo: false,
   chainConfirmationMode: 'auto',
+  aiEngineType: 'builtin',
 };
 
 export const useSettingsStore = defineStore('settings', {
@@ -73,6 +74,7 @@ export const useSettingsStore = defineStore('settings', {
             this.skipPreDuelVideo = saved.skipPreDuelVideo ?? defaultSettings.skipPreDuelVideo;
             this.chainConfirmationMode =
               saved.chainConfirmationMode || defaultSettings.chainConfirmationMode;
+            this.aiEngineType = saved.aiEngineType || defaultSettings.aiEngineType;
           }
 
           // Apply saved volume settings to audioManager
@@ -185,6 +187,7 @@ export const useSettingsStore = defineStore('settings', {
       this.devMode = defaultSettings.devMode;
       this.skipPreDuelVideo = defaultSettings.skipPreDuelVideo;
       this.chainConfirmationMode = defaultSettings.chainConfirmationMode;
+      this.aiEngineType = defaultSettings.aiEngineType;
 
       audioManager.setMasterVolume(this.masterVolume);
       audioManager.setBgmVolume(this.bgmVolume);
@@ -195,6 +198,11 @@ export const useSettingsStore = defineStore('settings', {
       audioManager.setDuckingIntensity('normal');
       audioManager.playBgm(this.selectedBgmTheme);
 
+      await this.persist();
+    },
+
+    async setAiEngineType(type: 'builtin' | 'gemini'): Promise<void> {
+      this.aiEngineType = type;
       await this.persist();
     },
 
@@ -215,6 +223,7 @@ export const useSettingsStore = defineStore('settings', {
             devMode: this.devMode,
             skipPreDuelVideo: this.skipPreDuelVideo,
             chainConfirmationMode: this.chainConfirmationMode,
+            aiEngineType: this.aiEngineType,
           });
         } catch (err) {
           console.error('[SettingsStore] Failed to save settings to IPC:', err);

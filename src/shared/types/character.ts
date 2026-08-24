@@ -56,5 +56,6 @@ export interface SettingsConfig {
   devMode: boolean;
   skipPreDuelVideo: boolean;
   chainConfirmationMode?: 'auto' | 'on' | 'off';
+  aiEngineType?: 'builtin' | 'gemini';
 }
 

@@ -23,8 +23,44 @@ import { evaluateSpellActivation, evaluateSpellTrapSet } from './evaluators/spel
 import { resolveArchetypePlan } from './strategies/archetypeStrategy.js';
 import { assertAiStateSanitized } from './antiCheatAssert.js';
 import { getExecutorForDeck } from './executors/index.js';
+import { geminiDuelService } from './GeminiDuelService.js';
 
 export class AIController {
+  /**
+   * Decide response asynchronously, with optional Gemini LLM reasoning and dialogue.
+   */
+  public async decideResponseAsync(
+    msg: OcgMessage,
+    context: EvaluatorContext,
+    engineType: 'builtin' | 'gemini' = 'builtin',
+  ): Promise<{ response: OcgResponse; dialogue?: string; reasoning?: string }> {
+    if (engineType === 'gemini' && geminiDuelService.isAvailable()) {
+      try {
+        const executor = getExecutorForDeck(context, context.aiDeckCards);
+        let candidates: ScoredAction[] | null = null;
+        if (msg.type === OcgMessageType.SELECT_IDLECMD && executor.onIdleCmd) {
+          candidates = executor.onIdleCmd(msg, context);
+        } else if (msg.type === OcgMessageType.SELECT_BATTLECMD && executor.onBattleCmd) {
+          candidates = executor.onBattleCmd(msg, context);
+        } else if (msg.type === OcgMessageType.SELECT_CHAIN && executor.onSelectChain) {
+          candidates = executor.onSelectChain(msg, context);
+        }
+
+        if (candidates && candidates.length > 0) {
+          const geminiResult = await geminiDuelService.decideResponse(msg, context, candidates);
+          if (geminiResult) {
+            return geminiResult;
+          }
+        }
+      } catch (err) {
+        console.warn('[AIController] Gemini decision error, falling back to heuristic engine:', err);
+      }
+    }
+
+    const response = this.decideResponse(msg, context);
+    return { response };
+  }
+
   /**
    * Main entrypoint to decide an AI response for an engine prompt.
    * Strictly expects a sanitized AI-side board state.

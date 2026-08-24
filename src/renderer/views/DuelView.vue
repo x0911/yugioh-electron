@@ -58,6 +58,17 @@
             :max-lp="currentBoardState.opponentField.maxLp"
             :is-turn="currentBoardState.opponentField.isTurn"
           />
+
+          <!-- Live Character Dialogue Banner (Gemini AI Speech) -->
+          <transition name="dialogue-pop">
+            <div v-if="duelStore.aiDialogue" class="ai-speech-bubble">
+              <div class="ai-speech-bubble__header">
+                <span class="ai-speech-bubble__speaker">{{ duelStore.aiDialogue.characterName }}</span>
+                <span class="ai-speech-bubble__badge">✨ Gemini AI</span>
+              </div>
+              <p class="ai-speech-bubble__body">"{{ duelStore.aiDialogue.text }}"</p>
+            </div>
+          </transition>
         </div>
       </section>
 
@@ -1994,5 +2005,73 @@ onUnmounted(() => {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.ai-speech-bubble {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  width: max-content;
+  max-width: 320px;
+  background: linear-gradient(135deg, rgba(14, 18, 28, 0.95), rgba(22, 28, 42, 0.95));
+  border: 1px solid rgba(201, 162, 39, 0.7);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(201, 162, 39, 0.3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  z-index: 100;
+  pointer-events: none;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  &__speaker {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #e5c365;
+    letter-spacing: 0.05em;
+  }
+
+  &__badge {
+    font-family: 'Oxanium', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(168, 85, 247, 0.4));
+    border: 1px solid rgba(168, 85, 247, 0.6);
+    color: #e0e7ff;
+  }
+
+  &__body {
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.25;
+    color: #f1f5f9;
+    font-style: italic;
+    margin: 0;
+  }
+}
+
+.dialogue-pop-enter-active,
+.dialogue-pop-leave-active {
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dialogue-pop-enter-from {
+  opacity: 0;
+  transform: translate(-50%, -10px) scale(0.95);
+}
+
+.dialogue-pop-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -5px) scale(0.98);
 }
 </style>

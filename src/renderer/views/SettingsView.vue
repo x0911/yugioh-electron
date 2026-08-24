@@ -388,6 +388,24 @@
               </select>
             </div>
 
+            <!-- AI Opponent Engine -->
+            <div class="settings-view__toggle-row">
+              <div class="settings-view__toggle-info">
+                <span class="settings-view__toggle-label">AI Opponent Engine (POC)</span>
+                <span class="settings-view__toggle-desc">
+                  Choose between the built-in fast offline engine or Gemini Cloud LLM for strategic reasoning and authentic character dialogue.
+                </span>
+              </div>
+              <select
+                class="settings-view__select-input"
+                :value="settingsStore.aiEngineType || 'builtin'"
+                @change="handleAiEngineChange"
+              >
+                <option value="builtin">⚡ Built-in Fast Engine (Instant Local Heuristics)</option>
+                <option value="gemini">✨ Gemini AI (Cloud LLM - Strategic & Dramatic Dialogue)</option>
+              </select>
+            </div>
+
             <!-- Skip Video Toggle -->
             <div class="settings-view__toggle-row">
               <div class="settings-view__toggle-info">
@@ -513,6 +531,11 @@ function handleDuckingChange(e: Event): void {
 function handleChainModeChange(e: Event): void {
   const val = (e.target as HTMLSelectElement).value as 'auto' | 'on' | 'off';
   settingsStore.setChainConfirmationMode(val);
+}
+
+function handleAiEngineChange(e: Event): void {
+  const val = (e.target as HTMLSelectElement).value as 'builtin' | 'gemini';
+  settingsStore.setAiEngineType(val);
 }
 
 async function handleReset(): Promise<void> {

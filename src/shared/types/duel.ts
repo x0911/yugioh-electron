@@ -126,6 +126,7 @@ export interface DuelInitOptions {
   humanPlayerId?: number; // 0 if user is Player 0, 1 if user is Player 1
   aiCharacterId?: string;
   aiDeckArchetype?: string;
+  aiEngineType?: 'builtin' | 'gemini';
 }
 
 export type CoinChoice = 'heads' | 'tails';
@@ -374,6 +375,12 @@ export interface CardVideoPayload {
   videoPath: string;
   controller: number;
   isPlaceholder?: boolean;
+}
+
+export interface AiDialoguePayload {
+  characterId: string;
+  characterName: string;
+  text: string;
 }
 
 
