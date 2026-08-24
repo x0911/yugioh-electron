@@ -101,8 +101,13 @@ async function runGeminiTests() {
 
   // Test 1: Service availability
   console.log('▶ Test 1: Gemini Service Client Initialization');
-  assert.equal(geminiDuelService.isAvailable(), true, 'GeminiDuelService should be available with valid API key');
-  console.log('  ✓ GeminiDuelService initialized successfully.\n');
+  if (process.env.GEMINI_API_KEY) {
+    assert.equal(geminiDuelService.isAvailable(), true, 'GeminiDuelService should be available with valid API key');
+    console.log('  ✓ GeminiDuelService initialized with environment API key.\n');
+  } else {
+    assert.equal(geminiDuelService.isAvailable(), false, 'GeminiDuelService should be idle when no API key is provided');
+    console.log('  ✓ GeminiDuelService safely idles when no API key is provided.\n');
+  }
 
   // Test 2: Synchronous Default Fallback
   console.log('▶ Test 2: AIController Default Builtin Response');

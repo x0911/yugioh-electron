@@ -27,7 +27,7 @@ export class GeminiDuelService {
 
   private initClient(): void {
     try {
-      const apiKey = process.env.GEMINI_API_KEY || 'AQ.00000000000000000000000000000000000000000000000000';
+      const apiKey = process.env.GEMINI_API_KEY || '';
       if (apiKey) {
         this.ai = new GoogleGenAI({ apiKey });
       }

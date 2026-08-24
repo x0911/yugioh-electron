@@ -3,8 +3,8 @@ import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 
-// Load API key from environment variable or provided key
-const API_KEY = process.env.GEMINI_API_KEY || 'AQ.00000000000000000000000000000000000000000000000000';
+// Load API key from environment variable
+const API_KEY = process.env.GEMINI_API_KEY || '';
 
 const UNIVERSAL_STYLE_ANCHOR =
   'Cinematic high-budget anime cutscene, crisp cel-shaded lines, dynamic anime lighting, vibrant holographic energy, dramatic rim lighting, 4K resolution, Studio Bridge/Toei high-end theatrical animation quality, volumetric smoke and glowing particle embers, no watermarks, no distorted faces, no extra limbs.';

@@ -52,7 +52,6 @@ export const useSettingsStore = defineStore('settings', {
     },
     hasKeyForProvider: (state) => (provider: string): boolean => {
       if (provider === 'builtin' || provider === 'ollama') return true;
-      if (provider === 'gemini') return true; // Has fallback key or user key
       return !!(state.aiApiKeys && state.aiApiKeys[provider] && state.aiApiKeys[provider].trim().length > 0);
     },
     configuredProviders(state): { id: string; name: string; icon: string }[] {
@@ -66,7 +65,7 @@ export const useSettingsStore = defineStore('settings', {
         { id: 'ollama', name: 'Ollama (Local LLM)', icon: '🦙' },
       ];
       return all.filter((p) => {
-        if (p.id === 'builtin' || p.id === 'gemini' || p.id === 'ollama') return true;
+        if (p.id === 'builtin' || p.id === 'ollama') return true;
         return !!(state.aiApiKeys && state.aiApiKeys[p.id] && state.aiApiKeys[p.id].trim().length > 0);
       });
     },

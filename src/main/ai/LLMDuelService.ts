@@ -91,7 +91,7 @@ export class LLMDuelService {
       const targetModel = model || DEFAULT_MODELS[provider] || 'default-model';
 
       if (provider === 'gemini') {
-        const key = apiKey || process.env.GEMINI_API_KEY || 'AQ.00000000000000000000000000000000000000000000000000';
+        const key = apiKey || process.env.GEMINI_API_KEY || '';
         if (!key) {
           return { success: false, error: 'Gemini API Key is required.' };
         }
@@ -259,7 +259,7 @@ Select the single best Option Index [0 to ${choices.length - 1}], provide your t
     config: ProviderConfig,
     promptData: PromptPayload,
   ): Promise<LLMDecisionResult | null> {
-    const apiKey = config.apiKey || process.env.GEMINI_API_KEY || 'AQ.00000000000000000000000000000000000000000000000000';
+    const apiKey = config.apiKey || process.env.GEMINI_API_KEY || '';
     if (!apiKey) return null;
 
     const modelName = config.model || DEFAULT_MODELS.gemini;
