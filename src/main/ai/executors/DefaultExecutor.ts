@@ -408,12 +408,12 @@ export class DefaultExecutor implements DeckExecutor {
         const pc = msg.pos_changes[i];
         const code = pc.code ?? 0;
         const detail = code > 0 ? cardReader.getCardDetail(code) : null;
-        const atk = detail?.atk ?? 1500;
-        const def = detail?.def ?? 1000;
+        const onFieldCard = aiField.monsterZones.find((m) => m && (m.sequence === pc.sequence || m.code === code));
+        const atk = onFieldCard ? (onFieldCard.atk ?? detail?.atk ?? 1500) : (detail?.atk ?? 1500);
+        const def = onFieldCard ? (onFieldCard.def ?? detail?.def ?? 1000) : (detail?.def ?? 1000);
         const isFlip = detail?.isFlip || (detail?.desc?.includes('FLIP:') ?? false);
         const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
 
-        const onFieldCard = aiField.monsterZones.find((m) => m && (m.sequence === pc.sequence || m.code === code));
         let score = 400;
         let reason = `Change battle position / Flip Summon ${name}`;
 
@@ -625,8 +625,17 @@ export class DefaultExecutor implements DeckExecutor {
         score = 2500 * defensiveness;
         reason = `[COUNTER NEGATE] Activate counter trap ${name} to negate opponent action`;
       }
-      // Mass Removal Battle Traps (Mirror Force, Torrential Tribute, Dimensional Prison, Bottomless)
-      else if (code === 44095762 || code === 53582587 || code === 29401950 || code === 70342110) {
+      // Mass Removal & Removal Traps (Ring of Destruction, Mirror Force, Torrential Tribute, Dimensional Prison, Bottomless)
+      else if (
+        code === 83555666 ||
+        code === 44095762 ||
+        code === 53582587 ||
+        code === 29401950 ||
+        code === 70342110 ||
+        name.includes('Ring of Destruction') ||
+        name.includes('Mirror Force') ||
+        name.includes('Torrential')
+      ) {
         const evalResult = evaluateSpellActivation(code, name, context);
         score = evalResult.score;
         reason = evalResult.reason;

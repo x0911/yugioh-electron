@@ -704,7 +704,13 @@ export class AIController {
       let score = 0;
       if (isAiCard) {
         // If selecting own card to keep / protect / search: prefer signature / high ATK
-        score = atk + (signatureCardIds.includes(code) ? 1000 : 0);
+        const isGodCard = code === 10000000 || code === 10000020 || code === 10000010;
+        const isTurn1GyRevival = boardState.turnNumber === 1 && (c.location === 0x10 || c.location === 16);
+        if (isGodCard && isTurn1GyRevival) {
+          score = -25000; // Egyptian God cards self-destruct at Turn 1 End Phase without attacking!
+        } else {
+          score = atk + (signatureCardIds.includes(code) ? 1000 : 0);
+        }
       } else {
         // If selecting opponent card to target / destroy / attack:
         const isBattleImmuneDef =

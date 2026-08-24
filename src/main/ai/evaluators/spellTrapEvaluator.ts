@@ -58,23 +58,31 @@ export function evaluateSpellActivation(
     const aiHandCount = aiField.hand.length;
     const oppHandCount = oppField.hand.length;
 
-    // If AI has small hand (<= 2) and opponent has a larger hand (>= 3): DO NOT REFRESH OPPONENT HAND!
-    if (aiHandCount <= 2 && oppHandCount >= 3) {
+    // Never activate on Turn 1 (gives opponent free 5-card GY setup and full hand refresh before their turn)
+    if (boardState.turnNumber === 1) {
+      return {
+        score: -8000,
+        reason: `Hold ${cardName} on Turn 1: would give opponent free graveyard setup and a fresh hand before their first turn`,
+      };
+    }
+
+    // If AI has smaller or equal hand compared to opponent: DO NOT REFRESH OPPONENT HAND!
+    if (aiHandCount <= oppHandCount) {
       return {
         score: -4500,
         reason: `Hold ${cardName}: would give opponent +${oppHandCount} fresh cards while AI only has ${aiHandCount}`,
       };
     }
-    // If opponent has huge hand (5+ cards) or AI has larger hand than opponent:
-    if (oppHandCount >= 5 || aiHandCount > oppHandCount) {
+    // If AI has larger hand than opponent:
+    if (aiHandCount > oppHandCount && aiHandCount >= 3) {
       return {
         score: 1600 * personality.cardAdvantageWeight,
         reason: `Activate ${cardName} to disrupt opponent hand (${oppHandCount} cards) and cycle AI cards (${aiHandCount} cards)`,
       };
     }
     return {
-      score: 300,
-      reason: `Activate ${cardName} to cycle hand`,
+      score: -2000,
+      reason: `Hold ${cardName}`,
     };
   }
 
@@ -232,14 +240,75 @@ export function evaluateSpellActivation(
     };
   }
 
+  // 3f. Spot Monster Destruction & Burn: Ring of Destruction (83555666)
+  if (code === 83555666 || cardName.includes('Ring of Destruction')) {
+    const oppFaceupMonsters = oppField.monsterZones.filter(
+      (m) => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense') && (m.atk ?? 0) > 0,
+    );
+    if (oppFaceupMonsters.length === 0) {
+      return {
+        score: -8000,
+        reason: `Hold ${cardName}: Opponent controls 0 face-up attack monsters to destroy`,
+      };
+    }
+
+    const aiLp = aiField.currentLp;
+    const oppLp = oppField.currentLp;
+
+    // Filter targets that AI can destroy without killing itself
+    const safeTargets = oppFaceupMonsters.filter((m) => (m.atk ?? 0) < aiLp);
+    const lethalTargets = oppFaceupMonsters.filter((m) => (m.atk ?? 0) >= oppLp && (m.atk ?? 0) < aiLp);
+
+    if (lethalTargets.length > 0) {
+      const topTarget = lethalTargets.reduce((max, m) => ((m.atk ?? 0) > (max.atk ?? 0) ? m : max), lethalTargets[0]);
+      return {
+        score: 25000,
+        reason: `[LETHAL] Activate Ring of Destruction targeting ${topTarget.name} (${topTarget.atk} ATK) to deal ${topTarget.atk} lethal burn damage to opponent!`,
+      };
+    }
+
+    if (safeTargets.length === 0) {
+      return {
+        score: -50000,
+        reason: `[SUICIDE PREVENTION] Hold Ring of Destruction: destroying opponent's monster would inflict damage >= AI's remaining Life Points (${aiLp} LP)`,
+      };
+    }
+
+    const bestTarget = safeTargets.reduce((max, m) => ((m.atk ?? 0) > (max.atk ?? 0) ? m : max), safeTargets[0]);
+    if ((bestTarget.atk ?? 0) >= 1500 && aiLp - (bestTarget.atk ?? 0) > 1000) {
+      return {
+        score: 1800 * (personality.defensiveness + 0.5),
+        reason: `Activate Ring of Destruction targeting ${bestTarget.name} (${bestTarget.atk} ATK) for monster removal and burn`,
+      };
+    }
+
+    return {
+      score: 600,
+      reason: `Activate Ring of Destruction`,
+    };
+  }
+
   // 4. Monster Reborn (83764719) / Special Summon Spells
   if (code === 83764719 || cardName.includes('Monster Reborn') || cardName.includes('Call of the Haunted') || cardName.includes('Premature Burial')) {
+    const isGodCard = (c?: number) => c === 10000000 || c === 10000020 || c === 10000010;
+    const graveMonsters = [...aiField.graveyard, ...oppField.graveyard].filter(
+      (c) => c && (c.atk !== undefined || c.level !== undefined),
+    );
+    const nonGodGraveTargets = graveMonsters.filter((c) => !isGodCard(c.code));
+
+    // Egyptian God cards die at End Phase when Special Summoned!
+    // On Turn 1 (no Battle Phase) or outside Main Phase 1 of AI's own turn, do NOT revive God cards if they are the only target!
+    if (boardState.turnNumber === 1 && nonGodGraveTargets.length === 0) {
+      return {
+        score: -8000,
+        reason: `Hold ${cardName} on Turn 1: Special Summoned Egyptian God cards would be sent to the GY at End Phase without having a Battle Phase`,
+      };
+    }
+
     const hasOppSlifer = oppField.monsterZones.some(
       (m) => m && m.code === 10000020 && (m.position === 'faceup_attack' || m.position === 'faceup_defense'),
     );
-    const hasSurvivingGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
-      (c) => c && c.atk && c.atk > 2000,
-    );
+    const hasSurvivingGraveTarget = graveMonsters.some((c) => c && c.atk && c.atk > 2000);
     if (hasOppSlifer && !hasSurvivingGraveTarget) {
       return {
         score: -2000,
@@ -247,9 +316,7 @@ export function evaluateSpellActivation(
       };
     }
 
-    const hasGoodGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
-      (c) => c && c.atk && c.atk >= 1800,
-    );
+    const hasGoodGraveTarget = nonGodGraveTargets.some((c) => c && c.atk && c.atk >= 1800);
     if (hasGoodGraveTarget) {
       return {
         score: 1200 * (personality.comboFocus + 0.5),
