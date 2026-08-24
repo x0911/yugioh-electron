@@ -326,6 +326,96 @@ export const useDuelStore = defineStore('duel', {
       return results;
     },
 
+    activatableDeckCards(): Array<{ card: FieldCard; actions: CardActionOption[] }> {
+      const results: Array<{ card: FieldCard; actions: CardActionOption[] }> = [];
+
+      // Check Idle Command activates for location 1 (Deck)
+      if (this.activeIdleCmd && this.boardState.userField.isTurn && this.activeIdleCmd.activates) {
+        for (let i = 0; i < this.activeIdleCmd.activates.length; i++) {
+          const a = this.activeIdleCmd.activates[i];
+          if (a.location === 1 || (a.location !== undefined && (a.location & 1) !== 0)) {
+            const detail = a.code ? (this as any).getCardDetail(a.code) : null;
+            const card: FieldCard = {
+              id: `deck-act-${a.code || 0}-${i}`,
+              code: a.code || 0,
+              name: detail?.name || (a as any).cardName || 'Card in Deck',
+              controller: this.userPlayerId,
+              location: 'deck',
+              sequence: a.sequence,
+              position: 'facedown_spell',
+              atk: detail?.atk,
+              def: detail?.def,
+              level: detail?.level,
+              attribute: detail?.attributeName,
+              race: detail?.raceName,
+              description: detail?.desc,
+              statuses: [],
+            };
+            const label = (a as any).description && (a as any).description.trim()
+              ? (a as any).description.trim()
+              : 'Activate Effect';
+            results.push({
+              card,
+              actions: [
+                {
+                  type: 'activate',
+                  index: i,
+                  label,
+                  icon: '⚡',
+                  cardName: card.name,
+                  code: card.code,
+                },
+              ],
+            });
+          }
+        }
+      }
+
+      // Check Chain Response chains for location 1 (Deck)
+      if (this.activeSelectChain && this.activeSelectChain.chains) {
+        for (let i = 0; i < this.activeSelectChain.chains.length; i++) {
+          const c = this.activeSelectChain.chains[i];
+          if (c.location === 1 || (c.location !== undefined && (c.location & 1) !== 0)) {
+            const detail = c.code ? (this as any).getCardDetail(c.code) : null;
+            const card: FieldCard = {
+              id: `deck-chain-${c.code || 0}-${i}`,
+              code: c.code || 0,
+              name: detail?.name || (c as any).cardName || 'Card in Deck',
+              controller: this.userPlayerId,
+              location: 'deck',
+              sequence: c.sequence,
+              position: 'facedown_spell',
+              atk: detail?.atk,
+              def: detail?.def,
+              level: detail?.level,
+              attribute: detail?.attributeName,
+              race: detail?.raceName,
+              description: detail?.desc,
+              statuses: [],
+            };
+            const label = (c as any).description && (c as any).description.trim()
+              ? (c as any).description.trim()
+              : 'Chain Effect';
+            results.push({
+              card,
+              actions: [
+                {
+                  type: 'chain',
+                  index: i,
+                  label,
+                  icon: '🔗',
+                  cardName: card.name,
+                  code: card.code,
+                },
+              ],
+            });
+          }
+        }
+      }
+
+      return results;
+    },
+
     hasActivatableGraveyard(): boolean {
       return (this as any).activatableGraveyardCards.length > 0;
     },
@@ -336,6 +426,10 @@ export const useDuelStore = defineStore('duel', {
 
     hasActivatableExtraDeck(): boolean {
       return (this as any).activatableExtraDeckCards.length > 0;
+    },
+
+    hasActivatableDeck(): boolean {
+      return (this as any).activatableDeckCards.length > 0;
     },
   },
 
@@ -1657,13 +1751,16 @@ export const useDuelStore = defineStore('duel', {
           for (let i = 0; i < this.activeIdleCmd.special_summons.length; i++) {
             const s = this.activeIdleCmd.special_summons[i];
             const locMatch = s.location === undefined || s.location === loc || (s.location & loc) !== 0;
-            const codeMatch = s.code === card.code;
-            const seqMatch = s.sequence === undefined || s.sequence === card.sequence;
-            if (locMatch && (codeMatch || seqMatch)) {
+            const codeMatch = s.code === undefined || card.code === undefined || s.code === card.code;
+            const seqMatch = s.sequence === undefined || card.sequence === undefined || s.sequence === card.sequence;
+            if (locMatch && codeMatch && seqMatch) {
+              const label = (s as any).description && (s as any).description.trim()
+                ? (s as any).description.trim()
+                : 'Special Summon';
               actions.push({
                 type: 'sp_summon',
                 index: i,
-                label: 'Special Summon',
+                label,
                 icon: '✨',
                 cardName: card.name,
                 code: card.code,
@@ -1677,13 +1774,16 @@ export const useDuelStore = defineStore('duel', {
           for (let i = 0; i < this.activeIdleCmd.activates.length; i++) {
             const a = this.activeIdleCmd.activates[i];
             const locMatch = a.location === undefined || a.location === loc || (a.location & loc) !== 0;
-            const codeMatch = a.code === card.code;
-            const seqMatch = a.sequence === undefined || a.sequence === card.sequence;
-            if (locMatch && (codeMatch || seqMatch)) {
+            const codeMatch = a.code === undefined || card.code === undefined || a.code === card.code;
+            const seqMatch = a.sequence === undefined || card.sequence === undefined || a.sequence === card.sequence;
+            if (locMatch && codeMatch && seqMatch) {
+              const label = (a as any).description && (a as any).description.trim()
+                ? (a as any).description.trim()
+                : 'Activate Effect';
               actions.push({
                 type: 'activate',
                 index: i,
-                label: 'Activate Effect',
+                label,
                 icon: '⚡',
                 cardName: card.name,
                 code: card.code,
@@ -1698,13 +1798,16 @@ export const useDuelStore = defineStore('duel', {
         for (let i = 0; i < this.activeSelectChain.chains.length; i++) {
           const c = this.activeSelectChain.chains[i];
           const locMatch = c.location === undefined || c.location === loc || (c.location & loc) !== 0;
-          const codeMatch = c.code === card.code;
-          const seqMatch = c.sequence === undefined || c.sequence === card.sequence;
-          if (locMatch && (codeMatch || seqMatch)) {
+          const codeMatch = c.code === undefined || card.code === undefined || c.code === card.code;
+          const seqMatch = c.sequence === undefined || card.sequence === undefined || c.sequence === card.sequence;
+          if (locMatch && codeMatch && seqMatch) {
+            const label = (c as any).description && (c as any).description.trim()
+              ? (c as any).description.trim()
+              : 'Chain Effect';
             actions.push({
               type: 'chain',
               index: i,
-              label: 'Chain Effect',
+              label,
               icon: '🔗',
               cardName: card.name,
               code: card.code,

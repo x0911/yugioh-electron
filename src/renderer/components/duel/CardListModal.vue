@@ -12,11 +12,32 @@
           <span class="header-icon">{{ stackIcon }}</span>
           <div class="header-titles">
             <h3 class="header-title">{{ title }}</h3>
-            <span class="header-count-badge"
-              >{{ cards.length }} {{ cards.length === 1 ? 'Card' : 'Cards' }}</span
-            >
+            <span class="header-count-badge">
+              {{ displayedCards.length }} {{ displayedCards.length === 1 ? 'Card' : 'Cards' }}
+            </span>
           </div>
         </div>
+
+        <!-- Filter Tabs: All vs Activatable Only -->
+        <div v-if="owner === 'user' && activatableCount > 0" class="header-filter-tabs">
+          <button
+            type="button"
+            class="filter-tab-btn"
+            :class="{ 'filter-tab-btn--active': !showActivatableOnly }"
+            @click="showActivatableOnly = false"
+          >
+            All ({{ cards.length }})
+          </button>
+          <button
+            type="button"
+            class="filter-tab-btn filter-tab-btn--activatable"
+            :class="{ 'filter-tab-btn--active': showActivatableOnly }"
+            @click="showActivatableOnly = true"
+          >
+            ⚡ Activatable ({{ activatableCount }})
+          </button>
+        </div>
+
         <div class="header-right">
           <span class="owner-pill" :class="`owner-pill--${owner}`">
             {{ owner === 'user' ? 'PLAYER' : 'OPPONENT' }}
@@ -28,15 +49,17 @@
     <!-- Modal Content: Scrollable Grid of Cards -->
     <div class="card-list-modal-body">
       <!-- Empty State -->
-      <div v-if="cards.length === 0" class="card-list-empty">
+      <div v-if="displayedCards.length === 0" class="card-list-empty">
         <span class="empty-icon">📭</span>
-        <p class="empty-text">No cards currently in this location.</p>
+        <p class="empty-text">
+          {{ showActivatableOnly ? 'No activatable cards in this location.' : 'No cards currently in this location.' }}
+        </p>
       </div>
 
       <!-- Card Grid -->
       <div v-else class="card-list-grid">
         <div
-          v-for="(card, idx) in enrichedCards"
+          v-for="(card, idx) in displayedCards"
           :key="card.id || `${card.code}-${idx}`"
           class="card-list-tile"
           :class="[
@@ -145,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { FieldCard } from '../../../shared/types/field.js';
 import { useDuelStore, type CardActionOption } from '../../stores/duelStore.js';
 import YugiModal from '../common/YugiModal.vue';
@@ -160,10 +183,12 @@ const props = withDefaults(
     cards: FieldCard[];
     owner?: 'user' | 'ai';
     type?: 'graveyard' | 'extra' | 'banished' | 'deck';
+    initialFilterActivatable?: boolean;
   }>(),
   {
     owner: 'user',
     type: 'graveyard',
+    initialFilterActivatable: false,
   },
 );
 
@@ -175,6 +200,17 @@ const emit = defineEmits<{
 }>();
 
 const duelStore = useDuelStore();
+
+const showActivatableOnly = ref(props.initialFilterActivatable);
+
+watch(
+  () => [props.modelValue, props.initialFilterActivatable],
+  () => {
+    if (props.modelValue) {
+      showActivatableOnly.value = props.initialFilterActivatable;
+    }
+  },
+);
 
 function getCardActions(card: FieldCard): CardActionOption[] {
   if (props.owner !== 'user' || !card.code || card.code <= 0) return [];
@@ -243,6 +279,18 @@ const enrichedCards = computed<FieldCard[]>(() => {
       description: card.description || detail.desc,
     };
   });
+});
+
+const activatableCount = computed<number>(() => {
+  if (props.owner !== 'user') return 0;
+  return enrichedCards.value.filter((card) => getCardActions(card).length > 0).length;
+});
+
+const displayedCards = computed<FieldCard[]>(() => {
+  if (showActivatableOnly.value) {
+    return enrichedCards.value.filter((card) => getCardActions(card).length > 0);
+  }
+  return enrichedCards.value;
 });
 
 function isMonsterCard(card: FieldCard): boolean {
@@ -336,6 +384,49 @@ function onCardClick(card: FieldCard): void {
   border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 4px;
   padding: 0.1rem 0.45rem;
+}
+
+.header-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(14, 18, 26, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 0.2rem;
+}
+
+.filter-tab-btn {
+  font-family: $font-display;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 14px;
+  background: transparent;
+  color: #a0aec0;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  &--active {
+    color: #111;
+    background: $color-gold-300;
+    box-shadow: 0 0 10px rgba(201, 162, 39, 0.4);
+  }
+
+  &--activatable {
+    &.filter-tab-btn--active {
+      background: linear-gradient(135deg, #f6e05e, #ecc94b);
+      color: #111;
+      box-shadow: 0 0 12px rgba(236, 201, 75, 0.6);
+    }
+  }
 }
 
 .owner-pill {

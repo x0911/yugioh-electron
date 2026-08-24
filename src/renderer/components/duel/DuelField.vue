@@ -339,6 +339,8 @@
           class="deck-stack--user-deck"
           :target-info="getSlotTarget(userPlayerId, 1, 0)"
           :is-prompt-active="isPromptActive"
+          :has-action="duelStore.hasActivatableDeck"
+          :action-count="duelStore.activatableDeckCards.length"
           @hover-card="$emit('hover-card', $event)"
           @click-stack="onStackClick('deck', userPlayerId)"
         />

@@ -92,41 +92,6 @@
           />
         </div>
 
-        <!-- Floating Quick Zone Activations HUD Bar (Graveyard / Banished / Extra Deck) -->
-        <div
-          v-if="quickZoneActions.length > 0 && !duelStore.isVideoPlaying && !isObservingPrompt"
-          class="quick-zone-actions-bar glass-panel"
-        >
-          <div class="quick-actions-badge">
-            <span class="pulse-icon">⚡</span>
-            <span class="badge-title">ACTIVATION AVAILABLE</span>
-          </div>
-          <div class="quick-actions-list">
-            <button
-              v-for="item in quickZoneActions"
-              :key="`${item.zone}-${item.card.code}-${item.action.type}-${item.action.index}`"
-              type="button"
-              class="quick-action-pill"
-              :class="`quick-action-pill--${item.zone}`"
-              @click="onSelectCardAction(item.action)"
-              @mouseenter="onCardHover(item.card)"
-            >
-              <span class="zone-badge">{{ item.zoneLabel }}</span>
-              <img
-                :src="getCardImageUrl(item.card.code, 'mini')"
-                :alt="item.card.name"
-                class="quick-card-art"
-                @error="handleImageError"
-              />
-              <span class="card-name">{{ item.card.name }}</span>
-              <span class="action-btn-tag" :class="`action-btn-tag--${item.action.type}`">
-                <span class="tag-icon">{{ item.action.icon || '⚡' }}</span>
-                <span class="tag-label">{{ item.action.label }}</span>
-              </span>
-            </button>
-          </div>
-        </div>
-
         <!-- User Hand Fan (Full Cards) -->
         <div class="user-hand-wrapper">
           <HandFan
@@ -151,6 +116,59 @@
       @select="onSelectCardAction"
       @close="closeCardActionMenu"
     />
+
+    <!-- Zone Mode Choice Modal (When zone has available effect activations) -->
+    <YugiModal
+      v-if="zoneChoiceModalState"
+      :model-value="true"
+      width="440px"
+      accent="user"
+      @update:model-value="zoneChoiceModalState = null"
+    >
+      <template #header>
+        <div class="zone-choice-header">
+          <span class="zone-choice-icon">{{ zoneChoiceModalState.icon }}</span>
+          <div class="zone-choice-title-box">
+            <h3 class="zone-choice-title">{{ zoneChoiceModalState.title }}</h3>
+            <span class="zone-choice-badge">⚡ ACTIVATIONS READY</span>
+          </div>
+        </div>
+      </template>
+
+      <div class="zone-choice-body">
+        <p class="zone-choice-desc">
+          Cards in your {{ zoneChoiceModalState.zoneName }} have effects available to activate. How would you like to view this zone?
+        </p>
+
+        <div class="zone-choice-options">
+          <button
+            type="button"
+            class="btn-zone-choice btn-zone-choice--activatable"
+            @click="onSelectZoneMode('activatable')"
+          >
+            <div class="choice-icon-wrap">⚡</div>
+            <div class="choice-info">
+              <span class="choice-main-text">Activatable Cards Only ({{ zoneChoiceModalState.activatableCount }})</span>
+              <span class="choice-sub-text">Show only cards ready to activate effects or special summon</span>
+            </div>
+            <span class="choice-arrow">➔</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn-zone-choice btn-zone-choice--all"
+            @click="onSelectZoneMode('all')"
+          >
+            <div class="choice-icon-wrap">📜</div>
+            <div class="choice-info">
+              <span class="choice-main-text">View All Cards ({{ zoneChoiceModalState.allCount }})</span>
+              <span class="choice-sub-text">Inspect the full list of cards in this location</span>
+            </div>
+            <span class="choice-arrow">➔</span>
+          </button>
+        </div>
+      </div>
+    </YugiModal>
 
     <!-- Interactive Prompt Modal (Position, Chain, Effect Yes/No, Options, Announcements) -->
     <PromptModal
@@ -301,7 +319,7 @@
       @surrender="onSurrender"
     />
 
-    <!-- Card List Inspection Modal (Graveyard, Extra Deck, Banished) -->
+    <!-- Card List Inspection Modal (Graveyard, Extra Deck, Banished, Deck) -->
     <CardListModal
       v-if="activeInspectStack"
       v-model="isInspectModalOpen"
@@ -309,6 +327,7 @@
       :cards="activeInspectStack.cards"
       :owner="activeInspectStack.owner"
       :type="activeInspectStack.type"
+      :initial-filter-activatable="activeInspectStack.initialFilterActivatable"
       @hover-card="onCardHover"
       @action="onSelectCardAction"
     />
@@ -393,6 +412,8 @@ import {
 import { audioManager } from '../audio/index.js';
 
 
+import YugiModal from '../components/common/YugiModal.vue';
+
 interface LogItem {
   time: string;
   type: string;
@@ -404,6 +425,16 @@ interface InspectStackState {
   cards: FieldCard[];
   owner: 'user' | 'ai';
   type: 'graveyard' | 'extra' | 'banished' | 'deck';
+  initialFilterActivatable?: boolean;
+}
+
+interface ZoneChoiceModalState {
+  zone: 'graveyard' | 'extra' | 'banished';
+  zoneName: string;
+  title: string;
+  icon: string;
+  activatableCount: number;
+  allCount: number;
 }
 
 const router = useRouter();
@@ -419,6 +450,7 @@ const isDuelLogOpen = ref(false);
 const isInspectModalOpen = ref(false);
 const activeInspectStack = ref<InspectStackState | null>(null);
 const isObservingPrompt = ref(false);
+const zoneChoiceModalState = ref<ZoneChoiceModalState | null>(null);
 
 const isReviewModalOpen = ref(false);
 const isReviewLoading = ref(false);
@@ -458,7 +490,18 @@ const hasAnyActivePrompt = computed(() => {
   );
 });
 
-function onInspectStack(stackType: string, controller: number): void {
+function onSelectZoneMode(mode: 'activatable' | 'all'): void {
+  if (!zoneChoiceModalState.value) return;
+  const { zone } = zoneChoiceModalState.value;
+  zoneChoiceModalState.value = null;
+  openStackInspection(zone, duelStore.userPlayerId, mode === 'activatable');
+}
+
+function openStackInspection(
+  stackType: string,
+  controller: number,
+  activatableOnly = false,
+): void {
   const isUser = controller === duelStore.userPlayerId;
   const pf = isUser ? currentBoardState.value.userField : currentBoardState.value.opponentField;
   const ownerName = isUser ? 'Your' : `${pf.name || 'Opponent'}'s`;
@@ -476,9 +519,11 @@ function onInspectStack(stackType: string, controller: number): void {
   } else if (stackType === 'banished') {
     cards = pf.banished || [];
     title = `${ownerName} Banished Zone`;
+  } else if (stackType === 'deck') {
+    cards = duelStore.activatableDeckCards.map((i) => i.card);
+    title = `${ownerName} Main Deck (Activatable Cards)`;
   }
 
-  // Those dialogs open only if [graveyard | extra-deck] has cards inside
   if (!cards || cards.length === 0) {
     return;
   }
@@ -487,9 +532,67 @@ function onInspectStack(stackType: string, controller: number): void {
     title,
     cards,
     owner,
-    type: stackType as 'graveyard' | 'extra' | 'banished',
+    type: stackType as 'graveyard' | 'extra' | 'banished' | 'deck',
+    initialFilterActivatable: activatableOnly,
   };
   isInspectModalOpen.value = true;
+}
+
+function onInspectStack(stackType: string, controller: number): void {
+  const isUser = controller === duelStore.userPlayerId;
+
+  if (isUser) {
+    // 1. Main Deck: Directly opens activatable cards modal if any
+    if (stackType === 'deck') {
+      if (duelStore.hasActivatableDeck) {
+        openStackInspection('deck', controller, true);
+      }
+      return;
+    }
+
+    // 2. Graveyard / Extra Deck / Banished Zone
+    let activatableCount = 0;
+    if (stackType === 'graveyard') {
+      activatableCount = duelStore.activatableGraveyardCards.length;
+    } else if (stackType === 'extra') {
+      activatableCount = duelStore.activatableExtraDeckCards.length;
+    } else if (stackType === 'banished') {
+      activatableCount = duelStore.activatableBanishedCards.length;
+    }
+
+    const pf = currentBoardState.value.userField;
+    const cards =
+      stackType === 'graveyard'
+        ? pf.graveyard || []
+        : stackType === 'extra'
+          ? pf.extraDeck || []
+          : stackType === 'banished'
+            ? pf.banished || []
+            : [];
+
+    if (cards.length === 0) return;
+
+    if (activatableCount > 0) {
+      const zoneNameMap = { graveyard: 'Graveyard', extra: 'Extra Deck', banished: 'Banished Zone' };
+      const iconMap = { graveyard: '🪦', extra: '⚡', banished: '🌀' };
+      zoneChoiceModalState.value = {
+        zone: stackType as 'graveyard' | 'extra' | 'banished',
+        zoneName: zoneNameMap[stackType as keyof typeof zoneNameMap] || stackType,
+        title: `Your ${zoneNameMap[stackType as keyof typeof zoneNameMap] || stackType}`,
+        icon: iconMap[stackType as keyof typeof iconMap] || '📜',
+        activatableCount,
+        allCount: cards.length,
+      };
+      return;
+    }
+
+    // No activatable cards -> Open normal inspection directly
+    openStackInspection(stackType, controller, false);
+    return;
+  }
+
+  // Opponent stack
+  openStackInspection(stackType, controller, false);
 }
 
 // Hover-previewed card state (persists last hovered card even when mouse leaves)
@@ -543,52 +646,6 @@ const actionGuideInfo = computed(() => {
     },
     duelStore.selectedTargetIndices.length,
   );
-});
-
-// Quick Zone Activations (Instant 1-click access to Graveyard, Banished, and Extra Deck effects)
-const quickZoneActions = computed(() => {
-  if (isObservingPrompt.value || duelStore.isGameOver) return [];
-  const results: Array<{
-    zone: 'graveyard' | 'banished' | 'extra';
-    zoneLabel: string;
-    card: FieldCard;
-    action: CardActionOption;
-  }> = [];
-
-  for (const item of duelStore.activatableGraveyardCards) {
-    for (const action of item.actions) {
-      results.push({
-        zone: 'graveyard',
-        zoneLabel: '🪦 GY',
-        card: item.card,
-        action,
-      });
-    }
-  }
-
-  for (const item of duelStore.activatableBanishedCards) {
-    for (const action of item.actions) {
-      results.push({
-        zone: 'banished',
-        zoneLabel: '🌀 BANISHED',
-        card: item.card,
-        action,
-      });
-    }
-  }
-
-  for (const item of duelStore.activatableExtraDeckCards) {
-    for (const action of item.actions) {
-      results.push({
-        zone: 'extra',
-        zoneLabel: '⚡ EXTRA',
-        card: item.card,
-        action,
-      });
-    }
-  }
-
-  return results;
 });
 
 // Live Logs
@@ -1511,150 +1568,148 @@ onUnmounted(() => {
   }
 }
 
-// Quick Zone Activations Floating Bar
-.quick-zone-actions-bar {
-  position: absolute;
-  top: -46px;
-  left: 50%;
-  transform: translateX(-50%);
+// Zone Mode Choice Modal Styles
+.zone-choice-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 16px;
-  border-radius: 24px;
-  background: rgba(14, 18, 26, 0.92);
-  border: 1px solid rgba(246, 224, 94, 0.5);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.85),
-    0 0 20px rgba(236, 201, 75, 0.35);
-  z-index: 50;
-  animation: quick-bar-slide-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  .quick-actions-badge {
+  .zone-choice-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+  }
+
+  .zone-choice-title-box {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .zone-choice-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #f7fafc;
+    margin: 0;
+  }
+
+  .zone-choice-badge {
+    font-family: 'Oxanium', monospace, sans-serif;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #f6e05e;
+    text-shadow: 0 0 6px rgba(246, 224, 94, 0.6);
+  }
+}
+
+.zone-choice-body {
+  padding: 0.5rem 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.zone-choice-desc {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 0.92rem;
+  color: #cbd5e0;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.zone-choice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-zone-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(22, 28, 38, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  .choice-icon-wrap {
+    font-size: 1.4rem;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-family: 'Oxanium', monospace, sans-serif;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    color: #f6e05e;
-    text-shadow: 0 0 8px rgba(246, 224, 94, 0.6);
-    white-space: nowrap;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+  }
 
-    .pulse-icon {
-      font-size: 0.85rem;
-      animation: pulse-quick-icon 1.2s infinite ease-in-out;
+  .choice-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .choice-main-text {
+    font-family: 'Oxanium', monospace, sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #fff;
+  }
+
+  .choice-sub-text {
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    font-size: 0.78rem;
+    color: #a0aec0;
+  }
+
+  .choice-arrow {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.3);
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(201, 162, 39, 0.6);
+    background: rgba(30, 40, 56, 0.95);
+    box-shadow:
+      0 6px 20px rgba(0, 0, 0, 0.6),
+      0 0 14px rgba(201, 162, 39, 0.25);
+
+    .choice-arrow {
+      transform: translateX(4px);
+      color: #ecc94b;
     }
   }
 
-  .quick-actions-list {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  &--activatable {
+    border-color: rgba(246, 224, 94, 0.4);
+    background: linear-gradient(135deg, rgba(28, 38, 52, 0.95), rgba(45, 40, 20, 0.95));
 
-  .quick-action-pill {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 10px 4px 6px;
-    background: rgba(26, 32, 44, 0.95);
-    border: 1px solid rgba(246, 224, 94, 0.4);
-    border-radius: 18px;
-    color: #fff;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    .choice-icon-wrap {
+      background: rgba(246, 224, 94, 0.15);
+      border: 1px solid rgba(246, 224, 94, 0.3);
+    }
+
+    .choice-main-text {
+      color: #f6e05e;
+    }
 
     &:hover {
-      transform: translateY(-2px) scale(1.04);
-      background: rgba(45, 55, 72, 0.98);
-      border-color: #ecc94b;
+      border-color: #f6e05e;
       box-shadow:
-        0 4px 14px rgba(0, 0, 0, 0.8),
-        0 0 16px rgba(236, 201, 75, 0.6);
+        0 6px 20px rgba(0, 0, 0, 0.7),
+        0 0 18px rgba(236, 201, 75, 0.5);
     }
-
-    .zone-badge {
-      font-family: 'Oxanium', monospace, sans-serif;
-      font-size: 0.65rem;
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      background: rgba(236, 201, 75, 0.2);
-      color: #ecc94b;
-      padding: 2px 6px;
-      border-radius: 10px;
-    }
-
-    .quick-card-art {
-      width: 20px;
-      height: 28px;
-      border-radius: 2px;
-      object-fit: cover;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .card-name {
-      font-family: 'Barlow Semi Condensed', sans-serif;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #f7fafc;
-      white-space: nowrap;
-      max-width: 140px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .action-btn-tag {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 8px;
-      background: linear-gradient(135deg, #d69e2e, #b7791f);
-      border: 1px solid #ecc94b;
-      border-radius: 12px;
-      font-family: 'Oxanium', monospace, sans-serif;
-      font-size: 0.68rem;
-      font-weight: 700;
-      color: #111;
-      letter-spacing: 0.04em;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-
-      &--sp_summon {
-        background: linear-gradient(135deg, #4299e1, #3182ce);
-        border-color: #63b3ed;
-        color: #fff;
-      }
-
-      &--chain {
-        background: linear-gradient(135deg, #9f7aea, #805ad5);
-        border-color: #b794f4;
-        color: #fff;
-      }
-    }
-  }
-}
-
-@keyframes quick-bar-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-@keyframes pulse-quick-icon {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.25);
-    opacity: 1;
   }
 }
 
