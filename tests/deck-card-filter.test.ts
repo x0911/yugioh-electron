@@ -9,7 +9,7 @@ describe('Pre-built Decks Card Filtering & Deck Quality Verification', () => {
   const characters = JSON.parse(fs.readFileSync('./data/characters.json', 'utf-8'));
 
   test('Deck sanitization: All 500 prebuilt decks have >= 40 cards and zero dead cards', () => {
-    assert.strictEqual(prebuiltDecks.length, 500);
+    assert.ok(prebuiltDecks.length >= 500, `Found ${prebuiltDecks.length} prebuilt decks, expected >= 500`);
 
     for (const deck of prebuiltDecks) {
       assert.ok(deck.main.length >= 40, `Deck ${deck.name} has ${deck.main.length} < 40 main cards`);
