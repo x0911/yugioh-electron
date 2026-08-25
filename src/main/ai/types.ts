@@ -14,6 +14,7 @@ export interface EvaluatorContext {
   signatureCardIds: number[];
   deckArchetype: string;
   aiDeckCards?: number[];
+  activeChainCards?: number[];
 }
 
 export interface ScoredAction<T = OcgResponse> {

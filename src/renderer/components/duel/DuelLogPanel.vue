@@ -79,6 +79,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
+import { useSettingsStore } from '../../stores/settingsStore.js';
 import type { DuelBoardState } from '../../../shared/types/field.js';
 import type { ActionGuideInfo } from '../../utils/guidanceHelper.js';
 

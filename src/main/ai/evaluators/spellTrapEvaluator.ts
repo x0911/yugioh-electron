@@ -14,6 +14,29 @@ export function evaluateSpellActivation(
   const aiMonsterCount = aiField.monsterZones.filter(Boolean).length;
   const oppLp = oppField.currentLp;
 
+  // Prevent self-chain loops: if this card code is already in the current unresolved chain, do not chain it again
+  if (context.activeChainCards && context.activeChainCards.includes(code)) {
+    return {
+      score: -10000,
+      reason: `[HOLD] ${cardName} is already activated in the current chain (prevent self-chain loop)`,
+    };
+  }
+
+  // 0. Necro Gardna (62015408) - Graveyard Quick Attack Negation
+  if (code === 62015408 || cardName.includes('Necro Gardna')) {
+    const isBattlePhase = boardState.currentPhase === 'BP' || boardState.currentPhase === 'BATTLE_START' || boardState.currentPhase === 'BATTLE_STEP';
+    if (!isBattlePhase) {
+      return {
+        score: -8000,
+        reason: `[HOLD] Hold Necro Gardna in Graveyard until opponent declares an attack in Battle Phase`,
+      };
+    }
+    return {
+      score: 3500 * (personality.defensiveness + 0.5),
+      reason: `[ATTACK NEGATION] Banish Necro Gardna from Graveyard to negate incoming attack`,
+    };
+  }
+
   // 1. Draw Power Spells (Pot of Greed, Graceful Charity, etc.)
   if (code === 55144522 || code === 79571449 || cardName.includes('Greed') || cardName.includes('Charity')) {
     return {

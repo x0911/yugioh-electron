@@ -916,14 +916,15 @@ export class AIController {
       return this.selectWeightedAction(executorActions);
     }
 
-    if (msg.forced && msg.selects && msg.selects.length > 0) {
+    const rawSelects = msg.selects || msg.chains || [];
+    if (msg.forced && rawSelects.length > 0) {
       return {
         type: OcgResponseType.SELECT_CHAIN,
         index: 0,
       };
     }
 
-    if (!msg.selects || msg.selects.length === 0) {
+    if (rawSelects.length === 0) {
       return {
         type: OcgResponseType.SELECT_CHAIN,
         index: null,
@@ -934,10 +935,15 @@ export class AIController {
     let bestIndex: number | null = null;
     let bestScore = 0;
 
-    for (let i = 0; i < msg.selects.length; i++) {
-      const ch = msg.selects[i];
+    for (let i = 0; i < rawSelects.length; i++) {
+      const ch = rawSelects[i];
       const code = ch.code ?? 0;
       const name = ch.cardName || context.cardReader.getCardName(code);
+
+      if (context.activeChainCards && context.activeChainCards.includes(code)) {
+        continue;
+      }
+
       const evalResult = evaluateSpellActivation(code, name, context);
       if (evalResult.score > bestScore) {
         bestScore = evalResult.score;
@@ -945,7 +951,8 @@ export class AIController {
       }
     }
 
-    if (bestIndex !== null && bestScore >= 300) {
+    // Must beat the default pass priority score (1000) to activate non-forced chain
+    if (bestIndex !== null && bestScore >= 1000) {
       return {
         type: OcgResponseType.SELECT_CHAIN,
         index: bestIndex,

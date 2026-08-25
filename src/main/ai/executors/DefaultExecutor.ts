@@ -585,14 +585,15 @@ export class DefaultExecutor implements DeckExecutor {
   }
 
   public onSelectChain(msg: OcgMessage, context: EvaluatorContext): ScoredAction[] | null {
-    if (!msg.chains || msg.chains.length === 0) return null;
+    const rawChains = msg.selects || msg.chains || [];
+    if (rawChains.length === 0) return null;
     const candidates: ScoredAction[] = [];
     const { cardReader, personality, boardState } = context;
     const defensiveness = personality?.defensiveness ?? 0.5;
     const isBattlePhase = boardState.currentPhase === 'BP' || boardState.currentPhase === 'BATTLE_START' || boardState.currentPhase === 'BATTLE_STEP';
 
-    for (let i = 0; i < msg.chains.length; i++) {
-      const c = msg.chains[i];
+    for (let i = 0; i < rawChains.length; i++) {
+      const c = rawChains[i];
       const code = c.code ?? 0;
       const detail = code > 0 ? cardReader.getCardDetail(code) : null;
       const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Chain Trigger');
@@ -600,8 +601,13 @@ export class DefaultExecutor implements DeckExecutor {
       let score = 400;
       let reason = `Chain effect of ${name}`;
 
+      // Prevent redundant self-chaining of the same card in the current chain
+      if (context.activeChainCards && context.activeChainCards.includes(code)) {
+        score = -10000;
+        reason = `[HOLD] ${name} is already activated in the current chain (prevent self-chain loop)`;
+      }
       // Counter Traps & Omni-negates (Solemn Judgment, Solemn Strike, Dark Bribe, Magic Jammer)
-      if (code === 41420027 || code === 84749824 || code === 77414722 || name.includes('Solemn') || name.includes('Dark Bribe')) {
+      else if (code === 41420027 || code === 84749824 || code === 77414722 || name.includes('Solemn') || name.includes('Dark Bribe')) {
         score = 2500 * (defensiveness + 0.5);
         reason = `[COUNTER NEGATE] Activate counter trap ${name} to negate opponent action`;
       }

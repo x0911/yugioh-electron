@@ -112,6 +112,7 @@ export class DuelEngineService {
     lastError: null as string | null,
     lastErrorTimestamp: null as number | null,
   };
+  private activeChainCards: number[] = [];
 
   // Tracked Board States for Player 0 and Player 1
   private player0Field: PlayerFieldState = this.createEmptyPlayerState(0, 'Player 0');
@@ -326,6 +327,14 @@ export class DuelEngineService {
       stepCount: 0,
       humanPlayerId: this.humanPlayerId,
       isVideoPlaying: false,
+    };
+    this.activeChainCards = [];
+    this.aiDiagnostics = {
+      totalCalls: 0,
+      successfulCalls: 0,
+      fallbackCalls: 0,
+      lastError: null,
+      lastErrorTimestamp: null,
     };
 
     const handle = this.lib.createDuel({
@@ -1354,6 +1363,7 @@ export class DuelEngineService {
       signatureCardIds: this.aiSignatureCards,
       deckArchetype: this.aiDeckArchetype,
       aiDeckCards: this.aiDeckCards,
+      activeChainCards: [...this.activeChainCards],
     };
 
     const response = this.aiController.decideResponse(msg, context);
@@ -1399,6 +1409,7 @@ export class DuelEngineService {
       signatureCardIds: this.aiSignatureCards,
       deckArchetype: this.aiDeckArchetype,
       aiDeckCards: this.aiDeckCards,
+      activeChainCards: [...this.activeChainCards],
     };
 
     if (this.aiProvider && this.aiProvider !== 'builtin') {
@@ -1511,14 +1522,21 @@ export class DuelEngineService {
         // Check for special card video triggers (summon/attack)
         const videoPayload = this.checkVideoTrigger(msg);
 
-        // Track internal state
         if (decoded.type === 'NEW_TURN') {
           this.state.currentTurn++;
           decoded.turn = this.state.currentTurn;
           decoded.description = `Turn ${this.state.currentTurn} begins. Active player: Player ${decoded.player}`;
+          this.activeChainCards = [];
+        }
+        if (decoded.type === 'CHAINING' && (decoded as any).code) {
+          this.activeChainCards.push((decoded as any).code);
+        }
+        if (decoded.type === 'CHAIN_SOLVED' || decoded.type === 'CHAIN_END') {
+          this.activeChainCards = [];
         }
         if (decoded.phase !== undefined) {
           this.state.currentPhase = (decoded.phase as DuelState['currentPhase']) || 'M1';
+          this.activeChainCards = [];
         }
         if (
           decoded.type === 'LPUPDATE' &&

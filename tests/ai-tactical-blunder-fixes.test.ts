@@ -393,3 +393,79 @@ test('8. Fix Blunder #8: Sakuretsu Armor is held when attacked by 0 ATK monster 
   assert.ok(sakuretsuEval.score > 0 || sakuretsuEval.score <= -2000, `Sakuretsu Armor evaluated properly`);
 });
 
+test('9. Necro Gardna (62015408): Activated during Battle Phase on attack declaration, held in Main Phase, and never loops on same chain', async () => {
+  const { evaluateSpellActivation } = await import('../src/main/ai/evaluators/spellTrapEvaluator.js');
+  const boardState = createEmptyBoardState();
+
+  // Test during Main Phase (should hold)
+  boardState.currentPhase = 'M1';
+  const mainPhaseContext: EvaluatorContext = {
+    playerId: 1,
+    aiPlayerId: 1,
+    turnPlayer: 0,
+    phase: 'MP1',
+    turnNumber: 4,
+    boardState,
+    personality: CHARACTER_PERSONALITIES['aster-phoenix'] || CHARACTER_PERSONALITIES['yugi-muto'],
+    aiDeckCards: [],
+    signatureCardIds: [],
+    deckArchetype: 'DestinyHERO',
+    cardReader,
+  };
+  const mainPhaseEval = evaluateSpellActivation(62015408, 'Necro Gardna', mainPhaseContext);
+  assert.ok(mainPhaseEval.score <= -5000, `Necro Gardna must be held in Main Phase, got: ${mainPhaseEval.score}`);
+
+  // Test during Battle Phase (should activate to negate attack)
+  boardState.currentPhase = 'BP';
+  const battlePhaseContext: EvaluatorContext = {
+    ...mainPhaseContext,
+    currentPhase: 'BP',
+  };
+  const battleEval = evaluateSpellActivation(62015408, 'Necro Gardna', battlePhaseContext);
+  assert.ok(battleEval.score >= 3000, `Necro Gardna must score high to negate attack during Battle Phase, got: ${battleEval.score}`);
+
+  // Test when Necro Gardna is ALREADY active in the current chain (must prevent infinite chain loop)
+  const chainedContext: EvaluatorContext = {
+    ...battlePhaseContext,
+    activeChainCards: [62015408],
+  };
+  const chainedEval = evaluateSpellActivation(62015408, 'Necro Gardna', chainedContext);
+  assert.strictEqual(chainedEval.score, -10000, `Necro Gardna must return -10000 when already in chain to prevent self-chain loop`);
+});
+
+test('10. Infinite Chain Loop Prevention: decideSelectChain passes priority when card is already chaining', () => {
+  const boardState = createEmptyBoardState();
+  boardState.currentPhase = 'BP';
+
+  const context: EvaluatorContext = {
+    playerId: 1,
+    aiPlayerId: 1,
+    turnPlayer: 0,
+    phase: 'BP',
+    turnNumber: 4,
+    boardState,
+    personality: CHARACTER_PERSONALITIES['aster-phoenix'] || CHARACTER_PERSONALITIES['yugi-muto'],
+    aiDeckCards: [],
+    signatureCardIds: [],
+    deckArchetype: 'DestinyHERO',
+    cardReader,
+    activeChainCards: [62015408], // Necro Gardna is already Chain Link 1
+  };
+
+  const msg: OcgMessage = {
+    type: OcgMessageType.SELECT_CHAIN,
+    player: 1,
+    forced: false,
+    selects: [
+      {
+        code: 62015408,
+        cardName: 'Necro Gardna',
+      },
+    ],
+  };
+
+  const response = aiController.decideResponse(msg, context);
+  assert.strictEqual(response.type, OcgResponseType.SELECT_CHAIN);
+  assert.strictEqual((response as any).index, null, 'AI must pass priority (index: null) instead of chaining Necro Gardna infinitely');
+});
+

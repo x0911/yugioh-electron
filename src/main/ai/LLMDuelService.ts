@@ -421,7 +421,8 @@ You MUST reply strictly with a valid JSON object matching this exact structure:
 === LEGAL ACTION CHOICES ===
 ${choices.map((c) => `[Option ${c.index}]: ${c.description}`).join('\n')}
 
-Select the single best Option Index [0 to ${choices.length - 1}], provide your tactical reasoning, and write 1 dramatic in-character spoken dialogue line.`;
+Select the single best Option Index [0 to ${choices.length - 1}], provide your tactical reasoning, and write 1 dramatic in-character spoken dialogue line.
+Reply with a valid JSON object: {"selectedIndex": <number>, "reasoning": "...", "characterDialogue": "..."}`;
 
     return { systemInstruction, userPrompt, choices };
   }
@@ -520,7 +521,7 @@ Select the single best Option Index [0 to ${choices.length - 1}], provide your t
         },
         body: JSON.stringify({
           model,
-          max_tokens: 512,
+          max_tokens: 300,
           system: promptData.systemInstruction,
           messages: [{ role: 'user', content: promptData.userPrompt }],
         }),
@@ -569,7 +570,7 @@ Select the single best Option Index [0 to ${choices.length - 1}], provide your t
     }
 
     try {
-      const res = await fetch(endpoint, {
+      let res = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -579,6 +580,7 @@ Select the single best Option Index [0 to ${choices.length - 1}], provide your t
             { role: 'user', content: promptData.userPrompt },
           ],
           response_format: { type: 'json_object' },
+          max_tokens: 300,
           temperature: 0.6,
         }),
       });
@@ -589,6 +591,37 @@ Select the single best Option Index [0 to ${choices.length - 1}], provide your t
           const j = JSON.parse(errText);
           if (j.error?.message) errText = j.error.message;
         } catch {}
+
+        // If provider rejected json_object response format (e.g. Qwen on Groq), retry in raw mode
+        if (
+          res.status === 400 &&
+          (errText.includes('validate JSON') || errText.includes('response_format') || errText.includes('failed_generation'))
+        ) {
+          try {
+            const retryRes = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                model,
+                messages: [
+                  { role: 'system', content: promptData.systemInstruction },
+                  { role: 'user', content: promptData.userPrompt },
+                ],
+                max_tokens: 300,
+                temperature: 0.3,
+              }),
+            });
+            if (retryRes.ok) {
+              const retryData: any = await retryRes.json();
+              const retryText = retryData?.choices?.[0]?.message?.content;
+              const parsed = this.parseJsonResponse(retryText, promptData, provider.toUpperCase());
+              if (parsed) {
+                return { result: parsed };
+              }
+            }
+          } catch {}
+        }
+
         return { result: null, error: `${provider.toUpperCase()} Error HTTP ${res.status}: ${errText}`, statusCode: res.status };
       }
 
@@ -612,9 +645,24 @@ Select the single best Option Index [0 to ${choices.length - 1}], provide your t
     if (!text) return null;
 
     try {
-      // Clean potential markdown backticks if returned
-      const cleanJson = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-      const parsed = JSON.parse(cleanJson);
+      // Strip any <think>...</think> reasoning tags emitted by Qwen/DeepSeek
+      let cleanText = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      cleanText = cleanText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+      let parsed: any;
+      try {
+        parsed = JSON.parse(cleanText);
+      } catch {
+        // Fallback regex to search for embedded JSON object { ... }
+        const match = cleanText.match(/\{[\s\S]*?\}/);
+        if (match) {
+          try {
+            parsed = JSON.parse(match[0]);
+          } catch {}
+        }
+      }
+
+      if (!parsed || typeof parsed !== 'object') return null;
 
       const chosenIndex = typeof parsed.selectedIndex === 'number' ? parsed.selectedIndex : 0;
       const validChoice = promptData.choices[chosenIndex] || promptData.choices[0];
