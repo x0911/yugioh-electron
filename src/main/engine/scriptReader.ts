@@ -76,6 +76,14 @@ export class ScriptReaderService {
     return null;
   }
 
+  private preprocessScript(rawContent: string): string {
+    // 1. Replace bitwise OR on uppercase constants: e.g. REASON_EFFECT|REASON_DISCARD -> REASON_EFFECT+REASON_DISCARD
+    let content = rawContent.replace(/([A-Z_0-9]+)\s*\|\s*([A-Z_0-9]+)/g, '$1+$2');
+    // 2. Replace `#variable` length operator on userdata groups with `aux.GetCount(variable)`
+    content = content.replace(/#([a-zA-Z0-9_]+)/g, 'aux.GetCount($1)');
+    return content;
+  }
+
   public readScript(name: string): string | null {
     if (this.scriptCache.has(name)) {
       return this.scriptCache.get(name) ?? null;
@@ -102,7 +110,7 @@ export class ScriptReaderService {
       if (fs.existsSync(officialPath)) {
         try {
           const rawContent = fs.readFileSync(officialPath, 'utf-8');
-          const content = preamble + rawContent;
+          const content = preamble + this.preprocessScript(rawContent);
           this.scriptCache.set(name, content);
           return content;
         } catch (err) {
@@ -116,7 +124,7 @@ export class ScriptReaderService {
         if (aliasPath && fs.existsSync(aliasPath)) {
           try {
             const rawContent = fs.readFileSync(aliasPath, 'utf-8');
-            const content = preamble + rawContent;
+            const content = preamble + this.preprocessScript(rawContent);
             this.scriptCache.set(name, content);
             return content;
           } catch (err) {

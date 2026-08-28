@@ -9,19 +9,8 @@
       },
     ]"
   >
-    <!-- Hand Info Header (Count Badge) -->
-    <div class="hand-meta">
-      <span class="hand-meta__count">
-        {{ player === 'user' ? 'Your Hand' : "Opponent's Hand" }} ({{ cards.length }})
-      </span>
-    </div>
-
     <!-- Horizontal Cards Container with Smooth CSS FLIP Motion -->
-    <TransitionGroup
-      name="hand-card-anim"
-      tag="div"
-      class="hand-cards-container"
-    >
+    <TransitionGroup name="hand-card-anim" tag="div" class="hand-cards-container">
       <div
         v-for="(card, idx) in cards"
         :key="card.id || `hand-${player}-${card.code}-${card.sequence ?? idx}`"
@@ -59,7 +48,10 @@
             <!-- Mini Header with Name & Level -->
             <div class="hand-card__header">
               <span class="hand-card__name" :title="card.name">{{ card.name }}</span>
-              <span v-if="card.level && card.level > 0 && !getCardTarget(card, idx)?.isSelectable" class="hand-card__level">
+              <span
+                v-if="card.level && card.level > 0 && !getCardTarget(card, idx)?.isSelectable"
+                class="hand-card__level"
+              >
                 ★{{ card.level }}
               </span>
             </div>
@@ -82,7 +74,9 @@
                 :tooltip-text="getCardTarget(card, idx)!.tooltipText"
                 size="md"
               />
-              <div v-if="getCardTarget(card, idx)!.isSelected" class="hand-card__target-check">✓</div>
+              <div v-if="getCardTarget(card, idx)!.isSelected" class="hand-card__target-check">
+                ✓
+              </div>
             </div>
           </div>
         </div>
@@ -110,13 +104,19 @@
             <!-- Mini Header for Revealed Opponent Card -->
             <div v-if="card.code > 0" class="hand-card__header">
               <span class="hand-card__name" :title="card.name">{{ card.name }}</span>
-              <span v-if="card.level && card.level > 0 && !getCardTarget(card, idx)?.isSelectable" class="hand-card__level">
+              <span
+                v-if="card.level && card.level > 0 && !getCardTarget(card, idx)?.isSelectable"
+                class="hand-card__level"
+              >
                 ★{{ card.level }}
               </span>
             </div>
 
             <!-- Bottom ATK/DEF Footer for Revealed Opponent Monsters -->
-            <div v-if="card.code > 0 && card.atk !== undefined && card.def !== undefined" class="hand-card__stats">
+            <div
+              v-if="card.code > 0 && card.atk !== undefined && card.def !== undefined"
+              class="hand-card__stats"
+            >
               <span class="stat-atk">{{ formatCombatStat(card.atk) }}</span>
               <span class="stat-slash">/</span>
               <span class="stat-def">{{ formatCombatStat(card.def) }}</span>
@@ -133,7 +133,9 @@
                 :tooltip-text="getCardTarget(card, idx)!.tooltipText"
                 size="md"
               />
-              <div v-if="getCardTarget(card, idx)!.isSelected" class="hand-card__target-check">✓</div>
+              <div v-if="getCardTarget(card, idx)!.isSelected" class="hand-card__target-check">
+                ✓
+              </div>
             </div>
           </div>
         </div>
@@ -232,23 +234,6 @@ function onCardClick(card: FieldCard, event: MouseEvent, idx: number): void {
   align-items: center;
   user-select: none;
 
-  .hand-meta {
-    padding: 2px 10px;
-    background: rgba(10, 12, 16, 0.88);
-    border: 1px solid rgba(201, 162, 39, 0.35);
-    border-radius: 12px;
-    margin-bottom: 4px;
-    z-index: 10;
-
-    &__count {
-      font-family: 'Oxanium', monospace, sans-serif;
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: $color-gold-300;
-      letter-spacing: 0.05em;
-    }
-  }
-
   .hand-cards-container {
     display: flex;
     justify-content: center;
@@ -262,7 +247,9 @@ function onCardClick(card: FieldCard, event: MouseEvent, idx: number): void {
 
   // Smooth FLIP Card Re-layout (when hand count changes after a card lands or leaves)
   .hand-card-anim-move {
-    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), margin 0.28s ease;
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      margin 0.28s ease;
   }
 
   // Cards entering/leaving hand have no separate CSS transition — the flight
@@ -492,7 +479,9 @@ function onCardClick(card: FieldCard, event: MouseEvent, idx: number): void {
     &--ineligible {
       opacity: 0.4;
       filter: grayscale(0.3) brightness(0.7);
-      transition: opacity 0.25s ease, filter 0.25s ease;
+      transition:
+        opacity 0.25s ease,
+        filter 0.25s ease;
     }
   }
 }

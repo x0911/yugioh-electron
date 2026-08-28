@@ -30,6 +30,31 @@ if Effect and not Effect.IsMonsterEffect then
 	end
 end
 
+-- Group __len polyfill for modern card scripts (#group)
+if Group then
+	local test_group = Group.CreateGroup and Group.CreateGroup()
+	local mt = test_group and (getmetatable(test_group) or (debug and debug.getmetatable and debug.getmetatable(test_group)))
+	if mt then
+		mt.__len = function(g) return g:GetCount() end
+	end
+	Group.__len = function(g) return g:GetCount() end
+	if test_group and test_group.DeleteGroup then
+		test_group:DeleteGroup()
+	end
+end
+
+function Auxiliary.GetCount(g)
+	if not g then return 0 end
+	local t = type(g)
+	if t == "table" or t == "string" then
+		return #g
+	elseif t == "userdata" and g.GetCount then
+		return g:GetCount()
+	end
+	return 0
+end
+Auxiliary.GetLen = Auxiliary.GetCount
+
 function Auxiliary.NULL()
 end
 

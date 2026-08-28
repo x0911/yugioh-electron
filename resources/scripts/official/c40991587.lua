@@ -31,7 +31,7 @@ function s.initial_effect(c)
 end
 s.listed_names={CARD_SKULL_SERVANT}
 function s.etarget(e,c)
-	return c:GetCode()~=id and c:IsRace(RACE_ZOMBIE) and c:IsLevelBelow(3)
+	return c:IsFaceup() and c:GetCode()~=id and c:IsRace(RACE_ZOMBIE) and c:IsLevelBelow(3)
 end
 function s.efilter(e,te)
 	return te:IsSpellTrapEffect() and not te:GetHandler():IsCode(4064256)

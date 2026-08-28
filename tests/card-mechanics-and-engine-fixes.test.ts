@@ -87,6 +87,14 @@ async function runTestSuite() {
     });
     service.processStep();
 
+    if ((service as any).state.isWaitingResponse) {
+      service.sendResponse({
+        type: OcgResponseType.SELECT_CHAIN,
+        index: -1,
+      });
+      service.processStep();
+    }
+
     const b2 = service.getBoardState();
     assert.equal(b2.opponentField.spellTrapZones.filter(Boolean).length, 0, 'Opponent S/T zones must be cleared');
     const oppGy = b2.opponentField.graveyard.map((c) => c.code);
@@ -884,10 +892,143 @@ async function runTestSuite() {
     assert.equal(replayPrompt.promptData.yesText, 'Continue Attack');
     assert.equal(replayPrompt.promptData.noText, 'Cancel Attack');
 
-    console.log('  ✓ Toon Direct Attack & Rich SELECT_YESNO Prompt Presentation passed!\n');
+    // 15. Raigeki destroying face-down monster & Pot of Greed drawing 2 cards
+    console.log('▶ Test 15: Raigeki vs Face-Down Monster & Pot of Greed Resolution');
+    service.startNewDuel({
+      // Deck top is at the end of the array
+      player0Deck: [...Array(30).fill(32274490), 55144522, 40991587, 40991587, 40991587, 40991587], // 4 Lady in Wight + 1 Pot of Greed
+      player1Deck: [...Array(30).fill(32274490), 12580477, 12580477, 12580477, 12580477, 12580477], // 5 Raigeki
+      noShuffle: true,
+      humanPlayerId: 0,
+      startingLP: 8000,
+      startingDrawCount: 5,
+    });
+
+    // Turn 1: Player 0 Sets The Lady in Wight
+    const p15Prompt = (service as any).lastPromptMessage;
+    const msetIdx = p15Prompt.monster_sets?.findIndex((s: any) => s.code === 40991587);
+    assert(msetIdx >= 0, 'Player 0 must be able to Set The Lady in Wight');
+
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.SELECT_MSET,
+      index: msetIdx,
+    });
+    service.processStep();
+    console.log('User monster zones after SELECT_MSET:', service.getBoardState().userField.monsterZones);
+
+    // Player 0 now activates Pot of Greed
+    const p15Prompt2 = (service as any).lastPromptMessage;
+    const pogIdx = p15Prompt2.activates?.findIndex((a: any) => a.code === 55144522);
+    assert(pogIdx >= 0, 'Player 0 must be able to activate Pot of Greed');
+
+    const handBeforePog = service.getBoardState().userField.hand.length;
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.SELECT_ACTIVATE,
+      index: pogIdx,
+    });
+    service.processStep();
+
+    // Pass chain if prompted
+    if ((service as any).state.isWaitingResponse) {
+      service.sendResponse({
+        type: OcgResponseType.SELECT_CHAIN,
+        index: -1,
+      });
+      service.processStep();
+    }
+
+    const handAfterPog = service.getBoardState().userField.hand.length;
+    assert.equal(handAfterPog, handBeforePog - 1 + 2, 'Pot of Greed must increase hand size by 1 (cost 1 card, draw 2 cards)');
+
+    // End Turn 1
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.TO_EP,
+      index: null,
+    });
+    while (!(service as any).lastPromptMessage || (service as any).lastPromptMessage.type !== OcgMessageType.SELECT_IDLECMD) {
+      service.processStep();
+    }
+
+    // Turn 2: Player 1 activates Raigeki
+    const p1Turn2Prompt = (service as any).lastPromptMessage;
+    console.log('Turn 2 prompt:', p1Turn2Prompt?.activates);
+    const raigekiIdx = p1Turn2Prompt.activates?.findIndex((a: any) => a.code === 12580477);
+    assert(raigekiIdx >= 0, 'Player 1 must be able to activate Raigeki on Turn 2');
+
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.SELECT_ACTIVATE,
+      index: raigekiIdx,
+    });
+    service.processStep();
+
+    if ((service as any).state.isWaitingResponse) {
+      service.sendResponse({
+        type: OcgResponseType.SELECT_CHAIN,
+        index: -1,
+      });
+      service.processStep();
+    }
+
+    const boardAfterRaigeki = service.getBoardState();
+    const p0MonstersAfter = boardAfterRaigeki.userField.monsterZones.filter(Boolean);
+    assert.equal(p0MonstersAfter.length, 0, 'Raigeki must destroy the Set monster');
+    assert.equal(boardAfterRaigeki.userField.graveyard.length, 2, 'GY must contain Pot of Greed and destroyed Lady in Wight');
+    // 16. Dark World Dealings (Draw 1, Discard 1 for both players)
+    console.log('▶ Test 16: Dark World Dealings (Both players draw 1, then discard 1)');
+    service.startNewDuel({
+      player0Deck: [...Array(35).fill(32274490), 74117290, 74117290, 74117290, 74117290, 74117290],
+      player1Deck: Array(40).fill(32274490),
+      noShuffle: true,
+      humanPlayerId: 0,
+      startingLP: 8000,
+    });
+
+    const p16Prompt = (service as any).lastPromptMessage;
+    const dwdIdx = p16Prompt.activates?.findIndex((a: any) => a.code === 74117290);
+    assert(dwdIdx >= 0, 'Player 0 must be able to activate Dark World Dealings');
+
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.SELECT_ACTIVATE,
+      index: dwdIdx,
+    });
+    service.processStep();
+
+    let p0DiscardPrompt: any = null;
+    let p1DiscardPrompt: any = null;
+
+    // Process until discard prompts
+    while ((service as any).state.isWaitingResponse) {
+      const prompt = (service as any).lastPromptMessage;
+      if (prompt?.type === OcgMessageType.SELECT_CHAIN) {
+        service.sendResponse({
+          type: OcgResponseType.SELECT_CHAIN,
+          index: -1,
+        });
+        service.processStep();
+      } else if (prompt?.type === OcgMessageType.SELECT_CARD) {
+        p0DiscardPrompt = prompt;
+        service.sendResponse({
+          type: OcgResponseType.SELECT_CARD,
+          indicies: [0],
+        });
+        service.processStep();
+      } else {
+        break;
+      }
+    }
+
+    assert(p0DiscardPrompt !== null, 'Player 0 discard prompt must have occurred');
+    const boardState = service.getBoardState();
+    assert.equal(boardState.userField.graveyard.length, 2, 'GY must contain activated DWD and discarded card');
+    console.log('  ✓ Dark World Dealings passed!\n');
 
     console.log('================================================================');
-    console.log('🎉 ALL 14 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 16 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();
