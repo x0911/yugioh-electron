@@ -1163,7 +1163,9 @@ async function setupEngineEventListener(): Promise<void> {
               toRect,
               type: animType,
               isFacedown,
-              isDefense,
+              // isDefense (90° rotation) only applies to monster zone destinations.
+              // Spell/trap cards fly upright regardless of face-up or face-down state.
+              isDefense: toLoc === 4 && isDefense,
               durationMs: toLoc === 16 || toLoc === 32 ? 440 : 480,
             });
           }
