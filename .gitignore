@@ -12,12 +12,15 @@ out/
 resources/cards/full/*
 !resources/cards/full/0.jpg
 !resources/cards/full/placeholder.jpg
+!resources/cards/full/999*.jpg
 resources/cards/art/*
 !resources/cards/art/0.jpg
 !resources/cards/art/placeholder.jpg
+!resources/cards/art/999*.jpg
 resources/cards/mini/*
 !resources/cards/mini/0.jpg
 !resources/cards/mini/placeholder.jpg
+!resources/cards/mini/999*.jpg
 
 # Media assets (videos and audio/music)
 resources/videos/

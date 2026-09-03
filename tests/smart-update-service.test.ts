@@ -35,13 +35,22 @@ async function runSmartUpdateTests() {
   assert.ok(manifest.files['resources/cards.cdb'], 'cards.cdb must be in manifest');
   assert.ok(manifest.files['data/prebuilt-decks.json'], 'prebuilt-decks.json must be in manifest');
   assert.ok(manifest.files['resources/scripts/official/c99900001.lua'], 'c99900001.lua must be in manifest');
+  assert.ok(manifest.files['resources/cards/full/99900001.jpg'], 'Egyxos full image must be in manifest');
+  assert.ok(manifest.files['resources/cards/art/99900001.jpg'], 'Egyxos art image must be in manifest');
+  assert.ok(manifest.files['resources/cards/mini/99900001.jpg'], 'Egyxos mini image must be in manifest');
 
   console.log(`  ✓ Validated manifest v${manifest.version} with ${fileKeys.length} tracked files.`);
-  console.log('  ✓ Verified tracking for cards.cdb, prebuilt-decks.json, and c99900001.lua.\n');
+  console.log('  ✓ Verified tracking for cards.cdb, prebuilt-decks.json, c99900001.lua, and Egyxos custom images.\n');
 
   // Test 2: SHA-256 Hash Matching on Local Disk
   console.log('▶ Test 2: SHA-256 Checksum Verification Against Local Repository');
-  for (const key of ['data/prebuilt-decks.json', 'resources/scripts/official/c99900001.lua']) {
+  for (const key of [
+    'data/prebuilt-decks.json',
+    'resources/scripts/official/c99900001.lua',
+    'resources/cards/full/99900001.jpg',
+    'resources/cards/art/99900001.jpg',
+    'resources/cards/mini/99900001.jpg',
+  ]) {
     const entry = manifest.files[key];
     const actualPath = path.join(ROOT_DIR, key);
     assert.ok(fs.existsSync(actualPath), `File ${key} must exist on disk`);

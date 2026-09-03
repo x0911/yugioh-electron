@@ -113,6 +113,32 @@
       box-shadow: 0 0 12px rgba(201, 162, 39, 0.4);
       transform: translateY(-1px);
     }
+
+    &--alert {
+      border-color: #eb5757;
+      color: #ff8a80;
+      box-shadow: 0 0 14px rgba(235, 87, 87, 0.45);
+      animation: pulseAlert 2s infinite ease-in-out;
+    }
+  }
+
+  &__update-badge {
+    background: #eb5757;
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+
+  @keyframes pulseAlert {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(235, 87, 87, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 18px rgba(235, 87, 87, 0.7);
+    }
   }
 
   &__status-badge {

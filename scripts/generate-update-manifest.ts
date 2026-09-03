@@ -72,6 +72,20 @@ export function generateManifest(): UpdateManifest {
   const distDir = path.join(ROOT_DIR, 'dist');
   walkDirectory(distDir, targetFiles);
 
+  // 5. Custom card images and essential card assets (full, art, mini)
+  for (const variant of ['full', 'art', 'mini']) {
+    const variantDir = path.join(ROOT_DIR, 'resources/cards', variant);
+    if (fs.existsSync(variantDir)) {
+      const files = fs.readdirSync(variantDir);
+      for (const file of files) {
+        const cardId = parseInt(path.basename(file, path.extname(file)), 10);
+        if (cardId >= 99000000 || file === '0.jpg' || file === 'placeholder.jpg') {
+          targetFiles.push(path.join(variantDir, file));
+        }
+      }
+    }
+  }
+
   const manifestFiles: Record<string, ManifestFileEntry> = {};
 
   for (const absPath of targetFiles) {

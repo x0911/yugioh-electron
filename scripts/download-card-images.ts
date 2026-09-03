@@ -203,6 +203,26 @@ async function processCard(
     return { full: true, art: true, mini: true, skipped: true };
   }
 
+  // Custom cards (e.g. 99900001 Egyxos) have no official CDN imagery; preserve local files
+  if (card.id >= 99000000) {
+    let miniSuccess = miniExists;
+    if (fullExists && !miniExists) {
+      try {
+        const fullLocalBuf = fs.readFileSync(fullPath);
+        await saveMiniVariant(fullLocalBuf, miniPath);
+        miniSuccess = true;
+      } catch {
+        copyFallback(miniPath, 'mini');
+      }
+    }
+    return {
+      full: fullExists,
+      art: artExists,
+      mini: miniSuccess,
+      skipped: true,
+    };
+  }
+
   let fullSuccess = fullExists;
   let artSuccess = artExists;
   let miniSuccess = miniExists;

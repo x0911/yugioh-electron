@@ -1,4 +1,6 @@
 import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
 import { DuelEngineService } from '../src/main/engine/DuelEngineService.js';
 import { CardReaderService } from '../src/main/engine/cardReader.js';
 import { getResourcePath } from '../src/main/decks/deckLoader.js';
@@ -343,11 +345,50 @@ async function testPolymerizationCannotSummonEgyxos() {
   engine.close();
 }
 
+// Test 5: Custom Card Visual Assets & Update Manifest Verification
+function testCustomCardVisualAssets() {
+  console.log('▶ Test 5: Custom Card Visual Assets (Full, Art, Mini) & Update Manifest...');
+  const rootDir = process.cwd();
+  const fullPath = path.resolve(rootDir, 'resources/cards/full/99900001.jpg');
+  const artPath = path.resolve(rootDir, 'resources/cards/art/99900001.jpg');
+  const miniPath = path.resolve(rootDir, 'resources/cards/mini/99900001.jpg');
+  const placeholderPath = path.resolve(rootDir, 'resources/cards/full/0.jpg');
+
+  assert.ok(fs.existsSync(fullPath), 'resources/cards/full/99900001.jpg must exist');
+  assert.ok(fs.existsSync(artPath), 'resources/cards/art/99900001.jpg must exist');
+  assert.ok(fs.existsSync(miniPath), 'resources/cards/mini/99900001.jpg must exist');
+
+  const fullStat = fs.statSync(fullPath);
+  const artStat = fs.statSync(artPath);
+  const miniStat = fs.statSync(miniPath);
+
+  assert.ok(fullStat.size > 50000, `Full image must be high-res (> 50KB), got ${fullStat.size}`);
+  assert.ok(artStat.size > 10000, `Art image must be valid cropped art (> 10KB), got ${artStat.size}`);
+  assert.ok(miniStat.size > 1000, `Mini image must be valid thumbnail (> 1KB), got ${miniStat.size}`);
+
+  if (fs.existsSync(placeholderPath)) {
+    const placeholderBuf = fs.readFileSync(placeholderPath);
+    const fullBuf = fs.readFileSync(fullPath);
+    assert.notDeepStrictEqual(fullBuf, placeholderBuf, 'Egyxos image must not be the fallback placeholder 0.jpg');
+  }
+
+  // Verify update manifest tracking
+  const manifestPath = path.resolve(rootDir, 'data/update-manifest.json');
+  assert.ok(fs.existsSync(manifestPath), 'data/update-manifest.json must exist');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+  assert.ok(manifest.files['resources/cards/full/99900001.jpg'], 'Full image must be in update manifest');
+  assert.ok(manifest.files['resources/cards/art/99900001.jpg'], 'Art image must be in update manifest');
+  assert.ok(manifest.files['resources/cards/mini/99900001.jpg'], 'Mini image must be in update manifest');
+
+  console.log('✓ Verified: All 3 Egyxos custom images exist, are non-placeholder, and are tracked in update-manifest.json!\n');
+}
+
 async function run() {
   testCardReader();
   await testInGameSummon();
   await testDestructionRetribution();
   await testPolymerizationCannotSummonEgyxos();
+  testCustomCardVisualAssets();
   console.log('🎉 ALL ELEMENTAL HERO EGYXOS CUSTOM CARD TESTS PASSED 100%!\n');
 }
 

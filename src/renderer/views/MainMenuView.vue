@@ -30,10 +30,12 @@
         <router-link
           to="/update"
           class="main-menu-view__about-btn"
+          :class="{ 'main-menu-view__about-btn--alert': hasUpdateAvailable }"
           title="Check for Game Updates & Synchronize Decks"
         >
-          <span class="about-icon">⚡</span>
+          <span class="about-icon">{{ hasUpdateAvailable ? '🔴' : '⚡' }}</span>
           <span>Update</span>
+          <span v-if="hasUpdateAvailable" class="main-menu-view__update-badge">NEW</span>
         </router-link>
 
         <button
@@ -186,7 +188,7 @@
       <div class="main-menu-view__footer-left">
         <span>Yu-Gi-Oh! Desktop Duel</span>
         <span>•</span>
-        <span>Version 0.1.0</span>
+        <span>Version 0.1.1</span>
       </div>
       <div class="main-menu-view__footer-right">
         <span>Offline Single-Player Edition</span>
@@ -222,7 +224,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useUIStore } from '../stores/uiStore.js';
 import { getMenuCardImageUrl } from '../utils/media.js';
 import YugiButton from '../components/common/YugiButton.vue';
@@ -232,6 +234,20 @@ import AboutModal from '../components/common/AboutModal.vue';
 const uiStore = useUIStore();
 const showExitModal = ref(false);
 const showAboutModal = ref(false);
+const hasUpdateAvailable = ref(false);
+
+onMounted(async () => {
+  if (window.updateAPI && typeof window.updateAPI.checkForUpdates === 'function') {
+    try {
+      const res = await window.updateAPI.checkForUpdates();
+      if (res && res.updateAvailable) {
+        hasUpdateAvailable.value = true;
+      }
+    } catch {
+      // background check is non-fatal
+    }
+  }
+});
 
 const engineBadgeText = computed(() => {
   if (uiStore.engineStatus?.ready) {
