@@ -21,10 +21,10 @@ jobs:
       - name: Setup Visual Studio MSVC Environment
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install NPM Dependencies
@@ -53,9 +53,9 @@ jobs:
           fi
 
       # Cache card images across builds (only downloads once or when cards are added/changed)
-      - name: Cache Card Images
+      - name: Restore Cached Card Images
         id: card-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: resources/cards
           key: cards-${{ runner.os }}-${{ hashFiles('data/card-pool-whitelist.json', 'resources/cards.cdb') }}
@@ -65,6 +65,13 @@ jobs:
       - name: Download Card Images (First Run / Cache Miss)
         if: steps.card-cache.outputs.cache-hit != 'true'
         run: npm run download:cards
+
+      - name: Save Card Images Cache
+        if: steps.card-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: resources/cards
+          key: cards-${{ runner.os }}-${{ hashFiles('data/card-pool-whitelist.json', 'resources/cards.cdb') }}
 
       - name: Build Application Bundle
         run: npm run build

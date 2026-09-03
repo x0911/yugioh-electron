@@ -68,7 +68,10 @@ for (const testFile of testFiles) {
     console.log('✓ PASSED');
     passed++;
   } else {
-    console.log('❌ FAILED');
+    console.log(`❌ FAILED (Exit status: ${result.status}, signal: ${result.signal})`);
+    if (result.error) {
+      console.error('Process Error:', result.error);
+    }
     console.error('\n--- STDOUT ---');
     console.error(result.stdout);
     console.error('--- STDERR ---');
