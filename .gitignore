@@ -19,9 +19,14 @@ resources/cards/mini/*
 !resources/cards/mini/0.jpg
 !resources/cards/mini/placeholder.jpg
 
+# Media assets (videos and audio/music)
+resources/videos/
+resources/audio/
+
 # OS & Editor files
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 tmp/
+
