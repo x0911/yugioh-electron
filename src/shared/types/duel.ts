@@ -258,6 +258,7 @@ export interface SelectPlacePayload {
 
 export interface SelectTributePayload {
   player: number;
+  can_cancel?: boolean;
   min: number;
   max: number;
   selects: OcgCardLocItem[];

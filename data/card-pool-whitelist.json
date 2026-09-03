@@ -40434,6 +40434,17 @@
     "race": "Spellcaster",
     "attribute": "DARK"
   },
+  "99900001": {
+    "id": 99900001,
+    "name": "Elemental HERO Egyxos",
+    "era": "GX",
+    "type": "Fusion Monster",
+    "atk": -2,
+    "def": -2,
+    "level": 10,
+    "race": "Divine-Beast",
+    "attribute": "DIVINE"
+  },
   "99937011": {
     "id": 99937011,
     "name": "Mudora the Sword Oracle",

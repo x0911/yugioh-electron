@@ -96,6 +96,8 @@ const settingsStore = useSettingsStore();
 const videoElement = ref<HTMLVideoElement | null>(null);
 const videoError = ref(false);
 const progressPercent = ref(0);
+const retryCount = ref(0);
+const cacheBuster = ref('');
 
 let progressInterval: ReturnType<typeof setInterval> | null = null;
 const FALLBACK_DURATION_MS = 3000;
@@ -103,29 +105,48 @@ const FALLBACK_DURATION_MS = 3000;
 const videoSrc = computed(() => {
   if (!props.video?.videoPath) return '';
   const cleanPath = props.video.videoPath.replace(/^resources[\/\\]/, '');
-  return `app-resource://${cleanPath}`;
+  const base = `app-resource://${cleanPath}`;
+  return cacheBuster.value ? `${base}?${cacheBuster.value}` : base;
 });
 
 watch(videoElement, (el) => {
   if (el) {
     el.volume = Math.max(0, Math.min(1, settingsStore.bgmVolume / 100));
+    el.currentTime = 0;
+
+    // Explicit play with autoplay-policy fallback
+    const playPromise = el.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        console.warn('[VideoOverlay] Autoplay was prevented with sound, retrying muted...', err);
+        el.muted = true;
+        el.play().catch((err2) => {
+          console.error('[VideoOverlay] Video play failed completely:', err2);
+          handleVideoError(err2);
+        });
+      });
+    }
   }
 });
 
 watch(
-  () => props.visible,
-  (isVis) => {
-    if (isVis && props.video) {
+  [() => props.visible, () => props.video],
+  ([isVis, curVideo]) => {
+    if (isVis && curVideo) {
       // Duck BGM immediately when cutscene starts
       audioManager.duckBgm('duel-video-overlay', 200);
 
-      videoError.value = !!props.video.isPlaceholder;
+      retryCount.value = 0;
+      cacheBuster.value = '';
+      videoError.value = !!curVideo.isPlaceholder;
       progressPercent.value = 0;
+
       if (videoError.value) {
         startProgressTimer();
       }
     } else {
       clearProgressTimer();
+      videoError.value = false;
       audioManager.restoreBgm('duel-video-overlay', 350);
     }
   },
@@ -153,7 +174,16 @@ function clearProgressTimer(): void {
   }
 }
 
-function handleVideoError(): void {
+function handleVideoError(err?: any): void {
+  // If this was an actual video asset on disk (not marked placeholder), try 1 reload attempt with cache-busting
+  if (!props.video?.isPlaceholder && retryCount.value < 1) {
+    retryCount.value++;
+    console.warn(`[VideoOverlay] Video encountered error. Retrying load (attempt ${retryCount.value})...`, err);
+    cacheBuster.value = `t=${Date.now()}`;
+    return;
+  }
+
+  console.warn('[VideoOverlay] Video playback failed or unavailable. Falling back to card presentation stage:', videoSrc.value, err);
   videoError.value = true;
   startProgressTimer();
 }

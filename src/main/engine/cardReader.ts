@@ -8,6 +8,7 @@ import {
   RACE_NAME_MAP,
   type CardDetail,
 } from '../../shared/types/card.js';
+import { getResourcePath } from '../decks/deckLoader.js';
 import { SYSTEM_STRINGS } from './stringResolver.js';
 
 export interface CardRecord {
@@ -198,6 +199,19 @@ export class CardReaderService {
     }
   }
 
+  public getCanonicalCode(code: number): number {
+    if (!this.stmtGetAlias || code <= 0) return code;
+    try {
+      const aliasRow = this.stmtGetAlias.get(code);
+      if (aliasRow && aliasRow.alias > 0) {
+        return aliasRow.alias;
+      }
+    } catch {
+      // ignore
+    }
+    return code;
+  }
+
   /**
    * Resolves a raw numeric string ID, system ID, or card string ID into human-readable text.
    * e.g. 1 -> "Normal Summon"
@@ -312,17 +326,15 @@ export class CardReaderService {
     }
   }
 
+  private manifestCache: Record<string, { id: number; name: string; era?: 'DM' | 'GX' }> | null = null;
+
   private loadWhitelistManifest(): Record<string, { id: number; name: string; era?: 'DM' | 'GX' }> {
+    if (this.manifestCache) return this.manifestCache;
     try {
-      const devPath = path.resolve(process.cwd(), 'data/card-pool-whitelist.json');
-      if (fs.existsSync(devPath)) {
-        return JSON.parse(fs.readFileSync(devPath, 'utf-8'));
-      }
-      if (process.resourcesPath) {
-        const packagedPath = path.join(process.resourcesPath, 'data/card-pool-whitelist.json');
-        if (fs.existsSync(packagedPath)) {
-          return JSON.parse(fs.readFileSync(packagedPath, 'utf-8'));
-        }
+      const manifestPath = getResourcePath('data/card-pool-whitelist.json');
+      if (fs.existsSync(manifestPath)) {
+        this.manifestCache = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+        return this.manifestCache!;
       }
     } catch (err) {
       console.warn('[CardReaderService] Could not load whitelist manifest:', err);
@@ -427,7 +439,8 @@ export class CardReaderService {
     if (!code || code <= 0) return null;
     const row = this.getCardRecord(code);
     if (!row) return null;
-    return this.mapRowToCardDetail(row);
+    const manifest = this.loadWhitelistManifest();
+    return this.mapRowToCardDetail(row, manifest);
   }
 
   public getAllCards(): CardDetail[] {

@@ -29,8 +29,8 @@
         :key="card.id"
         class="card-grid-item"
         :class="{
-          'card-grid-item--in-deck': (deckCounts.get(card.id) ?? 0) > 0,
-          'card-grid-item--max': (deckCounts.get(card.id) ?? 0) >= 3,
+          'card-grid-item--in-deck': getCardCopies(card) > 0,
+          'card-grid-item--max': getCardCopies(card) >= 3,
           'card-grid-item--dragging': store.isDragging && store.draggingCard?.id === card.id,
           'card-grid-item--filter-active': store.deckFilterCard?.id === card.id,
         }"
@@ -64,11 +64,11 @@
           <div
             class="card-count-badge"
             :class="{
-              'card-count-badge--active': (deckCounts.get(card.id) ?? 0) > 0,
-              'card-count-badge--max': (deckCounts.get(card.id) ?? 0) >= 3,
+              'card-count-badge--active': getCardCopies(card) > 0,
+              'card-count-badge--max': getCardCopies(card) >= 3,
             }"
           >
-            x{{ deckCounts.get(card.id) ?? 0 }}
+            x{{ getCardCopies(card) }}
           </div>
 
           <!-- Quick Deck Filter Button on Card -->
@@ -169,6 +169,12 @@ const OVERSCAN_ROWS = 3;
 
 // Live deck card copy counts
 const deckCounts = computed(() => store.deckCardCounts);
+const deckCanonicalCounts = computed(() => store.deckCanonicalCounts);
+
+function getCardCopies(card: CardDetail): number {
+  const canonId = card.alias && card.alias > 0 ? card.alias : card.id;
+  return deckCanonicalCounts.value.get(canonId) ?? (deckCounts.value.get(card.id) ?? 0);
+}
 
 // Filtered cards list from Pinia
 const cards = computed(() => store.filteredCards);

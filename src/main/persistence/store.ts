@@ -4,6 +4,8 @@ import Store from 'electron-store';
 import type { SettingsConfig } from '../../shared/types/character.js';
 import type { CustomDeck } from '../../shared/types/deck.js';
 
+import { getResourcePath } from '../decks/deckLoader.js';
+
 export interface AppStoreSchema {
   settings: SettingsConfig;
   customDecks: Record<string, CustomDeck>;
@@ -31,9 +33,9 @@ export const defaultSettings: SettingsConfig = {
   aiCustomEndpoints: {},
 };
 
-function loadAllPrebuiltDecks(): Record<string, CustomDeck> {
+export function loadAllPrebuiltDecks(): Record<string, CustomDeck> {
   try {
-    const jsonPath = path.resolve(process.cwd(), 'data/prebuilt-decks.json');
+    const jsonPath = getResourcePath('data/prebuilt-decks.json');
     if (fs.existsSync(jsonPath)) {
       const list: CustomDeck[] = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
       const map: Record<string, CustomDeck> = {};
@@ -104,7 +106,7 @@ export function savePersistedSettings(settings: Partial<SettingsConfig>): Settin
 
 export function getPersistedCustomDecks(): CustomDeck[] {
   const decksMap = appStore.get('customDecks') || {};
-  const prebuilt = defaultStarterDecks;
+  const prebuilt = Object.keys(defaultStarterDecks).length > 0 ? defaultStarterDecks : loadAllPrebuiltDecks();
   let hasMissingPrebuilt = false;
 
   // Always synchronize prebuilt decks so users receive updated card lists, archetypes, and avatars

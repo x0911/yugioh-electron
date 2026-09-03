@@ -27,11 +27,11 @@
     "attack": "resources/videos/cards/attack_74677422.mp4",
     "isPlaceholder": true
   },
-  "21844576": {
+  "89943723": {
     "cardName": "Elemental HERO Neos",
     "series": "GX",
-    "summon": "resources/videos/cards/summon_21844576.mp4",
-    "attack": "resources/videos/cards/attack_21844576.mp4",
+    "summon": "resources/videos/cards/summon_89943723.mp4",
+    "attack": "resources/videos/cards/attack_89943723.mp4",
     "isPlaceholder": true
   },
   "70095154": {
@@ -74,5 +74,12 @@
     "series": "DM",
     "victory": "resources/videos/cards/victory_33396948.mp4",
     "isPlaceholder": true
+  },
+  "99900001": {
+    "cardName": "Elemental HERO Egyxos",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_99900001.mp4",
+    "attack": "resources/videos/cards/attack_99900001.mp4",
+    "isPlaceholder": false
   }
 }

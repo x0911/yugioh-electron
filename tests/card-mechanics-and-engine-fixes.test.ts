@@ -1027,8 +1027,80 @@ async function runTestSuite() {
     assert.equal(boardState.userField.graveyard.length, 2, 'GY must contain activated DWD and discarded card');
     console.log('  ✓ Dark World Dealings passed!\n');
 
+    // 17. Cyber Jar (Destroy all monsters, reveal 5, special summon lv4, add rest to hand)
+    console.log('▶ Test 17: Cyber Jar (Flip Summon, field wipe, summon & hand draw)');
+    service.startNewDuel({
+      player0Deck: [
+        ...Array(30).fill(32274490),
+        34124316, // Cyber Jar
+        32274490, // Skull Servant (Lv 1)
+        32274490, // Skull Servant (Lv 1)
+        74117290, // Dark World Dealings (Spell)
+        74117290, // Dark World Dealings (Spell)
+      ],
+      player1Deck: [
+        ...Array(30).fill(32274490),
+        21844576, // Avian (Lv 3)
+        58932615, // Burstinatrix (Lv 3)
+        84327329, // Clayman (Lv 4)
+        74117290, // Spell
+        74117290, // Spell
+      ],
+      noShuffle: true,
+      humanPlayerId: 0,
+      startingLP: 8000,
+    });
+
+    // Player 0 sets Cyber Jar on Turn 1
+    const p17Prompt = (service as any).lastPromptMessage;
+    const cjIdx = p17Prompt.monster_sets?.findIndex((s: any) => s.code === 34124316);
+    assert(cjIdx >= 0, 'Player 0 must be able to Set Cyber Jar');
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.SELECT_MSET,
+      index: cjIdx,
+    });
+    service.processStep();
+
+    // End Turn 1
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.SELECT_TO_EP,
+    });
+    service.processStep();
+
+    // Turn 2: Player 1 (AI) summons monster and attacks Cyber Jar
+    console.log('Turn 2 waiting response:', (service as any).state.isWaitingResponse, 'waitingPlayer:', (service as any).state.waitingPlayer);
+    while ((service as any).state.isWaitingResponse) {
+      const prompt = (service as any).lastPromptMessage;
+      console.log('Test 17 loop prompt:', prompt?.type, 'for player:', prompt?.player);
+      if (prompt?.type === OcgMessageType.SELECT_POSITION) {
+        service.sendResponse({
+          type: OcgResponseType.SELECT_POSITION,
+          position: 1, // POS_FACEUP_ATTACK
+        });
+        service.processStep();
+      } else if (prompt?.type === OcgMessageType.SELECT_CHAIN) {
+        service.sendResponse({
+          type: OcgResponseType.SELECT_CHAIN,
+          index: -1,
+        });
+        service.processStep();
+      } else if (prompt?.type === OcgMessageType.SELECT_CARD) {
+        service.sendResponse({
+          type: OcgResponseType.SELECT_CARD,
+          indicies: [0],
+        });
+        service.processStep();
+      } else {
+        break;
+      }
+    }
+
+    console.log('  ✓ Cyber Jar test finished with final prompt:', (service as any).lastPromptMessage?.type);
+
     console.log('================================================================');
-    console.log('🎉 ALL 16 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 17 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();

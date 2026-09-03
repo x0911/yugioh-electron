@@ -2,7 +2,9 @@
 
 An offline, single-player (User vs AI) Yu-Gi-Oh! desktop game powered by **Electron**, **Vue 3**, **TypeScript**, **SCSS** (Ancient Duel Arena design system), and the official **`ygopro-core`** rules engine (EDOPro lineage via WebAssembly).
 
-Card pool is strictly restricted to the **original Yu-Gi-Oh! (Duel Monsters)** series and the **Yu-Gi-Oh! GX** series (2,826 legal cards).
+Card pool is strictly restricted to the **original Yu-Gi-Oh! (Duel Monsters)** series and the **Yu-Gi-Oh! GX** series (3,205 legal cards).
+
+> 📖 **Architectural Guide & AI Context**: For deep engine internals, data flow diagrams, alias rules, AI decision pipelines, and packaging notes, see [**Master Project Context & Architecture**](docs/PROJECT_CONTEXT_AND_ARCHITECTURE.md).
 
 ---
 

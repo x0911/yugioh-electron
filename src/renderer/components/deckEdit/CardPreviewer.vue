@@ -182,7 +182,8 @@ const fullImageUrl = computed(() => {
 
 const currentCopies = computed(() => {
   if (!card.value) return 0;
-  return store.deckCardCounts.get(card.value.id) ?? 0;
+  const canonId = card.value.alias && card.value.alias > 0 ? card.value.alias : card.value.id;
+  return store.deckCanonicalCounts.get(canonId) ?? (store.deckCardCounts.get(card.value.id) ?? 0);
 });
 
 function onPreviewDragStart(e: DragEvent): void {

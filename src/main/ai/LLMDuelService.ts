@@ -361,28 +361,23 @@ export class LLMDuelService {
 
     const characterName = personality.name || (context.boardState.userField.playerId === context.aiPlayerId ? context.boardState.userField.name : context.boardState.opponentField.name) || 'Duelist';
     const systemInstruction = `You are playing a high-stakes Yu-Gi-Oh! duel as ${characterName}.
-Your objective is to play strategically to win while maintaining your authentic persona, tactical insight, and dramatic character flair.
+Play strategically to win while maintaining your authentic persona and dramatic character flair.
 Tactical Principles:
-1. Preserve defensive traps (Mirror Force, Sakuretsu Armor, Dimensional Prison, Magic Cylinder) for major threats; do not waste removal on 0 ATK or weak attackers.
-2. Spot removal (Mystical Space Typhoon, Dust Tornado) should eliminate active continuous spells/traps, field spells, or dangerous face-down backrow; never target your own assets.
-3. Conserve resources and pass chain priority when the active trigger does not require disruption.
-Analyze the current board state, evaluate the legal choices available, and select the single best option.
-You MUST reply strictly with a valid JSON object matching this exact structure:
-{
-  "selectedIndex": <number>,
-  "reasoning": "<brief 1-sentence tactical rationale>",
-  "characterDialogue": "<1 dramatic in-character voice line delivered to the opponent>"
-}`;
+1. Preserve defensive traps for major threats; do not waste removal on 0 ATK attackers.
+2. Spot removal should eliminate active enemy threats or backrow; never target your own assets.
+3. Conserve resources and pass chain priority when disruption is unnecessary.
+Select the single best option. Reply strictly with a valid JSON object:
+{"selectedIndex": <number>, "reasoning": "<1 brief sentence>", "characterDialogue": "<1 dramatic in-character spoken voice line>"}`;
 
     const aiMonsters = aiField.monsterZones
       .filter(Boolean)
-      .map((m) => `${m!.name} (${m!.atk} ATK / ${m!.def} DEF, ${m!.position})`);
+      .map((m) => `${m!.name} (${m!.atk}/${m!.def}, ${m!.position})`);
     const aiSpells = aiField.spellTrapZones.filter(Boolean).map((s) => s!.name || 'Set Card');
     const aiHand = aiField.hand.map((h) => h.name || 'Card');
 
     const oppMonsters = oppField.monsterZones
       .filter(Boolean)
-      .map((m) => (m!.isRevealed ? `${m!.name} (${m!.atk} ATK / ${m!.def} DEF, ${m!.position})` : `Face-down Monster (${m!.position})`));
+      .map((m) => (m!.isRevealed ? `${m!.name} (${m!.atk}/${m!.def}, ${m!.position})` : `Face-down Monster (${m!.position})`));
     const oppBackrowCount = oppField.spellTrapZones.filter(Boolean).length;
     const oppHandCount = oppField.hand.length;
 
@@ -409,20 +404,16 @@ You MUST reply strictly with a valid JSON object matching this exact structure:
       return null;
     }
 
-    const userPrompt = `=== CURRENT DUEL SITUATION ===
-- Turn: ${currentTurn} | Phase: ${currentPhase}
-- Your Life Points (LP): ${aiField.currentLp} | Opponent LP: ${oppField.currentLp}
-- Your Hand (${aiHand.length}): ${aiHand.join(', ') || 'Empty'}
-- Your Monsters (${aiMonsters.length}): ${aiMonsters.join(', ') || 'None'}
-- Your Spells/Traps (${aiSpells.length}): ${aiSpells.join(', ') || 'None'}
-- Opponent Monsters (${oppMonsters.length}): ${oppMonsters.join(', ') || 'None'}
-- Opponent Backrow Count: ${oppBackrowCount} | Opponent Hand Count: ${oppHandCount}
+    const userPrompt = `=== DUEL STATE ===
+Turn ${currentTurn} (${currentPhase}) | Your LP: ${aiField.currentLp} | Opponent LP: ${oppField.currentLp}
+Your Hand (${aiHand.length}): ${aiHand.join(', ') || 'Empty'}
+Your Monsters (${aiMonsters.length}): ${aiMonsters.join(', ') || 'None'} | Backrow: ${aiSpells.join(', ') || 'None'}
+Opponent Monsters (${oppMonsters.length}): ${oppMonsters.join(', ') || 'None'} | Backrow: ${oppBackrowCount} | Hand: ${oppHandCount}
 
 === LEGAL ACTION CHOICES ===
 ${choices.map((c) => `[Option ${c.index}]: ${c.description}`).join('\n')}
 
-Select the single best Option Index [0 to ${choices.length - 1}], provide your tactical reasoning, and write 1 dramatic in-character spoken dialogue line.
-Reply with a valid JSON object: {"selectedIndex": <number>, "reasoning": "...", "characterDialogue": "..."}`;
+Select Option [0 to ${choices.length - 1}]. Reply strictly with JSON: {"selectedIndex": <number>, "reasoning": "...", "characterDialogue": "..."}`;
 
     return { systemInstruction, userPrompt, choices };
   }
@@ -569,6 +560,18 @@ Reply with a valid JSON object: {"selectedIndex": <number>, "reasoning": "...", 
       headers['Authorization'] = `Bearer ${apiKey}`;
     }
 
+    const modelLower = model.toLowerCase();
+    const isReasoningOrQwenModel =
+      modelLower.includes('qwen') ||
+      modelLower.includes('deepseek') ||
+      modelLower.includes('r1') ||
+      modelLower.includes('qwq') ||
+      modelLower.includes('reason');
+
+    // On Groq, reasoning/Qwen models fail Groq's JSON validator with HTTP 400 "Failed to validate JSON"
+    const useJsonObject = !(provider === 'groq' && isReasoningOrQwenModel);
+    const maxTokens = isReasoningOrQwenModel ? 1000 : 350;
+
     try {
       let res = await fetch(endpoint, {
         method: 'POST',
@@ -576,23 +579,75 @@ Reply with a valid JSON object: {"selectedIndex": <number>, "reasoning": "...", 
         body: JSON.stringify({
           model,
           messages: [
-            { role: 'system', content: promptData.systemInstruction },
+            {
+              role: 'system',
+              content:
+                promptData.systemInstruction +
+                (!useJsonObject ? '\nDo not include <think> or markdown tags. Reply with raw JSON only.' : ''),
+            },
             { role: 'user', content: promptData.userPrompt },
           ],
-          response_format: { type: 'json_object' },
-          max_tokens: 300,
-          temperature: 0.6,
+          ...(useJsonObject ? { response_format: { type: 'json_object' } } : {}),
+          max_tokens: maxTokens,
+          temperature: 0.5,
         }),
       });
 
       if (!res.ok) {
         let errText = await res.text();
+        let errorJson: any = null;
         try {
-          const j = JSON.parse(errText);
-          if (j.error?.message) errText = j.error.message;
+          errorJson = JSON.parse(errText);
+          if (errorJson?.error?.message) errText = errorJson.error.message;
         } catch {}
 
-        // If provider rejected json_object response format (e.g. Qwen on Groq), retry in raw mode
+        // 1. Try to recover from failed_generation if Groq returned json_validate_failed
+        const failedGen = errorJson?.error?.failed_generation || errorJson?.failed_generation;
+        if (failedGen) {
+          const recovered = this.parseJsonResponse(failedGen, promptData, provider.toUpperCase());
+          if (recovered) {
+            return { result: recovered };
+          }
+        }
+
+        // 2. Handle HTTP 429 rate limit backoff (if wait time is short, e.g. <= 3.5s)
+        if (res.status === 429) {
+          const waitMatch = errText.match(/try again in ([\d\.]+)s/i);
+          const waitSec = waitMatch ? parseFloat(waitMatch[1]) : 0;
+          if (waitSec > 0 && waitSec <= 3.5) {
+            const waitMs = Math.ceil(waitSec * 1000) + 200;
+            console.log(`[LLMDuelService] HTTP 429 rate limit on ${model}. Backing off for ${waitMs}ms before retry...`);
+            await new Promise((resolve) => setTimeout(resolve, waitMs));
+
+            try {
+              const retry429 = await fetch(endpoint, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  model,
+                  messages: [
+                    { role: 'system', content: promptData.systemInstruction },
+                    { role: 'user', content: promptData.userPrompt },
+                  ],
+                  max_tokens: maxTokens,
+                  temperature: 0.5,
+                  ...(useJsonObject ? { response_format: { type: 'json_object' } } : {}),
+                }),
+              });
+
+              if (retry429.ok) {
+                const data429: any = await retry429.json();
+                const text429 = data429?.choices?.[0]?.message?.content;
+                const parsed429 = this.parseJsonResponse(text429, promptData, provider.toUpperCase());
+                if (parsed429) {
+                  return { result: parsed429 };
+                }
+              }
+            } catch {}
+          }
+        }
+
+        // 3. If HTTP 400 validation error on JSON mode, retry in raw mode without response_format
         if (
           res.status === 400 &&
           (errText.includes('validate JSON') || errText.includes('response_format') || errText.includes('failed_generation'))
@@ -604,10 +659,13 @@ Reply with a valid JSON object: {"selectedIndex": <number>, "reasoning": "...", 
               body: JSON.stringify({
                 model,
                 messages: [
-                  { role: 'system', content: promptData.systemInstruction },
+                  {
+                    role: 'system',
+                    content: promptData.systemInstruction + '\nDo not output reasoning tags. Reply with raw JSON only.',
+                  },
                   { role: 'user', content: promptData.userPrompt },
                 ],
-                max_tokens: 300,
+                max_tokens: 800,
                 temperature: 0.3,
               }),
             });
@@ -622,7 +680,11 @@ Reply with a valid JSON object: {"selectedIndex": <number>, "reasoning": "...", 
           } catch {}
         }
 
-        return { result: null, error: `${provider.toUpperCase()} Error HTTP ${res.status}: ${errText}`, statusCode: res.status };
+        let formattedError = `${provider.toUpperCase()} Error HTTP ${res.status}: ${errText}`;
+        if (res.status === 429 && provider === 'groq' && isReasoningOrQwenModel) {
+          formattedError += ` (Tip: Model "${model}" has a strict 8,000 TPM limit on Groq. Switch to "llama-3.1-8b-instant" or "llama-3.3-70b-versatile" for high-limit dueling)`;
+        }
+        return { result: null, error: formattedError, statusCode: res.status };
       }
 
       const data: any = await res.json();
@@ -647,6 +709,7 @@ Reply with a valid JSON object: {"selectedIndex": <number>, "reasoning": "...", 
     try {
       // Strip any <think>...</think> reasoning tags emitted by Qwen/DeepSeek
       let cleanText = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      cleanText = cleanText.replace(/<think>[\s\S]*$/gi, '').trim();
       cleanText = cleanText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
       let parsed: any;
@@ -659,6 +722,26 @@ Reply with a valid JSON object: {"selectedIndex": <number>, "reasoning": "...", 
           try {
             parsed = JSON.parse(match[0]);
           } catch {}
+        }
+      }
+
+      // If standard JSON parsing failed due to unescaped quotes in dialogue or formatting quirks,
+      // extract properties directly via regex:
+      if (!parsed || typeof parsed !== 'object' || typeof parsed.selectedIndex !== 'number') {
+        const idxMatch = cleanText.match(/"selectedIndex"\s*:\s*(\d+)/i) || cleanText.match(/selectedIndex\D+(\d+)/i);
+        if (idxMatch) {
+          const selIdx = parseInt(idxMatch[1], 10);
+          const rMatch =
+            cleanText.match(/"reasoning"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/i) ||
+            cleanText.match(/"reasoning"\s*:\s*"([\s\S]*?)"\s*,\s*"characterDialogue"/i);
+          const dMatch =
+            cleanText.match(/"characterDialogue"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/i) ||
+            cleanText.match(/"characterDialogue"\s*:\s*"([\s\S]*?)"\s*[\n\r]*\}/i);
+          parsed = {
+            selectedIndex: selIdx,
+            reasoning: rMatch ? rMatch[1] : (parsed?.reasoning || ''),
+            characterDialogue: dMatch ? dMatch[1] : (parsed?.characterDialogue || ''),
+          };
         }
       }
 

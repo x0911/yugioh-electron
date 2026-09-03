@@ -19,6 +19,7 @@ import { CardReaderService } from './cardReader.js';
 import { ScriptReaderService } from './scriptReader.js';
 import { MessageDecoder, getAutoResponse, type DecodedDuelEvent } from './messageDecoder.js';
 import { ViewFilterService } from './viewFilter.js';
+import { getResourcePath } from '../decks/deckLoader.js';
 import {
   AIController,
   aiController,
@@ -150,7 +151,7 @@ export class DuelEngineService {
 
   private loadCardVideos(): void {
     try {
-      const jsonPath = path.resolve(process.cwd(), 'data/card-videos.json');
+      const jsonPath = getResourcePath('data/card-videos.json');
       if (fs.existsSync(jsonPath)) {
         const content = fs.readFileSync(jsonPath, 'utf-8');
         this.cardVideos = JSON.parse(content);
@@ -291,7 +292,7 @@ export class DuelEngineService {
     this.aiDeckCards = [...(aiDeck || [])];
 
     try {
-      const jsonPath = path.resolve(process.cwd(), 'data/characters.json');
+      const jsonPath = getResourcePath('data/characters.json');
       if (fs.existsSync(jsonPath)) {
         const chars = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
         const found = chars.find((c: any) => c.id === this.aiCharacterId);
@@ -708,15 +709,17 @@ export class DuelEngineService {
     // 1. Summon / Special Summon Video Trigger
     if ((rawType === OcgMessageType.SUMMONING || rawType === OcgMessageType.SPSUMMONING) && 'code' in msg) {
       const code = msg.code as number;
-      const entry = this.cardVideos[String(code)];
+      const canonicalCode = this.cardReader.getCanonicalCode(code);
+      const entry = this.cardVideos[String(code)] || (canonicalCode > 0 ? this.cardVideos[String(canonicalCode)] : undefined);
       if (entry && entry.summon) {
+        const hasRealFile = this.isVideoFileExisting(entry.summon);
         return {
           code,
           cardName: entry.cardName || this.cardReader.getCardName(code),
           videoType: 'summon',
           videoPath: entry.summon,
           controller: msg.controller,
-          isPlaceholder: !!entry.isPlaceholder,
+          isPlaceholder: hasRealFile ? false : !!entry.isPlaceholder,
         };
       }
     }
@@ -730,15 +733,17 @@ export class DuelEngineService {
         code = pf.monsterZones[cardInfo.sequence]?.code ?? 0;
       }
       if (code > 0) {
-        const entry = this.cardVideos[String(code)];
+        const canonicalCode = this.cardReader.getCanonicalCode(code);
+        const entry = this.cardVideos[String(code)] || (canonicalCode > 0 ? this.cardVideos[String(canonicalCode)] : undefined);
         if (entry && entry.attack) {
+          const hasRealFile = this.isVideoFileExisting(entry.attack);
           return {
             code,
             cardName: entry.cardName || this.cardReader.getCardName(code),
             videoType: 'attack',
             videoPath: entry.attack,
             controller: cardInfo.controller,
-            isPlaceholder: !!entry.isPlaceholder,
+            isPlaceholder: hasRealFile ? false : !!entry.isPlaceholder,
           };
         }
       }
@@ -748,18 +753,34 @@ export class DuelEngineService {
     if (rawType === OcgMessageType.WIN && 'reason' in msg) {
       const reason = msg.reason as number;
       if (reason === 0x10) {
+        const victoryPath = 'resources/videos/cards/victory_33396948.mp4';
+        const hasRealFile = this.isVideoFileExisting(victoryPath);
         return {
           code: 33396948,
           cardName: 'Exodia the Forbidden One',
           videoType: 'victory',
-          videoPath: 'resources/videos/cards/victory_33396948.mp4',
+          videoPath: victoryPath,
           controller: typeof msg.player === 'number' ? msg.player : 0,
-          isPlaceholder: true,
+          isPlaceholder: hasRealFile ? false : true,
         };
       }
     }
 
     return null;
+  }
+
+  private isVideoFileExisting(relPath?: string): boolean {
+    if (!relPath) return false;
+    try {
+      const fullPath = getResourcePath(relPath);
+      if (fs.existsSync(fullPath)) {
+        const stats = fs.statSync(fullPath);
+        return stats.size > 1000;
+      }
+    } catch {
+      return false;
+    }
+    return false;
   }
 
   private updateBoardStateFromMessage(msg: OcgMessage): void {
@@ -1236,14 +1257,32 @@ export class DuelEngineService {
           value: typeof (response as any).value === 'number' ? (response as any).value : Number((response as any).value),
         };
       case OcgResponseType.SELECT_CARD:
-      case OcgResponseType.SELECT_TRIBUTE:
-        if ((response as any).indicies) {
+      case OcgResponseType.SELECT_TRIBUTE: {
+        const resp = response as any;
+        const promptMsg = this.lastPromptMessage as any;
+        if (resp.indicies === null || resp.indicies === undefined) {
           return {
             ...response,
-            indicies: (response as any).indicies.map((i: any) => Number(i)),
+            indicies: null,
           };
         }
-        break;
+        if (
+          Array.isArray(resp.indicies) &&
+          resp.indicies.length === 0 &&
+          promptMsg &&
+          promptMsg.min > 0 &&
+          promptMsg.can_cancel
+        ) {
+          return {
+            ...response,
+            indicies: null,
+          };
+        }
+        return {
+          ...response,
+          indicies: resp.indicies.map((i: any) => Number(i)),
+        };
+      }
       case OcgResponseType.SELECT_SUM:
         if ((response as any).indicies) {
           return {
@@ -1512,6 +1551,8 @@ export class DuelEngineService {
       const status = this.lib.duelProcess(handle);
       const rawMessages = this.lib.duelGetMessage(handle);
 
+      let pendingVideoPayload: CardVideoPayload | null = null;
+
       for (const msg of rawMessages) {
         const decoded = this.messageDecoder.decode(msg);
         allDecodedEvents.push(decoded);
@@ -1521,6 +1562,9 @@ export class DuelEngineService {
 
         // Check for special card video triggers (summon/attack)
         const videoPayload = this.checkVideoTrigger(msg);
+        if (videoPayload && !pendingVideoPayload) {
+          pendingVideoPayload = videoPayload;
+        }
 
         if (decoded.type === 'NEW_TURN') {
           this.state.currentTurn++;
@@ -1571,35 +1615,46 @@ export class DuelEngineService {
         if (!decoded.isPrompt) {
           this.emitEvent(decoded);
         }
-
-        // If a video trigger fired: freeze engine, clear AI timers, emit video event and pause process loop
-        if (videoPayload) {
-          this.isVideoPlaying = true;
-          this.state.isVideoPlaying = true;
-          if (this.aiStepTimer) {
-            clearTimeout(this.aiStepTimer);
-            this.aiStepTimer = null;
-          }
-          this.emitVideoEvent(videoPayload);
-          break;
-        }
       }
 
       this.state.stepCount++;
-
-      if (this.isVideoPlaying) {
-        break;
-      }
 
       if (this.state.winner !== null || status === OcgProcessResult.END) {
         this.state.isActive = false;
         this.state.isWaitingResponse = false;
         this.lastPromptMessage = null;
+        if (pendingVideoPayload) {
+          this.isVideoPlaying = true;
+          this.state.isVideoPlaying = true;
+          this.emitVideoEvent(pendingVideoPayload);
+        }
+        break;
+      }
+
+      if (pendingVideoPayload && status !== OcgProcessResult.WAITING) {
+        this.isVideoPlaying = true;
+        this.state.isVideoPlaying = true;
+        if (this.aiStepTimer) {
+          clearTimeout(this.aiStepTimer);
+          this.aiStepTimer = null;
+        }
+        this.emitVideoEvent(pendingVideoPayload);
         break;
       }
 
       if (status === OcgProcessResult.WAITING) {
-        const lastMsg = rawMessages[rawMessages.length - 1];
+        let lastMsg: OcgMessage | null = null;
+        for (let i = rawMessages.length - 1; i >= 0; i--) {
+          const decoded = this.messageDecoder.decode(rawMessages[i]);
+          if (decoded.isPrompt) {
+            lastMsg = rawMessages[i];
+            break;
+          }
+        }
+        if (!lastMsg && rawMessages.length > 0) {
+          lastMsg = rawMessages[rawMessages.length - 1];
+        }
+
         if (lastMsg) {
           const promptPlayer = 'player' in lastMsg ? (lastMsg.player as number) : 0;
           this.state.isWaitingResponse = true;
@@ -1635,6 +1690,18 @@ export class DuelEngineService {
             this.state.waitingPlayer = null;
             this.lastPromptMessage = null;
             continue;
+          }
+
+          // If a video trigger was encountered in this step, pause here BEFORE scheduling AI or prompt
+          if (pendingVideoPayload) {
+            this.isVideoPlaying = true;
+            this.state.isVideoPlaying = true;
+            if (this.aiStepTimer) {
+              clearTimeout(this.aiStepTimer);
+              this.aiStepTimer = null;
+            }
+            this.emitVideoEvent(pendingVideoPayload);
+            break;
           }
 
           const isOpponent = promptPlayer !== this.humanPlayerId;
@@ -1708,7 +1775,10 @@ export class DuelEngineService {
         this.lastPromptMessage?.type === OcgMessageType.SELECT_BATTLECMD &&
         (response as any).type === OcgResponseType.SELECT_BATTLECMD
       ) {
-        if ((response as any).action === SelectBattleCMDAction.SELECT_ATTACK) {
+        if (
+          (response as any).action === SelectBattleCMDAction.SELECT_BATTLE ||
+          (response as any).action === 1
+        ) {
           const attackIndex = (response as any).index;
           const attackEntry = (this.lastPromptMessage as any).attacks?.[attackIndex];
           if (attackEntry) {

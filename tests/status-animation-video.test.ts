@@ -133,8 +133,8 @@ const viewFilter = new ViewFilterService();
   assert.equal(content['89631139'].cardName, 'Blue-Eyes White Dragon');
   assert.ok(content['89631139'].attack);
 
-  assert.ok(content['21844576'], 'Elemental HERO Neos (21844576) mapped');
-  assert.equal(content['21844576'].series, 'GX');
+  assert.ok(content['89943723'], 'Elemental HERO Neos (89943723) mapped');
+  assert.equal(content['89943723'].series, 'GX');
 
   assert.ok(content['70781052'], 'Summoned Skull (70781052) mapped');
 

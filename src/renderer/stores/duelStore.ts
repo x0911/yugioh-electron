@@ -298,6 +298,20 @@ export const useDuelStore = defineStore('duel', {
       return state.selectedTargetIndices.length >= min && state.selectedTargetIndices.length <= max;
     },
 
+    isAttackTargetPrompt(state): boolean {
+      if (!state.activeSelectCard) return false;
+      const min = state.activeSelectCard.min;
+      const max = state.activeSelectCard.max;
+      if (min !== 1 || max !== 1) return false;
+      if (state.boardState.currentPhase === 'BP') {
+        const selects = state.activeSelectCard.selects || [];
+        if (selects.length > 0 && selects.every((s) => s.controller !== state.userPlayerId)) {
+          return true;
+        }
+      }
+      return false;
+    },
+
     activatableGraveyardCards(): Array<{ card: FieldCard; actions: CardActionOption[] }> {
       const pf = this.boardState.userField;
       if (!pf || !pf.graveyard) return [];
@@ -2087,11 +2101,19 @@ export const useDuelStore = defineStore('duel', {
       return null;
     },
 
-    toggleTargetByIndex(selectIndex: number): void {
+    async toggleTargetByIndex(selectIndex: number): Promise<void> {
       if (this.activeSelectUnselectCard) {
-        this.executeSelectUnselectCard(selectIndex);
+        await this.executeSelectUnselectCard(selectIndex);
         return;
       }
+
+      // 1-Click Attack Execution: directly execute attack when selecting opponent target monster!
+      if (this.isAttackTargetPrompt) {
+        this.selectedTargetIndices = [selectIndex];
+        await this.executeSelectCard([selectIndex]);
+        return;
+      }
+
       const maxAllowed = this.activeSelectSum?.max || this.activeSelectTribute?.max || this.activeSelectCard?.max || 99;
       const existingPos = this.selectedTargetIndices.indexOf(selectIndex);
       if (existingPos >= 0) {
@@ -2132,8 +2154,11 @@ export const useDuelStore = defineStore('duel', {
       if (this.activeSelectUnselectCard && this.activeSelectUnselectCard.can_cancel) {
         return this.executeSelectUnselectCard(null);
       }
-      if (this.activeSelectCard && this.activeSelectCard.can_cancel) {
-        return this.executeSelectCard([]);
+      if (this.activeSelectCard && (this.activeSelectCard.can_cancel || this.isAttackTargetPrompt)) {
+        return this.executeSelectCard(null);
+      }
+      if (this.activeSelectTribute && this.activeSelectTribute.can_cancel) {
+        return this.executeSelectTribute(null);
       }
       return false;
     },
@@ -2248,7 +2273,7 @@ export const useDuelStore = defineStore('duel', {
       });
     },
 
-    async executeSelectCard(selectedIndices: number[]): Promise<boolean> {
+    async executeSelectCard(selectedIndices: number[] | null): Promise<boolean> {
       this.isCardSelectionModalOpen = false;
       return this.sendCommand({
         type: 5, // SELECT_CARD
@@ -2268,7 +2293,7 @@ export const useDuelStore = defineStore('duel', {
       });
     },
 
-    async executeSelectTribute(selectedIndices: number[]): Promise<boolean> {
+    async executeSelectTribute(selectedIndices: number[] | null): Promise<boolean> {
       this.isCardSelectionModalOpen = false;
       return this.sendCommand({
         type: 12, // SELECT_TRIBUTE

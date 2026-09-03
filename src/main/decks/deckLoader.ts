@@ -1,25 +1,63 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { app } from 'electron';
 import type { CharacterData, CharacterDeckData } from '../../shared/types/character.js';
 
 let cachedCharacters: CharacterData[] | null = null;
 
+function getElectronApp(): any {
+  try {
+    // @ts-ignore
+    const electron = globalThis.electron || (typeof process !== 'undefined' && (process as any).type ? require('electron') : null);
+    return electron?.app || electron?.default?.app || null;
+  } catch {
+    return null;
+  }
+}
+
 export function getResourcePath(relativePath: string): string {
-  const isPackaged = app ? app.isPackaged : false;
-  if (isPackaged) {
-    // In packaged app, extraResources maps resources/ to process.resourcesPath
+  // Check process.resourcesPath first (packaged Electron)
+  if (typeof process.resourcesPath === 'string' && process.resourcesPath) {
     const candidateResource = path.join(process.resourcesPath, relativePath);
     if (fs.existsSync(candidateResource)) {
       return candidateResource;
     }
-    // Check app path for data/
-    const candidateApp = path.join(app.getAppPath(), relativePath);
-    if (fs.existsSync(candidateApp)) {
-      return candidateApp;
+    const cleanSub = relativePath.replace(/^(?:resources|data)[\/\\]/, '');
+    const candidateSub = path.join(process.resourcesPath, cleanSub);
+    if (fs.existsSync(candidateSub)) {
+      return candidateSub;
     }
   }
-  return path.resolve(process.cwd(), relativePath);
+
+  // Check app.getAppPath()
+  const electronApp = getElectronApp();
+  if (electronApp && typeof electronApp.getAppPath === 'function') {
+    try {
+      const candidateApp = path.join(electronApp.getAppPath(), relativePath);
+      if (fs.existsSync(candidateApp)) {
+        return candidateApp;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Check current working directory
+  const cwdPath = path.resolve(process.cwd(), relativePath);
+  if (fs.existsSync(cwdPath)) {
+    return cwdPath;
+  }
+
+  // Fallback relative to __dirname
+  try {
+    const dirnameFallback = path.resolve(__dirname, '../../../../', relativePath);
+    if (fs.existsSync(dirnameFallback)) {
+      return dirnameFallback;
+    }
+  } catch {
+    // ignore
+  }
+
+  return cwdPath;
 }
 
 export function loadCharacters(): CharacterData[] {

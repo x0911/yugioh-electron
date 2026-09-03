@@ -1294,6 +1294,7 @@ export class MessageDecoder {
 
         promptData = {
           player: msg.player,
+          can_cancel: msg.can_cancel,
           min: msg.min,
           max: msg.max,
           selects: msg.selects.map((s) => ({

@@ -52,9 +52,19 @@ export class TacticalMemoryStore {
   private memory: TacticalMemoryData;
 
   constructor(customPath?: string) {
-    this.memoryPath =
-      customPath ||
-      path.join(process.cwd(), 'userData', 'ai-tactical-memory.json');
+    let defaultPath = path.join(process.cwd(), 'userData', 'ai-tactical-memory.json');
+    try {
+      // @ts-ignore
+      const electron = require('electron');
+      const app = electron.app || electron.remote?.app;
+      if (app && typeof app.getPath === 'function') {
+        defaultPath = path.join(app.getPath('userData'), 'ai-tactical-memory.json');
+      }
+    } catch {
+      // ignore
+    }
+
+    this.memoryPath = customPath || defaultPath;
     this.memory = this.load();
   }
 

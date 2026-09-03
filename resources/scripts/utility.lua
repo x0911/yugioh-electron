@@ -46,10 +46,13 @@ end
 function Auxiliary.GetCount(g)
 	if not g then return 0 end
 	local t = type(g)
-	if t == "table" or t == "string" then
+	if t == "userdata" then
+		local ok, count = pcall(function() return g:GetCount() end)
+		if ok and type(count) == "number" then
+			return count
+		end
+	elseif t == "table" or t == "string" then
 		return #g
-	elseif t == "userdata" and g.GetCount then
-		return g:GetCount()
 	end
 	return 0
 end

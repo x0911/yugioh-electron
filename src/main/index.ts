@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, protocol, net } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
+import { Readable } from 'node:stream';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { registerIpcHandlers } from './ipc/index';
 import { APP_CONFIG } from '../shared/constants/index';
@@ -101,8 +102,43 @@ if (!gotTheLock) {
     }
   });
 
+function getResourceMimeType(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  switch (ext) {
+    case '.mp4':
+      return 'video/mp4';
+    case '.webm':
+      return 'video/webm';
+    case '.mp3':
+      return 'audio/mpeg';
+    case '.wav':
+      return 'audio/wav';
+    case '.ogg':
+      return 'audio/ogg';
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.png':
+      return 'image/png';
+    case '.webp':
+      return 'image/webp';
+    case '.svg':
+      return 'image/svg+xml';
+    case '.json':
+      return 'application/json';
+    case '.woff2':
+      return 'font/woff2';
+    case '.woff':
+      return 'font/woff';
+    case '.ttf':
+      return 'font/ttf';
+    default:
+      return 'application/octet-stream';
+  }
+}
+
   app.whenReady().then(() => {
-    // Protocol handler for app-resource://
+    // Protocol handler for app-resource:// with full HTTP 206 Range support for video/audio streaming
     protocol.handle('app-resource', async (request) => {
       try {
         const urlObj = new URL(request.url);
@@ -139,7 +175,52 @@ if (!gotTheLock) {
         }
 
         if (fs.existsSync(targetPath)) {
-          return net.fetch(pathToFileURL(targetPath).toString());
+          const stats = fs.statSync(targetPath);
+          const fileSize = stats.size;
+          const mimeType = getResourceMimeType(targetPath);
+          const rangeHeader = request.headers.get('range');
+
+          // Support partial content range requests for video and audio (vital for MP4 seeking/demuxing)
+          if (rangeHeader && (mimeType.startsWith('video/') || mimeType.startsWith('audio/'))) {
+            const matches = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+            if (matches) {
+              const start = parseInt(matches[1], 10);
+              const end = matches[2] ? parseInt(matches[2], 10) : fileSize - 1;
+
+              if (start >= fileSize || end >= fileSize || start > end) {
+                return new Response(null, {
+                  status: 416,
+                  headers: { 'Content-Range': `bytes */${fileSize}` },
+                });
+              }
+
+              const chunkSize = end - start + 1;
+              const fileStream = fs.createReadStream(targetPath, { start, end });
+              const webStream = Readable.toWeb(fileStream);
+
+              return new Response(webStream as any, {
+                status: 206,
+                headers: {
+                  'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                  'Accept-Ranges': 'bytes',
+                  'Content-Length': String(chunkSize),
+                  'Content-Type': mimeType,
+                },
+              });
+            }
+          }
+
+          // Full file stream with accurate MIME type and Accept-Ranges
+          const fileStream = fs.createReadStream(targetPath);
+          const webStream = Readable.toWeb(fileStream);
+          return new Response(webStream as any, {
+            status: 200,
+            headers: {
+              'Accept-Ranges': 'bytes',
+              'Content-Length': String(fileSize),
+              'Content-Type': mimeType,
+            },
+          });
         }
       } catch (err) {
         console.error('[Protocol app-resource] Error loading resource:', request.url, err);

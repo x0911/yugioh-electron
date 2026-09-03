@@ -263,16 +263,19 @@
     <div
       v-if="duelStore.hasActiveSelectionPrompt && !duelStore.isCardSelectionModalOpen"
       class="target-confirmation-bar glass-panel"
+      :class="{ 'target-confirmation-bar--attack': duelStore.isAttackTargetPrompt }"
     >
       <div class="target-bar-info">
-        <span class="target-bar-icon">{{ actionGuideInfo?.categoryIcon || '🎯' }}</span>
+        <span class="target-bar-icon">{{ duelStore.isAttackTargetPrompt ? '⚔️' : (actionGuideInfo?.categoryIcon || '🎯') }}</span>
         <div class="target-bar-text">
-          <span class="target-bar-title">{{ actionGuideInfo?.instruction }}</span>
-          <span v-if="actionGuideInfo?.subText" class="target-bar-detail">{{ actionGuideInfo.subText }}</span>
+          <span class="target-bar-title">{{ duelStore.isAttackTargetPrompt ? 'Select an Opponent Monster to Attack' : actionGuideInfo?.instruction }}</span>
+          <span v-if="duelStore.isAttackTargetPrompt" class="target-bar-detail">Click any highlighted enemy monster to initiate combat immediately.</span>
+          <span v-else-if="actionGuideInfo?.subText" class="target-bar-detail">{{ actionGuideInfo.subText }}</span>
         </div>
       </div>
       <div class="target-bar-actions">
         <button
+          v-if="!duelStore.isAttackTargetPrompt"
           class="micro-btn micro-btn--browse"
           title="Open modal to browse and filter available cards"
           @click="duelStore.openCardSelectionModal"
@@ -280,13 +283,14 @@
           📋 Browse Cards ({{ duelStore.selectedTargetIndices.length }}/{{ duelStore.activeSelectionMax }})
         </button>
         <button
-          v-if="duelStore.activeSelectCard?.can_cancel || duelStore.activeSelectUnselectCard?.can_cancel"
+          v-if="duelStore.activeSelectCard?.can_cancel || duelStore.activeSelectUnselectCard?.can_cancel || duelStore.activeSelectTribute?.can_cancel || duelStore.isAttackTargetPrompt"
           class="micro-btn micro-btn--cancel"
           @click="duelStore.cancelActiveSelection"
         >
-          Cancel
+          {{ duelStore.isAttackTargetPrompt ? '✕ Cancel Attack' : 'Cancel' }}
         </button>
         <button
+          v-if="!duelStore.isAttackTargetPrompt"
           class="micro-btn micro-btn--confirm"
           :disabled="!duelStore.canConfirmActiveSelection"
           @click="duelStore.confirmActiveSelection"
@@ -1820,6 +1824,17 @@ onUnmounted(() => {
   backdrop-filter: blur(12px);
   z-index: 400;
   animation: modalPop 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &.target-confirmation-bar--attack {
+    border-color: rgba(239, 68, 68, 0.85);
+    box-shadow:
+      0 12px 32px rgba(0, 0, 0, 0.85),
+      0 0 28px rgba(239, 68, 68, 0.45);
+
+    .target-bar-title {
+      color: #fca5a5;
+    }
+  }
 }
 
 .target-bar-info {

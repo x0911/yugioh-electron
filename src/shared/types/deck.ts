@@ -51,6 +51,7 @@ export function validateDeck(
   mainOrDeck: number[] | CustomDeck,
   extraCards?: number[],
   getCardName?: (id: number) => string,
+  getCanonicalId?: (id: number) => number,
 ): DeckValidity {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -85,18 +86,24 @@ export function validateDeck(
     );
   }
 
-  // Count copies of each card across main + extra
+  // Count copies of each card across main + extra by canonical ID
   const counts = new Map<number, number>();
+  const representativeId = new Map<number, number>();
   for (const id of main) {
-    counts.set(id, (counts.get(id) ?? 0) + 1);
+    const canon = getCanonicalId ? getCanonicalId(id) : id;
+    counts.set(canon, (counts.get(canon) ?? 0) + 1);
+    if (!representativeId.has(canon)) representativeId.set(canon, id);
   }
   for (const id of extra) {
-    counts.set(id, (counts.get(id) ?? 0) + 1);
+    const canon = getCanonicalId ? getCanonicalId(id) : id;
+    counts.set(canon, (counts.get(canon) ?? 0) + 1);
+    if (!representativeId.has(canon)) representativeId.set(canon, id);
   }
 
-  for (const [id, count] of counts.entries()) {
+  for (const [canonId, count] of counts.entries()) {
     if (count > DECK_LIMITS.MAX_COPIES_PER_CARD) {
-      const cardTitle = getCardName ? getCardName(id) : `Card #${id}`;
+      const repId = representativeId.get(canonId) || canonId;
+      const cardTitle = getCardName ? getCardName(repId) : `Card #${repId}`;
       errors.push(
         `Exceeds maximum ${DECK_LIMITS.MAX_COPIES_PER_CARD} copies: "${cardTitle}" (${count} copies found).`,
       );

@@ -201,6 +201,24 @@ export const useDeckEditStore = defineStore('deckEdit', {
       return counts;
     },
 
+    deckCanonicalCounts(state): Map<number, number> {
+      const counts = new Map<number, number>();
+      const cardMap = this.cardMap;
+      const getCanon = (id: number) => {
+        const c = cardMap.get(id);
+        return c && c.alias && c.alias > 0 ? c.alias : id;
+      };
+      for (const id of state.activeDeck.main) {
+        const canon = getCanon(id);
+        counts.set(canon, (counts.get(canon) ?? 0) + 1);
+      }
+      for (const id of state.activeDeck.extra) {
+        const canon = getCanon(id);
+        counts.set(canon, (counts.get(canon) ?? 0) + 1);
+      }
+      return counts;
+    },
+
     mainDeckGrouped: (state): GroupedDeckCard[] => {
       const countMap = new Map<number, number>();
       for (const id of state.activeDeck.main) {
@@ -259,7 +277,11 @@ export const useDeckEditStore = defineStore('deckEdit', {
     deckValidity(state): DeckValidity {
       const cardMap = this.cardMap;
       const getCardName = (id: number) => cardMap.get(id)?.name || `Card #${id}`;
-      const validity = validateDeck(state.activeDeck.main, state.activeDeck.extra, getCardName);
+      const getCanonicalId = (id: number) => {
+        const c = cardMap.get(id);
+        return c && c.alias && c.alias > 0 ? c.alias : id;
+      };
+      const validity = validateDeck(state.activeDeck.main, state.activeDeck.extra, getCardName, getCanonicalId);
       const stats = this.deckStats;
       validity.monsterCount = stats.monsters;
       validity.spellCount = stats.spells;
@@ -489,7 +511,8 @@ export const useDeckEditStore = defineStore('deckEdit', {
       const card = this.cardMap.get(cardId);
       if (!card) return false;
 
-      const currentCount = this.deckCardCounts.get(cardId) ?? 0;
+      const canonId = card.alias && card.alias > 0 ? card.alias : cardId;
+      const currentCount = this.deckCanonicalCounts.get(canonId) ?? 0;
       if (currentCount >= DECK_LIMITS.MAX_COPIES_PER_CARD) {
         this.showToast(
           `Cannot add more than ${DECK_LIMITS.MAX_COPIES_PER_CARD} copies of "${card.name}".`,
