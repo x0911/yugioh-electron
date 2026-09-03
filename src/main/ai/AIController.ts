@@ -1041,7 +1041,9 @@ export class AIController {
   }
 
   private decideSelectSum(msg: OcgMessage, _context: EvaluatorContext): OcgResponse {
-    const candidates = msg.selects && msg.selects.length > 0 ? msg.selects : [];
+    const candidates = (msg.selects && msg.selects.length > 0)
+      ? msg.selects
+      : (msg.selects_must && msg.selects_must.length > 0 ? msg.selects_must : []);
     if (candidates.length === 0) {
       return {
         type: OcgResponseType.SELECT_SUM,
