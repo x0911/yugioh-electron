@@ -1,0 +1,10 @@
+# Enforce consistent LF line endings across all platforms
+* text=auto eol=lf
+*.cdb binary
+*.jpg binary
+*.png binary
+*.webp binary
+*.mp4 binary
+*.webm binary
+*.tar.gz binary
+*.zip binary

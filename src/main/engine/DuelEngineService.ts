@@ -1653,11 +1653,10 @@ export class DuelEngineService {
         }
         if (!lastMsg && rawMessages.length > 0) {
           const fallback = rawMessages[rawMessages.length - 1];
-          if (fallback.type === OcgMessageType.RETRY) {
-            console.warn('[DuelEngineService] OCGCORE requested RETRY of prompt:', this.lastPromptMessage ? OcgMessageType[this.lastPromptMessage.type] : 'none');
-            lastMsg = this.lastPromptMessage;
-          } else {
+          if (fallback.type !== OcgMessageType.RETRY) {
             lastMsg = fallback;
+          } else {
+            console.warn('[DuelEngineService] OCGCORE emitted RETRY message without new prompt');
           }
         }
 
@@ -1754,6 +1753,8 @@ export class DuelEngineService {
                 });
             } else {
               const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
+              console.log(`[AI Debug] Prompt: ${OcgMessageType[lastMsg.type]} for P${promptPlayer}`, JSON.stringify(lastMsg, (k, v) => typeof v === 'bigint' ? v.toString() : v));
+              console.log(`[AI Debug] Response: ${OcgResponseType[response.type]}`, JSON.stringify(response, (k, v) => typeof v === 'bigint' ? v.toString() : v));
               this.scheduleAiResponse(handle, response, delayMs);
             }
             break;
