@@ -1041,7 +1041,7 @@ export class AIController {
   }
 
   private decideSelectSum(msg: OcgMessage, _context: EvaluatorContext): OcgResponse {
-    const candidates = [...(msg.selects_must || []), ...(msg.selects || [])];
+    const candidates = msg.selects && msg.selects.length > 0 ? msg.selects : [];
     if (candidates.length === 0) {
       return {
         type: OcgResponseType.SELECT_SUM,
@@ -1053,6 +1053,12 @@ export class AIController {
     const minCount = Math.max(1, msg.min || 1);
     const maxCount = msg.max && msg.max > 0 ? msg.max : candidates.length;
     const isEqualMode = msg.select_max === 0;
+
+    let mustSum = 0;
+    for (const m of (msg.selects_must || [])) {
+      const rawAmt = m.amount ?? 0;
+      mustSum += (rawAmt & 0xffff) || 1;
+    }
 
     const getCardValues = (c: any): number[] => {
       const rawAmt = c.amount ?? 0;
@@ -1098,7 +1104,7 @@ export class AIController {
       return false;
     };
 
-    search(0, [], 0);
+    search(0, [], mustSum);
 
     const indicies = bestIndices ?? Array.from({ length: Math.min(minCount, candidates.length) }, (_, i) => i);
     return {

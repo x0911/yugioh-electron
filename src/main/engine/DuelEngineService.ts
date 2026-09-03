@@ -1652,7 +1652,13 @@ export class DuelEngineService {
           }
         }
         if (!lastMsg && rawMessages.length > 0) {
-          lastMsg = rawMessages[rawMessages.length - 1];
+          const fallback = rawMessages[rawMessages.length - 1];
+          if (fallback.type === OcgMessageType.RETRY) {
+            console.warn('[DuelEngineService] OCGCORE requested RETRY of prompt:', this.lastPromptMessage ? OcgMessageType[this.lastPromptMessage.type] : 'none');
+            lastMsg = this.lastPromptMessage;
+          } else {
+            lastMsg = fallback;
+          }
         }
 
         if (lastMsg) {

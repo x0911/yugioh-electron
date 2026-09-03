@@ -48,7 +48,7 @@ async function testAiRitualSummon() {
     startingDrawCount: 5,
     drawCountPerTurn: 1,
     humanPlayerId: 1,
-    autoPlay: false,
+    autoPlay: true,
   });
 
   const start = Date.now();
