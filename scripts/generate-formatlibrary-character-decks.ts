@@ -473,7 +473,7 @@ export async function generateAllCharacterDecks(): Promise<void> {
       // CustomDeck data for prebuilt-decks.json
       const prebuiltDeck: CustomDeck = {
         id: deckId,
-        name: `${char.name} — ${tDeck.deckTypeName}`,
+        name: `${char.name} — ${cleanName}`,
         main: tDeck.main,
         extra: tDeck.extra,
         createdAt: 1700000000000 + totalAssignedDecks * 1000,

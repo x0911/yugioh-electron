@@ -127,6 +127,18 @@ export function getPersistedCustomDecks(): CustomDeck[] {
     }
   }
 
+  // Purge any orphaned prebuilt decks from older versions that no longer exist in data/prebuilt-decks.json
+  // Strictly preserve user custom decks (category === 'custom' and id.startsWith('deck-'))
+  for (const [id, existing] of Object.entries(decksMap)) {
+    if (!prebuilt[id]) {
+      const isTrueUserCustom = existing.category === 'custom' && (id.startsWith('deck-') || !existing.characterId);
+      if (!isTrueUserCustom) {
+        delete decksMap[id];
+        hasMissingPrebuilt = true;
+      }
+    }
+  }
+
   if (hasMissingPrebuilt || Object.keys(decksMap).length === 0) {
     appStore.set('customDecks', decksMap);
   }
