@@ -12,11 +12,14 @@ permissions:
 jobs:
   build:
     name: Build Installer (Windows x64)
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+
+      - name: Setup Visual Studio MSVC Environment
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
@@ -27,14 +30,20 @@ jobs:
       - name: Install NPM Dependencies
         run: npm ci
 
-      # Fetch media assets pack from GitHub Releases if available, otherwise generate procedural assets
+      # Fetch custom media assets pack (videos, audio, characters, backgrounds) from GitHub Releases
       - name: Setup Game Media Assets
         shell: bash
         run: |
-          echo "Attempting to download pre-packaged media assets from GitHub Release assets-v1..."
+          echo "Downloading pre-packaged media assets from GitHub Release assets-v1..."
+          MEDIA_URL="https://github.com/x0911/yugioh-electron/releases/download/assets-v1/game-media.tar.gz"
           ASSETS_URL="https://github.com/x0911/yugioh-electron/releases/download/assets-v1/game-assets.tar.gz"
-          if curl -fsSL -I "$ASSETS_URL" >/dev/null 2>&1; then
-            echo "✓ Found remote media assets bundle. Downloading and extracting..."
+          if curl -fsSL -I "$MEDIA_URL" >/dev/null 2>&1; then
+            echo "✓ Found game-media.tar.gz. Downloading and extracting..."
+            curl -fsSL -o game-media.tar.gz "$MEDIA_URL"
+            tar -xzf game-media.tar.gz
+            echo "✓ Custom media assets extracted successfully."
+          elif curl -fsSL -I "$ASSETS_URL" >/dev/null 2>&1; then
+            echo "✓ Found game-assets.tar.gz. Downloading and extracting..."
             curl -fsSL -o game-assets.tar.gz "$ASSETS_URL"
             tar -xzf game-assets.tar.gz
             echo "✓ Media assets bundle extracted successfully."
@@ -42,6 +51,20 @@ jobs:
             echo "ℹ Remote media bundle not found yet. Generating procedural BGM & SFX tracks..."
             npx tsx scripts/generate-audio-tracks.ts
           fi
+
+      # Cache card images across builds (only downloads once or when cards are added/changed)
+      - name: Cache Card Images
+        id: card-cache
+        uses: actions/cache@v4
+        with:
+          path: resources/cards
+          key: cards-${{ runner.os }}-${{ hashFiles('data/card-pool-whitelist.json', 'resources/cards.cdb') }}
+          restore-keys: |
+            cards-${{ runner.os }}-
+
+      - name: Download Card Images (First Run / Cache Miss)
+        if: steps.card-cache.outputs.cache-hit != 'true'
+        run: npm run download:cards
 
       - name: Build Application Bundle
         run: npm run build
