@@ -40,7 +40,7 @@ end
 s.listed_series = { 0x3008 }
 
 function s.contactfilter(c)
-	return c:IsSetCard(0x3008) and c:IsType(TYPE_MONSTER) and c:IsAbleToDeckOrExtraAsCost()
+	return c:IsSetCard(0x3008) and c:IsType(TYPE_MONSTER) and (c:IsAbleToDeckOrExtraAsCost() or c:IsAbleToDeckAsCost() or c:IsAbleToExtraAsCost())
 end
 
 function s.rescon(sg, e, tp, mg)

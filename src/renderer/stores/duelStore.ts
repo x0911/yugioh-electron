@@ -1123,12 +1123,14 @@ export const useDuelStore = defineStore('duel', {
         if (idx >= 0 && idx < fromPf.banished.length) {
           card = fromPf.banished.splice(idx, 1)[0];
         }
+        fromPf.banished.forEach((c, i) => { if (c) c.sequence = i; });
       } else if (fromLoc === 64) {
         // Extra Deck
         const idx = code > 0 ? fromPf.extraDeck.findIndex((c) => c && c.code === code) : 0;
         if (idx >= 0 && idx < fromPf.extraDeck.length) {
           card = fromPf.extraDeck.splice(idx, 1)[0];
         }
+        fromPf.extraDeck.forEach((c, i) => { if (c) c.sequence = i; });
         fromPf.extraDeckCount = fromPf.extraDeck.length;
       } else if (fromLoc === 1) {
         // Deck
@@ -1704,18 +1706,7 @@ export const useDuelStore = defineStore('duel', {
         actions.push({ type: 'monster_set', index: mSetIdx, label: 'Set Monster', icon: '🛡️' });
       }
 
-      // 4. Set Spell / Trap
-      const sSetIdx = this.activeIdleCmd.spell_sets.findIndex(
-        (s) =>
-          s.code === card.code &&
-          (s.location === undefined || s.location === 2) &&
-          (s.sequence === card.sequence || s.sequence === undefined),
-      );
-      if (sSetIdx >= 0) {
-        actions.push({ type: 'spell_set', index: sSetIdx, label: 'Set Card', icon: '📜' });
-      }
-
-      // 5. Activate Spell from Hand
+      // 4. Activate Spell from Hand (Appears first before Set Card)
       const actIdx = this.activeIdleCmd.activates.findIndex(
         (a) =>
           a.code === card.code &&
@@ -1724,6 +1715,17 @@ export const useDuelStore = defineStore('duel', {
       );
       if (actIdx >= 0) {
         actions.push({ type: 'activate', index: actIdx, label: 'Activate', icon: '⚡' });
+      }
+
+      // 5. Set Spell / Trap
+      const sSetIdx = this.activeIdleCmd.spell_sets.findIndex(
+        (s) =>
+          s.code === card.code &&
+          (s.location === undefined || s.location === 2) &&
+          (s.sequence === card.sequence || s.sequence === undefined),
+      );
+      if (sSetIdx >= 0) {
+        actions.push({ type: 'spell_set', index: sSetIdx, label: 'Set Card', icon: '📜' });
       }
 
       // Fallback matching: strictly require location 2 (hand)
@@ -1740,6 +1742,12 @@ export const useDuelStore = defineStore('duel', {
         if (anySpIdx >= 0) {
           actions.push({ type: 'sp_summon', index: anySpIdx, label: 'Special Summon', icon: '✨' });
         }
+        const anyActIdx = this.activeIdleCmd.activates.findIndex(
+          (a) => a.code === card.code && (a.location === undefined || a.location === 2),
+        );
+        if (anyActIdx >= 0) {
+          actions.push({ type: 'activate', index: anyActIdx, label: 'Activate', icon: '⚡' });
+        }
         const anyMSetIdx = this.activeIdleCmd.monster_sets.findIndex(
           (s) => s.code === card.code && (s.location === undefined || s.location === 2),
         );
@@ -1751,12 +1759,6 @@ export const useDuelStore = defineStore('duel', {
         );
         if (anySSetIdx >= 0) {
           actions.push({ type: 'spell_set', index: anySSetIdx, label: 'Set Card', icon: '📜' });
-        }
-        const anyActIdx = this.activeIdleCmd.activates.findIndex(
-          (a) => a.code === card.code && (a.location === undefined || a.location === 2),
-        );
-        if (anyActIdx >= 0) {
-          actions.push({ type: 'activate', index: anyActIdx, label: 'Activate', icon: '⚡' });
         }
       }
 
@@ -1853,7 +1855,10 @@ export const useDuelStore = defineStore('duel', {
             const s = this.activeIdleCmd.special_summons[i];
             const locMatch = s.location === undefined || s.location === loc || (s.location & loc) !== 0;
             const codeMatch = s.code === undefined || card.code === undefined || s.code === card.code;
-            const seqMatch = s.sequence === undefined || card.sequence === undefined || s.sequence === card.sequence;
+            const seqMatch =
+              loc === 64 || loc === 16 || loc === 32
+                ? true
+                : s.sequence === undefined || card.sequence === undefined || s.sequence === card.sequence;
             if (locMatch && codeMatch && seqMatch) {
               const label = (s as any).description && (s as any).description.trim()
                 ? (s as any).description.trim()
@@ -1876,7 +1881,10 @@ export const useDuelStore = defineStore('duel', {
             const a = this.activeIdleCmd.activates[i];
             const locMatch = a.location === undefined || a.location === loc || (a.location & loc) !== 0;
             const codeMatch = a.code === undefined || card.code === undefined || a.code === card.code;
-            const seqMatch = a.sequence === undefined || card.sequence === undefined || a.sequence === card.sequence;
+            const seqMatch =
+              loc === 64 || loc === 16 || loc === 32
+                ? true
+                : a.sequence === undefined || card.sequence === undefined || a.sequence === card.sequence;
             if (locMatch && codeMatch && seqMatch) {
               const label = (a as any).description && (a as any).description.trim()
                 ? (a as any).description.trim()

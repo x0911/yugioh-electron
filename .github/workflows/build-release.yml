@@ -8,11 +8,8 @@ on:
 
 jobs:
   build:
-    name: Build Installer (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest]
+    name: Build Installer (Windows x64)
+    runs-on: windows-latest
 
     steps:
       - name: Checkout Source Code
@@ -49,10 +46,9 @@ jobs:
       - name: Run Test Suite
         run: npm test
 
-      - name: Package & Publish Installers
+      - name: Package & Publish Windows Installer
         uses: electron-userland/electron-builder-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          mac_args: '--mac'
-          windows_args: '--win'
+          windows_args: '--win --x64'
