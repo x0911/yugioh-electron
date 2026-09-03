@@ -66,20 +66,21 @@ export class UpdateService {
   }
 
   private resolveActiveLocalFilePath(relPath: string): string | null {
+    const normRel = relPath.replace(/\\/g, '/');
     // 1. Check patch directory overlay first
-    const patchPath = path.join(this.getPatchDir(), relPath);
+    const patchPath = path.join(this.getPatchDir(), ...normRel.split('/'));
     if (fs.existsSync(patchPath)) {
       return patchPath;
     }
 
     // 2. Check engine resource path
-    const resPath = getResourcePath(relPath);
+    const resPath = getResourcePath(normRel);
     if (fs.existsSync(resPath)) {
       return resPath;
     }
 
     // 3. Check CWD fallback
-    const cwdPath = path.resolve(process.cwd(), relPath);
+    const cwdPath = path.resolve(process.cwd(), ...normRel.split('/'));
     if (fs.existsSync(cwdPath)) {
       return cwdPath;
     }
@@ -182,8 +183,9 @@ export class UpdateService {
 
     try {
       for (const delta of this.pendingDeltas) {
-        const fileUrl = `${manifest.remoteBaseUrl}/${delta.path}`;
-        const stagingFilePath = path.join(stagingDir, delta.path);
+        const normPath = delta.path.replace(/\\/g, '/');
+        const fileUrl = `${manifest.remoteBaseUrl}/${normPath}`;
+        const stagingFilePath = path.join(stagingDir, ...normPath.split('/'));
         const stagingFileDir = path.dirname(stagingFilePath);
 
         if (!fs.existsSync(stagingFileDir)) {
@@ -197,7 +199,7 @@ export class UpdateService {
           stage: 'downloading',
           totalFiles,
           completedFiles,
-          currentFile: delta.path,
+          currentFile: normPath,
           downloadedBytes,
           totalBytes,
           speedBytesPerSec,
@@ -207,7 +209,7 @@ export class UpdateService {
         // Download file
         const res = await fetch(fileUrl);
         if (!res.ok) {
-          throw new Error(`Failed to download file ${delta.path}: HTTP ${res.status}`);
+          throw new Error(`Failed to download file ${normPath}: HTTP ${res.status}`);
         }
         const arrayBuf = await res.arrayBuffer();
         const buf = Buffer.from(arrayBuf);
@@ -215,7 +217,7 @@ export class UpdateService {
         // Verify SHA-256
         const hash = crypto.createHash('sha256').update(buf).digest('hex');
         if (hash !== delta.sha256) {
-          throw new Error(`Checksum mismatch for ${delta.path}: expected ${delta.sha256}, got ${hash}`);
+          throw new Error(`Checksum mismatch for ${normPath}: expected ${delta.sha256}, got ${hash}`);
         }
 
         fs.writeFileSync(stagingFilePath, buf);
@@ -262,11 +264,20 @@ export class UpdateService {
       throw new Error('No verified update in staging directory.');
     }
 
+    console.log('[UpdateService] Releasing database locks before patch application...');
+    try {
+      const { duelEngineService } = await import('../engine/DuelEngineService.js');
+      duelEngineService.close();
+    } catch {
+      // ignore
+    }
+
     console.log('[UpdateService] Applying update files to patch overlay directory...');
 
     for (const delta of this.pendingDeltas) {
-      const srcPath = path.join(stagingDir, delta.path);
-      const destPath = path.join(patchDir, delta.path);
+      const normPath = delta.path.replace(/\\/g, '/');
+      const srcPath = path.join(stagingDir, ...normPath.split('/'));
+      const destPath = path.join(patchDir, ...normPath.split('/'));
       const destDir = path.dirname(destPath);
 
       if (!fs.existsSync(destDir)) {
@@ -306,6 +317,14 @@ export class UpdateService {
   }
 
   public async rollback(): Promise<boolean> {
+    console.log('[UpdateService] Releasing database locks before rollback...');
+    try {
+      const { duelEngineService } = await import('../engine/DuelEngineService.js');
+      duelEngineService.close();
+    } catch {
+      // ignore
+    }
+
     const patchDir = this.getPatchDir();
     console.log('[UpdateService] Rolling back all user patch overlays...');
 

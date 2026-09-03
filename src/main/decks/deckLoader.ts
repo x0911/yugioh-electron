@@ -15,19 +15,28 @@ function getElectronApp(): any {
 }
 
 export function getResourcePath(relativePath: string): string {
+  const normRel = relativePath.replace(/\\/g, '/');
   // 1. Check user patch overlay first (userData/patch)
   const electronApp = getElectronApp();
   if (electronApp && typeof electronApp.getPath === 'function') {
     try {
       const patchDir = path.join(electronApp.getPath('userData'), 'patch');
-      const patchCandidate = path.join(patchDir, relativePath);
+      const patchCandidate = path.join(patchDir, ...normRel.split('/'));
       if (fs.existsSync(patchCandidate)) {
         return patchCandidate;
       }
-      const cleanSub = relativePath.replace(/^(?:resources|data)[\/\\]/, '');
-      const patchSubCandidate = path.join(patchDir, cleanSub);
+      const cleanSub = normRel.replace(/^(?:resources|data)\//, '');
+      const patchSubCandidate = path.join(patchDir, ...cleanSub.split('/'));
       if (fs.existsSync(patchSubCandidate)) {
         return patchSubCandidate;
+      }
+      const patchResCandidate = path.join(patchDir, 'resources', ...cleanSub.split('/'));
+      if (fs.existsSync(patchResCandidate)) {
+        return patchResCandidate;
+      }
+      const patchDataCandidate = path.join(patchDir, 'data', ...cleanSub.split('/'));
+      if (fs.existsSync(patchDataCandidate)) {
+        return patchDataCandidate;
       }
     } catch {
       // ignore
