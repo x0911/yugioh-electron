@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "releaseDate": "2026-09-03T11:51:51.335Z",
+  "releaseDate": "2026-09-03T12:30:01.838Z",
   "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.0\n- Added Egyptian God \"Elemental HERO Egyxos\" custom monster with Contact Special Summon\n- 526 pre-built decks available for all duelists\n- HTTP 206 Partial Content Range streaming for cinematic summon videos\n- Enhanced LLM AI duelist integration with automated rate-limit fallbacks",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {
@@ -17546,13 +17546,13 @@
     },
     "dist/main/index.js": {
       "path": "dist/main/index.js",
-      "size": 338101,
-      "sha256": "1bf1cfb0664c3a393f7d3025aef3af7503c2f84392ff01f51ec06223a2649d35"
+      "size": 382600,
+      "sha256": "5eff3f119660ca3525fc8a7b8a9a30e546d18206980bfbc46da4a3d24528e0ed"
     },
     "dist/preload/index.cjs": {
       "path": "dist/preload/index.cjs",
-      "size": 6292,
-      "sha256": "48eb950374c1f9ac14f04d0ab93da1f37378bbab7754c59e9e08ab89af45d278"
+      "size": 7482,
+      "sha256": "809550fed3eb65de34a8c4387282aa287286aae0ba756270a20c4af1614cb446"
     },
     "dist/renderer/assets/BarlowSemiCondensed-Bold-D_nMxumM.woff2": {
       "path": "dist/renderer/assets/BarlowSemiCondensed-Bold-D_nMxumM.woff2",
@@ -17584,35 +17584,45 @@
       "size": 48432,
       "sha256": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4"
     },
+    "dist/renderer/assets/LogsView-CTNEe_eM.js": {
+      "path": "dist/renderer/assets/LogsView-CTNEe_eM.js",
+      "size": 8638,
+      "sha256": "87f4ee877995b160f7d0ef0333ae233fb726b2ee57f8929e6a299a9224e9bf89"
+    },
     "dist/renderer/assets/LogsView-D_iMWp_1.css": {
       "path": "dist/renderer/assets/LogsView-D_iMWp_1.css",
       "size": 10551,
       "sha256": "aeac78d387ab5d13be3cc2c80c77b8cbf22a55d702ed4378f98ece438a29136f"
-    },
-    "dist/renderer/assets/LogsView-gkb5oLMi.js": {
-      "path": "dist/renderer/assets/LogsView-gkb5oLMi.js",
-      "size": 8638,
-      "sha256": "724140599ccb7eb1f938c9f970c396e970a81ff5ffdaabafddda053f69eb83e5"
     },
     "dist/renderer/assets/Oxanium-Bold-BKmfYGDN.woff2": {
       "path": "dist/renderer/assets/Oxanium-Bold-BKmfYGDN.woff2",
       "size": 6972,
       "sha256": "7587b3592db3f122028d04747c66a16d42f1b2926e930c53295a12efae7be1f3"
     },
+    "dist/renderer/assets/UpdateView-52SESwJa.js": {
+      "path": "dist/renderer/assets/UpdateView-52SESwJa.js",
+      "size": 8867,
+      "sha256": "ecb4d9e4adce26bafc841933ff6b1df68f205f354bf8e2954725bce585960bbe"
+    },
+    "dist/renderer/assets/UpdateView-DRmUO6Vo.css": {
+      "path": "dist/renderer/assets/UpdateView-DRmUO6Vo.css",
+      "size": 8244,
+      "sha256": "b10c3af5d90c034a1841251f5967174814be42474e55eb323926d97d81cd4f4c"
+    },
     "dist/renderer/assets/icon-CckE-_sU.png": {
       "path": "dist/renderer/assets/icon-CckE-_sU.png",
       "size": 20975,
       "sha256": "c879bccba626ba4ce495433a9c3b5b60ef2587e3bf47f0425e2c8ded8d794d8e"
     },
-    "dist/renderer/assets/index-BIRC84Nq.js": {
-      "path": "dist/renderer/assets/index-BIRC84Nq.js",
-      "size": 489584,
-      "sha256": "261e5e1c25e060527ddcf94c8090c5481bccfad7cff466a947c987c5878a8e81"
-    },
-    "dist/renderer/assets/index-BpabR66B.css": {
-      "path": "dist/renderer/assets/index-BpabR66B.css",
+    "dist/renderer/assets/index-CUH5hqhg.css": {
+      "path": "dist/renderer/assets/index-CUH5hqhg.css",
       "size": 275586,
-      "sha256": "69dbf266631a933618a0c617169d785bfb60d87afb2e39623e65153b773c51b8"
+      "sha256": "df7c491cc0b2a5d80090a8f8e5b6035bd9c5f9a8ce1d5fb963c431341bd4c568"
+    },
+    "dist/renderer/assets/index-D9TTtH0p.js": {
+      "path": "dist/renderer/assets/index-D9TTtH0p.js",
+      "size": 490455,
+      "sha256": "639b0d62482ea1121de6d181b1d490267984afe64d345a39f9d8fe746e1c7ab1"
     },
     "dist/renderer/assets/logo-CH-TCrmY.png": {
       "path": "dist/renderer/assets/logo-CH-TCrmY.png",
@@ -17622,7 +17632,7 @@
     "dist/renderer/index.html": {
       "path": "dist/renderer/index.html",
       "size": 723,
-      "sha256": "7c12e30275089a9dd948827a569a2a8886a6c92d2f9a56b586627d4676ff1082"
+      "sha256": "819fd7bafab13594ad53b3324eae69541bc78d7a52e8589d6a739867a892582e"
     }
   }
 }
