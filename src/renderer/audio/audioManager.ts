@@ -154,6 +154,13 @@ export class AudioManager {
 
       this.bgmAudioEl.addEventListener('error', (e) => {
         console.warn('[AudioManager] BGM audio element error:', e);
+        if (this.bgmAudioEl && this.bgmAudioEl.src.endsWith('.mp3')) {
+          const wavSrc = this.bgmAudioEl.src.replace(/\.mp3$/, '.wav');
+          console.log('[AudioManager] Attempting WAV fallback:', wavSrc);
+          this.bgmAudioEl.src = wavSrc;
+          this.bgmAudioEl.load();
+          this.bgmAudioEl.play().catch(() => {});
+        }
       });
 
       // Connect to Web Audio graph
@@ -480,7 +487,8 @@ export class AudioManager {
 
     if (this.ctx && this.bgmGain) {
       this.bgmGain.gain.setValueAtTime(perceivedBgm, this.ctx.currentTime);
-    } else if (this.bgmAudioEl) {
+    }
+    if (this.bgmAudioEl) {
       this.bgmAudioEl.volume = Math.max(0, Math.min(1, perceivedBgm * masterScale));
     }
   }

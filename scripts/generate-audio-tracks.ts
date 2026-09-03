@@ -438,7 +438,9 @@ async function main() {
     const wavBuf = createWavBuffer(samples);
     const targetFile = path.join(bgmDir, filename);
     fs.writeFileSync(targetFile, wavBuf);
-    console.log(`  ✓ Written ${filename} (${(wavBuf.length / 1024).toFixed(1)} KB)`);
+    const wavFile = path.join(bgmDir, filename.replace(/\.mp3$/, '.wav'));
+    fs.writeFileSync(wavFile, wavBuf);
+    console.log(`  ✓ Written ${filename} & ${path.basename(wavFile)} (${(wavBuf.length / 1024).toFixed(1)} KB)`);
   }
 
   // 2. Generate SFX Audio Files

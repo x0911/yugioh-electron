@@ -104,15 +104,26 @@ if (!gotTheLock) {
 
 function getResourceMimeType(filePath: string): string {
   const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.mp3' || ext === '.wav') {
+    try {
+      const fd = fs.openSync(filePath, 'r');
+      const headerBuf = Buffer.alloc(4);
+      fs.readSync(fd, headerBuf, 0, 4, 0);
+      fs.closeSync(fd);
+      if (headerBuf.toString('ascii') === 'RIFF') {
+        return 'audio/wav';
+      }
+    } catch {
+      // ignore
+    }
+    return ext === '.wav' ? 'audio/wav' : 'audio/mpeg';
+  }
+
   switch (ext) {
     case '.mp4':
       return 'video/mp4';
     case '.webm':
       return 'video/webm';
-    case '.mp3':
-      return 'audio/mpeg';
-    case '.wav':
-      return 'audio/wav';
     case '.ogg':
       return 'audio/ogg';
     case '.jpg':
@@ -183,6 +194,17 @@ function getResourceMimeType(filePath: string): string {
           }
         }
 
+        if (request.method === 'OPTIONS') {
+          return new Response(null, {
+            status: 204,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+              'Access-Control-Allow-Headers': '*',
+            },
+          });
+        }
+
         if (fs.existsSync(targetPath)) {
           const stats = fs.statSync(targetPath);
           const fileSize = stats.size;
@@ -199,7 +221,10 @@ function getResourceMimeType(filePath: string): string {
               if (start >= fileSize || end >= fileSize || start > end) {
                 return new Response(null, {
                   status: 416,
-                  headers: { 'Content-Range': `bytes */${fileSize}` },
+                  headers: {
+                    'Content-Range': `bytes */${fileSize}`,
+                    'Access-Control-Allow-Origin': '*',
+                  },
                 });
               }
 
@@ -214,12 +239,15 @@ function getResourceMimeType(filePath: string): string {
                   'Accept-Ranges': 'bytes',
                   'Content-Length': String(chunkSize),
                   'Content-Type': mimeType,
+                  'Access-Control-Allow-Origin': '*',
+                  'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+                  'Access-Control-Allow-Headers': '*',
                 },
               });
             }
           }
 
-          // Full file stream with accurate MIME type and Accept-Ranges
+          // Full file stream with accurate MIME type, CORS and Accept-Ranges
           const fileStream = fs.createReadStream(targetPath);
           const webStream = Readable.toWeb(fileStream);
           return new Response(webStream as any, {
@@ -228,6 +256,9 @@ function getResourceMimeType(filePath: string): string {
               'Accept-Ranges': 'bytes',
               'Content-Length': String(fileSize),
               'Content-Type': mimeType,
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+              'Access-Control-Allow-Headers': '*',
             },
           });
         }
