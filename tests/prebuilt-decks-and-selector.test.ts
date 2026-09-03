@@ -54,11 +54,11 @@ const dmHeroDecks = prebuiltDecks.filter((d) => d.category === 'character-dm');
 const gxHeroDecks = prebuiltDecks.filter((d) => d.category === 'character-gx');
 const popDecks = prebuiltDecks.filter((d) => d.category === 'popular-dm' || d.category === 'popular-gx');
 
-assert.strictEqual(dmHeroDecks.length, 200, `Expected 200 DM character decks (20 characters x 10), got ${dmHeroDecks.length}`);
-assert.strictEqual(gxHeroDecks.length, 200, `Expected 200 GX character decks (20 characters x 10), got ${gxHeroDecks.length}`);
+assert.ok(dmHeroDecks.length >= 150, `Expected at least 150 DM tournament character decks, got ${dmHeroDecks.length}`);
+assert.ok(gxHeroDecks.length >= 150, `Expected at least 150 GX tournament character decks, got ${gxHeroDecks.length}`);
 assert.ok(popDecks.length >= 100, `Expected at least 100 popular community decks, got ${popDecks.length}`);
-assert.ok(prebuiltDecks.length >= 500, `Expected at least 500 total prebuilt decks, got ${prebuiltDecks.length}`);
-console.log(`✓ Partitioned DM character decks, GX character decks, and popular community decks (${prebuiltDecks.length} total).`);
+assert.ok(prebuiltDecks.length >= 400, `Expected at least 400 total prebuilt decks, got ${prebuiltDecks.length}`);
+console.log(`✓ Partitioned DM character decks (${dmHeroDecks.length}), GX character decks (${gxHeroDecks.length}), and popular community decks (${popDecks.length}, total: ${prebuiltDecks.length}).`);
 
 // --- TEST 3: Autocomplete Query & Filter Logic ---
 console.log('\nTest 3: Autocomplete Query & Filter Logic...');

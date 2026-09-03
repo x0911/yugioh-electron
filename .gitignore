@@ -34,4 +34,5 @@ Thumbs.db
 .vscode/
 .idea/
 tmp/
+data/formatlibrary-cache/
 
