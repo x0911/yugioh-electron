@@ -109,6 +109,9 @@ export class UpdateService {
       let totalDownloadSize = 0;
 
       for (const [relPath, fileEntry] of Object.entries(manifest.files)) {
+        if (relPath.startsWith('dist/') || relPath.startsWith('node_modules/')) {
+          continue;
+        }
         const localPath = this.resolveActiveLocalFilePath(relPath);
 
         if (!localPath) {
@@ -206,9 +209,19 @@ export class UpdateService {
           percent: Math.min(100, Math.round((downloadedBytes / totalBytes) * 100)),
         });
 
+        if (normPath.startsWith('dist/') || normPath.startsWith('node_modules/')) {
+          completedFiles++;
+          continue;
+        }
+
         // Download file
         const res = await fetch(fileUrl);
         if (!res.ok) {
+          if (res.status === 404) {
+            console.warn(`[UpdateService] Skipped unavailable file ${normPath} (HTTP 404)`);
+            completedFiles++;
+            continue;
+          }
           throw new Error(`Failed to download file ${normPath}: HTTP ${res.status}`);
         }
         const arrayBuf = await res.arrayBuffer();

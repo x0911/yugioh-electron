@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -68,28 +69,47 @@ export function generateManifest(): UpdateManifest {
   const scriptsDir = path.join(ROOT_DIR, 'resources/scripts');
   walkDirectory(scriptsDir, targetFiles);
 
-  // 4. Compiled distributions if they exist
-  const distDir = path.join(ROOT_DIR, 'dist');
-  walkDirectory(distDir, targetFiles);
-
-  // 5. Custom card images and essential card assets (full, art, mini)
+  // 4. Custom card images and essential card assets (full, art, mini)
   for (const variant of ['full', 'art', 'mini']) {
     const variantDir = path.join(ROOT_DIR, 'resources/cards', variant);
     if (fs.existsSync(variantDir)) {
       const files = fs.readdirSync(variantDir);
       for (const file of files) {
         const cardId = parseInt(path.basename(file, path.extname(file)), 10);
-        if (cardId >= 99000000 || file === '0.jpg' || file === 'placeholder.jpg') {
+        if (cardId >= 99900000 || file === '0.jpg' || file === 'placeholder.jpg') {
           targetFiles.push(path.join(variantDir, file));
         }
       }
     }
   }
 
+  // Ensure card back and placeholder are tracked
+  for (const rootCardAsset of ['resources/cards/card-back.jpg', 'resources/cards/placeholder.jpg']) {
+    const abs = path.join(ROOT_DIR, rootCardAsset);
+    if (fs.existsSync(abs) && !targetFiles.includes(abs)) {
+      targetFiles.push(abs);
+    }
+  }
+
+  // Filter out ANY file that is gitignored to guarantee 100% availability on GitHub raw CDN
+  const relPaths = targetFiles.map((abs) => path.relative(ROOT_DIR, abs).replace(/\\/g, '/'));
+  const ignoreCheck = spawnSync('git', ['check-ignore', '--stdin'], {
+    input: relPaths.join('\n'),
+    encoding: 'utf8',
+  });
+  const ignoredSet = new Set(
+    ignoreCheck.stdout ? ignoreCheck.stdout.split('\n').filter(Boolean) : [],
+  );
+
   const manifestFiles: Record<string, ManifestFileEntry> = {};
 
   for (const absPath of targetFiles) {
     const relPath = path.relative(ROOT_DIR, absPath).replace(/\\/g, '/');
+    if (ignoredSet.has(relPath)) {
+      console.warn(`[GenerateManifest] Skipping gitignored file: ${relPath}`);
+      continue;
+    }
+
     const stats = fs.statSync(absPath);
     const hash = getFileSha256(absPath);
 

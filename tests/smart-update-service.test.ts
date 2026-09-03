@@ -40,7 +40,12 @@ async function runSmartUpdateTests() {
   assert.ok(manifest.files['resources/cards/mini/99900001.jpg'], 'Egyxos mini image must be in manifest');
 
   console.log(`  ✓ Validated manifest v${manifest.version} with ${fileKeys.length} tracked files.`);
-  console.log('  ✓ Verified tracking for cards.cdb, prebuilt-decks.json, c99900001.lua, and Egyxos custom images.\n');
+  console.log('  ✓ Verified tracking for cards.cdb, prebuilt-decks.json, c99900001.lua, and Egyxos custom images.');
+
+  // Verify NO dist files or gitignored build artifacts are tracked
+  const distFiles = fileKeys.filter((k) => k.startsWith('dist/'));
+  assert.strictEqual(distFiles.length, 0, 'No dist/ files should ever be in update-manifest.json');
+  console.log('  ✓ Verified 0 dist/ files in manifest.\n');
 
   // Test 2: SHA-256 Hash Matching on Local Disk
   console.log('▶ Test 2: SHA-256 Checksum Verification Against Local Repository');
