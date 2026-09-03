@@ -1,0 +1,58 @@
+name: Build & Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Installer (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      # Fetch media assets pack from GitHub Releases if available, otherwise generate procedural assets
+      - name: Setup Game Media Assets
+        shell: bash
+        run: |
+          echo "Attempting to download pre-packaged media assets from GitHub Release assets-v1..."
+          ASSETS_URL="https://github.com/x0911/yugioh-electron/releases/download/assets-v1/game-assets.tar.gz"
+          if curl -fsSL -I "$ASSETS_URL" >/dev/null 2>&1; then
+            echo "✓ Found remote media assets bundle. Downloading and extracting..."
+            curl -fsSL -o game-assets.tar.gz "$ASSETS_URL"
+            tar -xzf game-assets.tar.gz
+            echo "✓ Media assets bundle extracted successfully."
+          else
+            echo "ℹ Remote media bundle not found yet. Generating procedural BGM & SFX tracks..."
+            npx tsx scripts/generate-audio-tracks.ts
+          fi
+
+      - name: Build Application Bundle
+        run: npm run build
+
+      - name: Run Test Suite
+        run: npm test
+
+      - name: Package & Publish Installers
+        uses: electron-userland/electron-builder-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          mac_args: '--mac'
+          windows_args: '--win'
