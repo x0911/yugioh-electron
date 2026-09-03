@@ -49,9 +49,11 @@ export interface CharacterRule {
   id: string;
   name: string;
   series: 'DM' | 'GX';
-  signatureKeywords: string[];
-  preferredArchetypes: string[];
-  minSignatureMatches?: number;
+  mustIds?: number[];
+  keywords: string[];
+  preferred: string[];
+  disallowed?: string[];
+  maxPerArchetype?: number;
 }
 
 export const CHARACTER_RULES: CharacterRule[] = [
@@ -60,141 +62,172 @@ export const CHARACTER_RULES: CharacterRule[] = [
     id: 'yugi-muto',
     name: 'Yugi Muto',
     series: 'DM',
-    signatureKeywords: ['gadget', 'magnet warrior', 'valkyrion', 'silent swordsman', 'silent magician', 'gandora', 'marshmallon', 'blockman'],
-    preferredArchetypes: ['gadget', 'chaos gadget', 'pacman', 'earth beat', 'goat control', 'rock stun'],
+    mustIds: [39153],
+    keywords: ['gadget', 'magnet warrior', 'valkyrion', 'silent swordsman', 'silent magician', 'gandora', 'marshmallon', 'blockman', 'alpha', 'beta', 'gamma'],
+    preferred: ['gadget', 'pacman', 'earth beat', 'rock stun', 'counter fairy'],
+    disallowed: ['dark magician', 'chimeratech', 'zombie'],
   },
   {
     id: 'yami-yugi',
     name: 'Yami Yugi',
     series: 'DM',
-    signatureKeywords: ['dark magician', 'black luster soldier', 'buster blader', 'breaker the magical warrior', 'dark paladin', 'slifer', 'magician of faith', 'skilled dark magician'],
-    preferredArchetypes: ['chaos control', 'warrior', 'goat control', 'chaos return', 'spellcaster', 'dark magician'],
+    mustIds: [39153, 36990, 48430],
+    keywords: ['slifer', 'dark magician', 'buster blader', 'black luster soldier', 'breaker the magical warrior', 'dark paladin', 'skilled dark magician', 'kuriboh'],
+    preferred: ['paladin turbo', 'dark magician turbo', 'creator turbo', 'chaos control', 'goat control', 'reasoning gate turbo'],
+    disallowed: ['gadget', 'volcanic', 'harpie', 'amazoness'],
   },
   {
     id: 'seto-kaiba',
     name: 'Seto Kaiba',
     series: 'DM',
-    signatureKeywords: ['blue-eyes', 'cyber jar', 'ring of destruction', 'vorse raider', 'enemy controller', 'crush card', 'obelisk', 'xyz-dragon'],
-    preferredArchetypes: ['dragon', 'chaos control', 'stein otk', 'hand control', 'virus control', 'chaos return'],
+    mustIds: [39153, 54407, 52207, 35503],
+    keywords: ['obelisk', 'blue-eyes', 'xyz-dragon', 'x-head', 'y-dragon', 'z-metal', 'vorse raider', 'enemy controller', 'crush card', 'ring of destruction'],
+    preferred: ['blue-eyes', 'dragon turbo', 'stein otk', 'chaos return', 'virus control', 'chaos control'],
+    disallowed: ['gadget', 'volcanic', 'harpie', 'amazoness', 'zombie'],
   },
   {
     id: 'joey-wheeler',
     name: 'Joey Wheeler',
     series: 'DM',
-    signatureKeywords: ['red-eyes', 'jinzo', 'gearfried', 'gilford', 'scapegoat', 'time wizard', 'rocket warrior', 'alligator'],
-    preferredArchetypes: ['warrior', 'gearfried', 'ben kei', 'beast beat', 'jinzo control', 'cat otk'],
+    mustIds: [3159, 84083, 35515, 35505],
+    keywords: ['red-eyes', 'jinzo', 'gearfried', 'gilford', 'time wizard', 'scapegoat', 'rocket warrior', 'alligator'],
+    preferred: ['coin control', 'gearfried', 'cat otk', 'ben kei otk', 'warrior control', 'warrior', 'reasoning gate turbo'],
+    disallowed: ['dark magician', 'blue-eyes', 'counter fairy', 'gadget'],
   },
   {
     id: 'tea-gardner',
     name: 'Téa Gardner',
     series: 'DM',
-    signatureKeywords: ['injection fairy lily', 'magician of faith', 'solemn wishes', 'shining angel', 'dunames dark witch', 'maha vailo'],
-    preferredArchetypes: ['counter fairy', 'fairy', 'lily beat', 'goat control', 'chaos control'],
+    keywords: ['injection fairy lily', 'magician of faith', 'solemn wishes', 'shining angel', 'dunames dark witch', 'maha vailo', 'fire princess'],
+    preferred: ['counter fairy', 'fairy', 'lily beat', 'goat control', 'chaos control'],
+    disallowed: ['machine otk', 'zombie', 'demise'],
   },
   {
     id: 'tristan-taylor',
     name: 'Tristan Taylor',
     series: 'DM',
-    signatureKeywords: ['berserk gorilla', 'enraged battle ox', 'cyber commander', 'super roboyarou', 'command knight', 'exiled force'],
-    preferredArchetypes: ['beast', 'baboon burn', 'earth beat', 'skill drain', 'warrior'],
+    keywords: ['berserk gorilla', 'enraged battle ox', 'cyber commander', 'command knight', 'exiled force'],
+    preferred: ['earth beat', 'beast', 'warrior', 'skill drain'],
+    disallowed: ['dark magician', 'blue-eyes', 'counter fairy'],
   },
   {
     id: 'mai-valentine',
     name: 'Mai Valentine',
     series: 'DM',
-    signatureKeywords: ['harpie', 'amazoness', 'elegant egotist', 'birdface', 'sonic duck', 'icarus'],
-    preferredArchetypes: ['harpie', 'amazoness harpie', 'birdman', 'wind control'],
+    keywords: ['harpie', 'amazoness', 'elegant egotist', 'birdface', 'sonic duck', 'icarus'],
+    preferred: ['harpie', 'amazoness harpie', 'wind beat', 'warrior'],
+    disallowed: ['machine', 'zombie', 'dark magician'],
   },
   {
     id: 'bakura-ryou',
     name: 'Bakura Ryou',
     series: 'DM',
-    signatureKeywords: ['dark necrofear', 'morphing jar', 'night assailant', 'doomcaliber knight', 'destiny board', 'sangan', 'witch of the black forest'],
-    preferredArchetypes: ['fiend control', 'dark necrofear', 'empty jar', 'jar turbo', 'zombie', 'chaos control'],
+    mustIds: [82261, 83815, 83818],
+    keywords: ['dark necrofear', 'morphing jar', 'night assailant', 'doomcaliber knight', 'destiny board', 'sangan', 'witch of the black forest'],
+    preferred: ['strike ninja return', 'empty jar', 'jar turbo', 'fiend', 'zombie', 'chaos control'],
+    disallowed: ['blue-eyes', 'gadget', 'counter fairy'],
   },
   {
     id: 'marik-ishtar',
     name: 'Marik Ishtar',
     series: 'DM',
-    signatureKeywords: ['lava golem', 'bowganian', 'nightmare wheel', 'mask of restrict', 'winged dragon of ra', 'stealth bird'],
-    preferredArchetypes: ['burn', 'panda burn', 'lava golem control', 'drain burn', 'dark world burn', 'pacman'],
+    mustIds: [39153, 83780, 83802],
+    keywords: ['winged dragon of ra', 'lava golem', 'bowganian', 'nightmare wheel', 'mask of restrict', 'stealth bird'],
+    preferred: ['stall burn', 'panda burn', 'chain burn', 'burn', 'drain burn'],
+    disallowed: ['blue-eyes', 'machine otk', 'gadget'],
   },
   {
     id: 'maximillion-pegasus',
     name: 'Maximillion Pegasus',
     series: 'DM',
-    signatureKeywords: ['relinquished', 'thousand-eyes', 'toon', 'black illusion ritual', 'tsukuyomi'],
-    preferredArchetypes: ['relinquished', 'goat control', 'toons', 'toon table turbo'],
+    mustIds: [79043, 77955, 75352],
+    keywords: ['relinquished', 'thousand-eyes', 'toon', 'black illusion ritual', 'tsukuyomi'],
+    preferred: ['relinquished', 'relinquished burn', 'goat control', 'toons'],
+    disallowed: ['machine otk', 'zombie', 'gadget'],
   },
   {
     id: 'bandit-keith',
     name: 'Bandit Keith',
     series: 'DM',
-    signatureKeywords: ['blowback dragon', 'barrel dragon', 'machine king', 'limiter removal', 'heavy mech support', 'cyber dragon', 'card trooper'],
-    preferredArchetypes: ['machine beat', 'chaos machine', 'troop dupe', 'blowback dragon', 'stein monarch'],
+    mustIds: [3159, 83872, 83875],
+    keywords: ['blowback dragon', 'barrel dragon', 'machine king', 'limiter removal', 'heavy mech support', 'cyber dragon'],
+    preferred: ['coin control', 'machine otk', 'chaos machine', 'machine beat'],
+    disallowed: ['fairy', 'spellcaster', 'relinquished'],
   },
   {
     id: 'weevil-underwood',
     name: 'Weevil Underwood',
     series: 'DM',
-    signatureKeywords: ['doom dozer', 'insect queen', 'pinch hopper', 'howling insect', 'man-eater bug', '4-starred ladybug'],
-    preferredArchetypes: ['insect', 'doom dozer otk', 'demise dozer', 'spider control', 'earth beat'],
+    mustIds: [83881],
+    keywords: ['doom dozer', 'insect queen', 'pinch hopper', 'howling insect', 'man-eater bug'],
+    preferred: ['demise otk', 'insect', 'plant insect', 'earth beat'],
+    disallowed: ['blue-eyes', 'dark magician', 'fairy'],
   },
   {
     id: 'rex-raptor',
     name: 'Rex Raptor',
     series: 'DM',
-    signatureKeywords: ['tyranno', 'hydrogeddon', 'oxygeddon', 'frostosaurus', 'jurassic', 'sabersaurus', 'hyper hammerhead'],
-    preferredArchetypes: ['dinosaur', 'hydrogeddon control', 'earth beat', 'dino beat'],
+    keywords: ['tyranno', 'hydrogeddon', 'oxygeddon', 'frostosaurus', 'jurassic', 'sabersaurus', 'hyper hammerhead'],
+    preferred: ['dinosaur', 'earth beat', 'vanilla beat'],
+    disallowed: ['fairy', 'dark magician', 'spellcaster'],
   },
   {
     id: 'mako-tsunami',
     name: 'Mako Tsunami',
     series: 'DM',
-    signatureKeywords: ['fisherman', 'daedalus', 'abyss soldier', 'legendary ocean', 'amphibian beast', 'fenrir', 'yomi ship', 'mobius'],
-    preferredArchetypes: ['water control', 'water beat', 'daedalus turbo', 'diva frog', 'water monarch'],
+    keywords: ['fisherman', 'daedalus', 'abyss soldier', 'legendary ocean', 'amphibian beast', 'fenrir', 'yomi ship'],
+    preferred: ['ocean control', 'umi beat', 'water control', 'water beat'],
+    disallowed: ['machine otk', 'fairy', 'zombie'],
   },
   {
     id: 'ishizu-ishtar',
     name: 'Ishizu Ishtar',
     series: 'DM',
-    signatureKeywords: ['gravekeeper', 'necrovalley', 'mudora', 'kelbek', 'agido', 'exchange of the spirit'],
-    preferredArchetypes: ['gravekeeper', 'necrovalley stun', 'exchange of the spirit', 'keeper beatdown'],
+    mustIds: [83890, 83891, 83892],
+    keywords: ['gravekeeper', 'necrovalley', 'mudora', 'kelbek', 'agido', 'exchange of the spirit'],
+    preferred: ['gravekeeper', 'gravekeeper burn', 'gravekeeper monarch'],
+    disallowed: ['machine otk', 'volcanic', 'harpie'],
   },
   {
     id: 'odion',
     name: 'Odion',
     series: 'DM',
-    signatureKeywords: ['serket', 'apophis', 'solemn judgment', 'metal reflect slime', 'trap monster', 'magic jammer', 'seven tools'],
-    preferredArchetypes: ['trap monster', 'counter trap control', 'macro stun', 'solemn judgment stun', 'chain burn'],
+    keywords: ['serket', 'apophis', 'solemn judgment', 'metal reflect slime', 'trap monster', 'magic jammer'],
+    preferred: ['macro stun', 'macro monarch', 'counter fairy', 'drain burn'],
+    disallowed: ['blue-eyes', 'dark magician', 'gadget'],
   },
   {
     id: 'espa-roba',
     name: 'Espa Roba',
     series: 'DM',
-    signatureKeywords: ['jinzo', 'cyber-stein', 'reflect bounder', 'heavy mech support'],
-    preferredArchetypes: ['jinzo returner', 'stein otk', 'machine beat', 'chaos machine'],
+    keywords: ['jinzo', 'cyber-stein', 'reflect bounder', 'heavy mech support'],
+    preferred: ['machine beat', 'machine otk', 'chaos machine', 'stein otk'],
+    disallowed: ['fairy', 'spellcaster', 'relinquished'],
   },
   {
     id: 'arkana',
     name: 'Arkana',
     series: 'DM',
-    signatureKeywords: ['dark magician', 'legion the fiend jester', 'skilled dark magician', 'dark magic curtain', 'ectoplasmer'],
-    preferredArchetypes: ['dark magician', 'dark world spellcaster', 'spellcaster beatdown', 'chaos control'],
+    mustIds: [48430, 36990],
+    keywords: ['dark magician', 'legion the fiend jester', 'skilled dark magician', 'dark magic curtain', 'ectoplasmer'],
+    preferred: ['dark magician turbo', 'paladin turbo', 'spellcaster control', 'chaos control'],
+    disallowed: ['gadget', 'volcanic', 'harpie'],
   },
   {
     id: 'rafael',
     name: 'Rafael',
     series: 'DM',
-    signatureKeywords: ['guardian', 'eatos', 'grarl', 'arsenal summoner', 'butterfly dagger', 'mage power', 'united we stand'],
-    preferredArchetypes: ['warrior', 'guardian eatos beat', 'equip beat', 'dimension fusion turbo'],
+    keywords: ['guardian', 'eatos', 'grarl', 'arsenal summoner', 'butterfly dagger', 'mage power', 'united we stand'],
+    preferred: ['warrior', 'equip beat', 'dimension fusion turbo'],
+    disallowed: ['zombie', 'machine otk', 'demise'],
   },
   {
     id: 'dartz',
     name: 'Dartz',
     series: 'DM',
-    signatureKeywords: ['ocean', 'atlantis', 'daedalus', 'underdog', 'amphibian', 'seal of orichalcos'],
-    preferredArchetypes: ['atlantis water beat', 'normal monster beat', 'anti-meta stun', 'seal stun', 'chaos control'],
+    keywords: ['ocean', 'atlantis', 'daedalus', 'underdog', 'seal of orichalcos'],
+    preferred: ['ocean control', 'umi beat', 'anti-meta stun', 'scientist ftk'],
+    disallowed: ['gadget', 'volcanic', 'harpie'],
   },
 
   // --- 20 GX CHARACTERS ---
@@ -202,153 +235,181 @@ export const CHARACTER_RULES: CharacterRule[] = [
     id: 'jaden-yuki',
     name: 'Jaden Yuki',
     series: 'GX',
-    signatureKeywords: ['elemental hero', 'stratos', 'sparkman', 'clayman', 'bubbleman', 'avian', 'flame wingman', 'neos', 'miracle fusion', 'egyxos'],
-    preferredArchetypes: ['hero beat', 'trooper hero', 'gemini hero', 'miracle fusion beat', 'hero frog'],
+    mustIds: [46997, 79713],
+    keywords: ['neos', 'flame wingman', 'elemental hero', 'stratos', 'sparkman', 'clayman', 'bubbleman', 'avian', 'miracle fusion'],
+    preferred: ['hero beat', 'trooper hero', 'fusion hero', 'warrior'],
+    disallowed: ['counter fairy', 'ocean control', 'gadget', 'demise'],
   },
   {
     id: 'zane-truesdale',
     name: 'Zane Truesdale',
     series: 'GX',
-    signatureKeywords: ['cyber dragon', 'cyber twin dragon', 'cyber end dragon', 'chimeratech', 'power bond', 'overload fusion', 'future fusion'],
-    preferredArchetypes: ['cyber dragon', 'chimeratech future overload', 'machine beat', 'troop dupe', 'stein otk', 'cyber monarch'],
+    mustIds: [82262, 82011],
+    keywords: ['cyber end', 'chimeratech', 'cyber dragon', 'power bond', 'overload fusion'],
+    preferred: ['bazoo return', 'macro monarch', 'machine otk', 'machine beat'],
+    disallowed: ['fairy', 'spellcaster', 'relinquished'],
   },
   {
     id: 'syrus-truesdale',
     name: 'Syrus Truesdale',
     series: 'GX',
-    signatureKeywords: ['steamroid', 'drillroid', 'gyroid', 'submarineroid', 'super vehicroid', 'power bond', 'limiter removal'],
-    preferredArchetypes: ['machina roid', 'machine beat', 'drillroid control', 'machine stun'],
+    keywords: ['steamroid', 'drillroid', 'gyroid', 'submarineroid', 'super vehicroid', 'power bond', 'limiter removal'],
+    preferred: ['machine beat', 'machine otk'],
+    disallowed: ['fairy', 'spellcaster', 'zombie'],
   },
   {
     id: 'chazz-princeton',
     name: 'Chazz Princeton',
     series: 'GX',
-    signatureKeywords: ['armed dragon', 'ojama', 'light and darkness dragon', 'ojamagic', 'ojama delta', 'ojama king'],
-    preferredArchetypes: ['light and darkness dragon', 'ojama', 'armed dragon', 'dragon turbo'],
+    mustIds: [3191, 83730, 83731],
+    keywords: ['ojama', 'armed dragon', 'light and darkness dragon'],
+    preferred: ['dragon beat', 'warrior', 'chaos turbo', 'dad return'],
+    disallowed: ['counter fairy', 'ocean control', 'gravekeeper'],
   },
   {
     id: 'alexis-rhodes',
     name: 'Alexis Rhodes',
     series: 'GX',
-    signatureKeywords: ['cyber angel', 'benten', 'idaten', 'dakini', 'cyber blader', 'machine angel ritual', 'demise'],
-    preferredArchetypes: ['demise otk', 'ritual control', 'cyber blader beat', 'warrior'],
+    mustIds: [79469, 79939],
+    keywords: ['cyber blader', 'cyber angel', 'benten', 'idaten', 'dakini', 'demise'],
+    preferred: ['rat warrior', 'chaos control', 'demise otk'],
+    disallowed: ['machine otk', 'volcanic', 'gadget'],
   },
   {
     id: 'bastion-misawa',
     name: 'Bastion Misawa',
     series: 'GX',
-    signatureKeywords: ['hydrogeddon', 'oxygeddon', 'water dragon', 'bonding - h2o', 'carboneddon', 'plasma warrior eitom'],
-    preferredArchetypes: ['hydrogeddon beat', 'water control', 'earth beat', 'rat toolbox'],
+    keywords: ['hydrogeddon', 'oxygeddon', 'water dragon', 'carboneddon', 'plasma warrior eitom'],
+    preferred: ['water control', 'earth beat', 'rat toolbox', 'hydrogeddon'],
+    disallowed: ['demise', 'machine otk', 'fairy'],
   },
   {
     id: 'chumley-huffington',
     name: 'Chumley Huffington',
     series: 'GX',
-    signatureKeywords: ['master of oz', 'big koala', 'des kangaroo', 'ayers rock sunrise', 'nimble momonga', 'green baboon', 'beast'],
-    preferredArchetypes: ['baboon burn', 'trooper beast', 'beast beatdown', 'cat otk'],
+    mustIds: [82678, 83681, 83944, 83935],
+    keywords: ['master of oz', 'big koala', 'des kangaroo', 'nimble momonga', 'green baboon', 'beast'],
+    preferred: ['clown control', 'chaos turbo', 'trooper beast', 'baboon burn', 'forest beat'],
+    disallowed: ['machine otk', 'counter fairy', 'six samurai'],
   },
   {
     id: 'aster-phoenix',
     name: 'Aster Phoenix',
     series: 'GX',
-    signatureKeywords: ['destiny hero', 'malicious', 'diamond dude', 'plasma', 'dasher', 'destiny draw', 'dark armed dragon'],
-    preferredArchetypes: ['diamond dude turbo', 'perfect circle monarch', 'destiny hero', 'dad return', 'dad turbo'],
+    mustIds: [46997],
+    keywords: ['plasma', 'diamond dude', 'malicious', 'destiny hero', 'dreadmaster', 'destiny draw', 'dark armed dragon'],
+    preferred: ['diamond dude turbo', 'dad return', 'dad turbo', 'perfect circle monarch'],
+    disallowed: ['gadget', 'volcanic', 'harpie'],
   },
   {
     id: 'jesse-anderson',
     name: 'Jesse Anderson',
     series: 'GX',
-    signatureKeywords: ['crystal beast', 'pegasus', 'carbuncle', 'tiger', 'rainbow dragon', 'crystal abundance', 'crystal beacon'],
-    preferredArchetypes: ['crystal beast', 'crystal abundance otk', 'rainbow dragon turbo'],
+    keywords: ['crystal beast', 'pegasus', 'carbuncle', 'tiger', 'rainbow dragon', 'crystal abundance'],
+    preferred: ['tiger stun', 'gladiator beast', 'warrior'],
+    disallowed: ['machine otk', 'zombie', 'demise'],
   },
   {
     id: 'vellian-crowler',
     name: 'Dr. Vellian Crowler',
     series: 'GX',
-    signatureKeywords: ['ancient gear', 'golem', 'beast', 'engineer', 'castle', 'geartown', 'limiter removal'],
-    preferredArchetypes: ['ancient gear machina', 'ancient gear dark', 'machine beat', 'geartown'],
+    mustIds: [25104, 15931],
+    keywords: ['ancient gear', 'golem', 'beast', 'engineer', 'castle', 'geartown', 'limiter removal'],
+    preferred: ['ancient gear', 'machine beat', 'machine otk'],
+    disallowed: ['fairy', 'spellcaster', 'zombie'],
   },
   {
     id: 'atticus-rhodes',
     name: 'Atticus Rhodes',
     series: 'GX',
-    signatureKeywords: ['red-eyes', 'dragon', 'exploder', 'prime material dragon', 'darkness metal dragon', 'wyvern'],
-    preferredArchetypes: ['red-eyes turbo', 'dragon turbo', 'disaster dragon', 'hopeless dragon'],
+    keywords: ['red-eyes', 'dragon', 'exploder', 'prime material dragon', 'darkness metal dragon', 'wyvern'],
+    preferred: ['dragon turbo', 'dragon beat', 'blue-eyes'],
+    disallowed: ['fairy', 'gadget', 'counter fairy'],
   },
   {
     id: 'tyranno-hassleberry',
     name: 'Tyranno Hassleberry',
     series: 'GX',
-    signatureKeywords: ['ultimate tyranno', 'super conductor tyranno', 'babycerasaurus', 'fossil dig', 'jurassic world', 'hydrogeddon'],
-    preferredArchetypes: ['dinosaur', 'hydrogeddon beat', 'survival dino beat'],
+    keywords: ['ultimate tyranno', 'super conductor tyranno', 'babycerasaurus', 'fossil dig', 'jurassic world', 'hydrogeddon'],
+    preferred: ['dinosaur', 'earth beat'],
+    disallowed: ['fairy', 'spellcaster', 'machine otk'],
   },
   {
     id: 'jim-crocodile-cook',
     name: 'Jim Crocodile Cook',
     series: 'GX',
-    signatureKeywords: ['grandmarg', 'jujitsu', 'morphing jar', 'rock', 'megarock', 'fossil dyna'],
-    preferredArchetypes: ['fossil dyna rock stun', 'megarock dragon otk', 'earth beat', 'rock monarch'],
+    keywords: ['grandmarg', 'jujitsu', 'morphing jar', 'rock', 'megarock', 'fossil dyna'],
+    preferred: ['rock stun', 'earth beat', 'rock monarch'],
+    disallowed: ['machine otk', 'fairy', 'six samurai'],
   },
   {
     id: 'axel-brodie',
     name: 'Axel Brodie',
     series: 'GX',
-    signatureKeywords: ['volcanic', 'rocket', 'scattershot', 'shell', 'blaze accelerator', 'doomfire', 'solar flare'],
-    preferredArchetypes: ['volcanic', 'volcanic monarch', 'volcanic counter fairy', 'burn'],
+    mustIds: [48188],
+    keywords: ['volcanic', 'rocket', 'scattershot', 'shell', 'blaze accelerator', 'doomfire'],
+    preferred: ['volcanic monarch', 'volcanic', 'volcanic gadget'],
+    disallowed: ['fairy', 'blue-eyes', 'dark magician'],
   },
   {
     id: 'adrian-gecko',
     name: 'Adrian Gecko',
     series: 'GX',
-    signatureKeywords: ['cloudian', 'exodius', 'sanctuary in the sky', 'fog counter', 'spirit reaper'],
-    preferredArchetypes: ['cloudian', 'exodius turbo', 'sanctuary control'],
+    keywords: ['cloudian', 'exodius', 'sanctuary in the sky', 'fog counter', 'spirit reaper'],
+    preferred: ['rat toolbox', 'stall control', 'warrior'],
+    disallowed: ['machine otk', 'volcanic', 'gadget'],
   },
   {
     id: 'sartorius-kumar',
     name: 'Sartorius Kumar',
     series: 'GX',
-    signatureKeywords: ['artemis', 'harvest', 'meltiel', 'layard', 'arcana', 'solemn', 'bountiful', 'valhalla'],
-    preferredArchetypes: ['counter fairy', 'valhalla light beat', 'arcana force turn skip turbo'],
+    keywords: ['artemis', 'harvest', 'meltiel', 'layard', 'arcana', 'solemn', 'bountiful', 'valhalla'],
+    preferred: ['counter fairy', 'light beat', 'fairy'],
+    disallowed: ['machine otk', 'zombie', 'demise'],
   },
   {
     id: 'yubel',
     name: 'Yubel',
     series: 'GX',
-    signatureKeywords: ['fiend', 'dark necrofear', 'night assailant', 'sangan', 'witch of the black forest', 'chaos', 'yubel', 'raviel'],
-    preferredArchetypes: ['yubel limit reverse', 'fiend burn', 'chaos control', 'dark armageddon control'],
+    keywords: ['fiend', 'dark necrofear', 'night assailant', 'sangan', 'witch of the black forest', 'chaos', 'yubel', 'raviel'],
+    preferred: ['fiend', 'chaos control', 'strike ninja return'],
+    disallowed: ['gadget', 'volcanic', 'counter fairy'],
   },
   {
     id: 'nightshroud',
     name: 'Nightshroud',
     series: 'GX',
-    signatureKeywords: ['dragon', 'five-headed', 'red-eyes', 'chaos', 'future fusion', 'darkness'],
-    preferredArchetypes: ['red-eyes darkness beat', 'dragon\'s mirror five-headed dragon otk', 'chaos dragon'],
+    keywords: ['dragon', 'five-headed', 'red-eyes', 'chaos', 'future fusion', 'darkness'],
+    preferred: ['dragon turbo', 'dragon beat', 'chaos control'],
+    disallowed: ['fairy', 'counter fairy', 'gadget'],
   },
   {
     id: 'yusuke-fujiwara',
     name: 'Yusuke Fujiwara',
     series: 'GX',
-    signatureKeywords: ['clear vice dragon', 'clear world', 'honest', 'chaos sorcerer', 'd.d. crow'],
-    preferredArchetypes: ['clear world control', 'chaos control', 'anti-meta stun'],
+    keywords: ['clear vice dragon', 'clear world', 'honest', 'chaos sorcerer', 'd.d. crow'],
+    preferred: ['chaos control', 'anti-meta stun', 'light beat'],
+    disallowed: ['machine otk', 'volcanic', 'gadget'],
   },
   {
     id: 'supreme-king-jaden',
     name: 'Supreme King Jaden',
     series: 'GX',
-    signatureKeywords: ['evil hero', 'dark gaia', 'malicious edge', 'dark calling', 'dark fusion', 'super polymerization', 'malicious', 'destiny hero', 'elemental hero'],
-    preferredArchetypes: ['evil hero dark gaia otk', 'dark calling beat', 'dad turbo'],
+    mustIds: [24724],
+    keywords: ['evil hero', 'dark gaia', 'malicious edge', 'dark calling', 'dark fusion', 'super polymerization'],
+    preferred: ['soul control', 'dad turbo', 'phantom turbo'],
+    disallowed: ['counter fairy', 'ocean control', 'gadget'],
   },
 ];
 
 export async function generateAllCharacterDecks(): Promise<void> {
   if (!fs.existsSync(CACHE_FILE)) {
-    throw new Error(`Tournament deck cache not found at ${CACHE_FILE}. Run scrape-formatlibrary-decks.ts first!`);
+    throw new Error(`Tournament deck cache not found at ${CACHE_FILE}. Run fetch-expanded-deck-pool.ts first!`);
   }
 
   const allTournamentDecks: TournamentDeckRecord[] = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-  console.log(`Loaded ${allTournamentDecks.length} validated tournament decks from cache.`);
+  console.log(`Loaded ${allTournamentDecks.length} validated decks from cache.`);
 
-  // Load existing data
   const characters: CharacterData[] = JSON.parse(fs.readFileSync(CHARACTERS_JSON_PATH, 'utf-8'));
   const existingPrebuilts: CustomDeck[] = JSON.parse(fs.readFileSync(PREBUILT_DECKS_PATH, 'utf-8'));
 
@@ -376,70 +437,60 @@ export async function generateAllCharacterDecks(): Promise<void> {
 
     console.log(`\n▶ Processing [${char.series}] ${char.name} (${char.id})...`);
 
-    // Score all tournament decks for this character
-    const candidates: { deck: TournamentDeckRecord; score: number; distinctKey: string }[] = [];
+    const candidates: { deck: TournamentDeckRecord; score: number; distinctKey: string; archetype: string }[] = [];
+    const mustSet = new Set(charRule.mustIds || []);
 
     for (const tDeck of allTournamentDecks) {
       const cardNames = tDeck.main.map((id) => (pool[String(id)]?.name || '').toLowerCase());
-      const typeLower = tDeck.deckTypeName.toLowerCase();
+      const extraNames = tDeck.extra.map((id) => (pool[String(id)]?.name || '').toLowerCase());
+      const typeLower = (tDeck.deckTypeName || '').toLowerCase();
+      const nameLower = (tDeck.name || '').toLowerCase();
+      const allNames = [...cardNames, ...extraNames];
 
-      // Count signature keyword hits
-      let sigHits = 0;
-      for (const kw of charRule.signatureKeywords) {
-        if (cardNames.some((cName) => cName.includes(kw.toLowerCase()))) {
-          sigHits++;
-        }
-      }
-
-      if (sigHits < (charRule.minSignatureMatches || 1)) {
+      // Disallowed check
+      if (charRule.disallowed && charRule.disallowed.some((dis) => typeLower.includes(dis) || nameLower.includes(dis))) {
         continue;
       }
 
-      let score = sigHits * 10;
-
-      // Bonus for preferred archetype match
-      for (const pref of charRule.preferredArchetypes) {
-        if (typeLower.includes(pref.toLowerCase())) {
-          score += 25;
-          break;
-        }
+      let score = 0;
+      if (mustSet.has(tDeck.id)) {
+        score += 1000; // Guaranteed must-include
       }
 
-      // Flagship signature card bonus
-      if ((charRule.id === 'yami-yugi' || charRule.id === 'arkana') && cardNames.includes('dark magician')) score += 50;
-      if (charRule.id === 'seto-kaiba' && cardNames.some(n => n.includes('blue-eyes'))) score += 50;
-      if (charRule.id === 'joey-wheeler' && cardNames.some(n => n.includes('red-eyes'))) score += 30;
-      if (charRule.id === 'zane-truesdale' && cardNames.some(n => n.includes('cyber dragon'))) score += 30;
-      if (charRule.id === 'jaden-yuki' && cardNames.some(n => n.includes('elemental hero'))) score += 30;
+      for (const kw of charRule.keywords) {
+        if (allNames.some((cn) => cn.includes(kw.toLowerCase()))) score += 15;
+      }
+      for (const pref of charRule.preferred) {
+        if (typeLower.includes(pref.toLowerCase())) score += 30;
+      }
 
-      // Bonus for high tournament placement (1st place > 2nd > Top Cut)
-      if (tDeck.placement === 1) score += 15;
-      else if (tDeck.placement === 2) score += 10;
-      else if (tDeck.placement <= 4) score += 5;
+      if (score <= 0) continue;
 
-      // Distinct key based on archetype and core cards to prevent duplicate decks
       const sortedCore = [...tDeck.main].sort().slice(0, 8).join('-');
       const distinctKey = `${tDeck.deckTypeName}_${sortedCore}`;
-
-      candidates.push({ deck: tDeck, score, distinctKey });
+      candidates.push({ deck: tDeck, score, distinctKey, archetype: tDeck.deckTypeName });
     }
 
-    // Sort by score descending
     candidates.sort((a, b) => b.score - a.score);
 
-    // Pick top unique decks (up to 10)
     const selected: TournamentDeckRecord[] = [];
     const seenKeys = new Set<string>();
+    const archetypeCount: Record<string, number> = {};
+    const maxPerArch = charRule.maxPerArchetype || 2;
 
     for (const cand of candidates) {
       if (selected.length >= 10) break;
-      if (!seenKeys.has(cand.distinctKey)) {
-        seenKeys.add(cand.distinctKey);
-        selected.push(cand.deck);
-      }
+      if (seenKeys.has(cand.distinctKey)) continue;
+
+      const count = archetypeCount[cand.archetype] || 0;
+      if (count >= maxPerArch && !mustSet.has(cand.deck.id)) continue;
+
+      seenKeys.add(cand.distinctKey);
+      archetypeCount[cand.archetype] = count + 1;
+      selected.push(cand.deck);
     }
 
-    console.log(`  Found ${candidates.length} candidates, selected ${selected.length} top tournament decks.`);
+    console.log(`  Found ${candidates.length} candidates, selected ${selected.length} top authentic decks.`);
 
     const charDeckList: CharacterDeckData[] = [];
     let deckIdx = 1;
@@ -451,10 +502,35 @@ export async function generateAllCharacterDecks(): Promise<void> {
       const ydkRelativePath = `resources/decks/${ydkFilename}`;
       const ydkAbsolutePath = path.join(DECKS_DIR, ydkFilename);
 
-      // Write YDK file
-      writeYdkFile(ydkAbsolutePath, tDeck.main, tDeck.extra, tDeck.side);
+      // Ensure extra deck monsters in side deck are moved to extra if there is room (< 15)
+      const extraCards = [...(tDeck.extra || [])];
+      const sideCards: number[] = [];
+      const extraTypeMask = 0x40 | 0x2000 | 0x800000 | 0x4000000;
+      for (const cid of (tDeck.side || [])) {
+        const row = db.prepare('SELECT type FROM datas WHERE id = ?').get(cid) as { type: number } | undefined;
+        if (row && (row.type & extraTypeMask) && extraCards.length < 15) {
+          extraCards.push(cid);
+        } else {
+          sideCards.push(cid);
+        }
+      }
 
-      const cleanName = `${tDeck.deckTypeName} [${tDeck.event || tDeck.formatName}]`;
+      // Write YDK file
+      writeYdkFile(ydkAbsolutePath, tDeck.main, extraCards, sideCards);
+
+      // Clean, evocative tournament name
+      let cleanName = tDeck.name && tDeck.name !== 'null' && tDeck.name !== 'Format Library Deck'
+        ? tDeck.name
+        : tDeck.deckTypeName;
+      
+      if (tDeck.id === 39153) {
+        cleanName = 'Egyptian God [Format Library]';
+      } else if (tDeck.id === 46997) {
+        cleanName = 'HERO Neos [Format Library]';
+      } else if (!cleanName.includes('[')) {
+        cleanName = `${cleanName} [${tDeck.event || tDeck.formatName}]`;
+      }
+
       const placementStr = tDeck.placement === 1 ? '1st Place Champion' : `Top Cut #${tDeck.placement}`;
       const description = `Authentic Format Library tournament deck (${placementStr}) from ${tDeck.event || tDeck.formatName} format, piloted by ${tDeck.builderName}. Features signature synergy for ${char.name}.`;
 
@@ -466,7 +542,7 @@ export async function generateAllCharacterDecks(): Promise<void> {
         description,
         ydkPath: ydkRelativePath,
         mainCards: tDeck.main,
-        extraCards: tDeck.extra,
+        extraCards,
       };
       charDeckList.push(charDeckData);
 
@@ -475,7 +551,7 @@ export async function generateAllCharacterDecks(): Promise<void> {
         id: deckId,
         name: `${char.name} — ${cleanName}`,
         main: tDeck.main,
-        extra: tDeck.extra,
+        extra: extraCards,
         createdAt: 1700000000000 + totalAssignedDecks * 1000,
         updatedAt: 1700000000000 + totalAssignedDecks * 1000,
         series: char.series,
