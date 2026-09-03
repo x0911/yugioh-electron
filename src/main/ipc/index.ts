@@ -194,4 +194,38 @@ export function registerIpcHandlers(): void {
     const { llmDuelService } = await import('../ai/LLMDuelService.js');
     return llmDuelService.fetchAvailableModels(payload.provider, payload.apiKey, payload.customEndpoint);
   });
+
+  // Smart Delta Update handlers (Phase 16)
+  ipcMain.handle(IPC_CHANNELS.UPDATE_CHECK, async (_event, customUrl?: string) => {
+    const { updateService } = await import('../services/UpdateService.js');
+    return updateService.checkForUpdates(customUrl);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.UPDATE_DOWNLOAD, async () => {
+    const { updateService } = await import('../services/UpdateService.js');
+    return updateService.downloadUpdate((progress) => {
+      const wins = BrowserWindow.getAllWindows();
+      for (const win of wins) {
+        if (!win.isDestroyed()) {
+          win.webContents.send(IPC_CHANNELS.UPDATE_PROGRESS, progress);
+        }
+      }
+    });
+  });
+
+  ipcMain.handle(IPC_CHANNELS.UPDATE_APPLY, async () => {
+    const { updateService } = await import('../services/UpdateService.js');
+    return updateService.applyUpdate();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.UPDATE_ROLLBACK, async () => {
+    const { updateService } = await import('../services/UpdateService.js');
+    return updateService.rollback();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.UPDATE_GET_STATUS, async () => {
+    const { updateService } = await import('../services/UpdateService.js');
+    return updateService.getStatus();
+  });
 }
+

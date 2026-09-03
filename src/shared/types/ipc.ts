@@ -44,6 +44,14 @@ export const IPC_CHANNELS = {
   CHARACTERS_GET_RANDOM_DECK: 'characters:get-random-deck',
   AI_TEST_CONNECTION: 'ai:test-connection',
   AI_FETCH_MODELS: 'ai:fetch-models',
+
+  // Smart Delta Update (Phase 16)
+  UPDATE_CHECK: 'update:check',
+  UPDATE_DOWNLOAD: 'update:download',
+  UPDATE_APPLY: 'update:apply',
+  UPDATE_ROLLBACK: 'update:rollback',
+  UPDATE_GET_STATUS: 'update:get-status',
+  UPDATE_PROGRESS: 'update:progress',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
@@ -134,3 +142,56 @@ export interface AppAPI {
   exitApp: () => Promise<void>;
   platform: NodeJS.Platform;
 }
+
+export interface UpdateFileDelta {
+  path: string;
+  size: number;
+  sha256: string;
+  status: 'new' | 'modified';
+}
+
+export interface UpdateCheckResult {
+  updateAvailable: boolean;
+  currentVersion: string;
+  targetVersion: string;
+  releaseDate?: string;
+  releaseNotes?: string;
+  totalDownloadSize: number;
+  changedFiles: UpdateFileDelta[];
+  hasPatchInstalled: boolean;
+  installedPatchVersion?: string;
+  error?: string;
+}
+
+export interface UpdateProgressPayload {
+  stage: 'idle' | 'checking' | 'downloading' | 'verifying' | 'ready' | 'applying' | 'error';
+  totalFiles: number;
+  completedFiles: number;
+  currentFile: string;
+  downloadedBytes: number;
+  totalBytes: number;
+  speedBytesPerSec: number;
+  percent: number;
+  error?: string;
+}
+
+export interface UpdateAPI {
+  checkForUpdates: (customManifestUrl?: string) => Promise<UpdateCheckResult>;
+  downloadUpdate: () => Promise<boolean>;
+  applyUpdate: () => Promise<void>;
+  rollback: () => Promise<boolean>;
+  getStatus: () => Promise<UpdateCheckResult>;
+  onProgress: (callback: (progress: UpdateProgressPayload) => void) => () => void;
+}
+
+declare global {
+  interface Window {
+    duelAPI?: DuelAPI;
+    deckAPI?: DeckAPI;
+    settingsAPI?: SettingsAPI;
+    appAPI?: AppAPI;
+    updateAPI?: UpdateAPI;
+  }
+}
+
+

@@ -5,6 +5,8 @@ import {
   type DeckAPI,
   type SettingsAPI,
   type AppAPI,
+  type UpdateAPI,
+  type UpdateProgressPayload,
 } from '../shared/types/ipc.js';
 import type {
   DuelInitOptions,
@@ -134,7 +136,34 @@ const appAPI: AppAPI = {
   platform: process.platform,
 };
 
+const updateAPI: UpdateAPI = {
+  checkForUpdates: (customManifestUrl?: string) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CHECK, customManifestUrl);
+  },
+  downloadUpdate: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_DOWNLOAD);
+  },
+  applyUpdate: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_APPLY);
+  },
+  rollback: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_ROLLBACK);
+  },
+  getStatus: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_GET_STATUS);
+  },
+  onProgress: (callback: (progress: UpdateProgressPayload) => void) => {
+    const handler = (_e: Electron.IpcRendererEvent, progress: UpdateProgressPayload) => callback(progress);
+    ipcRenderer.on(IPC_CHANNELS.UPDATE_PROGRESS, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.UPDATE_PROGRESS, handler);
+    };
+  },
+};
+
 contextBridge.exposeInMainWorld('duelAPI', duelAPI);
 contextBridge.exposeInMainWorld('deckAPI', deckAPI);
 contextBridge.exposeInMainWorld('settingsAPI', settingsAPI);
 contextBridge.exposeInMainWorld('appAPI', appAPI);
+contextBridge.exposeInMainWorld('updateAPI', updateAPI);
+

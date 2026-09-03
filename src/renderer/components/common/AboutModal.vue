@@ -73,6 +73,13 @@
 
     <template #footer>
       <div class="about-modal-footer">
+        <YugiButton
+          variant="secondary"
+          icon="⚡"
+          @click="openUpdater"
+        >
+          Check for Updates
+        </YugiButton>
         <YugiButton variant="primary" @click="$emit('close')">
           Close
         </YugiButton>
@@ -83,16 +90,24 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import YugiModal from './YugiModal.vue';
 import YugiButton from './YugiButton.vue';
+
+const router = useRouter();
 
 defineProps<{
   isOpen: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'close'): void;
 }>();
+
+function openUpdater(): void {
+  emit('close');
+  router.push('/update');
+}
 
 const appVersion = ref('0.1.0');
 

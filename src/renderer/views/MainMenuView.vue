@@ -27,6 +27,15 @@
           <span>Logs</span>
         </router-link>
 
+        <router-link
+          to="/update"
+          class="main-menu-view__about-btn"
+          title="Check for Game Updates & Synchronize Decks"
+        >
+          <span class="about-icon">⚡</span>
+          <span>Update</span>
+        </router-link>
+
         <button
           type="button"
           class="main-menu-view__about-btn"

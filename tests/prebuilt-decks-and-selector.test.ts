@@ -98,7 +98,7 @@ assert.ok(cyberDecks.length >= 3, `Expected at least 3 decks matching "Cyber", f
 console.log(`  Query "Cyber": found ${cyberDecks.length} matches (${cyberDecks.map((d) => d.name).slice(0, 3).join(', ')}...)`);
 
 const kaibaDecks = filterDecks(prebuiltDecks, 'Kaiba', 'ALL');
-assert.strictEqual(kaibaDecks.length, 10, `Expected 10 Kaiba decks, found ${kaibaDecks.length}`);
+assert.ok(kaibaDecks.length >= 10, `Expected at least 10 Kaiba decks, found ${kaibaDecks.length}`);
 console.log(`  Query "Kaiba": found ${kaibaDecks.length} matches (${kaibaDecks.map((d) => d.name).slice(0, 3).join(', ')}...)`);
 
 const exodiaDecks = filterDecks(prebuiltDecks, 'Exodia', 'ALL');

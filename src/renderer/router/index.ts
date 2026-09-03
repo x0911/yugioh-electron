@@ -49,6 +49,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/LogsView.vue'),
   },
   {
+    path: '/update',
+    name: 'update',
+    component: () => import('../views/UpdateView.vue'),
+  },
+  {
     path: '/characters',
     redirect: '/main-menu',
   },

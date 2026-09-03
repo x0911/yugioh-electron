@@ -148,7 +148,16 @@ function getResourceMimeType(filePath: string): string {
           ? path.join(process.resourcesPath, 'resources')
           : path.resolve(process.cwd(), 'resources');
 
-        let targetPath = path.resolve(basePath, cleanSubPath);
+        const patchDir = path.join(app.getPath('userData'), 'patch');
+        const patchSubDir = path.join(patchDir, 'resources');
+
+        let targetPath = path.resolve(patchSubDir, cleanSubPath);
+        if (!fs.existsSync(targetPath)) {
+          targetPath = path.resolve(patchDir, cleanSubPath);
+        }
+        if (!fs.existsSync(targetPath)) {
+          targetPath = path.resolve(basePath, cleanSubPath);
+        }
         if (!fs.existsSync(targetPath)) {
           targetPath = path.resolve(basePath, rawSubPath);
         }
