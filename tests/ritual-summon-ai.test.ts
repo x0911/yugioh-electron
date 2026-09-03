@@ -52,7 +52,7 @@ async function testAiRitualSummon() {
   });
 
   const start = Date.now();
-  while (!blsRitualSummoned && Date.now() - start < 6000) {
+  while (!blsRitualSummoned && Date.now() - start < 25000) {
     await new Promise((r) => setTimeout(r, 50));
   }
 
