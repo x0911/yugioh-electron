@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "releaseDate": "2026-09-03T12:41:04.455Z",
+  "releaseDate": "2026-09-03T12:51:35.826Z",
   "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.0\n- Added Egyptian God \"Elemental HERO Egyxos\" custom monster with Contact Special Summon\n- 526 pre-built decks available for all duelists\n- HTTP 206 Partial Content Range streaming for cinematic summon videos\n- Enhanced LLM AI duelist integration with automated rate-limit fallbacks",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {
@@ -11,8 +11,8 @@
     },
     "data/card-videos.json": {
       "path": "data/card-videos.json",
-      "size": 3127,
-      "sha256": "a9d45fa79744885a4f1aa00de4d9a1079a4281df06ab13cf6a58673f26080867"
+      "size": 2659,
+      "sha256": "c5713fa475c71c659c1b686c9403348e3082b5b402344142e5fd4f73d9bdf7e5"
     },
     "data/characters.json": {
       "path": "data/characters.json",

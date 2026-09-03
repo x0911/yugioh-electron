@@ -1,17 +1,66 @@
 {
+  "46986414": {
+    "cardName": "Dark Magician",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_46986414.mp4",
+    "attack": "resources/videos/cards/attack_46986414.mp4",
+    "isPlaceholder": false
+  },
+  "89631139": {
+    "cardName": "Blue-Eyes White Dragon",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_89631139.mp4",
+    "attack": "resources/videos/cards/attack_89631139.mp4",
+    "isPlaceholder": false
+  },
+  "70781052": {
+    "cardName": "Summoned Skull",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_70781052.mp4",
+    "attack": "resources/videos/cards/attack_70781052.mp4",
+    "isPlaceholder": true
+  },
+  "74677422": {
+    "cardName": "Red-Eyes Black Dragon",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_74677422.mp4",
+    "attack": "resources/videos/cards/attack_74677422.mp4",
+    "isPlaceholder": true
+  },
+  "89943723": {
+    "cardName": "Elemental HERO Neos",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_89943723.mp4",
+    "attack": "resources/videos/cards/attack_89943723.mp4",
+    "isPlaceholder": true
+  },
+  "70095154": {
+    "cardName": "Cyber Dragon",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_70095154.mp4",
+    "attack": "resources/videos/cards/attack_70095154.mp4",
+    "isPlaceholder": true
+  },
+  "45231177": {
+    "cardName": "Flame Swordsman",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_45231177.mp4",
+    "attack": "resources/videos/cards/attack_45231177.mp4",
+    "isPlaceholder": true
+  },
   "10000000": {
     "cardName": "Obelisk the Tormentor",
     "series": "DM",
     "summon": "resources/videos/cards/summon_10000000.mp4",
     "attack": "resources/videos/cards/attack_10000000.mp4",
-    "isPlaceholder": false
+    "isPlaceholder": true
   },
   "10000010": {
     "cardName": "The Winged Dragon of Ra",
     "series": "DM",
     "summon": "resources/videos/cards/summon_10000010.mp4",
     "attack": "resources/videos/cards/attack_10000010.mp4",
-    "isPlaceholder": false
+    "isPlaceholder": true
   },
   "10000020": {
     "cardName": "Slifer the Sky Dragon",
@@ -24,70 +73,7 @@
     "cardName": "Exodia the Forbidden One",
     "series": "DM",
     "victory": "resources/videos/cards/victory_33396948.mp4",
-    "isPlaceholder": false
-  },
-  "35809262": {
-    "cardName": "Elemental HERO Flame Wingman",
-    "series": "GX",
-    "summon": "resources/videos/cards/summon_35809262.mp4",
-    "attack": "resources/videos/cards/attack_35809262.mp4",
-    "isPlaceholder": false
-  },
-  "38033121": {
-    "cardName": "Dark Magician Girl",
-    "series": "DM",
-    "summon": "resources/videos/cards/summon_38033121.mp4",
-    "attack": "resources/videos/cards/attack_38033121.mp4",
-    "isPlaceholder": false
-  },
-  "45231177": {
-    "cardName": "Flame Swordsman",
-    "series": "DM",
-    "summon": "resources/videos/cards/summon_45231177.mp4",
-    "attack": "resources/videos/cards/attack_45231177.mp4",
     "isPlaceholder": true
-  },
-  "46986414": {
-    "cardName": "Dark Magician",
-    "series": "DM",
-    "summon": "resources/videos/cards/summon_46986414.mp4",
-    "attack": "resources/videos/cards/attack_46986414.mp4",
-    "isPlaceholder": false
-  },
-  "70095154": {
-    "cardName": "Cyber Dragon",
-    "series": "GX",
-    "summon": "resources/videos/cards/summon_70095154.mp4",
-    "attack": "resources/videos/cards/attack_70095154.mp4",
-    "isPlaceholder": false
-  },
-  "70781052": {
-    "cardName": "Summoned Skull",
-    "series": "DM",
-    "summon": "resources/videos/cards/summon_70781052.mp4",
-    "attack": "resources/videos/cards/attack_70781052.mp4",
-    "isPlaceholder": false
-  },
-  "74677422": {
-    "cardName": "Red-Eyes Black Dragon",
-    "series": "DM",
-    "summon": "resources/videos/cards/summon_74677422.mp4",
-    "attack": "resources/videos/cards/attack_74677422.mp4",
-    "isPlaceholder": false
-  },
-  "89631139": {
-    "cardName": "Blue-Eyes White Dragon",
-    "series": "DM",
-    "summon": "resources/videos/cards/summon_89631139.mp4",
-    "attack": "resources/videos/cards/attack_89631139.mp4",
-    "isPlaceholder": false
-  },
-  "89943723": {
-    "cardName": "Elemental HERO Neos",
-    "series": "GX",
-    "summon": "resources/videos/cards/summon_89943723.mp4",
-    "attack": "resources/videos/cards/attack_89943723.mp4",
-    "isPlaceholder": false
   },
   "99900001": {
     "cardName": "Elemental HERO Egyxos",
