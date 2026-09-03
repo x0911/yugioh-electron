@@ -22,6 +22,8 @@ resources/cards/mini/*
 # Media assets (videos and audio/music)
 resources/videos/
 resources/audio/
+*.tar.gz
+game-assets.tar.gz
 
 # OS & Editor files
 .DS_Store
