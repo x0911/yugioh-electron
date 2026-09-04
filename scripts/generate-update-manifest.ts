@@ -125,10 +125,10 @@ export function generateManifest(): UpdateManifest {
     releaseDate: new Date().toISOString(),
     releaseNotes:
       `Yu-Gi-Oh! Duel Arena v${currentVersion}\n` +
-      `- Added Egyptian God "Elemental HERO Egyxos" custom monster with Contact Special Summon\n` +
-      `- 526 pre-built decks available for all duelists\n` +
-      `- HTTP 206 Partial Content Range streaming for cinematic summon videos\n` +
-      `- Enhanced LLM AI duelist integration with automated rate-limit fallbacks`,
+      `- 394 authentic Format Library tournament decks across all 40 DM & GX characters with signature flagship cards (Slifer, Obelisk, Ra, Neos, Cyber End Dragon, Armed Dragon, Ancient Gear Golem, etc.)\n` +
+      `- 517 total prebuilt decks with zero procedural filler cards\n` +
+      `- Deck editor DeckColumn crash fix & legality safeguards\n` +
+      `- Added Egyptian God "Elemental HERO Egyxos" custom monster with Contact Special Summon`,
     remoteBaseUrl: 'https://raw.githubusercontent.com/x0911/yugioh-electron/main',
     files: manifestFiles,
   };
