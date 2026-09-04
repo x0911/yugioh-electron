@@ -910,8 +910,8 @@ async function onRestartMatch(): Promise<void> {
   audioManager.playSfx('duel-start');
   appendLog('RESTART', 'Restarting live duel...');
   if (duelStore.isPvPMatch) {
-    if (duelStore.pvpRole === 'host' && duelStore.pvpInitOptions && window.duelAPI) {
-      await window.duelAPI.newDuel(duelStore.pvpInitOptions);
+    if (duelStore.pvpRole === 'host') {
+      await duelStore.startPvPDuel();
     }
   } else {
     await duelStore.startPreparedDuel();
@@ -1484,7 +1484,8 @@ async function setupEngineEventListener(): Promise<void> {
       multiplayerStore.handleIncomingPacket(packet);
       if (packet.type === 'DUEL_RESPONSE') {
         if (window.duelAPI) {
-          window.duelAPI.sendCommand(packet.payload);
+          const plainResponse = JSON.parse(JSON.stringify(packet.payload));
+          window.duelAPI.sendCommand(plainResponse);
         }
       } else if (packet.type === 'REMATCH_REQUEST' || packet.type === 'REMATCH_ACCEPT') {
         onRestartMatch();
@@ -1498,6 +1499,43 @@ async function setupEngineEventListener(): Promise<void> {
           multiplayerStore.sendDuelPrompt(event);
           return;
         }
+
+        // If event is a prompt for Player 0 (Host), only process locally
+        if (event.isPrompt && event.promptPlayer === 0) {
+          await handleIncomingDuelEvent(event);
+          return;
+        }
+
+        // Handle DRAW events: redact opponent cards for the recipient
+        if (event.type === 'DRAW') {
+          // Guest receives masked cards if Player 0 drew
+          const guestEvent =
+            event.player === 0 && Array.isArray((event as any).drawnCards)
+              ? {
+                  ...event,
+                  drawnCards: (event as any).drawnCards.map(() => ({
+                    code: 0,
+                    cardName: 'Card Back',
+                  })),
+                }
+              : event;
+          multiplayerStore.sendDuelEvent(guestEvent);
+
+          // Host receives masked cards if Player 1 drew
+          const localEvent =
+            event.player === 1 && Array.isArray((event as any).drawnCards)
+              ? {
+                  ...event,
+                  drawnCards: (event as any).drawnCards.map(() => ({
+                    code: 0,
+                    cardName: 'Card Back',
+                  })),
+                }
+              : event;
+          await handleIncomingDuelEvent(localEvent);
+          return;
+        }
+
         // Forward regular events to Guest and process locally
         multiplayerStore.sendDuelEvent(event);
         await handleIncomingDuelEvent(event);
@@ -1531,8 +1569,8 @@ onMounted(async () => {
 
   // Start fresh prepared live duel (PvP host initializes engine, or Solo play against AI)
   if (duelStore.isPvPMatch) {
-    if (duelStore.pvpRole === 'host' && duelStore.pvpInitOptions && window.duelAPI) {
-      await window.duelAPI.newDuel(duelStore.pvpInitOptions);
+    if (duelStore.pvpRole === 'host') {
+      await duelStore.startPvPDuel();
     }
   } else {
     await duelStore.startPreparedDuel();

@@ -254,6 +254,12 @@ export class DuelEngineService {
         event.fieldStats = stats;
       }
     }
+    if (this.isPvPMode) {
+      for (const listener of this.eventListeners) {
+        listener(event);
+      }
+      return;
+    }
     const isOppHandPublic = this.viewFilter.isPlayerHandPublic(
       this.getPlayerField(1 - this.humanPlayerId),
       this.getPlayerField(this.humanPlayerId),

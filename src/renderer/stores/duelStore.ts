@@ -817,6 +817,10 @@ export const useDuelStore = defineStore('duel', {
      * trigger simultaneous enter animations for every card on screen).
      */
     async fetchBoardState(): Promise<void> {
+      if (this.isPvPMatch && this.pvpRole === 'guest') {
+        // In PvP mode, guest receives all updates and board state events incrementally from host.
+        return;
+      }
       if (window.duelAPI) {
         await this.initCardDatabase();
         try {
@@ -2523,6 +2527,38 @@ export const useDuelStore = defineStore('duel', {
         winReason: null,
       };
       this.isDuelActive = true;
+    },
+
+    async startPvPDuel(): Promise<boolean> {
+      if (!window.duelAPI || !this.pvpInitOptions) return false;
+      try {
+        const raw = this.pvpInitOptions;
+        const plainOptions: import('../../shared/types/duel.js').DuelInitOptions = {
+          player0Deck: Array.from(raw.player0Deck || []).map((c) => Number(c)),
+          player1Deck: Array.from(raw.player1Deck || []).map((c) => Number(c)),
+          player0ExtraDeck: Array.from(raw.player0ExtraDeck || []).map((c) => Number(c)),
+          player1ExtraDeck: Array.from(raw.player1ExtraDeck || []).map((c) => Number(c)),
+          startingLP: Number(raw.startingLP || 8000),
+          startingDrawCount: Number(raw.startingDrawCount || 5),
+          drawCountPerTurn: Number(raw.drawCountPerTurn || 1),
+          autoPlay: false,
+          humanPlayerId: 0,
+          isPvPMode: true,
+          player0Name: String(raw.player0Name || 'Host'),
+          player1Name: String(raw.player1Name || 'Guest'),
+        };
+
+        const success = await window.duelAPI.newDuel(plainOptions);
+        this.isDuelActive = success;
+        return success;
+      } catch (err) {
+        console.error('[DuelStore] Failed starting PvP duel:', err);
+        useUIStore().triggerCrashError(
+          err instanceof Error ? err : new Error(String(err)),
+          'PvP Duel Initialization Error',
+        );
+        return false;
+      }
     },
 
     resetDuel(): void {

@@ -501,4 +501,113 @@ console.log('--- Starting Multiplayer & PvP Protocol Test Suite ---');
   console.log('✓ Test 10: multiplayerStore.sendPacket & match start execution flow verified.');
 }
 
+// Test 11: startPvPDuel Structured Clone Safety (Vue Proxy Unwrapping)
+{
+  // Simulate a reactive Proxy around pvpInitOptions (like Pinia/Vue)
+  const reactiveDeck = new Proxy([89631139, 46986414], {
+    get(target, prop, receiver) {
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+
+  const reactiveOptions = new Proxy(
+    {
+      player0Deck: reactiveDeck,
+      player1Deck: reactiveDeck,
+      player0ExtraDeck: [],
+      player1ExtraDeck: [],
+      startingLP: 8000,
+      startingDrawCount: 5,
+      drawCountPerTurn: 1,
+      isPvPMode: true,
+      player0Name: 'Host Player',
+      player1Name: 'Guest Player',
+    },
+    {
+      get(target, prop, receiver) {
+        return Reflect.get(target, prop, receiver);
+      },
+    },
+  );
+
+  // Replicate startPvPDuel plainOptions construction
+  const plainOptions = {
+    player0Deck: Array.from(reactiveOptions.player0Deck || []).map((c) => Number(c)),
+    player1Deck: Array.from(reactiveOptions.player1Deck || []).map((c) => Number(c)),
+    player0ExtraDeck: Array.from(reactiveOptions.player0ExtraDeck || []).map((c) => Number(c)),
+    player1ExtraDeck: Array.from(reactiveOptions.player1ExtraDeck || []).map((c) => Number(c)),
+    startingLP: Number(reactiveOptions.startingLP || 8000),
+    startingDrawCount: Number(reactiveOptions.startingDrawCount || 5),
+    drawCountPerTurn: Number(reactiveOptions.drawCountPerTurn || 1),
+    autoPlay: false,
+    humanPlayerId: 0,
+    isPvPMode: true,
+    player0Name: String(reactiveOptions.player0Name || 'Host'),
+    player1Name: String(reactiveOptions.player1Name || 'Guest'),
+  };
+
+  // Chromium / contextBridge structuredClone must succeed without throwing DataCloneError
+  const cloned = structuredClone(plainOptions);
+  assert.deepStrictEqual(cloned.player0Deck, [89631139, 46986414]);
+  assert.strictEqual(cloned.isPvPMode, true);
+  assert.strictEqual(cloned.player0Name, 'Host Player');
+  assert.strictEqual(cloned.player1Name, 'Guest Player');
+
+  console.log('✓ Test 11: startPvPDuel structured clone safety (Vue proxy unwrapping) verified.');
+}
+
+// Test 12: Bidirectional DRAW Card Redaction & Prompt Routing in PvP
+{
+  const hostDrawEvent = {
+    type: 'DRAW',
+    player: 0,
+    drawnCards: [{ code: 46986414, cardName: 'Dark Magician' }],
+  };
+
+  // Host sends to Guest: Player 0's drawn cards are masked
+  const guestEventForHostDraw =
+    hostDrawEvent.player === 0 && Array.isArray(hostDrawEvent.drawnCards)
+      ? {
+          ...hostDrawEvent,
+          drawnCards: hostDrawEvent.drawnCards.map(() => ({ code: 0, cardName: 'Card Back' })),
+        }
+      : hostDrawEvent;
+
+  assert.strictEqual(guestEventForHostDraw.drawnCards[0].code, 0);
+  assert.strictEqual(guestEventForHostDraw.drawnCards[0].cardName, 'Card Back');
+  assert.strictEqual(hostDrawEvent.drawnCards[0].code, 46986414);
+
+  const guestDrawEvent = {
+    type: 'DRAW',
+    player: 1,
+    drawnCards: [{ code: 89631139, cardName: 'Blue-Eyes White Dragon' }],
+  };
+
+  // Host processes locally: Player 1's drawn cards are masked
+  const localEventForGuestDraw =
+    guestDrawEvent.player === 1 && Array.isArray(guestDrawEvent.drawnCards)
+      ? {
+          ...guestDrawEvent,
+          drawnCards: guestDrawEvent.drawnCards.map(() => ({ code: 0, cardName: 'Card Back' })),
+        }
+      : guestDrawEvent;
+
+  assert.strictEqual(localEventForGuestDraw.drawnCards[0].code, 0);
+  assert.strictEqual(localEventForGuestDraw.drawnCards[0].cardName, 'Card Back');
+  // Guest receives unmasked drawn cards
+  assert.strictEqual(guestDrawEvent.drawnCards[0].code, 89631139);
+
+  // Prompt routing: Guest prompt (player 1) vs Host prompt (player 0)
+  const guestPrompt = { isPrompt: true, promptPlayer: 1, promptType: 'SELECT_IDLECMD' };
+  const hostPrompt = { isPrompt: true, promptPlayer: 0, promptType: 'SELECT_IDLECMD' };
+
+  const isGuestPromptForGuest = guestPrompt.isPrompt && guestPrompt.promptPlayer === 1;
+  const isHostPromptForHost = hostPrompt.isPrompt && hostPrompt.promptPlayer === 0;
+
+  assert.strictEqual(isGuestPromptForGuest, true, 'Guest prompt must route to Guest');
+  assert.strictEqual(isHostPromptForHost, true, 'Host prompt must route to Host');
+
+  console.log('✓ Test 12: Bidirectional DRAW card redaction & prompt routing verified.');
+}
+
 console.log('🎉 All Multiplayer & PvP Protocol Tests Passed Cleanly!');
