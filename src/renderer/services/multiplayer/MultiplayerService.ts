@@ -17,6 +17,7 @@ export type PvpPacketType =
   | 'REMATCH_REQUEST'
   | 'REMATCH_ACCEPT'
   | 'SURRENDER'
+  | 'DISCONNECT'
   | 'VOICE_STATUS';
 
 export interface PlayerProfile {
@@ -95,6 +96,7 @@ export class MultiplayerService {
   public onStatusChange?: (status: ConnectionStatus, message?: string) => void;
   public onPacketReceived?: (packet: PvpPacket) => void;
   public onVoiceChange?: (state: VoiceState) => void;
+  public onOpponentLeft?: (reason: 'surrender' | 'disconnect' | 'left') => void;
 
   /**
    * Generates a 4-digit room code between 1000 and 9999
@@ -236,6 +238,7 @@ export class MultiplayerService {
       console.log('[MultiplayerService] Data connection closed by remote peer.');
       this.setStatus('disconnected', 'Opponent disconnected.');
       this.leaveVoiceChat();
+      this.onOpponentLeft?.('disconnect');
     });
 
     conn.on('error', (err) => {

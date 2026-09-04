@@ -408,9 +408,24 @@ const opponentDeckName = computed(() => multiplayerStore.remotePlayer?.deckName 
 onMounted(async () => {
   multiplayerStore.init();
   multiplayerStore.onStartDuel = () => {
+    const localDeck = getSelectedDeck();
     const localName = String(multiplayerStore.localPlayer?.name || 'Guest Duelist');
     const remoteName = String(multiplayerStore.remotePlayer?.name || 'Host');
-    duelStore.setupPvPMatch('guest', 1, localName, remoteName);
+    const localExtra = cleanDeckCards(localDeck.extraCards || multiplayerStore.localPlayer?.extraDeckCards);
+    const localDeckCount = cleanDeckCards(localDeck.cards || multiplayerStore.localPlayer?.deckCards).length || 40;
+    const remoteDeckCount = multiplayerStore.remotePlayer?.deckCards?.length || 40;
+    const remoteExtraCount = multiplayerStore.remotePlayer?.extraDeckCards?.length || 0;
+    duelStore.setupPvPMatch(
+      'guest',
+      1,
+      localName,
+      remoteName,
+      null,
+      localExtra,
+      localDeckCount,
+      remoteDeckCount,
+      remoteExtraCount,
+    );
     router.push('/duel');
   };
   if (window.appAPI?.isGuest) {
@@ -586,7 +601,17 @@ async function handleStartMatch() {
   };
 
   // Host prepares the duel match state with clean, un-proxied data
-  duelStore.setupPvPMatch('host', 0, hostName, guestName, pvpInitOptions);
+  duelStore.setupPvPMatch(
+    'host',
+    0,
+    hostName,
+    guestName,
+    pvpInitOptions,
+    p0Extra,
+    p0Deck.length,
+    p1Deck.length,
+    p1Extra.length,
+  );
 
   // Tell Guest to start duel and navigate to /duel
   multiplayerStore.sendPacket('START_DUEL', {

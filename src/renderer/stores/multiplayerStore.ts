@@ -60,6 +60,7 @@ export const useMultiplayerStore = defineStore('multiplayer', {
     rematchRequested: false,
     remoteRematchRequested: false,
     onStartDuel: null as ((payload: any) => void) | null,
+    onOpponentLeft: null as ((reason: 'surrender' | 'disconnect' | 'left') => void) | null,
   }),
 
   getters: {
@@ -82,6 +83,12 @@ export const useMultiplayerStore = defineStore('multiplayer', {
 
       multiplayerService.onPacketReceived = (packet) => {
         this.handleIncomingPacket(packet);
+      };
+
+      multiplayerService.onOpponentLeft = (reason) => {
+        if (this.onOpponentLeft) {
+          this.onOpponentLeft(reason);
+        }
       };
     },
 
@@ -204,6 +211,13 @@ export const useMultiplayerStore = defineStore('multiplayer', {
       multiplayerService.sendPacket('REMATCH_ACCEPT', {});
     },
 
+    sendSurrender(reason: 'surrender' | 'left' | 'disconnect' = 'surrender'): void {
+      multiplayerService.sendPacket('SURRENDER', {
+        player: this.localPlayer?.name,
+        reason,
+      });
+    },
+
     async toggleVoiceChat(): Promise<boolean> {
       if (this.voiceState.enabled) {
         multiplayerService.leaveVoiceChat();
@@ -297,6 +311,14 @@ export const useMultiplayerStore = defineStore('multiplayer', {
           };
           if (this.onStartDuel) {
             this.onStartDuel(data);
+          }
+          break;
+        }
+
+        case 'SURRENDER': {
+          const reason = (packet.payload as any)?.reason || 'surrender';
+          if (this.onOpponentLeft) {
+            this.onOpponentLeft(reason === 'disconnect' ? 'disconnect' : 'surrender');
           }
           break;
         }

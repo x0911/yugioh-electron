@@ -385,7 +385,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import type { FieldCard, DuelBoardState } from '../../shared/types/field.js';
-import { type DuelEventPayload, type TossPayload, getGameOverSubtitle } from '../../shared/types/duel.js';
+import { type DuelEventPayload, type TossPayload, getGameOverSubtitle, WIN_REASONS } from '../../shared/types/duel.js';
 import { getBackgroundUrl, getCardImageUrl, handleImageError } from '../utils/media.js';
 import { useDuelStore, type CardActionOption, type TargetInfo } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
@@ -918,18 +918,49 @@ async function onRestartMatch(): Promise<void> {
   }
 }
 
+function handleOpponentForfeit(reason?: string): void {
+  if (duelStore.isPvPMatch && duelStore.isDuelActive && duelStore.boardState.winner === null) {
+    const isDisconnect = reason === 'disconnect' || reason === 'left';
+    duelStore.boardState.winner = duelStore.userPlayerId;
+    duelStore.boardState.winReason = isDisconnect ? WIN_REASONS.DISCONNECT : WIN_REASONS.SURRENDER;
+    audioManager.playSfx('match-victory');
+    appendLog('VICTORY', isDisconnect ? 'Opponent left or disconnected. You win!' : 'Opponent surrendered. You win!');
+    saveCurrentDuelLog();
+  }
+}
+
 function onSurrender(): void {
   isMenuOpen.value = false;
   closeCardActionMenu();
   audioManager.playSfx('match-defeat');
   appendLog('SURRENDER', 'Player surrendered the match.');
   saveCurrentDuelLog('surrender');
-  router.push('/main-menu');
+  if (duelStore.isPvPMatch) {
+    const multiplayerStore = useMultiplayerStore();
+    multiplayerStore.sendSurrender('surrender');
+    duelStore.boardState.winner = duelStore.opponentPlayerId;
+    duelStore.boardState.winReason = WIN_REASONS.SURRENDER;
+  } else {
+    router.push('/main-menu');
+  }
 }
 
 function returnToCharacters(): void {
+  isMenuOpen.value = false;
+  closeCardActionMenu();
+  duelLogs.value = [];
   saveCurrentDuelLog();
-  router.push('/main-menu');
+  if (duelStore.isPvPMatch) {
+    if (duelStore.isDuelActive && duelStore.boardState.winner === null) {
+      const multiplayerStore = useMultiplayerStore();
+      multiplayerStore.sendSurrender('left');
+    }
+    const multiplayerStore = useMultiplayerStore();
+    multiplayerStore.disconnect();
+    router.push('/multiplayer');
+  } else {
+    router.push('/main-menu');
+  }
 }
 
 let unsubscribeEvents: (() => void) | null = null;
@@ -1487,6 +1518,8 @@ async function setupEngineEventListener(): Promise<void> {
           const plainResponse = JSON.parse(JSON.stringify(packet.payload));
           window.duelAPI.sendCommand(plainResponse);
         }
+      } else if (packet.type === 'SURRENDER') {
+        handleOpponentForfeit((packet.payload as any)?.reason);
       } else if (packet.type === 'REMATCH_REQUEST' || packet.type === 'REMATCH_ACCEPT') {
         onRestartMatch();
       }
@@ -1548,6 +1581,8 @@ async function setupEngineEventListener(): Promise<void> {
         await handleIncomingDuelEvent(packet.payload as DuelEventPayload);
       } else if (packet.type === 'VIDEO_TRIGGER') {
         duelStore.handlePlayVideo(packet.payload as any);
+      } else if (packet.type === 'SURRENDER') {
+        handleOpponentForfeit((packet.payload as any)?.reason);
       } else if (packet.type === 'REMATCH_REQUEST' || packet.type === 'REMATCH_ACCEPT') {
         onRestartMatch();
       }
@@ -1557,12 +1592,30 @@ async function setupEngineEventListener(): Promise<void> {
   }
 }
 
+const handleBeforeUnload = () => {
+  if (duelStore.isPvPMatch && duelStore.isDuelActive && duelStore.boardState.winner === null) {
+    const multiplayerStore = useMultiplayerStore();
+    multiplayerStore.sendSurrender('disconnect');
+    multiplayerStore.disconnect();
+  }
+};
+
 onMounted(async () => {
   await settingsStore.initializeSettings();
+  await duelStore.initCardDatabase();
+
+  multiplayerStore.onOpponentLeft = (reason) => {
+    handleOpponentForfeit(reason);
+  };
+
+  window.addEventListener('beforeunload', handleBeforeUnload);
 
   await setupEngineEventListener();
   if (window.duelAPI?.playVideo) {
     unsubscribeVideo = window.duelAPI.playVideo((video) => {
+      if (duelStore.isPvPMatch && duelStore.pvpRole === 'host') {
+        multiplayerStore.sendVideoTrigger(video);
+      }
       duelStore.handlePlayVideo(video);
     });
   }
@@ -1578,6 +1631,8 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+  multiplayerStore.onOpponentLeft = null;
   if (unsubscribeEvents) {
     unsubscribeEvents();
   }

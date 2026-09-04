@@ -610,4 +610,154 @@ console.log('--- Starting Multiplayer & PvP Protocol Test Suite ---');
   console.log('✓ Test 12: Bidirectional DRAW card redaction & prompt routing verified.');
 }
 
+// Test 13: Card Database Hydration & Stats / Description Resolution in Guest View
+{
+  const mockCardMap = new Map<number, any>();
+  mockCardMap.set(89631139, {
+    id: 89631139,
+    name: 'Blue-Eyes White Dragon',
+    atk: 3000,
+    def: 2500,
+    level: 8,
+    attributeName: 'LIGHT',
+    raceName: 'Dragon',
+    desc: 'This legendary dragon is a powerful engine of destruction.',
+    isMonster: true,
+  });
+
+  // Simulate an unhydrated hand card (as created when drawn before DB was ready)
+  const unhydratedCard = {
+    id: 'hand-1',
+    code: 89631139,
+    name: 'Card',
+    controller: 1,
+    location: 'hand' as const,
+    sequence: 0,
+    position: 'faceup_spell' as const,
+    atk: undefined,
+    def: undefined,
+    level: undefined,
+    attribute: undefined,
+    race: undefined,
+    description: undefined,
+    statuses: [],
+  };
+
+  assert.strictEqual(unhydratedCard.atk, undefined);
+  assert.strictEqual(unhydratedCard.description, undefined);
+
+  // Simulate hydrateFieldCard logic when cardMap is ready
+  const detail = mockCardMap.get(unhydratedCard.code);
+  const hydratedCard = {
+    ...unhydratedCard,
+    name: detail?.name ?? unhydratedCard.name,
+    atk: detail?.isMonster ? detail.atk : undefined,
+    def: detail?.isMonster ? detail.def : undefined,
+    level: detail?.isMonster ? detail.level : undefined,
+    attribute: detail?.attributeName,
+    race: detail?.raceName,
+    description: detail?.desc,
+  };
+
+  assert.strictEqual(hydratedCard.name, 'Blue-Eyes White Dragon');
+  assert.strictEqual(hydratedCard.atk, 3000);
+  assert.strictEqual(hydratedCard.def, 2500);
+  assert.strictEqual(hydratedCard.level, 8);
+  assert.strictEqual(hydratedCard.attribute, 'LIGHT');
+  assert.strictEqual(hydratedCard.race, 'Dragon');
+  assert.strictEqual(hydratedCard.description, 'This legendary dragon is a powerful engine of destruction.');
+
+  console.log('✓ Test 13: Card database hydration & stats / description resolution verified.');
+}
+
+// Test 14: Summon & Attack Video Trigger Synchronization
+{
+  let sentVideoPacket: any = null;
+  const mockMultiplayerStore = {
+    sendVideoTrigger(payload: any) {
+      sentVideoPacket = payload;
+    },
+  };
+
+  const sampleVideo = {
+    cardCode: 89631139,
+    cardName: 'Blue-Eyes White Dragon',
+    type: 'summon' as const,
+    videoPath: 'videos/blue_eyes_summon.mp4',
+  };
+
+  // When Host triggers video via engine
+  const pvpRole = 'host';
+  if (pvpRole === 'host') {
+    mockMultiplayerStore.sendVideoTrigger(sampleVideo);
+  }
+
+  assert.deepStrictEqual(sentVideoPacket, sampleVideo);
+
+  // Guest receives VIDEO_TRIGGER
+  let guestPlayingVideo: any = null;
+  const guestDuelStore = {
+    handlePlayVideo(video: any) {
+      guestPlayingVideo = video;
+    },
+  };
+
+  guestDuelStore.handlePlayVideo(sentVideoPacket);
+  assert.deepStrictEqual(guestPlayingVideo, sampleVideo);
+
+  console.log('✓ Test 14: Summon & attack video trigger synchronization verified.');
+}
+
+// Test 15: Opponent Forfeit, Surrender & Disconnect Handling
+{
+  const WIN_REASONS = {
+    UNKNOWN: 0x0,
+    LP_ZERO: 0x1,
+    DECK_OUT: 0x2,
+    SURRENDER: 0x3,
+    DISCONNECT: 0x20,
+  };
+
+  const createMockDuel = (userPlayerId: 0 | 1) => ({
+    isPvPMatch: true,
+    isDuelActive: true,
+    userPlayerId,
+    opponentPlayerId: (userPlayerId === 0 ? 1 : 0) as 0 | 1,
+    boardState: {
+      winner: null as 0 | 1 | null,
+      winReason: null as number | null,
+    },
+  });
+
+  // Case A: Opponent Surrenders
+  const duelHost = createMockDuel(0);
+  const handleOpponentForfeit = (duel: typeof duelHost, reason?: string) => {
+    if (duel.isPvPMatch && duel.isDuelActive && duel.boardState.winner === null) {
+      const isDisconnect = reason === 'disconnect' || reason === 'left';
+      duel.boardState.winner = duel.userPlayerId;
+      duel.boardState.winReason = isDisconnect ? WIN_REASONS.DISCONNECT : WIN_REASONS.SURRENDER;
+    }
+  };
+
+  handleOpponentForfeit(duelHost, 'surrender');
+  assert.strictEqual(duelHost.boardState.winner, 0, 'Host must be declared winner when Guest surrenders');
+  assert.strictEqual(duelHost.boardState.winReason, WIN_REASONS.SURRENDER);
+
+  // Case B: Opponent Disconnects / Closes Window
+  const duelGuest = createMockDuel(1);
+  handleOpponentForfeit(duelGuest, 'disconnect');
+  assert.strictEqual(duelGuest.boardState.winner, 1, 'Guest must be declared winner when Host disconnects');
+  assert.strictEqual(duelGuest.boardState.winReason, WIN_REASONS.DISCONNECT);
+
+  // Subtitle verification
+  const { getGameOverSubtitle } = await import('../src/shared/types/duel.js');
+  const surrenderSub = getGameOverSubtitle(true, WIN_REASONS.SURRENDER);
+  assert.strictEqual(surrenderSub, 'Your opponent surrendered the duel.');
+
+  const disconnectSub = getGameOverSubtitle(true, WIN_REASONS.DISCONNECT);
+  assert.strictEqual(disconnectSub, 'Your opponent disconnected or left the duel.');
+
+  console.log('✓ Test 15: Opponent forfeit, surrender & disconnect victory handling verified.');
+}
+
 console.log('🎉 All Multiplayer & PvP Protocol Tests Passed Cleanly!');

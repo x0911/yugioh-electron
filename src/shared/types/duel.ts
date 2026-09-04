@@ -49,6 +49,7 @@ export const WIN_REASONS = {
   FA_WINNERS: 0x1d,
   FLYING_ELEPHANT: 0x1e,
   EXODIA_DEFENDER: 0x1f,
+  DISCONNECT: 0x20,
 } as const;
 
 export function getGameOverSubtitle(isWinner: boolean, reason: number | null): string {
@@ -85,6 +86,10 @@ export function getGameOverSubtitle(isWinner: boolean, reason: number | null): s
       return isWinner
         ? 'Your opponent surrendered the duel.'
         : 'You surrendered the duel.';
+    case WIN_REASONS.DISCONNECT:
+      return isWinner
+        ? 'Your opponent disconnected or left the duel.'
+        : 'You disconnected or left the duel.';
     case WIN_REASONS.LP_ZERO:
     default:
       return isWinner

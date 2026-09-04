@@ -24,10 +24,7 @@
       <div class="turn-callout">
         <span class="turn-number">TURN {{ turnNumber }}</span>
         <span class="turn-divider">•</span>
-        <span
-          class="turn-owner"
-          :class="isUserTurn ? 'turn-owner--user' : 'turn-owner--ai'"
-        >
+        <span class="turn-owner" :class="isUserTurn ? 'turn-owner--user' : 'turn-owner--ai'">
           {{ isUserTurn ? 'YOUR TURN' : "OPPONENT'S TURN" }}
         </span>
         <template v-if="guideInfo?.categoryLabel">
@@ -37,7 +34,9 @@
       </div>
       <div class="guide-prompt">
         <span class="guide-icon">{{ guideInfo?.categoryIcon || '⚡' }}</span>
-        <span class="guide-text">{{ guideInfo?.instruction || guideText || defaultGuideText }}</span>
+        <span class="guide-text">{{
+          guideInfo?.instruction || guideText || defaultGuideText
+        }}</span>
         <span v-if="guideInfo?.selectionProgress" class="guide-progress-chip">
           {{ guideInfo.selectionProgress.current }} / {{ guideInfo.selectionProgress.requiredMax }}
         </span>
@@ -381,6 +380,7 @@ function handleIconFallback(event: Event, fallbackEmoji: string): void {
 
   .guide-prompt {
     display: flex;
+    display: none; // Hidden for now.
     align-items: center;
     gap: 6px;
     font-family: 'Barlow Semi Condensed', sans-serif;

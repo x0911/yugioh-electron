@@ -476,6 +476,17 @@ export const useDuelStore = defineStore('duel', {
           }
           this.cardMap = map;
           this.isCardsLoaded = true;
+
+          // Re-hydrate any cards currently on the board/hand so they immediately
+          // gain ATK/DEF, description, lore, level, and attributes
+          if (this.boardState) {
+            if (this.boardState.userField) {
+              this.boardState.userField = this.hydratePlayerField(this.boardState.userField);
+            }
+            if (this.boardState.opponentField) {
+              this.boardState.opponentField = this.hydratePlayerField(this.boardState.opponentField);
+            }
+          }
         }
       } catch (err) {
         console.warn('[DuelStore] Failed to load card database:', err);
@@ -2508,7 +2519,12 @@ export const useDuelStore = defineStore('duel', {
       localName: string,
       opponentName: string,
       options?: import('../../shared/types/duel.js').DuelInitOptions | null,
+      localExtraCards?: number[],
+      localDeckCount?: number,
+      remoteDeckCount?: number,
+      remoteExtraCount?: number,
     ): void {
+      this.initCardDatabase();
       this.isPvPMatch = true;
       this.pvpRole = role;
       this.userPlayerId = userPlayerId;
@@ -2526,6 +2542,34 @@ export const useDuelStore = defineStore('duel', {
         winner: null,
         winReason: null,
       };
+
+      if (localDeckCount) this.boardState.userField.deckCount = localDeckCount;
+      if (remoteDeckCount) this.boardState.opponentField.deckCount = remoteDeckCount;
+      if (remoteExtraCount) this.boardState.opponentField.extraDeckCount = remoteExtraCount;
+
+      if (localExtraCards && Array.isArray(localExtraCards)) {
+        this.boardState.userField.extraDeck = localExtraCards.map((code, idx) => {
+          const detail = this.cardMap.get(code);
+          return {
+            id: `extra-local-${idx}-${Date.now()}`,
+            code,
+            name: detail?.name || 'Extra Monster',
+            controller: this.userPlayerId,
+            location: 'extra-deck',
+            sequence: idx,
+            position: 'facedown_defense',
+            atk: detail?.atk,
+            def: detail?.def,
+            level: detail?.level,
+            attribute: detail?.attributeName,
+            race: detail?.raceName,
+            description: detail?.desc,
+            statuses: [],
+          };
+        });
+        this.boardState.userField.extraDeckCount = this.boardState.userField.extraDeck.length;
+      }
+
       this.isDuelActive = true;
     },
 
