@@ -99,6 +99,15 @@
               ⬇️ Download Update ({{ formatBytes(status.totalDownloadSize) }})
             </button>
             <button
+              v-if="status?.updateAvailable && currentStage !== 'downloading'"
+              type="button"
+              class="action-btn action-btn--secondary"
+              title="Download the full installer setup (.exe) from GitHub Releases"
+              @click="onDownloadInstaller"
+            >
+              🌐 Download Installer (.exe)
+            </button>
+            <button
               v-else
               type="button"
               class="action-btn action-btn--accent"
@@ -275,6 +284,10 @@ async function onDownload(): Promise<void> {
     currentStage.value = 'error';
     errorMessage.value = err?.message || 'Download failed';
   }
+}
+
+function onDownloadInstaller(): void {
+  window.open('https://github.com/x0911/yugioh-electron/releases/latest');
 }
 
 async function onApplyRestart(): Promise<void> {
@@ -611,6 +624,8 @@ onUnmounted(() => {
   &__cta {
     display: flex;
     align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
 }
 

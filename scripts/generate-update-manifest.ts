@@ -129,10 +129,12 @@ export function generateManifest(): UpdateManifest {
     releaseDate: new Date().toISOString(),
     releaseNotes:
       `Yu-Gi-Oh! Duel Arena v${currentVersion}\n` +
-      `- Advanced Duel AI: Core engine overhaul with tactical turn sequencing, smart Graveyard/cost discards, backrow discipline, and deterministic argmax selection\n` +
-      `- Archetype Combo AI Engines: Dedicated tournament tactical playbooks for HERO & Destiny HERO, Monarch, Gladiator Beast, Volcanic, Ancient Gear, Lightsworn, Chaos/DAD, Blue-Eyes, Dark Magician, and Cyber Dragon\n` +
-      `- Engine & UI Fixes: Pot of Prosperity / ANNOUNCE_NUMBER resolution, Field Spell targeting (Toon Kingdom), and Lua group utility polyfills\n` +
-      `- 100% test verification across all 38 test suites`,
+      `- Real-Time Multiplayer PvP: Peer-to-peer WebRTC dueling with 4-digit room codes, zero server hosting, and full game parity\n` +
+      `- Voice Chat & Audio: Integrated low-latency WebRTC voice chat with microphone/deafen controls, speaking indicators, and complete SFX ducking\n` +
+      `- Duel Synchronization: Real-time summon and attack video sync for both host and guest, live card database hydration with full ATK/DEF stats and card lore descriptions\n` +
+      `- Victory & Disconnect Handling: Automatic forfeit/surrender and disconnect detection granting immediate victory celebration and SFX to the remaining player\n` +
+      `- Stability & Navigation: Seamless return to main menu, clean duel state reset, equipped deck auto-scrolling, and persistent Duelist name\n` +
+      `- 100% test verification across all 39 test suites`,
     remoteBaseUrl: 'https://raw.githubusercontent.com/x0911/yugioh-electron/main',
     files: manifestFiles,
   };
