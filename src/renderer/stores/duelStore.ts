@@ -1794,7 +1794,10 @@ export const useDuelStore = defineStore('duel', {
         const actIdx = this.activeIdleCmd.activates.findIndex((a) => {
           if (isMonsterZone && a.location !== 4) return false;
           if (isSpellTrapZone && a.location !== 8 && a.location !== undefined) return false;
-          if (isFieldZone && a.location !== 256 && a.location !== 8) return false;
+          if (isFieldZone) {
+            if (a.location !== 256 && a.location !== 8) return false;
+            return a.sequence === 5 || a.sequence === 0 || a.sequence === card.sequence || a.sequence === undefined;
+          }
           return a.sequence === card.sequence || a.sequence === undefined;
         });
         if (actIdx >= 0) {
@@ -1820,7 +1823,10 @@ export const useDuelStore = defineStore('duel', {
         const chainIdx = this.activeBattleCmd.chains.findIndex((c) => {
           if (isMonsterZone && c.location !== 4) return false;
           if (isSpellTrapZone && c.location !== 8 && c.location !== undefined) return false;
-          if (isFieldZone && c.location !== 256 && c.location !== 8) return false;
+          if (isFieldZone) {
+            if (c.location !== 256 && c.location !== 8) return false;
+            return c.sequence === 5 || c.sequence === 0 || c.sequence === card.sequence || c.sequence === undefined;
+          }
           return c.sequence === card.sequence || c.sequence === undefined;
         });
         if (chainIdx >= 0) {
@@ -1932,6 +1938,34 @@ export const useDuelStore = defineStore('duel', {
      * Resolves target metadata for a card or stack in any of the 6 locations.
      */
     getTargetInfo(controller: number, location: number, sequence: number): TargetInfo | null {
+      const matchesPromptSlot = (
+        s: any,
+        targetController: number,
+        targetLocation: number,
+        targetSequence: number,
+      ): boolean => {
+        if (s.controller !== targetController) return false;
+
+        // Handle Field Zone equivalence:
+        // In ocgcore, Field Spells can be represented as:
+        // - LOCATION_SZONE (8) with sequence 5
+        // - LOCATION_FZONE (256) with sequence 0 or 5
+        // The UI queries FieldZoneSlot with location 256 and sequence 0.
+        const isTargetField =
+          (targetLocation === 256 && (targetSequence === 0 || targetSequence === 5)) ||
+          (targetLocation === 8 && targetSequence === 5);
+        const isSelectField =
+          (s.location === 256 && (s.sequence === 0 || s.sequence === 5)) ||
+          (s.location === 8 && s.sequence === 5);
+
+        if (isTargetField && isSelectField) {
+          return true;
+        }
+
+        const locMatch = s.location === targetLocation || (s.location & targetLocation) !== 0;
+        return locMatch && s.sequence === targetSequence;
+      };
+
       const getSafeCardName = (
         item: any,
         owner: 'user' | 'ai',
@@ -1949,11 +1983,12 @@ export const useDuelStore = defineStore('duel', {
             item.code === 0);
 
         const isFacedownSpell =
-          loc === 8 &&
+          (loc === 8 || loc === 256) &&
           (item.position === 8 ||
             (item.position !== undefined && (item.position & 0x8) !== 0) ||
             this.boardState.opponentField.spellTrapZones[seq]?.position === 'facedown_spell' ||
             this.boardState.opponentField.spellTrapZones[seq]?.position === 'facedown_defense' ||
+            (loc === 256 && this.boardState.opponentField.fieldZone?.position === 'facedown_spell') ||
             item.code === 0);
 
         if (isFacedownMonster) return 'Face-down Monster';
@@ -1968,8 +2003,8 @@ export const useDuelStore = defineStore('duel', {
 
       // 1. Check active Tribute prompt
       if (this.activeSelectTribute && this.activeSelectTribute.selects) {
-        const selectIndex = this.activeSelectTribute.selects.findIndex(
-          (s) => s.controller === controller && (s.location === location || (s.location & location) !== 0) && s.sequence === sequence,
+        const selectIndex = this.activeSelectTribute.selects.findIndex((s) =>
+          matchesPromptSlot(s, controller, location, sequence),
         );
         if (selectIndex >= 0) {
           const item = this.activeSelectTribute.selects[selectIndex];
@@ -1991,8 +2026,8 @@ export const useDuelStore = defineStore('duel', {
 
       // 2. Check active Card Selection prompt
       if (this.activeSelectCard && this.activeSelectCard.selects) {
-        const selectIndex = this.activeSelectCard.selects.findIndex(
-          (s) => s.controller === controller && (s.location === location || (s.location & location) !== 0) && s.sequence === sequence,
+        const selectIndex = this.activeSelectCard.selects.findIndex((s) =>
+          matchesPromptSlot(s, controller, location, sequence),
         );
         if (selectIndex >= 0) {
           const item = this.activeSelectCard.selects[selectIndex];
@@ -2046,8 +2081,8 @@ export const useDuelStore = defineStore('duel', {
 
       // 3. Check active Select/Unselect Card prompt
       if (this.activeSelectUnselectCard && this.activeSelectUnselectCard.selects) {
-        const selectIndex = this.activeSelectUnselectCard.selects.findIndex(
-          (s) => s.controller === controller && (s.location === location || (s.location & location) !== 0) && s.sequence === sequence,
+        const selectIndex = this.activeSelectUnselectCard.selects.findIndex((s) =>
+          matchesPromptSlot(s, controller, location, sequence),
         );
         if (selectIndex >= 0) {
           const item = this.activeSelectUnselectCard.selects[selectIndex];
@@ -2077,8 +2112,8 @@ export const useDuelStore = defineStore('duel', {
 
       // 4. Check active Select Sum prompt (e.g. Ritual Tributes / Synchro Materials)
       if (this.activeSelectSum && this.activeSelectSum.selects) {
-        const selectIndex = this.activeSelectSum.selects.findIndex(
-          (s) => s.controller === controller && (s.location === location || (s.location & location) !== 0) && s.sequence === sequence,
+        const selectIndex = this.activeSelectSum.selects.findIndex((s) =>
+          matchesPromptSlot(s, controller, location, sequence),
         );
         if (selectIndex >= 0) {
           const item = this.activeSelectSum.selects[selectIndex];
@@ -2408,6 +2443,7 @@ export const useDuelStore = defineStore('duel', {
       return this.sendCommand({
         type: 19, // ANNOUNCE_NUMBER
         value,
+        index: value,
       });
     },
 

@@ -542,7 +542,7 @@
             :key="`num-${idx}`"
             type="button"
             class="number-btn"
-            @click="$emit('announce-number', Number(num))"
+            @click="$emit('announce-number', idx)"
           >
             <span class="number-val">{{ num }}</span>
           </button>

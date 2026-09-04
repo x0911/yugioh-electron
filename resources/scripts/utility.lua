@@ -58,6 +58,18 @@ function Auxiliary.GetCount(g)
 end
 Auxiliary.GetLen = Auxiliary.GetCount
 
+function Auxiliary.GetValueType(v)
+	local t = type(v)
+	if t == "userdata" then
+		if v.GetFirst or v.GetCount or v.Filter then return "Group"
+		elseif v.GetCode or v.IsLocation then return "Card"
+		elseif v.SetType or v.SetCategory then return "Effect"
+		end
+	end
+	return t
+end
+Auxiliary.getValueType = Auxiliary.GetValueType
+
 function Auxiliary.NULL()
 end
 
@@ -2258,7 +2270,7 @@ end
 
 
 function Duel.MoveToDeckTop(obj)
-	local typ=type(obj)
+	local typ=Auxiliary.GetValueType(obj)
 	if typ=="Group" then
 		for c in aux.Next(obj:Filter(Card.IsLocation,nil,LOCATION_DECK)) do
 			Duel.MoveSequence(c,SEQ_DECKTOP)
@@ -2273,7 +2285,7 @@ function Duel.MoveToDeckTop(obj)
 end
 
 function Duel.MoveToDeckBottom(obj,tp)
-	local typ=type(obj)
+	local typ=Auxiliary.GetValueType(obj)
 	if typ=="number" then
 		if type(tp)~="number" then
 			error("Parameter 2 should be \"number\"",2)
@@ -2654,7 +2666,7 @@ function Auxiliary.ToHandOrElse(card,player,check,oper,str,...)
 		if not oper then oper=aux.thoeSend end
 		if not str then str=574 end
 		local b1,b2=true,true
-		if type(card)=="Group" then
+		if Auxiliary.GetValueType(card)=="Group" then
 			for ctg in aux.Next(card) do
 				if not ctg:IsAbleToHand() then
 					b1=false
@@ -2908,7 +2920,7 @@ end
 --]]
 local delayed_operation_id=0
 function Auxiliary.DelayedOperation(card_or_group,phase,flag,e,tp,oper,cond,reset,reset_count,hint,effect_desc)
-	local g=(type(card_or_group)=="Group" and card_or_group or Group.FromCards(card_or_group))
+	local g=(Auxiliary.GetValueType(card_or_group)=="Group" and card_or_group or Group.FromCards(card_or_group))
 	if #g==0 then return end
 
 	reset=reset or (RESET_PHASE|phase)
@@ -2972,7 +2984,7 @@ end
 		int|nil effect_desc: a string to be used as the description of the delayed effect (useful when the same effect registers multiple different delayed effects)
 --]]
 function Auxiliary.RemoveUntil(card_or_group,pos,reason,phase,flag,e,tp,oper,cond,reset,reset_count,hint,effect_desc)
-	local g=(type(card_or_group)=="Group" and card_or_group or Group.FromCards(card_or_group))
+	local g=(Auxiliary.GetValueType(card_or_group)=="Group" and card_or_group or Group.FromCards(card_or_group))
 	if #g>0 and Duel.Remove(g,pos,reason|REASON_TEMPORARY)>0 and #g:Match(Card.IsLocation,nil,LOCATION_REMOVED)>0 then
 		return aux.DelayedOperation(g,phase,flag,e,tp,oper,cond,reset,reset_count,hint,effect_desc)
 	end

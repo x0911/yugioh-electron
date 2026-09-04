@@ -1251,11 +1251,35 @@ export class DuelEngineService {
           ...response,
           card: typeof (response as any).card === 'number' ? (response as any).card : Number((response as any).card),
         };
-      case OcgResponseType.ANNOUNCE_NUMBER:
+      case OcgResponseType.ANNOUNCE_NUMBER: {
+        let val =
+          (response as any).index !== undefined
+            ? Number((response as any).index)
+            : typeof (response as any).value === 'number'
+              ? (response as any).value
+              : Number((response as any).value);
+
+        const prompt = this.lastPromptMessage as any;
+        if (
+          prompt &&
+          prompt.type === OcgMessageType.ANNOUNCE_NUMBER &&
+          Array.isArray(prompt.options) &&
+          prompt.options.length > 0
+        ) {
+          // ocgcore expects the 0-based option index.
+          // If the caller supplied the actual option value (e.g. 3 or 6 when options are [3, 6]),
+          // or an out-of-range index, defensively map it to the corresponding option index.
+          if (val < 0 || val >= prompt.options.length) {
+            const matchedIdx = prompt.options.findIndex((opt: any) => Number(opt) === val);
+            val = matchedIdx >= 0 ? matchedIdx : 0;
+          }
+        }
+
         return {
           ...response,
-          value: typeof (response as any).value === 'number' ? (response as any).value : Number((response as any).value),
+          value: val,
         };
+      }
       case OcgResponseType.SELECT_CARD:
       case OcgResponseType.SELECT_TRIBUTE: {
         const resp = response as any;
@@ -1773,6 +1797,11 @@ export class DuelEngineService {
   }
 
   public sendResponse(response: OcgResponse): boolean {
+    if (this.aiStepTimer) {
+      clearTimeout(this.aiStepTimer);
+      this.aiStepTimer = null;
+    }
+
     if (!this.lib || !this.currentDuel || !this.state.isActive || this.isVideoPlaying) {
       return false;
     }

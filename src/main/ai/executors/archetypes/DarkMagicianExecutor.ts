@@ -6,6 +6,7 @@ import {
 } from 'ocgcore-wasm';
 import { DefaultExecutor } from '../DefaultExecutor.js';
 import type { EvaluatorContext, ScoredAction } from '../../types.js';
+import { getAiAndOpponentFields } from '../../types.js';
 
 export class DarkMagicianExecutor extends DefaultExecutor {
   public override readonly id = 'dark-magician';
@@ -52,5 +53,84 @@ export class DarkMagicianExecutor extends DefaultExecutor {
     }
 
     return baseCandidates;
+  }
+
+  public override onSelectCard(msg: OcgMessage, context: EvaluatorContext): number[] | null {
+    const rawSelects = msg.selects || [];
+    if (rawSelects.length === 0) return null;
+
+    const { activeChainCards, cardReader, humanPlayerId } = context;
+    const { aiField } = getAiAndOpponentFields(context);
+
+    // 1. Magician's Rod (70791372) Search:
+    // When Normal Summoned: Add 1 Spell/Trap that lists "Dark Magician" from Deck to hand.
+    // Priority: Dark Magical Circle (47222536) > Eternal Soul (48680970) > Magician Navigation (7922915)
+    if (activeChainCards?.includes(70791372)) {
+      const hasCircle = aiField.spellTrapZones.some((s) => s && s.code === 47222536);
+      if (!hasCircle) {
+        const circleIdx = rawSelects.findIndex((s: any) => s.code === 47222536);
+        if (circleIdx >= 0) return [circleIdx];
+      }
+      const soulIdx = rawSelects.findIndex((s: any) => s.code === 48680970);
+      if (soulIdx >= 0) return [soulIdx];
+      const navIdx = rawSelects.findIndex((s: any) => s.code === 7922915);
+      if (navIdx >= 0) return [navIdx];
+    }
+
+    // 2. Dark Magical Circle (47222536) Banish Target:
+    // If "Dark Magician" is Normal or Special Summoned to your field: Target 1 card your opponent controls; banish it.
+    if (activeChainCards?.includes(47222536)) {
+      const oppCards = rawSelects
+        .map((s: any, idx: number) => ({ s, idx }))
+        .filter((item) => item.s.controller === humanPlayerId);
+
+      if (oppCards.length > 0) {
+        oppCards.sort((a, b) => {
+          const detA = cardReader.getCardDetail(a.s.code);
+          const detB = cardReader.getCardDetail(b.s.code);
+          const atkA = detA?.isMonster ? (detA.atk ?? 0) : 1500;
+          const atkB = detB?.isMonster ? (detB.atk ?? 0) : 1500;
+          return atkB - atkA;
+        });
+        return [oppCards[0].idx];
+      }
+    }
+
+    return null;
+  }
+
+  public override onSelectChain(msg: OcgMessage, context: EvaluatorContext): ScoredAction[] | null {
+    const rawSelects = msg.selects || [];
+    const candidates: ScoredAction[] = [];
+    const { aiField } = getAiAndOpponentFields(context);
+    const hasCircle = aiField.spellTrapZones.some((s) => s && s.code === 47222536);
+
+    for (let i = 0; i < rawSelects.length; i++) {
+      const s = rawSelects[i];
+      const code = s.code ?? 0;
+
+      // Eternal Soul (48680970):
+      // Chain to Special Summon Dark Magician from hand or GY (especially when Circle is active to banish!)
+      if (code === 48680970) {
+        const bonus = hasCircle ? 4500 : 3500;
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_CHAIN,
+            index: i,
+          },
+          score: bonus,
+          reason: hasCircle
+            ? `[ETERNAL SOUL + CIRCLE] Resurrect Dark Magician to trigger Dark Magical Circle banish!`
+            : `[ETERNAL SOUL] Special Summon Dark Magician from hand or GY`,
+          cardCode: code,
+          cardName: 'Eternal Soul',
+        });
+      }
+    }
+
+    if (candidates.length > 0) {
+      return candidates;
+    }
+    return super.onSelectChain ? super.onSelectChain(msg, context) : null;
   }
 }

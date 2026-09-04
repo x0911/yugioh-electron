@@ -391,10 +391,10 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
     }
 
     case OcgMessageType.ANNOUNCE_NUMBER: {
-      const val = msg.options && msg.options.length > 0 ? Number(msg.options[0]) : 1;
       return {
         type: OcgResponseType.ANNOUNCE_NUMBER,
-        value: val,
+        value: 0,
+        index: 0,
       };
     }
 

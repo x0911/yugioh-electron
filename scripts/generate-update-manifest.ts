@@ -125,10 +125,10 @@ export function generateManifest(): UpdateManifest {
     releaseDate: new Date().toISOString(),
     releaseNotes:
       `Yu-Gi-Oh! Duel Arena v${currentVersion}\n` +
-      `- 394 authentic Format Library tournament decks across all 40 DM & GX characters with signature flagship cards (Slifer, Obelisk, Ra, Neos, Cyber End Dragon, Armed Dragon, Ancient Gear Golem, etc.)\n` +
-      `- 517 total prebuilt decks with zero procedural filler cards\n` +
-      `- Deck editor DeckColumn crash fix & legality safeguards\n` +
-      `- Added Egyptian God "Elemental HERO Egyxos" custom monster with Contact Special Summon`,
+      `- Advanced Duel AI: Core engine overhaul with tactical turn sequencing, smart Graveyard/cost discards, backrow discipline, and deterministic argmax selection\n` +
+      `- Archetype Combo AI Engines: Dedicated tournament tactical playbooks for HERO & Destiny HERO, Monarch, Gladiator Beast, Volcanic, Ancient Gear, Lightsworn, Chaos/DAD, Blue-Eyes, Dark Magician, and Cyber Dragon\n` +
+      `- Engine & UI Fixes: Pot of Prosperity / ANNOUNCE_NUMBER resolution, Field Spell targeting (Toon Kingdom), and Lua group utility polyfills\n` +
+      `- 100% test verification across all 38 test suites`,
     remoteBaseUrl: 'https://raw.githubusercontent.com/x0911/yugioh-electron/main',
     files: manifestFiles,
   };

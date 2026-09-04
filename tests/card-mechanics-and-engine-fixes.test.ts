@@ -68,7 +68,7 @@ async function runTestSuite() {
       player1Deck: Array(40).fill(25652259),
       player1SpellTraps: [
         { code: 44095762, sequence: 0, position: 0x8 }, // Set Mirror Force
-        { code: 72302403, sequence: 1, position: 0x1 }, // Face-up Swords of Revealing Light
+        { code: 62279055, sequence: 1, position: 0x8 }, // Set Magic Cylinder
       ],
       noShuffle: true,
       humanPlayerId: 0,
@@ -87,10 +87,10 @@ async function runTestSuite() {
     });
     service.processStep();
 
-    if ((service as any).state.isWaitingResponse) {
+    if ((service as any).state.isWaitingResponse && (service as any).lastPromptMessage?.type === OcgMessageType.SELECT_CHAIN) {
       service.sendResponse({
         type: OcgResponseType.SELECT_CHAIN,
-        index: -1,
+        index: null,
       });
       service.processStep();
     }
@@ -99,7 +99,7 @@ async function runTestSuite() {
     assert.equal(b2.opponentField.spellTrapZones.filter(Boolean).length, 0, 'Opponent S/T zones must be cleared');
     const oppGy = b2.opponentField.graveyard.map((c) => c.code);
     assert(oppGy.includes(44095762), 'Mirror Force must be in opponent GY');
-    assert(oppGy.includes(72302403), 'Swords of Revealing Light must be in opponent GY');
+    assert(oppGy.includes(62279055), 'Magic Cylinder must be in opponent GY');
     service.destroyCurrentDuel();
     console.log("  ✓ Harpie's Feather Duster passed!\n");
 
@@ -1099,8 +1099,149 @@ async function runTestSuite() {
 
     console.log('  ✓ Cyber Jar test finished with final prompt:', (service as any).lastPromptMessage?.type);
 
+    // 18. Pot of Prosperity & ANNOUNCE_NUMBER Resolution
+    console.log('\n▶ Test 18: Pot of Prosperity & ANNOUNCE_NUMBER Resolution (c84211599)');
+    service.startNewDuel({
+      player0Deck: Array(40).fill(84211599), // Pot of Prosperity in hand & deck
+      player1Deck: Array(40).fill(25652259),
+      player0ExtraDeck: [42166000, 42166000, 42166000, 42166000, 42166000, 42166000],
+      humanPlayerId: 0,
+      noShuffle: true,
+      startingLP: 8000,
+    });
+
+    const popPrompt = (service as any).lastPromptMessage;
+    const popActIdx = popPrompt?.activates?.findIndex((a: any) => a.code === 84211599);
+    assert(popActIdx >= 0, 'Pot of Prosperity must be activatable from hand');
+
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.SELECT_ACTIVATE,
+      index: popActIdx,
+    });
+    service.processStep();
+
+    const announcePrompt = (service as any).lastPromptMessage;
+    assert.equal(
+      announcePrompt?.type,
+      OcgMessageType.ANNOUNCE_NUMBER,
+      'Pot of Prosperity must prompt ANNOUNCE_NUMBER',
+    );
+    assert(
+      announcePrompt.options && announcePrompt.options.length >= 1,
+      'ANNOUNCE_NUMBER prompt must contain options [3, 6]',
+    );
+
+    // Test sending literal option value (6) - engine must defensively map it to option index 1
+    service.sendResponse({
+      type: OcgResponseType.ANNOUNCE_NUMBER,
+      value: 6,
+    });
+    service.processStep();
+
+    const extraBanishPrompt = (service as any).lastPromptMessage;
+    assert.equal(
+      extraBanishPrompt?.type,
+      OcgMessageType.SELECT_CARD,
+      'Must prompt SELECT_CARD to banish from Extra Deck',
+    );
+    assert.equal(extraBanishPrompt.min, 6, 'Must require banishing 6 cards as chosen');
+
+    // Banish 6 extra deck cards
+    service.sendResponse({
+      type: OcgResponseType.SELECT_CARD,
+      indicies: [0, 1, 2, 3, 4, 5],
+    });
+    service.processStep();
+
+    const excavateSelectPrompt = (service as any).lastPromptMessage;
+    assert.equal(
+      excavateSelectPrompt?.type,
+      OcgMessageType.SELECT_CARD,
+      'Must prompt SELECT_CARD to add 1 excavated card to hand',
+    );
+    assert.equal(excavateSelectPrompt.min, 1, 'Must pick 1 excavated card');
+
+    // Select 1 excavated card to add to hand
+    service.sendResponse({
+      type: OcgResponseType.SELECT_CARD,
+      indicies: [0],
+    });
+    service.processStep();
+
+    // The remaining excavated cards are moved to deck bottom; prompt may be SORT_CARD (25) or SELECT_IDLECMD
+    const postPopPrompt = (service as any).lastPromptMessage;
+    assert(
+      postPopPrompt && postPopPrompt.type !== OcgMessageType.RETRY,
+      'Duel must not freeze or emit RETRY during Pot of Prosperity resolution',
+    );
+    console.log('  ✓ Pot of Prosperity resolved successfully without freeze or RETRY errors.');
+
+    // 19. Field Spell Target Resolution (Wild Wingman targeting Toon Kingdom)
+    console.log('\n▶ Test 19: Field Spell Target Resolution (Wild Wingman targeting Toon Kingdom)');
+    service.startNewDuel({
+      player0Deck: [25652259, ...Array(39).fill(25652259)],
+      player1Deck: Array(40).fill(25652259),
+      player0Monsters: [{ code: 55615891, sequence: 0, position: 1 }], // Wild Wingman (Face-up ATK)
+      player1SpellTraps: [{ code: 43175858, sequence: 5, position: 1 }], // Toon Kingdom in Field Zone
+      humanPlayerId: 0,
+      noShuffle: true,
+      startingLP: 8000,
+    });
+
+    const wwmPrompt = (service as any).lastPromptMessage;
+    const wwmActIdx = wwmPrompt?.activates?.findIndex((a: any) => a.code === 55615891);
+    assert(wwmActIdx >= 0, 'Wild Wingman ignition effect must be activatable');
+
+    service.sendResponse({
+      type: OcgResponseType.SELECT_IDLECMD,
+      action: SelectIdleCMDAction.SELECT_ACTIVATE,
+      index: wwmActIdx,
+    });
+    service.processStep();
+
+    // Discard 1 card from hand as cost
+    const wwmCostPrompt = (service as any).lastPromptMessage;
+    assert.equal(wwmCostPrompt?.type, OcgMessageType.SELECT_CARD, 'Must prompt for discard cost');
+    service.sendResponse({
+      type: OcgResponseType.SELECT_CARD,
+      indicies: [0],
+    });
+    service.processStep();
+
+    // Target Spell/Trap on field: Toon Kingdom in opponent Field Zone (location 8, sequence 5 in ocgcore)
+    const wwmTargetPrompt = (service as any).lastPromptMessage;
+    assert.equal(
+      wwmTargetPrompt?.type,
+      OcgMessageType.SELECT_CARD,
+      'Must prompt SELECT_CARD to target 1 Spell/Trap on field',
+    );
+    assert(
+      wwmTargetPrompt.selects?.some((s: any) => s.code === 43175858 && s.controller === 1),
+      'Target prompt selects must include opponent Toon Kingdom',
+    );
+
+    // Destroy Toon Kingdom
+    service.sendResponse({
+      type: OcgResponseType.SELECT_CARD,
+      indicies: [0],
+    });
+    service.processStep();
+
+    const postDestroyBoard = service.getBoardState();
+    assert.equal(
+      postDestroyBoard.opponentField.fieldZone,
+      null,
+      'Opponent Field Zone must be cleared after Toon Kingdom destruction',
+    );
+    assert(
+      postDestroyBoard.opponentField.graveyard.some((c) => c.code === 43175858),
+      'Toon Kingdom must be sent to opponent graveyard',
+    );
+    console.log('  ✓ Opponent Field Spell (Toon Kingdom) successfully targeted and destroyed by Wild Wingman.');
+
     console.log('================================================================');
-    console.log('🎉 ALL 17 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 19 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();

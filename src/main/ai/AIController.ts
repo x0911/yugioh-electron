@@ -127,10 +127,7 @@ export class AIController {
         return this.decideSelectSum(msg, context);
 
       case OcgMessageType.SELECT_OPTION:
-        return {
-          type: OcgResponseType.SELECT_OPTION,
-          index: 0,
-        };
+        return this.decideSelectOption(msg, context);
 
       case OcgMessageType.SELECT_UNSELECT_CARD:
         return {
@@ -211,10 +208,17 @@ export class AIController {
       }
 
       case OcgMessageType.ANNOUNCE_NUMBER: {
-        const val = msg.options && msg.options.length > 0 ? Number(msg.options[0]) : 1;
+        const opts = msg.options ?? [];
+        let chosenIndex = 0;
+        // If 6 is an option (e.g. Pot of Prosperity), AI prefers excavating 6 if extra deck has >= 6 cards
+        const idx6 = opts.findIndex((opt) => Number(opt) === 6);
+        if (idx6 >= 0 && (context.aiField?.extraDeck?.length ?? 0) >= 6) {
+          chosenIndex = idx6;
+        }
         return {
           type: OcgResponseType.ANNOUNCE_NUMBER,
-          value: val,
+          value: chosenIndex,
+          index: chosenIndex,
         };
       }
 
@@ -281,7 +285,7 @@ export class AIController {
     const executor = getExecutorForDeck(context, context.aiDeckCards);
     const executorActions = executor.onIdleCmd ? executor.onIdleCmd(msg, context) : null;
     if (executorActions && executorActions.length > 0) {
-      return this.selectWeightedAction(executorActions);
+      return this.selectWeightedAction(executorActions, context);
     }
 
     const candidates: ScoredAction[] = [];
@@ -333,7 +337,7 @@ export class AIController {
         const atk = detail?.isMonster ? detail.atk : 1000;
         const level = detail?.isMonster ? detail.level : 4;
 
-        let score = 500 + atk * 0.8 * personality.aggression * archetypePlan.beatdownWeight;
+        let score = 2200 + atk * 0.8 * personality.aggression * archetypePlan.beatdownWeight;
 
         // Suicidal summon penalty against Slifer / King Tiger Wanghu
         if (hasOppSlifer && atk <= 2000) {
@@ -641,7 +645,7 @@ export class AIController {
       });
     }
 
-    return this.selectWeightedAction(candidates);
+    return this.selectWeightedAction(candidates, context);
   }
 
   // ===========================================================================
@@ -652,7 +656,7 @@ export class AIController {
     const executor = getExecutorForDeck(context, context.aiDeckCards);
     const executorActions = executor.onBattleCmd ? executor.onBattleCmd(msg, context) : null;
     if (executorActions && executorActions.length > 0) {
-      return this.selectWeightedAction(executorActions);
+      return this.selectWeightedAction(executorActions, context);
     }
 
     const candidates: ScoredAction[] = [];
@@ -725,7 +729,7 @@ export class AIController {
       });
     }
 
-    return this.selectWeightedAction(candidates);
+    return this.selectWeightedAction(candidates, context);
   }
 
   // ===========================================================================
@@ -756,20 +760,31 @@ export class AIController {
     );
     const aiAttackerAtk = aiAttackers.length > 0 ? Math.max(...aiAttackers.map((m) => m.atk ?? 0)) : 2000;
 
+    // Check if AI controls or holds a Graveyard revival card (Monster Reborn, Premature Burial, Call of the Haunted)
+    const hasRevivalEnabler =
+      aiField.hand.some((c) => c === 83764719 || c === 70828912 || c === 97077563) ||
+      aiField.spellTrapZones.some((s) => s && (s.code === 83764719 || s.code === 70828912 || s.code === 97077563));
+
     // Score each candidate in msg.selects
     const scoredCandidates = msg.selects.map((c: any, index: number) => {
       const code = c.code ?? 0;
       const detail = code > 0 ? cardReader.getCardDetail(code) : null;
       const atk = detail?.isMonster ? detail.atk : 1000;
+      const def = detail?.isMonster ? detail.def : 1000;
+      const level = detail?.isMonster ? detail.level : 4;
       const isAiCard = c.controller === aiPlayerId;
+      const location = c.location;
 
       let score = 0;
-      const isGyOrDeck = c.location === 0x10 || c.location === 16 || c.location === 0x1 || c.location === 1 || c.location === 0x20 || c.location === 32;
+      const isGyOrDeck = location === 0x10 || location === 16 || location === 0x1 || location === 1 || location === 0x20 || location === 32;
+      const isHand = location === 0x02 || location === 2;
+      const isMzone = location === 0x04 || location === 4;
+      const isSzone = location === 0x08 || location === 8;
 
       if (isGyOrDeck) {
         // Graveyard/Deck/Banished Selection (e.g. Monster Reborn, Foolish Burial, Searchers):
         const isGodCard = code === 10000000 || code === 10000020 || code === 10000010;
-        const isTurn1GyRevival = boardState.turnNumber === 1 && (c.location === 0x10 || c.location === 16);
+        const isTurn1GyRevival = boardState.turnNumber === 1 && (location === 0x10 || location === 16);
         if (isGodCard && isTurn1GyRevival) {
           score = -25000;
         } else {
@@ -780,9 +795,103 @@ export class AIController {
             score = atk + (signatureCardIds.includes(code) ? 1500 : 0);
           }
         }
-      } else if (isAiCard) {
-        // If selecting own on-field card to keep / protect:
-        score = atk + (signatureCardIds.includes(code) ? 1000 : 0);
+      } else if (isHand && isAiCard) {
+        // =========================================================================
+        // HAND DISCARD / COST PROMPT:
+        // Candidates with HIGHEST score are chosen to be discarded/sent to GY!
+        // =========================================================================
+
+        // 1. Graveyard recurrence / trigger synergy cards (BEST to discard)
+        if (code === 8124921) {
+          // Sinister Serpent: infinite discard fodder (returns to hand every standby phase)
+          score = 50000;
+        } else if (code === 12538374 || code === 16226786) {
+          // Treeborn Frog / Night Assailant
+          score = 45000;
+        } else if (code === 9411399 || code === 15341821) {
+          // Destiny HERO - Malicious / Dandylion
+          score = 40000;
+        } else if (code === 81863068 || code === 62015408 || code === 92826944) {
+          // Destiny HERO - Dasher / Necro Gardna / Mezuki
+          score = 35000;
+        } else if (code === 33420078 || code === 67441435) {
+          // Plaguespreader Zombie / Glow-Up Bulb
+          score = 30000;
+        }
+        // 2. Staple Spells / Traps (STRICTLY PRESERVE - NEVER DISCARD)
+        else if (
+          code === 55144522 || // Pot of Greed
+          code === 79571449 || // Graceful Charity
+          code === 12580477 || // Raigeki
+          code === 53129443 || // Dark Hole
+          code === 18144506 || // Harpie's Feather Duster
+          code === 19613556 || // Heavy Storm
+          code === 44095762 || // Mirror Force
+          code === 53582587 || // Torrential Tribute
+          code === 41420027 || // Solemn Judgment
+          code === 83764719 || // Monster Reborn
+          code === 70828912 || // Premature Burial
+          code === 97077563 || // Call of the Haunted
+          code === 5318639     // Mystical Space Typhoon
+        ) {
+          score = -50000;
+        }
+        // 3. Signature cards (PRESERVE)
+        else if (signatureCardIds.includes(code)) {
+          score = -40000;
+        }
+        // 4. Other Spells / Traps (PRESERVE)
+        else if (!detail?.isMonster) {
+          score = -15000;
+        }
+        // 5. Boss monsters (Level >= 5)
+        else if (level >= 5) {
+          if (hasRevivalEnabler) {
+            // GY setup for instant revival!
+            score = 6000 + atk;
+          } else {
+            // Without revival, discarding our boss monster loses our win condition!
+            score = -20000 - atk;
+          }
+        }
+        // 6. Ordinary monsters (Level 1-4)
+        else {
+          score = 2500 - atk; // Lower ATK / utility monsters discarded first
+        }
+      } else if (isMzone && isAiCard) {
+        // =========================================================================
+        // ON-FIELD MONSTER COST / SACRIFICE / TARGET:
+        // =========================================================================
+        const isStolenMonster =
+          (c.owner !== undefined && c.owner !== aiPlayerId) ||
+          (c.controller === aiPlayerId && c.owner !== undefined && c.owner !== aiPlayerId);
+        const isIndestructibleWall =
+          code === 31305911 || // Marshmallon
+          code === 23205979 || // Spirit Reaper
+          code === 37412656 || // Arcana Force 0
+          code === 78371393;   // Yubel
+
+        if (isStolenMonster) {
+          score = 100000; // Prioritize sacrificing opponent's stolen monster
+        } else if (isIndestructibleWall) {
+          score = -50000; // Never sacrifice indestructible stall walls
+        } else if (signatureCardIds.includes(code)) {
+          score = -30000;
+        } else if (level >= 5 || atk >= 2000) {
+          score = -15000 - atk; // Preserve high-ATK boss monsters
+        } else {
+          score = 5000 - atk; // Sacrifice lower ATK fodder first
+        }
+      } else if (isSzone && !isAiCard) {
+        // =========================================================================
+        // OPPONENT BACKROW TARGETING (MST, Dust Tornado, etc.):
+        // =========================================================================
+        const isFacedown = c.position === 8 || c.position === 2 || (c.position !== undefined && (c.position & 0xa) !== 0);
+        if (isFacedown) {
+          score = 3500; // Prioritize popping face-down backrow
+        } else {
+          score = 2800; // Pop face-up continuous / field / equip cards
+        }
       } else {
         // If selecting opponent card to target / destroy / attack:
         const isBattleImmuneDef =
@@ -913,7 +1022,7 @@ export class AIController {
     const executor = getExecutorForDeck(context, context.aiDeckCards);
     const executorActions = executor.onSelectChain ? executor.onSelectChain(msg, context) : null;
     if (executorActions && executorActions.length > 0) {
-      return this.selectWeightedAction(executorActions);
+      return this.selectWeightedAction(executorActions, context);
     }
 
     const rawSelects = msg.selects || msg.chains || [];
@@ -965,10 +1074,104 @@ export class AIController {
     };
   }
 
-  private decideSelectYesNo(msg: OcgMessage, _context: EvaluatorContext): OcgResponse {
+  private decideSelectYesNo(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const responseType = (msg.type === OcgMessageType.SELECT_EFFECTYN ? OcgResponseType.SELECT_EFFECTYN : OcgResponseType.SELECT_YESNO) as any;
+    const { aiField } = getAiAndOpponentFields(context);
+    const code = (msg as any).code ?? 0;
+
+    // 0. Deck Executor custom override
+    const executor = getExecutorForDeck(context, context.aiDeckCards);
+    const customYesNo = executor.onSelectYesNo ? executor.onSelectYesNo(msg, context) : null;
+    if (customYesNo !== null && customYesNo !== undefined) {
+      return { type: responseType, yes: customYesNo };
+    }
+
+    // 1. Suicidal LP cost prevention
+    // Cyber-Stein (10397227) costs 5000 LP
+    if (code === 10397227 && aiField.currentLp <= 5000) {
+      return { type: responseType, yes: false };
+    }
+    // Generic LP costs: if AI LP <= 1000 and effect asks for significant LP
+    if (aiField.currentLp <= 1000 && (code === 70828912 || code === 87910978)) {
+      return { type: responseType, yes: false };
+    }
+
+    // 2. Self-mill deck-out prevention
+    if (aiField.deckCount <= 3) {
+      if (code === 72892420 || code === 81439173 || code === 22624373) {
+        return { type: responseType, yes: false };
+      }
+    }
+
     return {
-      type: (msg.type === OcgMessageType.SELECT_EFFECTYN ? OcgResponseType.SELECT_EFFECTYN : OcgResponseType.SELECT_YESNO) as any,
+      type: responseType,
       yes: true,
+    };
+  }
+
+  private decideSelectOption(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
+    const { cardReader, activeChainCards } = context;
+    const { aiField, oppField } = getAiAndOpponentFields(context);
+
+    // 0. Deck Executor custom override
+    const executor = getExecutorForDeck(context, context.aiDeckCards);
+    const customOption = executor.onSelectOption ? executor.onSelectOption(msg, context) : null;
+    if (customOption !== null && customOption !== undefined) {
+      return {
+        type: OcgResponseType.SELECT_OPTION,
+        index: customOption,
+      };
+    }
+
+    // 1. Enemy Controller (98045062):
+    // Option 0: Change 1 face-up monster your opponent controls to Defense Position.
+    // Option 1: Tribute 1 monster to take control of 1 face-up monster your opponent controls until End Phase.
+    const isEnemyController = activeChainCards?.includes(98045062);
+    if (isEnemyController) {
+      const aiMonsters = aiField.monsterZones.filter((m): m is FieldCard => !!m);
+      const oppMonsters = oppField.monsterZones.filter(
+        (m): m is FieldCard => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'),
+      );
+      const hasExpendableTribute = aiMonsters.some(
+        (m) =>
+          (m.atk ?? 0) <= 1400 ||
+          (m.owner !== undefined && m.owner !== context.aiPlayerId) ||
+          m.code === 31305911 ||
+          m.code === 23205979,
+      );
+      const oppBossMonster = oppMonsters.find((m) => (m.atk ?? 0) >= 1900);
+
+      // If AI has fodder to tribute and opponent has a high-ATK boss monster to steal:
+      if (aiMonsters.length >= 1 && hasExpendableTribute && oppBossMonster) {
+        return {
+          type: OcgResponseType.SELECT_OPTION,
+          index: 1, // Take control of opponent's boss monster!
+        };
+      }
+      return {
+        type: OcgResponseType.SELECT_OPTION,
+        index: 0, // Switch position
+      };
+    }
+
+    // 2. Generic Option string resolution & evaluation
+    if (msg.options && msg.options.length > 0) {
+      const resolvedOptions = msg.options.map((opt: any) => {
+        const text = cardReader.resolveString(opt);
+        return (text || '').toLowerCase();
+      });
+
+      for (let i = 0; i < resolvedOptions.length; i++) {
+        const optText = resolvedOptions[i];
+        if (optText.includes('take control') && oppField.monsterZones.some(Boolean)) {
+          return { type: OcgResponseType.SELECT_OPTION, index: i };
+        }
+      }
+    }
+
+    return {
+      type: OcgResponseType.SELECT_OPTION,
+      index: 0,
     };
   }
 
@@ -1119,7 +1322,7 @@ export class AIController {
   // Weighted Random Selection (Non-Deterministic Softmax)
   // ===========================================================================
 
-  private selectWeightedAction(candidates: ScoredAction[]): OcgResponse {
+  private selectWeightedAction(candidates: ScoredAction[], context?: EvaluatorContext): OcgResponse {
     if (candidates.length === 0) {
       return {
         type: OcgResponseType.SELECT_CHAIN,
@@ -1131,7 +1334,10 @@ export class AIController {
       return candidates[0].action;
     }
 
-    const maxScore = Math.max(...candidates.map((c) => c.score));
+    // Always sort candidates descending by score first
+    candidates.sort((a, b) => b.score - a.score);
+
+    const maxScore = candidates[0].score;
 
     // When neutral/positive actions (score >= 0) exist, prune heavily negative futile/suicidal actions (< -100)
     let eligibleCandidates = candidates;
@@ -1146,24 +1352,37 @@ export class AIController {
       return eligibleCandidates[0].action;
     }
 
-    // Softmax temperature (higher = more uniform, lower = more deterministic)
-    const temperature = 250;
-    const eligibleMaxScore = Math.max(...eligibleCandidates.map((c) => c.score));
+    // Greedy Argmax for decisive plays or competitive duelists:
+    // If top candidate has decisive lead (lead >= 150 or score >= 3000), or if duelist is competitive,
+    // take the best action deterministically (no random blunders!)
+    const leadOverSecond = eligibleCandidates.length > 1 ? eligibleCandidates[0].score - eligibleCandidates[1].score : Infinity;
+    const isCompetitive = context?.personality
+      ? (context.personality.riskTolerance >= 0.6 && context.personality.aggression >= 0.7) || context.personality.comboFocus >= 0.8
+      : false;
 
-    // Exponentiate shifted scores to prevent numerical overflow
-    const expScores = eligibleCandidates.map((c) => Math.exp((c.score - eligibleMaxScore) / (temperature / 100)));
+    if (isCompetitive || eligibleCandidates[0].score >= 3000 || leadOverSecond >= 150) {
+      return eligibleCandidates[0].action;
+    }
+
+    // For very close decisions among casual duelists: sample from top candidates within 150 of max
+    const topTier = eligibleCandidates.filter((c) => c.score >= maxScore - 150);
+    if (topTier.length <= 1) {
+      return eligibleCandidates[0].action;
+    }
+
+    const temperature = 100;
+    const expScores = topTier.map((c) => Math.exp((c.score - maxScore) / (temperature / 100)));
     const sumExp = expScores.reduce((sum, val) => sum + val, 0);
 
-    // Sample from categorical distribution
     let randomSample = Math.random() * sumExp;
-    for (let i = 0; i < eligibleCandidates.length; i++) {
+    for (let i = 0; i < topTier.length; i++) {
       randomSample -= expScores[i];
       if (randomSample <= 0) {
-        return eligibleCandidates[i].action;
+        return topTier[i].action;
       }
     }
 
-    return eligibleCandidates[0].action;
+    return topTier[0].action;
   }
 }
 

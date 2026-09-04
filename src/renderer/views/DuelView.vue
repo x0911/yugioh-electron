@@ -757,8 +757,13 @@ function onFieldCardClick(card: FieldCard | null, event?: MouseEvent, targetInfo
 
   // 2. If there is an active selection prompt, check target info by card location as fallback
   if (duelStore.hasActiveSelectionPrompt && card) {
-    const loc = card.location === 'field' || card.position === 'faceup_spell' || card.position === 'facedown_spell' ? 8 : 4;
-    const target = duelStore.getTargetInfo(card.controller, loc, card.sequence ?? 0);
+    let loc = card.position === 'faceup_spell' || card.position === 'facedown_spell' ? 8 : 4;
+    let seq = card.sequence ?? 0;
+    if (card.location === 'field') {
+      loc = 256;
+      seq = 0;
+    }
+    const target = duelStore.getTargetInfo(card.controller, loc, seq);
     if (target && target.isSelectable) {
       closeCardActionMenu();
       duelStore.toggleTargetByIndex(target.selectIndex);

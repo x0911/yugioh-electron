@@ -1,6 +1,6 @@
 {
   "name": "yugioh-electron",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Yu-Gi-Oh! Web-Desktop Duel Simulator (DM + GX Era)",
   "private": true,
   "type": "module",

@@ -39,6 +39,11 @@ export type ArchetypeName =
   | 'LEVEL_UP'
   | 'CRYSTAL_BEAST'
   | 'ANCIENT_GEAR'
+  | 'MONARCH'
+  | 'GLADIATOR_BEAST'
+  | 'VOLCANIC'
+  | 'LIGHTSWORN'
+  | 'CHAOS_DAD'
   | 'RITUAL'
   | 'GENERIC_CONTROL'
   | 'GENERIC_AGGRO';

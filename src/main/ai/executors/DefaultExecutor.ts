@@ -54,16 +54,17 @@ export class DefaultExecutor implements DeckExecutor {
         let score = 500;
         let reason = `Activate ${name}`;
 
-        // 1.1 Draw Power (Pot of Greed, Graceful Charity, Upstart, Allure, Trade-In, Cards of Consonance)
+        // 1.1 Draw Power (Pot of Greed, Graceful Charity, Upstart, Allure, Trade-In, Cards of Consonance, Destiny Draw)
         if (
           code === 55144522 || // Pot of Greed
           code === 79571449 || // Graceful Charity
           code === 70368879 || // Upstart Goblin
           code === 1475311 ||  // Allure of Darkness
           code === 38120068 || // Trade-In
-          code === 39701395    // Cards of Consonance
+          code === 39701395 || // Cards of Consonance
+          code === 76218313    // Destiny Draw
         ) {
-          score = 3000 * cardAdvWeight;
+          score = 5000 * cardAdvWeight;
           reason = `[PRIORITY DRAW] Activate draw accelerator ${name} (+card advantage)`;
         }
         // 1.2 Backrow Wipes (Harpie's Feather Duster, Heavy Storm, Mystical Space Typhoon)
@@ -86,7 +87,7 @@ export class DefaultExecutor implements DeckExecutor {
         }
         // 1.4 Searchers & Deck Thinners (Reinforcement of the Army, E - Emergency Call, Terraforming, Sangan)
         else if (code === 32807846 || code === 75043725 || code === 73628505) {
-          score = 2000 * comboFocus;
+          score = 4200 * comboFocus;
           reason = `[SEARCH] Activate search card ${name} to fetch combo pieces`;
         }
         // 1.5 Special Summons & Graveyard Revivals (Monster Reborn, Premature Burial, Call of the Haunted)
@@ -250,7 +251,7 @@ export class DefaultExecutor implements DeckExecutor {
           continue;
         }
 
-        let score = atk * 0.7;
+        let score = 2200 + (atk * 0.5) * (aggression + 0.3);
         if (level >= 5) {
           const aiMonsters = aiField.monsterZones.filter((m): m is FieldCard => !!m);
           const neededTributes = level >= 7 ? 2 : 1;
@@ -272,7 +273,7 @@ export class DefaultExecutor implements DeckExecutor {
             });
             continue;
           }
-          score += 400; // Tribute boss monster bonus
+          score += 500; // Tribute boss monster bonus
         }
         if (signatureCardIds.includes(code)) {
           score += 800 * sigFavoritism;
@@ -356,7 +357,7 @@ export class DefaultExecutor implements DeckExecutor {
         const level = detail?.level ?? 5;
         const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
 
-        let score = 1500 + atk * 0.5 * (aggression + 0.5);
+        let score = 2600 + atk * 0.5 * (aggression + 0.5);
         if (signatureCardIds.includes(code)) {
           score += 1000 * sigFavoritism;
         }

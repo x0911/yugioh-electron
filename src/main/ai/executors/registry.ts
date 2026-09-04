@@ -7,6 +7,12 @@ import { DarkMagicianExecutor } from './archetypes/DarkMagicianExecutor.js';
 import { HeroFusionExecutor } from './archetypes/HeroFusionExecutor.js';
 import { AntiMetaStunExecutor } from './archetypes/AntiMetaStunExecutor.js';
 import { BurnOTKExecutor } from './archetypes/BurnOTKExecutor.js';
+import { MonarchExecutor } from './archetypes/MonarchExecutor.js';
+import { GladiatorBeastExecutor } from './archetypes/GladiatorBeastExecutor.js';
+import { VolcanicExecutor } from './archetypes/VolcanicExecutor.js';
+import { AncientGearExecutor } from './archetypes/AncientGearExecutor.js';
+import { LightswornExecutor } from './archetypes/LightswornExecutor.js';
+import { ChaosDadExecutor } from './archetypes/ChaosDadExecutor.js';
 
 export class ExecutorRegistry {
   private static instance: ExecutorRegistry | null = null;
@@ -21,6 +27,12 @@ export class ExecutorRegistry {
     this.registerExecutor(new HeroFusionExecutor());
     this.registerExecutor(new AntiMetaStunExecutor());
     this.registerExecutor(new BurnOTKExecutor());
+    this.registerExecutor(new MonarchExecutor());
+    this.registerExecutor(new GladiatorBeastExecutor());
+    this.registerExecutor(new VolcanicExecutor());
+    this.registerExecutor(new AncientGearExecutor());
+    this.registerExecutor(new LightswornExecutor());
+    this.registerExecutor(new ChaosDadExecutor());
   }
 
   public static getInstance(): ExecutorRegistry {

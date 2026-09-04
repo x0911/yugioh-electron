@@ -39,6 +39,8 @@ const testFiles = [
   'tests/llm-multi-provider.test.ts',
   'tests/smart-update-service.test.ts',
   'tests/action-ordering-and-extra-shift.test.ts',
+  'tests/ai-core-engine-fixes.test.ts',
+  'tests/ai-archetype-combos.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);

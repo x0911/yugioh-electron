@@ -151,6 +151,81 @@ export function resolveArchetypePlan(archetypeDescription: string = ''): Archety
     };
   }
 
+  if (desc.includes('monarch') || desc.includes('soul control') || desc.includes('tribute')) {
+    return {
+      name: 'MONARCH',
+      fusionWeight: 0.2,
+      ritualWeight: 0.1,
+      beatdownWeight: 1.8,
+      defenseWeight: 0.9,
+      burnWeight: 0.8,
+      graveyardWeight: 1.6,
+      swarmWeight: 1.2,
+      preferredAttributes: [0x10, 0x08, 0x04, 0x02], // DARK, WIND, WATER, FIRE
+      preferredRaces: [0x4000, 0x08], // FIEND, AQUA
+    };
+  }
+
+  if (desc.includes('gladiator') || desc.includes('gladiator beast')) {
+    return {
+      name: 'GLADIATOR_BEAST',
+      fusionWeight: 1.8,
+      ritualWeight: 0.0,
+      beatdownWeight: 1.7,
+      defenseWeight: 0.8,
+      burnWeight: 0.3,
+      graveyardWeight: 1.4,
+      swarmWeight: 1.9,
+      preferredAttributes: [0x01, 0x20, 0x08], // EARTH, LIGHT, WIND
+      preferredRaces: [0x100, 0x40], // BEAST_WARRIOR, WINGED_BEAST
+    };
+  }
+
+  if (desc.includes('volcanic') || desc.includes('blaze')) {
+    return {
+      name: 'VOLCANIC',
+      fusionWeight: 0.2,
+      ritualWeight: 0.0,
+      beatdownWeight: 1.4,
+      defenseWeight: 1.2,
+      burnWeight: 2.0,
+      graveyardWeight: 1.5,
+      swarmWeight: 1.3,
+      preferredAttributes: [0x02], // FIRE
+      preferredRaces: [0x1000], // PYRO
+    };
+  }
+
+  if (desc.includes('lightsworn')) {
+    return {
+      name: 'LIGHTSWORN',
+      fusionWeight: 0.3,
+      ritualWeight: 0.2,
+      beatdownWeight: 1.9,
+      defenseWeight: 0.4,
+      burnWeight: 0.2,
+      graveyardWeight: 2.0,
+      swarmWeight: 1.8,
+      preferredAttributes: [0x20], // LIGHT
+      preferredRaces: [0x01, 0x02, 0x2000], // WARRIOR, SPELLCASTER, DRAGON
+    };
+  }
+
+  if (desc.includes('dad') || desc.includes('chaos') || desc.includes('dark armed')) {
+    return {
+      name: 'CHAOS_DAD',
+      fusionWeight: 0.5,
+      ritualWeight: 0.2,
+      beatdownWeight: 1.9,
+      defenseWeight: 0.5,
+      burnWeight: 0.4,
+      graveyardWeight: 1.9,
+      swarmWeight: 1.7,
+      preferredAttributes: [0x10, 0x20], // DARK, LIGHT
+      preferredRaces: [0x2000, 0x01, 0x02], // DRAGON, WARRIOR, SPELLCASTER
+    };
+  }
+
   // Generic Beatdown / Aggro fallback
   return {
     name: 'BEATDOWN',

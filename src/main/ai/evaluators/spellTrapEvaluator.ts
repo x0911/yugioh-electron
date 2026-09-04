@@ -769,8 +769,29 @@ export function evaluateSpellTrapSet(
     cardName.includes('Solemn') ||
     cardName.includes('Dimensional Prison');
 
+  // Phase timing:
+  const currentPhase = context.currentPhase || context.boardState.currentPhase;
+  const isMainPhase1 = currentPhase === 'M1' || currentPhase === 'DP' || currentPhase === 'SP';
+  const isMainPhase2 = currentPhase === 'M2';
+  const isTurn1 = context.boardState.turnNumber === 1;
+
+  // In Main Phase 1 (before combat):
+  // Quick-Play Spells (Book of Moon, Enemy Controller, MST, Shrink, Rush Recklessly)
+  // CANNOT be activated the turn they are set!
+  // Setting them in MP1 prevents using them from hand during Battle Phase.
+  if (isQuickPlay && isMainPhase1 && !isTurn1) {
+    return {
+      score: -3500,
+      reason: `[HOLD IN HAND] Keep Quick-Play Spell ${cardName} in hand during MP1 so it remains activatable during the Battle Phase`,
+    };
+  }
+
+  // In Main Phase 2 or Turn 1:
+  // Setting defensive traps and quick-plays receives a massive bonus so they are set before ending the turn.
+  const phaseBonus = (isMainPhase2 || isTurn1) ? 1400 : 0;
+
   if (isPremierStaple) {
-    const score = 1400 * (personality.defensiveness + 0.6) + (4 - currentBackrowCount) * 80;
+    const score = 1200 * (personality.defensiveness + 0.6) + (4 - currentBackrowCount) * 80 + phaseBonus;
     return {
       score,
       reason: `[PRIORITY SET] Set premier defensive trap/quick-play ${cardName} for opponent's turn`,
@@ -778,7 +799,7 @@ export function evaluateSpellTrapSet(
   }
 
   if (isTrap || isQuickPlay) {
-    const score = 950 * (personality.defensiveness + 0.5) + (4 - currentBackrowCount) * 60;
+    const score = 850 * (personality.defensiveness + 0.5) + (4 - currentBackrowCount) * 60 + phaseBonus;
     return {
       score,
       reason: `Set defensive Trap/Quick-Play ${cardName} for opponent's turn`,

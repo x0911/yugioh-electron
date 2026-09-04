@@ -53,4 +53,63 @@ export class CyberDragonExecutor extends DefaultExecutor {
 
     return baseCandidates;
   }
+
+  public override onSelectCard(msg: OcgMessage, context: EvaluatorContext): number[] | null {
+    const rawSelects = msg.selects || [];
+    if (rawSelects.length === 0) return null;
+
+    const { activeChainCards } = context;
+    const { aiField } = getAiAndOpponentFields(context);
+
+    // Cyber Dragon Core (23893227) Search:
+    // When Normal Summoned: Add 1 "Cyber" Spell/Trap from Deck to hand.
+    // Priority: Power Bond (37630732) > Cyber Emergency (60312991) > Cyber Repair Plant (77603950)
+    if (activeChainCards?.includes(23893227)) {
+      const hasPowerBond = aiField.hand.some((c) => c === 37630732);
+      if (!hasPowerBond) {
+        const pbIdx = rawSelects.findIndex((s: any) => s.code === 37630732);
+        if (pbIdx >= 0) return [pbIdx];
+      }
+      const emergencyIdx = rawSelects.findIndex((s: any) => s.code === 60312991);
+      if (emergencyIdx >= 0) return [emergencyIdx];
+      const plantIdx = rawSelects.findIndex((s: any) => s.code === 77603950);
+      if (plantIdx >= 0) return [plantIdx];
+    }
+
+    return null;
+  }
+
+  public override onSelectChain(msg: OcgMessage, context: EvaluatorContext): ScoredAction[] | null {
+    const rawSelects = msg.selects || [];
+    const candidates: ScoredAction[] = [];
+    const isBattlePhase =
+      context.boardState.currentPhase === 'BP' ||
+      context.boardState.currentPhase === 'BATTLE_START' ||
+      context.boardState.currentPhase === 'BATTLE_STEP' ||
+      context.boardState.currentPhase === 'DAMAGE_STEP';
+
+    for (let i = 0; i < rawSelects.length; i++) {
+      const s = rawSelects[i];
+      const code = s.code ?? 0;
+
+      // Limiter Removal (23171610): Chain in Battle Phase for Machine OTK!
+      if (code === 23171610 && isBattlePhase) {
+        candidates.push({
+          action: {
+            type: OcgResponseType.SELECT_CHAIN,
+            index: i,
+          },
+          score: 4800,
+          reason: `[CYBER LIMITER REMOVAL] Double Machine ATK during battle for lethal damage!`,
+          cardCode: code,
+          cardName: 'Limiter Removal',
+        });
+      }
+    }
+
+    if (candidates.length > 0) {
+      return candidates;
+    }
+    return super.onSelectChain ? super.onSelectChain(msg, context) : null;
+  }
 }
