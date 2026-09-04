@@ -453,6 +453,7 @@ interface ZoneChoiceModalState {
 const router = useRouter();
 const duelStore = useDuelStore();
 const settingsStore = useSettingsStore();
+const multiplayerStore = useMultiplayerStore();
 const duelLogsStore = useDuelLogsStore();
 
 let hasSavedCurrentDuel = false;
@@ -936,7 +937,6 @@ function onSurrender(): void {
   appendLog('SURRENDER', 'Player surrendered the match.');
   saveCurrentDuelLog('surrender');
   if (duelStore.isPvPMatch) {
-    const multiplayerStore = useMultiplayerStore();
     multiplayerStore.sendSurrender('surrender');
     duelStore.boardState.winner = duelStore.opponentPlayerId;
     duelStore.boardState.winReason = WIN_REASONS.SURRENDER;
@@ -952,10 +952,8 @@ function returnToCharacters(): void {
   saveCurrentDuelLog();
   if (duelStore.isPvPMatch) {
     if (duelStore.isDuelActive && duelStore.boardState.winner === null) {
-      const multiplayerStore = useMultiplayerStore();
       multiplayerStore.sendSurrender('left');
     }
-    const multiplayerStore = useMultiplayerStore();
     multiplayerStore.disconnect();
     router.push('/multiplayer');
   } else {
@@ -1508,8 +1506,6 @@ async function setupEngineEventListener(): Promise<void> {
     });
   };
 
-  const multiplayerStore = useMultiplayerStore();
-
   if (duelStore.isPvPMatch && duelStore.pvpRole === 'host') {
     multiplayerService.onPacketReceived = (packet) => {
       multiplayerStore.handleIncomingPacket(packet);
@@ -1594,7 +1590,6 @@ async function setupEngineEventListener(): Promise<void> {
 
 const handleBeforeUnload = () => {
   if (duelStore.isPvPMatch && duelStore.isDuelActive && duelStore.boardState.winner === null) {
-    const multiplayerStore = useMultiplayerStore();
     multiplayerStore.sendSurrender('disconnect');
     multiplayerStore.disconnect();
   }
