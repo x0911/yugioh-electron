@@ -955,10 +955,9 @@ function returnToCharacters(): void {
       multiplayerStore.sendSurrender('left');
     }
     multiplayerStore.disconnect();
-    router.push('/multiplayer');
-  } else {
-    router.push('/main-menu');
+    duelStore.resetDuel();
   }
+  router.push('/main-menu');
 }
 
 let unsubscribeEvents: (() => void) | null = null;

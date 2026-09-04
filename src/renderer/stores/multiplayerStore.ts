@@ -239,6 +239,10 @@ export const useMultiplayerStore = defineStore('multiplayer', {
       multiplayerService.setVolume(volume);
     },
 
+    disconnect(): void {
+      this.leaveRoom();
+    },
+
     leaveRoom(): void {
       multiplayerService.disconnect();
       this.role = 'none';

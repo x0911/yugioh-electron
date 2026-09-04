@@ -2619,6 +2619,9 @@ export const useDuelStore = defineStore('duel', {
         winReason: null,
       };
       this.isDuelActive = false;
+      this.isPvPMatch = false;
+      this.pvpRole = 'none';
+      this.pvpInitOptions = null;
     },
   },
 });

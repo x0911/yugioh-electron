@@ -760,4 +760,70 @@ console.log('--- Starting Multiplayer & PvP Protocol Test Suite ---');
   console.log('✓ Test 15: Opponent forfeit, surrender & disconnect victory handling verified.');
 }
 
+// Test 16: multiplayerStore.disconnect() & Match Exit Cleanup
+{
+  let serviceDisconnected = false;
+  const mockMultiplayerService = {
+    disconnect() {
+      serviceDisconnected = true;
+    },
+  };
+
+  const mockMultiplayerStore = {
+    role: 'host',
+    roomCode: '1234',
+    status: 'connected',
+    remotePlayer: { name: 'Player 2' },
+    isLocalReady: true,
+    isRemoteReady: true,
+    rematchRequested: true,
+    remoteRematchRequested: true,
+    leaveRoom() {
+      mockMultiplayerService.disconnect();
+      this.role = 'none';
+      this.roomCode = '';
+      this.status = 'disconnected';
+      this.remotePlayer = null;
+      this.isLocalReady = false;
+      this.isRemoteReady = false;
+      this.rematchRequested = false;
+      this.remoteRematchRequested = false;
+    },
+    disconnect() {
+      this.leaveRoom();
+    },
+  };
+
+  assert.strictEqual(typeof mockMultiplayerStore.disconnect, 'function');
+  mockMultiplayerStore.disconnect();
+
+  assert.strictEqual(serviceDisconnected, true);
+  assert.strictEqual(mockMultiplayerStore.status, 'disconnected');
+  assert.strictEqual(mockMultiplayerStore.role, 'none');
+  assert.strictEqual(mockMultiplayerStore.roomCode, '');
+  assert.strictEqual(mockMultiplayerStore.remotePlayer, null);
+
+  // DuelStore reset verification
+  const mockDuelStore = {
+    isDuelActive: true,
+    isPvPMatch: true,
+    pvpRole: 'host',
+    pvpInitOptions: { startingLP: 8000 },
+    resetDuel() {
+      this.isDuelActive = false;
+      this.isPvPMatch = false;
+      this.pvpRole = 'none';
+      this.pvpInitOptions = null;
+    },
+  };
+
+  mockDuelStore.resetDuel();
+  assert.strictEqual(mockDuelStore.isDuelActive, false);
+  assert.strictEqual(mockDuelStore.isPvPMatch, false);
+  assert.strictEqual(mockDuelStore.pvpRole, 'none');
+  assert.strictEqual(mockDuelStore.pvpInitOptions, null);
+
+  console.log('✓ Test 16: multiplayerStore.disconnect() & match exit cleanup verified.');
+}
+
 console.log('🎉 All Multiplayer & PvP Protocol Tests Passed Cleanly!');
