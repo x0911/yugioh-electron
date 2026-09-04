@@ -294,6 +294,10 @@ export const useDeckEditStore = defineStore('deckEdit', {
       return this.deckValidity.isValid;
     },
 
+    errors(): string[] {
+      return this.deckValidity.errors || [];
+    },
+
     decksContainingFilterCard(state): CustomDeck[] {
       if (!state.deckFilterCard) return state.customDecks;
       const targetId = state.deckFilterCard.id;

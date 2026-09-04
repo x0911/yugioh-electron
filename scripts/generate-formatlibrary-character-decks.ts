@@ -502,13 +502,22 @@ export async function generateAllCharacterDecks(): Promise<void> {
       const ydkRelativePath = `resources/decks/${ydkFilename}`;
       const ydkAbsolutePath = path.join(DECKS_DIR, ydkFilename);
 
-      // Ensure extra deck monsters in side deck are moved to extra if there is room (< 15)
-      const extraCards = [...(tDeck.extra || [])];
+      // Ensure extra deck monsters in side deck are moved to extra if there is room (< 15) and not exceeding 3 copies
+      const rawExtra = [...(tDeck.extra || [])];
+      const extraCards: number[] = [];
+      for (const cid of rawExtra) {
+        const count = [...tDeck.main, ...extraCards].filter(id => id === cid).length;
+        if (count < 3 && extraCards.length < 15) {
+          extraCards.push(cid);
+        }
+      }
+
       const sideCards: number[] = [];
       const extraTypeMask = 0x40 | 0x2000 | 0x800000 | 0x4000000;
       for (const cid of (tDeck.side || [])) {
         const row = db.prepare('SELECT type FROM datas WHERE id = ?').get(cid) as { type: number } | undefined;
-        if (row && (row.type & extraTypeMask) && extraCards.length < 15) {
+        const count = [...tDeck.main, ...extraCards].filter(id => id === cid).length;
+        if (row && (row.type & extraTypeMask) && extraCards.length < 15 && count < 3) {
           extraCards.push(cid);
         } else {
           sideCards.push(cid);

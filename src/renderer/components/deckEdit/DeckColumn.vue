@@ -39,8 +39,8 @@
               !validity.isValid
                 ? store.mainDeckCount < 40
                   ? `Cannot save: Main deck has ${store.mainDeckCount}/40 cards minimum`
-                  : store.errors.length > 0
-                  ? 'Cannot save: Deck contains illegal cards'
+                  : (validity.errors && validity.errors.length > 0)
+                  ? `Cannot save: ${validity.errors[0]}`
                   : 'Cannot save: Deck is invalid'
                 : !store.isDirty
                 ? 'Deck already saved'
@@ -116,7 +116,7 @@
           Main: {{ store.mainDeckCount }}/40-60 • Extra: {{ store.extraDeckCount }}/15
         </span>
       </div>
-      <div v-if="!validity.isValid && validity.errors.length > 0" class="validity-errors">
+      <div v-if="!validity.isValid && validity.errors?.length > 0" class="validity-errors">
         <div v-for="(err, idx) in validity.errors" :key="idx" class="error-item">
           • {{ err }}
         </div>
