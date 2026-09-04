@@ -171,9 +171,13 @@ async function startEngineInitialization(): Promise<void> {
       statusMessage.value = 'Ancient Duel Arena Ready!';
       isReady.value = true;
 
-      // Smooth transition to Main Menu
+      // Smooth transition to target view (multiplayer lobby if guest window, otherwise main menu)
       await new Promise((resolve) => setTimeout(resolve, 500));
-      router.replace('/main-menu');
+      if (window.appAPI?.isGuest) {
+        router.replace('/multiplayer');
+      } else {
+        router.replace('/main-menu');
+      }
     } else {
       // Fallback for non-Electron or standalone browser environment
       console.warn('[LoadingView] window.appAPI not detected — running mock initialization');

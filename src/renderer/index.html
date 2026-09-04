@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: file:; media-src 'self' file:;"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: file: app-resource: blob:; media-src 'self' file: app-resource: blob: mediastream:; connect-src 'self' https://*.peerjs.com wss://*.peerjs.com https://peerjs.com wss://peerjs.com ws: wss: app-resource: data: blob:;"
     />
     <title>Yu-Gi-Oh! Desktop Duel</title>
     <link rel="icon" type="image/png" href="./assets/icon.png" />

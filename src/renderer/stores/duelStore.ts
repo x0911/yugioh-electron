@@ -87,6 +87,7 @@ export interface DuelStoreState {
   isMatchPrepared: boolean;
   isPvPMatch: boolean;
   pvpRole: 'host' | 'guest' | 'none';
+  pvpInitOptions: import('../../shared/types/duel.js').DuelInitOptions | null;
 
   // In-Duel Board State
   boardState: DuelBoardState;
@@ -191,6 +192,7 @@ export const useDuelStore = defineStore('duel', {
     isMatchPrepared: false,
     isPvPMatch: false,
     pvpRole: 'none',
+    pvpInitOptions: null,
 
     boardState: {
       userField: createEmptyPlayerField(0, 'You'),
@@ -2494,6 +2496,33 @@ export const useDuelStore = defineStore('duel', {
           console.warn('[DuelStore] Error calling notifyVideoFinished:', err);
         }
       }
+    },
+
+    setupPvPMatch(
+      role: 'host' | 'guest',
+      userPlayerId: 0 | 1,
+      localName: string,
+      opponentName: string,
+      options?: import('../../shared/types/duel.js').DuelInitOptions | null,
+    ): void {
+      this.isPvPMatch = true;
+      this.pvpRole = role;
+      this.userPlayerId = userPlayerId;
+      this.opponentPlayerId = userPlayerId === 0 ? 1 : 0;
+      this.pvpInitOptions = options ? JSON.parse(JSON.stringify(options)) : null;
+      this.clearPrompts();
+      this.boardState = {
+        userField: createEmptyPlayerField(this.userPlayerId, localName),
+        opponentField: createEmptyPlayerField(this.opponentPlayerId, opponentName),
+        extraMonsterZones: [null, null],
+        turnNumber: 1,
+        currentPhase: 'DP',
+        activePrompt: null,
+        phaseGuideText: '',
+        winner: null,
+        winReason: null,
+      };
+      this.isDuelActive = true;
     },
 
     resetDuel(): void {

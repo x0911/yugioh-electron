@@ -909,7 +909,13 @@ async function onRestartMatch(): Promise<void> {
   duelAnimationQueue.clear();
   audioManager.playSfx('duel-start');
   appendLog('RESTART', 'Restarting live duel...');
-  await duelStore.startPreparedDuel();
+  if (duelStore.isPvPMatch) {
+    if (duelStore.pvpRole === 'host' && duelStore.pvpInitOptions && window.duelAPI) {
+      await window.duelAPI.newDuel(duelStore.pvpInitOptions);
+    }
+  } else {
+    await duelStore.startPreparedDuel();
+  }
 }
 
 function onSurrender(): void {
@@ -1523,8 +1529,12 @@ onMounted(async () => {
     });
   }
 
-  // Start fresh prepared live duel (Host or Solo only)
-  if (!duelStore.isPvPMatch || duelStore.pvpRole === 'host') {
+  // Start fresh prepared live duel (PvP host initializes engine, or Solo play against AI)
+  if (duelStore.isPvPMatch) {
+    if (duelStore.pvpRole === 'host' && duelStore.pvpInitOptions && window.duelAPI) {
+      await window.duelAPI.newDuel(duelStore.pvpInitOptions);
+    }
+  } else {
     await duelStore.startPreparedDuel();
   }
 });

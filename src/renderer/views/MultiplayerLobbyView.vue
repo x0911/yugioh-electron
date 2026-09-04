@@ -94,9 +94,7 @@
                   <span v-else class="deck-avatar-icon">🎴</span>
                 </div>
                 <div class="deck-text-box">
-                  <span class="deck-title">{{
-                    currentDeckObject?.name || 'Select a Deck'
-                  }}</span>
+                  <span class="deck-title">{{ currentDeckObject?.name || 'Select a Deck' }}</span>
                   <div class="deck-sub-meta">
                     <span
                       v-if="currentDeckObject?.series"
@@ -368,7 +366,11 @@ function handleSelectDeckFromModal(deck: CustomDeck) {
 }
 
 const canLaunchGuest = computed(() => {
-  return typeof window !== 'undefined' && Boolean(window.appAPI?.launchGuestWindow);
+  return (
+    typeof window !== 'undefined' &&
+    Boolean(window.appAPI?.launchGuestWindow) &&
+    !window.appAPI?.isGuest
+  );
 });
 
 async function onLaunchGuestWindow() {
@@ -406,12 +408,17 @@ const opponentDeckName = computed(() => multiplayerStore.remotePlayer?.deckName 
 onMounted(async () => {
   multiplayerStore.init();
   multiplayerStore.onStartDuel = () => {
-    duelStore.isPvPMatch = true;
-    duelStore.pvpRole = 'guest';
-    duelStore.userPlayerId = 1;
-    duelStore.opponentPlayerId = 0;
+    const localName = String(multiplayerStore.localPlayer?.name || 'Guest Duelist');
+    const remoteName = String(multiplayerStore.remotePlayer?.name || 'Host');
+    duelStore.setupPvPMatch('guest', 1, localName, remoteName);
     router.push('/duel');
   };
+  if (window.appAPI?.isGuest) {
+    activeTab.value = 'join';
+    if (!localStorage.getItem('yugioh_duelist_name') || playerName.value === 'Duelist') {
+      playerName.value = 'Guest Duelist';
+    }
+  }
   if (!deckEditStore.isLoaded || deckEditStore.customDecks.length === 0) {
     await deckEditStore.initStore();
   }
@@ -541,6 +548,18 @@ function handlePinPaste(event: ClipboardEvent) {
   }
 }
 
+function cleanDeckCards(cards: unknown): number[] {
+  if (!cards || !Array.isArray(cards)) return [];
+  return Array.from(cards)
+    .map((c: any) => {
+      if (typeof c === 'object' && c !== null) {
+        return Number(c.code || c.id || 0);
+      }
+      return Number(c);
+    })
+    .filter((id) => Number.isFinite(id) && id > 0);
+}
+
 async function handleStartMatch() {
   if (!multiplayerStore.isHost || !multiplayerStore.bothReady) return;
 
@@ -548,30 +567,32 @@ async function handleStartMatch() {
   const guestDeck = multiplayerStore.remotePlayer?.deckCards || [];
   const guestExtra = multiplayerStore.remotePlayer?.extraDeckCards || [];
 
-  // Host prepares the duel match
-  duelStore.isPvPMatch = true;
-  duelStore.pvpRole = 'host';
-  duelStore.userPlayerId = 0;
-  duelStore.opponentPlayerId = 1;
+  // Deep sanitize all deck card arrays and player names into pure primitives
+  const p0Deck = cleanDeckCards(hostDeck.cards);
+  const p1Deck = cleanDeckCards(guestDeck);
+  const p0Extra = cleanDeckCards(hostDeck.extraCards);
+  const p1Extra = cleanDeckCards(guestExtra);
+  const hostName = String(multiplayerStore.localPlayer?.name || 'Host');
+  const guestName = String(multiplayerStore.remotePlayer?.name || 'Player 2');
 
-  // Initialize authoritative engine on Host
-  if (window.duelAPI) {
-    await window.duelAPI.newDuel({
-      player0Deck: hostDeck.cards,
-      player1Deck: guestDeck,
-      player0ExtraDeck: hostDeck.extraCards,
-      player1ExtraDeck: guestExtra,
-      isPvPMode: true,
-      player0Name: multiplayerStore.localPlayer.name,
-      player1Name: multiplayerStore.remotePlayer?.name || 'Player 2',
-    });
-  }
+  const pvpInitOptions = {
+    player0Deck: p0Deck,
+    player1Deck: p1Deck,
+    player0ExtraDeck: p0Extra,
+    player1ExtraDeck: p1Extra,
+    isPvPMode: true,
+    player0Name: hostName,
+    player1Name: guestName,
+  };
 
-  // Tell Guest to start duel
+  // Host prepares the duel match state with clean, un-proxied data
+  duelStore.setupPvPMatch('host', 0, hostName, guestName, pvpInitOptions);
+
+  // Tell Guest to start duel and navigate to /duel
   multiplayerStore.sendPacket('START_DUEL', {
     startingPlayer: 0,
-    hostDeckName: hostDeck.name,
-    guestDeckName: multiplayerStore.remotePlayer?.deckName || 'Deck',
+    hostDeckName: String(hostDeck.name || 'Deck'),
+    guestDeckName: String(multiplayerStore.remotePlayer?.deckName || 'Deck'),
   });
 
   router.push('/duel');
@@ -920,6 +941,12 @@ async function handleStartMatch() {
   color: #cbd5e0;
   line-height: 1.4;
   margin: 0;
+}
+
+.host-waiting-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 // 4-Digit Code Display

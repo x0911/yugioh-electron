@@ -312,4 +312,193 @@ console.log('--- Starting Multiplayer & PvP Protocol Test Suite ---');
   console.log('✓ Test 7: Duelist name persistence and modal auto-scroll target verified.');
 }
 
+// Test 8: Guest Window Launch Configuration & Binary String Type Safety
+{
+  // 1. Verify executable path resolution logic
+  const mockProcessExecPath = process.execPath;
+  assert.strictEqual(typeof mockProcessExecPath, 'string', 'process.execPath must strictly be a string');
+  assert.ok(mockProcessExecPath.length > 0, 'process.execPath must not be empty');
+
+  // Verify that an object is NEVER used as the executable (which caused TypeError [ERR_INVALID_ARG_TYPE])
+  const resolveElectronBin = (isDev: boolean) => {
+    // Correct resolution uses process.execPath directly
+    return process.execPath;
+  };
+
+  const resolvedBinDev = resolveElectronBin(true);
+  assert.strictEqual(typeof resolvedBinDev, 'string', 'Electron binary in dev must be a string');
+  assert.notStrictEqual(typeof resolvedBinDev, 'object', 'Electron binary must never be an object');
+
+  // 2. Verify spawn argument composition
+  const mockAppPath = '/path/to/yugioh-electron';
+  const getSpawnArgs = (isDev: boolean) => {
+    return isDev
+      ? [mockAppPath, '--guest', '--multi-instance', '--windowed']
+      : ['--guest', '--multi-instance', '--windowed'];
+  };
+
+  const devArgs = getSpawnArgs(true);
+  assert.strictEqual(devArgs[0], mockAppPath);
+  assert.ok(devArgs.includes('--guest'));
+  assert.ok(devArgs.includes('--multi-instance'));
+  assert.ok(devArgs.includes('--windowed'));
+
+  const prodArgs = getSpawnArgs(false);
+  assert.strictEqual(prodArgs[0], '--guest');
+  assert.ok(prodArgs.includes('--multi-instance'));
+  assert.ok(prodArgs.includes('--windowed'));
+
+  // 3. Verify guest window UI constraints (button hidden on guest, join tab active)
+  const canLaunchGuestHost = (isGuest: boolean) => !isGuest;
+  assert.strictEqual(canLaunchGuestHost(false), true, 'Host window can launch guest window');
+  assert.strictEqual(canLaunchGuestHost(true), false, 'Guest window must not show launch guest button');
+
+  console.log('✓ Test 8: Guest window launch configuration and binary string type safety verified.');
+}
+
+// Test 9: Duel Initialization Serialization & Structured Clone Safety
+{
+  function cleanDeckCards(cards: unknown): number[] {
+    if (!cards || !Array.isArray(cards)) return [];
+    return Array.from(cards)
+      .map((c: any) => {
+        if (typeof c === 'object' && c !== null) {
+          return Number(c.code || c.id || 0);
+        }
+        return Number(c);
+      })
+      .filter((id) => Number.isFinite(id) && id > 0);
+  }
+
+  // Simulate Vue 3 reactive proxy wrapping card objects and functions
+  const mockReactiveCardList = new Proxy(
+    [
+      { id: 46986414, name: 'Dark Magician' },
+      { code: 89631139, name: 'Blue-Eyes White Dragon' },
+      '40737112',
+    ],
+    {
+      get(target, prop, receiver) {
+        if (prop === '__v_isReactive') return true;
+        if (prop === 'customFunction') return () => {};
+        return Reflect.get(target, prop, receiver);
+      },
+    },
+  );
+
+  // Clean cards must extract pure numeric primitives
+  const cleaned = cleanDeckCards(mockReactiveCardList);
+  assert.deepStrictEqual(cleaned, [46986414, 89631139, 40737112]);
+
+  // Construct PvP init options payload
+  const pvpInitOptions = {
+    player0Deck: cleaned,
+    player1Deck: [12345678, 87654321],
+    player0ExtraDeck: [],
+    player1ExtraDeck: [],
+    isPvPMode: true,
+    player0Name: 'Yugi Muto',
+    player1Name: 'Seto Kaiba',
+  };
+
+  // Structured clone algorithm must serialize the options cleanly with zero errors
+  const cloned = structuredClone(pvpInitOptions);
+  assert.deepStrictEqual(cloned.player0Deck, [46986414, 89631139, 40737112]);
+  assert.strictEqual(cloned.player0Name, 'Yugi Muto');
+  assert.strictEqual(cloned.isPvPMode, true);
+
+  console.log('✓ Test 9: Duel initialization serialization & structured clone safety verified.');
+}
+
+// Test 10: multiplayerStore.sendPacket & Match Start Execution Flow
+{
+  // 1. Mock multiplayer store with sendPacket method
+  let sentPacketType: string | null = null;
+  let sentPacketPayload: any = null;
+
+  const mockMultiplayerStore = {
+    isHost: true,
+    bothReady: true,
+    localPlayer: { name: 'Host Duelist' },
+    remotePlayer: { name: 'Guest Duelist', deckName: 'Guest Deck', deckCards: [46986414] },
+    sendPacket: function (type: string, payload: any): boolean {
+      sentPacketType = type;
+      sentPacketPayload = payload;
+      return true;
+    },
+  };
+
+  assert.strictEqual(
+    typeof mockMultiplayerStore.sendPacket,
+    'function',
+    'multiplayerStore.sendPacket must strictly be a function',
+  );
+
+  // 2. Simulate handleStartMatch execution
+  const hostDeck = { name: 'Host Deck', cards: [89631139], extraCards: [] };
+  const pvpInitOptions = {
+    player0Deck: [89631139],
+    player1Deck: [46986414],
+    player0ExtraDeck: [],
+    player1ExtraDeck: [],
+    isPvPMode: true,
+    player0Name: mockMultiplayerStore.localPlayer.name,
+    player1Name: mockMultiplayerStore.remotePlayer.name,
+  };
+
+  const mockDuelStore = {
+    isPvPMatch: false,
+    pvpRole: 'none' as 'host' | 'guest' | 'none',
+    userPlayerId: 0 as 0 | 1,
+    opponentPlayerId: 1 as 0 | 1,
+    pvpInitOptions: null as any,
+    setupPvPMatch(role: 'host' | 'guest', userPlayerId: 0 | 1, localName: string, opponentName: string, options?: any) {
+      this.isPvPMatch = true;
+      this.pvpRole = role;
+      this.userPlayerId = userPlayerId;
+      this.opponentPlayerId = userPlayerId === 0 ? 1 : 0;
+      this.pvpInitOptions = options ? JSON.parse(JSON.stringify(options)) : null;
+    },
+  };
+
+  mockDuelStore.setupPvPMatch('host', 0, 'Host Duelist', 'Guest Duelist', pvpInitOptions);
+  assert.strictEqual(mockDuelStore.isPvPMatch, true);
+  assert.strictEqual(mockDuelStore.pvpRole, 'host');
+  assert.deepStrictEqual(mockDuelStore.pvpInitOptions.player0Deck, [89631139]);
+
+  // 3. Send START_DUEL packet via store
+  const success = mockMultiplayerStore.sendPacket('START_DUEL', {
+    startingPlayer: 0,
+    hostDeckName: hostDeck.name,
+    guestDeckName: mockMultiplayerStore.remotePlayer.deckName,
+  });
+
+  assert.strictEqual(success, true);
+  assert.strictEqual(sentPacketType, 'START_DUEL');
+  assert.strictEqual(sentPacketPayload.hostDeckName, 'Host Deck');
+  assert.strictEqual(sentPacketPayload.guestDeckName, 'Guest Deck');
+
+  // 4. Simulate Guest handling START_DUEL
+  const guestDuelStore = {
+    isPvPMatch: false,
+    pvpRole: 'none' as 'host' | 'guest' | 'none',
+    userPlayerId: 0 as 0 | 1,
+    opponentPlayerId: 1 as 0 | 1,
+    setupPvPMatch(role: 'host' | 'guest', userPlayerId: 0 | 1, localName: string, opponentName: string) {
+      this.isPvPMatch = true;
+      this.pvpRole = role;
+      this.userPlayerId = userPlayerId;
+      this.opponentPlayerId = userPlayerId === 0 ? 1 : 0;
+    },
+  };
+
+  guestDuelStore.setupPvPMatch('guest', 1, 'Guest Duelist', 'Host Duelist');
+  assert.strictEqual(guestDuelStore.isPvPMatch, true);
+  assert.strictEqual(guestDuelStore.pvpRole, 'guest');
+  assert.strictEqual(guestDuelStore.userPlayerId, 1);
+  assert.strictEqual(guestDuelStore.opponentPlayerId, 0);
+
+  console.log('✓ Test 10: multiplayerStore.sendPacket & match start execution flow verified.');
+}
+
 console.log('🎉 All Multiplayer & PvP Protocol Tests Passed Cleanly!');

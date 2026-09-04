@@ -253,13 +253,13 @@ export class MultiplayerService {
       return false;
     }
 
-    const packet: PvpPacket<T> = {
-      type,
-      payload,
-      timestamp: Date.now(),
-    };
-
     try {
+      const cleanPayload = payload !== undefined ? JSON.parse(JSON.stringify(payload)) : undefined;
+      const packet: PvpPacket<T> = {
+        type,
+        payload: cleanPayload,
+        timestamp: Date.now(),
+      };
       this.connection.send(packet);
       return true;
     } catch (err) {

@@ -142,6 +142,7 @@ export interface AppAPI {
   getInitStatus: () => Promise<EngineInitStatus>;
   exitApp: () => Promise<void>;
   launchGuestWindow?: () => Promise<boolean>;
+  isGuest?: boolean;
   platform: NodeJS.Platform;
 }
 

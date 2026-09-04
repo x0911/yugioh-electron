@@ -4,6 +4,7 @@ import {
   type ConnectionStatus,
   type PlayerProfile,
   type PvpPacket,
+  type PvpPacketType,
   type VoiceState,
 } from '../services/multiplayer/MultiplayerService.js';
 import type { DuelEventPayload, CardVideoPayload } from '../../shared/types/duel.js';
@@ -163,6 +164,14 @@ export const useMultiplayerStore = defineStore('multiplayer', {
         result,
         startingPlayer: this.startingPlayer,
       });
+    },
+
+    sendPacket<T = unknown>(type: PvpPacketType, payload: T): boolean {
+      return multiplayerService.sendPacket(type, payload);
+    },
+
+    sendStartDuel(payload: { startingPlayer: number; hostDeckName: string; guestDeckName: string }): void {
+      multiplayerService.sendPacket('START_DUEL', payload);
     },
 
     sendDuelEvent(event: DuelEventPayload): void {

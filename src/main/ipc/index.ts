@@ -69,14 +69,14 @@ export function registerIpcHandlers(): void {
       const { spawn } = await import('node:child_process');
       const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
       const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
-      const electronBin = isDev
-        ? ((await import('electron')).default as unknown as string)
-        : process.execPath;
+      const electronBin = process.execPath;
+      const appPath = app.getAppPath();
       const args = isDev
-        ? ['.', '--guest', '--multi-instance', '--windowed']
+        ? [appPath, '--guest', '--multi-instance', '--windowed']
         : ['--guest', '--multi-instance', '--windowed'];
 
-      spawn(electronBin, args, {
+      const child = spawn(electronBin, args, {
+        cwd: appPath,
         detached: true,
         stdio: 'ignore',
         env: {
@@ -87,7 +87,8 @@ export function registerIpcHandlers(): void {
           YUGIOH_INSTANCE_ROLE: 'guest',
           WINDOWED: 'true',
         },
-      }).unref();
+      });
+      child.unref();
       return true;
     } catch (err) {
       console.error('[Main IPC] Failed to launch guest window:', err);

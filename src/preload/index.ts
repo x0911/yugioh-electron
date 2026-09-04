@@ -136,6 +136,7 @@ const appAPI: AppAPI = {
   launchGuestWindow: (): Promise<boolean> => {
     return ipcRenderer.invoke(IPC_CHANNELS.APP_LAUNCH_GUEST);
   },
+  isGuest: process.argv.includes('--guest') || process.env.YUGIOH_INSTANCE_ROLE === 'guest',
   platform: process.platform,
 };
 
