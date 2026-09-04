@@ -133,6 +133,9 @@ const appAPI: AppAPI = {
   exitApp: (): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.APP_EXIT);
   },
+  launchGuestWindow: (): Promise<boolean> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.APP_LAUNCH_GUEST);
+  },
   platform: process.platform,
 };
 

@@ -9,6 +9,7 @@ export const IPC_CHANNELS = {
   APP_GET_VERSION: 'app:get-version',
   APP_INIT_ENGINE: 'app:init-engine',
   APP_GET_INIT_STATUS: 'app:get-init-status',
+  APP_LAUNCH_GUEST: 'app:launch-guest',
   APP_EXIT: 'app:exit',
 
   // Duel
@@ -140,6 +141,7 @@ export interface AppAPI {
   initEngine: () => Promise<EngineInitStatus>;
   getInitStatus: () => Promise<EngineInitStatus>;
   exitApp: () => Promise<void>;
+  launchGuestWindow?: () => Promise<boolean>;
   platform: NodeJS.Platform;
 }
 

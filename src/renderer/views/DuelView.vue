@@ -301,33 +301,17 @@
     </div>
 
     <!-- Game Over Victory / Defeat Overlay -->
-    <div v-if="duelStore.isGameOver" class="game-over-modal-backdrop">
-      <div
-        class="game-over-modal glass-panel"
-        :class="isUserWinner ? 'game-over-modal--victory' : 'game-over-modal--defeat'"
-      >
-        <div class="game-over-banner">
-          <h2 class="game-over-title">
-            {{ isUserWinner ? '👑 VICTORY!' : '💀 DEFEAT' }}
-          </h2>
-          <p class="game-over-subtitle">
-            {{ gameOverSubtitle }}
-          </p>
-        </div>
-
-        <div class="game-over-actions">
-          <button class="action-btn action-btn--primary" @click="onRestartMatch">
-            🔄 Rematch
-          </button>
-          <button class="action-btn action-btn--review" @click="onOpenPostMatchReview">
-            🧠 AI Tactical Review
-          </button>
-          <button class="action-btn action-btn--secondary" @click="returnToCharacters">
-            🏠 Exit to Menu
-          </button>
-        </div>
-      </div>
-    </div>
+    <PostDuelOverlay
+      v-if="duelStore.isGameOver"
+      :is-winner="isUserWinner"
+      :user-lp="duelStore.boardState.userField.currentLp"
+      :opponent-lp="duelStore.boardState.opponentField.currentLp"
+      :turn-count="duelStore.boardState.turnNumber"
+      :win-reason="gameOverSubtitle"
+      @rematch="onRestartMatch"
+      @review="onOpenPostMatchReview"
+      @exit="returnToCharacters"
+    />
 
     <!-- Side Card Previewer Popup (Persistent Hover-driven) -->
     <CardPreviewPopup
@@ -385,6 +369,7 @@
 
     <!-- Floating Duel Tools -->
     <aside class="dev-floating-controls">
+      <VoiceChatWidget v-if="duelStore.isPvPMatch" />
       <button
         class="dev-pill-btn"
         title="Toggle Duel Log Drawer"
@@ -423,6 +408,10 @@ import {
   TossVisualOverlay,
 } from '../components/duel/index.js';
 import DuelReviewModal from '../components/duel/DuelReviewModal.vue';
+import VoiceChatWidget from '../components/multiplayer/VoiceChatWidget.vue';
+import PostDuelOverlay from '../components/duel/PostDuelOverlay.vue';
+import { useMultiplayerStore } from '../stores/multiplayerStore.js';
+import { multiplayerService } from '../services/multiplayer/MultiplayerService.js';
 import {
   duelAnimationQueue,
   playCardFlight,
@@ -947,7 +936,7 @@ async function setupEngineEventListener(): Promise<void> {
   const toDomOwner = (p: 0 | 1 | number): 'user' | 'ai' =>
     p === duelStore.userPlayerId ? 'user' : 'ai';
 
-  unsubscribeEvents = window.duelAPI.onEvent(async (event: DuelEventPayload) => {
+  const handleIncomingDuelEvent = async (event: DuelEventPayload) => {
     appendLog(event.type, event.description);
 
     await duelAnimationQueue.enqueue(async () => {
@@ -1480,23 +1469,64 @@ async function setupEngineEventListener(): Promise<void> {
         saveCurrentDuelLog();
       }
     });
-  });
+  };
+
+  const multiplayerStore = useMultiplayerStore();
+
+  if (duelStore.isPvPMatch && duelStore.pvpRole === 'host') {
+    multiplayerService.onPacketReceived = (packet) => {
+      multiplayerStore.handleIncomingPacket(packet);
+      if (packet.type === 'DUEL_RESPONSE') {
+        if (window.duelAPI) {
+          window.duelAPI.sendCommand(packet.payload);
+        }
+      } else if (packet.type === 'REMATCH_REQUEST' || packet.type === 'REMATCH_ACCEPT') {
+        onRestartMatch();
+      }
+    };
+
+    if (window.duelAPI) {
+      unsubscribeEvents = window.duelAPI.onEvent(async (event: DuelEventPayload) => {
+        // If event is a prompt for Player 1 (Guest), forward to Guest via WebRTC
+        if (event.isPrompt && event.promptPlayer === 1) {
+          multiplayerStore.sendDuelPrompt(event);
+          return;
+        }
+        // Forward regular events to Guest and process locally
+        multiplayerStore.sendDuelEvent(event);
+        await handleIncomingDuelEvent(event);
+      });
+    }
+  } else if (duelStore.isPvPMatch && duelStore.pvpRole === 'guest') {
+    multiplayerService.onPacketReceived = async (packet) => {
+      multiplayerStore.handleIncomingPacket(packet);
+      if (packet.type === 'DUEL_EVENT' || packet.type === 'DUEL_PROMPT') {
+        await handleIncomingDuelEvent(packet.payload as DuelEventPayload);
+      } else if (packet.type === 'VIDEO_TRIGGER') {
+        duelStore.handlePlayVideo(packet.payload as any);
+      } else if (packet.type === 'REMATCH_REQUEST' || packet.type === 'REMATCH_ACCEPT') {
+        onRestartMatch();
+      }
+    };
+  } else if (window.duelAPI) {
+    unsubscribeEvents = window.duelAPI.onEvent(handleIncomingDuelEvent);
+  }
 }
 
 onMounted(async () => {
   await settingsStore.initializeSettings();
 
-  if (window.duelAPI) {
-    await setupEngineEventListener();
-    if (window.duelAPI.playVideo) {
-      unsubscribeVideo = window.duelAPI.playVideo((video) => {
-        duelStore.handlePlayVideo(video);
-      });
-    }
+  await setupEngineEventListener();
+  if (window.duelAPI?.playVideo) {
+    unsubscribeVideo = window.duelAPI.playVideo((video) => {
+      duelStore.handlePlayVideo(video);
+    });
   }
 
-  // Start fresh prepared live duel
-  await duelStore.startPreparedDuel();
+  // Start fresh prepared live duel (Host or Solo only)
+  if (!duelStore.isPvPMatch || duelStore.pvpRole === 'host') {
+    await duelStore.startPreparedDuel();
+  }
 });
 
 onUnmounted(() => {

@@ -130,6 +130,9 @@ export interface DuelInitOptions {
   aiDeckArchetype?: string;
   aiEngineType?: 'builtin' | 'gemini';
   aiProvider?: AiProviderType;
+  isPvPMode?: boolean;
+  player0Name?: string;
+  player1Name?: string;
 }
 
 export type CoinChoice = 'heads' | 'tails';

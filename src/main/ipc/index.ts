@@ -64,6 +64,36 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.APP_GET_INIT_STATUS, async () => {
     return duelEngineService.getStatus();
   });
+  ipcMain.handle(IPC_CHANNELS.APP_LAUNCH_GUEST, async () => {
+    try {
+      const { spawn } = await import('node:child_process');
+      const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+      const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+      const electronBin = isDev
+        ? ((await import('electron')).default as unknown as string)
+        : process.execPath;
+      const args = isDev
+        ? ['.', '--guest', '--multi-instance', '--windowed']
+        : ['--guest', '--multi-instance', '--windowed'];
+
+      spawn(electronBin, args, {
+        detached: true,
+        stdio: 'ignore',
+        env: {
+          ...process.env,
+          NODE_ENV: isDev ? 'development' : 'production',
+          VITE_DEV_SERVER_URL: devServerUrl,
+          YUGIOH_MULTI_INSTANCE: 'true',
+          YUGIOH_INSTANCE_ROLE: 'guest',
+          WINDOWED: 'true',
+        },
+      }).unref();
+      return true;
+    } catch (err) {
+      console.error('[Main IPC] Failed to launch guest window:', err);
+      return false;
+    }
+  });
   ipcMain.handle(IPC_CHANNELS.APP_EXIT, () => {
     app.quit();
   });

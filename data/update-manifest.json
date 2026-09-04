@@ -1,7 +1,7 @@
 {
-  "version": "0.1.3",
-  "releaseDate": "2026-09-04T09:20:24.793Z",
-  "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.3\n- Advanced Duel AI: Core engine overhaul with tactical turn sequencing, smart Graveyard/cost discards, backrow discipline, and deterministic argmax selection\n- Archetype Combo AI Engines: Dedicated tournament tactical playbooks for HERO & Destiny HERO, Monarch, Gladiator Beast, Volcanic, Ancient Gear, Lightsworn, Chaos/DAD, Blue-Eyes, Dark Magician, and Cyber Dragon\n- Engine & UI Fixes: Pot of Prosperity / ANNOUNCE_NUMBER resolution, Field Spell targeting (Toon Kingdom), and Lua group utility polyfills\n- 100% test verification across all 38 test suites",
+  "version": "0.1.4",
+  "releaseDate": "2026-09-04T12:51:00.155Z",
+  "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.4\n- Advanced Duel AI: Core engine overhaul with tactical turn sequencing, smart Graveyard/cost discards, backrow discipline, and deterministic argmax selection\n- Archetype Combo AI Engines: Dedicated tournament tactical playbooks for HERO & Destiny HERO, Monarch, Gladiator Beast, Volcanic, Ancient Gear, Lightsworn, Chaos/DAD, Blue-Eyes, Dark Magician, and Cyber Dragon\n- Engine & UI Fixes: Pot of Prosperity / ANNOUNCE_NUMBER resolution, Field Spell targeting (Toon Kingdom), and Lua group utility polyfills\n- 100% test verification across all 38 test suites",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {
     "data/card-pool-whitelist.json": {
@@ -17613,6 +17613,171 @@
       "path": "resources/cards/placeholder.jpg",
       "size": 87124,
       "sha256": "b8826ff0f57f6d08a0abafc248d3763b7423bbc487ef82703f5d19fb460df622"
+    },
+    "resources/ui/card-back.png": {
+      "path": "resources/ui/card-back.png",
+      "size": 1816201,
+      "sha256": "9a75bd187e3b2517f4d711be9909bdb47a85cd8b456966b23f69b529dd4a210a"
+    },
+    "resources/ui/card-image-missing.png": {
+      "path": "resources/ui/card-image-missing.png",
+      "size": 186068,
+      "sha256": "cfc7b9d3842f822d8640d06868a8b84580fea666d35ed155c124815a0323e378"
+    },
+    "resources/ui/character-frame.png": {
+      "path": "resources/ui/character-frame.png",
+      "size": 222332,
+      "sha256": "2fee61a7ece48316249fba42cf0365b40c3dc5dce4b3957f971adcf0bf880fb6"
+    },
+    "resources/ui/coin-edge.png": {
+      "path": "resources/ui/coin-edge.png",
+      "size": 310437,
+      "sha256": "408238ac1092a255bc3953ca69c55c02d7de2a9515296332b887d5adcf43032c"
+    },
+    "resources/ui/coin-heads.png": {
+      "path": "resources/ui/coin-heads.png",
+      "size": 864394,
+      "sha256": "d209dda6c68d93edc6850a06d5b9338fd5ec45ee79d6fa69f29f6052a9848ee9"
+    },
+    "resources/ui/coin-tails.png": {
+      "path": "resources/ui/coin-tails.png",
+      "size": 865441,
+      "sha256": "c02710e6f03cffc619fcd43ba10136da8a671d2c63dd9019fe189b4144c6554a"
+    },
+    "resources/ui/icons/hud-activation-confirm.png": {
+      "path": "resources/ui/icons/hud-activation-confirm.png",
+      "size": 1140,
+      "sha256": "54cb6686d6853655e169ed65ab9d8c17532e5486eb6169e74c54820a998a7047"
+    },
+    "resources/ui/icons/hud-duel-log.png": {
+      "path": "resources/ui/icons/hud-duel-log.png",
+      "size": 736,
+      "sha256": "935b5de0611c1e4da43201335bedb85e6f443a28caf5ef5d6f1963be9a2ddfc6"
+    },
+    "resources/ui/icons/hud-field-status.png": {
+      "path": "resources/ui/icons/hud-field-status.png",
+      "size": 1866,
+      "sha256": "48e0852172f7c18dfd239541a0c4b7eccb6166d88ef2e364a71a48961df108f1"
+    },
+    "resources/ui/icons/hud-menu.png": {
+      "path": "resources/ui/icons/hud-menu.png",
+      "size": 771,
+      "sha256": "60504712a395fa85d135bac2ef2b75b8116fa1c447b95101fcf00cc2cbf4f9d3"
+    },
+    "resources/ui/icons/location-banished.png": {
+      "path": "resources/ui/icons/location-banished.png",
+      "size": 3212,
+      "sha256": "8ffda12b527db1d46c1e38c5631b1ed05979a818a59a9bcf077c11e3654440ee"
+    },
+    "resources/ui/icons/location-deck.png": {
+      "path": "resources/ui/icons/location-deck.png",
+      "size": 1004,
+      "sha256": "0a89b4a2bfad6b755e128059ea2c73261863017633f1d5beb4c723e8656d2728"
+    },
+    "resources/ui/icons/location-extra-deck.png": {
+      "path": "resources/ui/icons/location-extra-deck.png",
+      "size": 1396,
+      "sha256": "5cbeba174813ffd8dc272736acad3072435a4b29a338a21b491b04608a33ae13"
+    },
+    "resources/ui/icons/location-field.png": {
+      "path": "resources/ui/icons/location-field.png",
+      "size": 1578,
+      "sha256": "6d3f6f2ee101f085b105ac8ef97428c7a1a2bee6fc5702f6936e301acbf9fb5a"
+    },
+    "resources/ui/icons/location-graveyard.png": {
+      "path": "resources/ui/icons/location-graveyard.png",
+      "size": 1324,
+      "sha256": "37b051f47a78effea12b4769164adec18c80d9a109e473ff49f105d4a0222cfb"
+    },
+    "resources/ui/icons/location-hand.png": {
+      "path": "resources/ui/icons/location-hand.png",
+      "size": 1584,
+      "sha256": "4d65fa8a04c2556849b46342e24ae461517e057d2fe5f9132ed909f3c1ea883a"
+    },
+    "resources/ui/icons/menu-deck-edit.png": {
+      "path": "resources/ui/icons/menu-deck-edit.png",
+      "size": 5579,
+      "sha256": "bdacaaa7a09bfe9ab0b988e7f42c87bd0d610b4e6343546975b944a40f424c9a"
+    },
+    "resources/ui/icons/menu-exit.png": {
+      "path": "resources/ui/icons/menu-exit.png",
+      "size": 4996,
+      "sha256": "58b017ec34fdc6626f86495aaa9b67a4d5fd6681521f8381d08278517c302137"
+    },
+    "resources/ui/icons/menu-settings.png": {
+      "path": "resources/ui/icons/menu-settings.png",
+      "size": 5857,
+      "sha256": "e733f853c9dc00ed902081acc5f760a4cfd47326f16b7ebff5c74047a67719df"
+    },
+    "resources/ui/icons/menu-start-duel.png": {
+      "path": "resources/ui/icons/menu-start-duel.png",
+      "size": 8260,
+      "sha256": "76e7e0dd30026ad3c8d3ea7caa06cac7c86b8e423eba16b7b17d311746dd9946"
+    },
+    "resources/ui/icons/status-destroyed-battle.png": {
+      "path": "resources/ui/icons/status-destroyed-battle.png",
+      "size": 1018,
+      "sha256": "91e53ed02064f4c3428662bc2a009d93c6a1d6da8e402d5149a3f0e82ada9c3f"
+    },
+    "resources/ui/icons/status-fusion-material.png": {
+      "path": "resources/ui/icons/status-fusion-material.png",
+      "size": 1096,
+      "sha256": "2a6ad330614ab66acb15eb585c8d12d05de7cbad4b56b7a126dda02a315e52ec"
+    },
+    "resources/ui/icons/status-negated.png": {
+      "path": "resources/ui/icons/status-negated.png",
+      "size": 2082,
+      "sha256": "38230cad65f337e325c8fb0497e90c60b653375ecd50ba0088df17235c44a2a3"
+    },
+    "resources/ui/icons/status-no-attack.png": {
+      "path": "resources/ui/icons/status-no-attack.png",
+      "size": 734,
+      "sha256": "a25f6f1dbe5810921f62148d8452c6f5327160e2e97b51d60a2abc76650898c4"
+    },
+    "resources/ui/icons/status-no-special-summon.png": {
+      "path": "resources/ui/icons/status-no-special-summon.png",
+      "size": 2192,
+      "sha256": "75300bd0466bad6f546e555e3a23ddaca6d0715aac80bd753647fc2468937bdb"
+    },
+    "resources/ui/icons/status-synchro-material.png": {
+      "path": "resources/ui/icons/status-synchro-material.png",
+      "size": 2985,
+      "sha256": "944e70fb5b3126b7cb0f57bfa4a7bbe17a3a2ed0de2cb7c7d86b1c97337f8cb2"
+    },
+    "resources/ui/icons/status-temp-banished.png": {
+      "path": "resources/ui/icons/status-temp-banished.png",
+      "size": 2387,
+      "sha256": "b0a300a940eef6447c11c1fd807798c07f63fa266efc6ad967d754ab58356c91"
+    },
+    "resources/ui/logo.png": {
+      "path": "resources/ui/logo.png",
+      "size": 108799,
+      "sha256": "cf6309cde1a420402fd65a29b42264b9bcd514df034ea658ed2de417f4361ec4"
+    },
+    "resources/ui/menu-deck.jpg": {
+      "path": "resources/ui/menu-deck.jpg",
+      "size": 1137705,
+      "sha256": "72c83e1add52f74785959857a373c472cd5c0cbb463101431162376b26275a9e"
+    },
+    "resources/ui/menu-duel.jpg": {
+      "path": "resources/ui/menu-duel.jpg",
+      "size": 1033769,
+      "sha256": "edec14ba5fbb8126106f1c47511d8ff2f3d019f75b582dcd187703a03e812bb9"
+    },
+    "resources/ui/menu-exit.jpg": {
+      "path": "resources/ui/menu-exit.jpg",
+      "size": 895206,
+      "sha256": "d2f9141b903a0529190ede25ce5da8452634294763aacbc306122b48bb15443f"
+    },
+    "resources/ui/menu-multiplayer.jpg": {
+      "path": "resources/ui/menu-multiplayer.jpg",
+      "size": 4271740,
+      "sha256": "923fe17d4a312b1951b7cf54fd5862318600d901dca5837b9ad00acc6376c764"
+    },
+    "resources/ui/menu-settings.jpg": {
+      "path": "resources/ui/menu-settings.jpg",
+      "size": 972078,
+      "sha256": "0576c8b72e8f81cd157133835a7b8e9d228a4dff4c350017dddc79fb5a79563c"
     }
   }
 }

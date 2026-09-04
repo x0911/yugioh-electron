@@ -85,6 +85,8 @@ export interface DuelStoreState {
   userPlayerId: 0 | 1;
   opponentPlayerId: 0 | 1;
   isMatchPrepared: boolean;
+  isPvPMatch: boolean;
+  pvpRole: 'host' | 'guest' | 'none';
 
   // In-Duel Board State
   boardState: DuelBoardState;
@@ -187,6 +189,8 @@ export const useDuelStore = defineStore('duel', {
     userPlayerId: 0,
     opponentPlayerId: 1,
     isMatchPrepared: false,
+    isPvPMatch: false,
+    pvpRole: 'none',
 
     boardState: {
       userField: createEmptyPlayerField(0, 'You'),
@@ -2449,6 +2453,15 @@ export const useDuelStore = defineStore('duel', {
 
     async sendCommand(command: unknown): Promise<boolean> {
       this.clearPrompts();
+
+      // In PvP Guest mode, forward response packet directly to Host via WebRTC DataChannel
+      if (this.isPvPMatch && this.pvpRole === 'guest') {
+        const { useMultiplayerStore } = await import('./multiplayerStore.js');
+        const multiplayerStore = useMultiplayerStore();
+        multiplayerStore.sendDuelResponse(command);
+        return true;
+      }
+
       if (window.duelAPI) {
         try {
           const plainCommand = JSON.parse(JSON.stringify(command));

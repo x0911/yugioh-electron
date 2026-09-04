@@ -24,6 +24,17 @@ protocol.registerSchemesAsPrivileged([
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Multi-instance / Guest testing flags
+const isMultiInstance = process.env.YUGIOH_MULTI_INSTANCE === 'true' || process.argv.includes('--multi-instance');
+const isGuest = process.env.YUGIOH_INSTANCE_ROLE === 'guest' || process.argv.includes('--guest');
+const forceWindowed = process.env.WINDOWED === 'true' || process.argv.includes('--windowed') || isMultiInstance || isGuest;
+
+if (isMultiInstance || isGuest) {
+  const instanceId = process.env.YUGIOH_INSTANCE_NAME || (isGuest ? 'guest' : `dev-${process.pid}`);
+  const baseUserData = app.getPath('userData');
+  app.setPath('userData', `${baseUserData}-${instanceId}`);
+}
+
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
@@ -34,15 +45,19 @@ function createWindow(): void {
     ? path.join(process.resourcesPath, 'build/icon.png')
     : path.resolve(__dirname, '../../build/icon.png');
 
+  const isWindowed = forceWindowed;
+
   mainWindow = new BrowserWindow({
-    title: APP_CONFIG.TITLE,
+    title: isGuest ? `${APP_CONFIG.TITLE} [Player 2 - Guest]` : APP_CONFIG.TITLE,
     icon: fs.existsSync(iconPath) ? iconPath : undefined,
-    width: APP_CONFIG.DEFAULT_WIDTH,
-    height: APP_CONFIG.DEFAULT_HEIGHT,
+    width: isWindowed ? 1280 : APP_CONFIG.DEFAULT_WIDTH,
+    height: isWindowed ? 720 : APP_CONFIG.DEFAULT_HEIGHT,
+    x: isGuest ? 820 : undefined,
+    y: isGuest ? 80 : undefined,
     minWidth: APP_CONFIG.MIN_WIDTH,
     minHeight: APP_CONFIG.MIN_HEIGHT,
     backgroundColor: '#0a0c10',
-    fullscreen: true,
+    fullscreen: !isWindowed,
     show: false,
     webPreferences: {
       preload: preloadPath,
@@ -51,6 +66,14 @@ function createWindow(): void {
       webSecurity: true,
       sandbox: true,
     },
+  });
+
+  // Toggle fullscreen with F11
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && input.key === 'F11') {
+      mainWindow?.setFullScreen(!mainWindow.isFullScreen());
+      event.preventDefault();
+    }
   });
 
   // Show window once ready to prevent visual flickering
@@ -77,10 +100,19 @@ function createWindow(): void {
     }
   });
 
+  // Prevent modern mouse back/forward buttons from navigating browser history
+  mainWindow.webContents.on('app-command', (event, command) => {
+    if (command === 'browser-backward' || command === 'browser-forward') {
+      event.preventDefault();
+    }
+  });
+
   // Load URL or production build file
   if (isDev && process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
+    if (!isGuest) {
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
+    }
   } else {
     mainWindow.loadFile(path.resolve(__dirname, '../renderer/index.html'));
   }
@@ -90,8 +122,8 @@ function createWindow(): void {
   });
 }
 
-// Single instance lock
-const gotTheLock = app.requestSingleInstanceLock();
+// Single instance lock (bypassed if explicitly running multi-instance / guest instance for development testing)
+const gotTheLock = (isMultiInstance || isGuest) ? true : app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {

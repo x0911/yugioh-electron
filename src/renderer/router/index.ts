@@ -39,6 +39,11 @@ const routes: RouteRecordRaw[] = [
     component: PreDuelVideoView,
   },
   {
+    path: '/multiplayer',
+    name: 'multiplayer',
+    component: () => import('../views/MultiplayerLobbyView.vue'),
+  },
+  {
     path: '/duel',
     name: 'duel',
     component: DuelView,

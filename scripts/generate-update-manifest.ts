@@ -91,6 +91,10 @@ export function generateManifest(): UpdateManifest {
     }
   }
 
+  // 5. UI assets (menu images, logos, icons)
+  const uiDir = path.join(ROOT_DIR, 'resources/ui');
+  walkDirectory(uiDir, targetFiles);
+
   // Filter out ANY file that is gitignored to guarantee 100% availability on GitHub raw CDN
   const relPaths = targetFiles.map((abs) => path.relative(ROOT_DIR, abs).replace(/\\/g, '/'));
   const ignoreCheck = spawnSync('git', ['check-ignore', '--stdin'], {

@@ -19,8 +19,9 @@
       <div class="card-image-wrap">
         <div
           class="card-frame-container"
-          draggable="true"
-          title="Drag into Deck"
+          :class="{ 'card-frame-container--static': !showActions }"
+          :draggable="showActions"
+          :title="showActions ? 'Drag into Deck' : undefined"
           @dragstart="onPreviewDragStart"
           @dragend="onPreviewDragEnd"
         >
@@ -32,7 +33,7 @@
             @error="handleImageError"
           />
           <div class="foil-sweep-layer"></div>
-          <div class="preview-drag-hint">
+          <div v-if="showActions" class="preview-drag-hint">
             <span>✋ Drag into Deck</span>
           </div>
         </div>
@@ -88,13 +89,18 @@
       <div class="previewer-actions">
         <!-- Find Decks with this Card Button -->
         <button
+          v-if="showActions"
           type="button"
           class="find-decks-action-btn"
           :class="{
             'find-decks-action-btn--active': isCardFilterActive,
             'find-decks-action-btn--empty': matchingDecksCount === 0,
           }"
-          :title="isCardFilterActive ? 'Clear deck filter' : `Filter pre-built and custom decks containing ${card.name}`"
+          :title="
+            isCardFilterActive
+              ? 'Clear deck filter'
+              : `Filter pre-built and custom decks containing ${card.name}`
+          "
           @click="toggleDeckFilter"
         >
           <div class="btn-left-content">
@@ -120,7 +126,7 @@
             x{{ currentCopies }} / 3
           </span>
         </div>
-        <div class="drag-hint-pill">
+        <div v-if="showActions" class="drag-hint-pill">
           <span class="drag-hint-icon">✋</span>
           <span class="drag-hint-text">Drag image to Deck</span>
         </div>
@@ -143,9 +149,25 @@ import type { CardDetail } from '../../../shared/types/card.js';
 import { getCardImageUrl, handleImageError, preloadCardImage } from '../../utils/media.js';
 import { useDeckEditStore } from '../../stores/deckEditStore.js';
 
+const props = withDefaults(
+  defineProps<{
+    card?: CardDetail | null;
+    showActions?: boolean;
+    copiesInDeck?: number;
+  }>(),
+  {
+    card: undefined,
+    showActions: true,
+    copiesInDeck: undefined,
+  },
+);
+
 const store = useDeckEditStore();
 
-const card = computed<CardDetail | null>(() => store.hoveredCard);
+const card = computed<CardDetail | null>(() => {
+  if (props.card !== undefined) return props.card;
+  return store.hoveredCard;
+});
 
 const matchingDecksCount = computed(() => {
   if (!card.value) return 0;
@@ -181,12 +203,14 @@ const fullImageUrl = computed(() => {
 });
 
 const currentCopies = computed(() => {
+  if (props.copiesInDeck !== undefined) return props.copiesInDeck;
   if (!card.value) return 0;
   const canonId = card.value.alias && card.value.alias > 0 ? card.value.alias : card.value.id;
-  return store.deckCanonicalCounts.get(canonId) ?? (store.deckCardCounts.get(card.value.id) ?? 0);
+  return store.deckCanonicalCounts.get(canonId) ?? store.deckCardCounts.get(card.value.id) ?? 0;
 });
 
 function onPreviewDragStart(e: DragEvent): void {
+  if (!props.showActions) return;
   if (e.dataTransfer && card.value) {
     e.dataTransfer.setData(
       'text/plain',
@@ -350,7 +374,7 @@ function onPreviewDragEnd(): void {
 .card-frame-container {
   position: relative;
   height: auto;
-  width: 280px;
+  width: 180px;
   border-radius: 6px;
   overflow: hidden;
   box-shadow:
@@ -364,6 +388,14 @@ function onPreviewDragEnd(): void {
 
   &:active {
     cursor: grabbing;
+  }
+
+  &--static {
+    cursor: default;
+
+    &:active {
+      cursor: default;
+    }
   }
 
   &:hover {

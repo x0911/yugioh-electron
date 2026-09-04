@@ -361,6 +361,9 @@ export const useDeckEditStore = defineStore('deckEdit', {
           } else {
             this.activeDeck = JSON.parse(JSON.stringify(this.customDecks[0]));
             this.activeDeckId = this.customDecks[0].id;
+            if (window.deckAPI?.setActiveDeckId) {
+              window.deckAPI.setActiveDeckId(this.customDecks[0].id);
+            }
           }
         } else {
           const fresh = createEmptyDeck('custom-deck-1', 'My Custom Deck');
@@ -384,7 +387,14 @@ export const useDeckEditStore = defineStore('deckEdit', {
       }
     },
 
-    selectDeck(deckId: string): void {
+    async loadCustomDecks(): Promise<void> {
+      return this.initStore();
+    },
+
+    async selectDeck(deckId: string): Promise<void> {
+      if (this.customDecks.length === 0) {
+        await this.initStore();
+      }
       const found = this.customDecks.find((d) => d.id === deckId);
       if (found) {
         this.activeDeck = JSON.parse(JSON.stringify(found));

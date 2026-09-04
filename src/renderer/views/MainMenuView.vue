@@ -98,7 +98,36 @@
         </template>
       </YugiButton>
 
-      <!-- 2. Deck Edit -->
+      <!-- 2. Multiplayer PvP -->
+      <YugiButton
+        variant="card"
+        to="/multiplayer"
+        class="main-menu-view__card-btn"
+        aria-label="Multiplayer — Duel Real Players via 4-Digit Room Code"
+      >
+        <template #header>
+          <span class="main-menu-view__card-header">PVP ARENA</span>
+        </template>
+        <template #art>
+          <div class="main-menu-view__card-art-frame">
+            <img
+              :src="getMenuCardImageUrl('multiplayer')"
+              @error="(e: Event) => ((e.target as HTMLImageElement).src = getMenuCardImageUrl('duel'))"
+              alt="Multiplayer Duel"
+              class="main-menu-view__card-img"
+            />
+            <div class="main-menu-view__card-shine" />
+          </div>
+        </template>
+        <template #footer>
+          <div class="main-menu-view__card-label-block">
+            <span class="main-menu-view__card-title">MULTIPLAYER</span>
+            <span class="main-menu-view__card-desc">Real-Time P2P Duel</span>
+          </div>
+        </template>
+      </YugiButton>
+
+      <!-- 3. Deck Edit -->
       <YugiButton
         variant="card"
         to="/deck-edit"
@@ -188,7 +217,7 @@
       <div class="main-menu-view__footer-left">
         <span>Yu-Gi-Oh! Desktop Duel</span>
         <span>•</span>
-        <span>Version 0.1.1</span>
+        <span>Version {{ appVersion }}</span>
       </div>
       <div class="main-menu-view__footer-right">
         <span>Offline Single-Player Edition</span>
@@ -235,8 +264,18 @@ const uiStore = useUIStore();
 const showExitModal = ref(false);
 const showAboutModal = ref(false);
 const hasUpdateAvailable = ref(false);
+const appVersion = ref('0.1.4');
 
 onMounted(async () => {
+  if (window.appAPI && typeof window.appAPI.getVersion === 'function') {
+    try {
+      const v = await window.appAPI.getVersion();
+      if (v) appVersion.value = v;
+    } catch {
+      // default fallback
+    }
+  }
+
   if (window.updateAPI && typeof window.updateAPI.checkForUpdates === 'function') {
     try {
       const res = await window.updateAPI.checkForUpdates();

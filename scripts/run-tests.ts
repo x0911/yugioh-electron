@@ -41,6 +41,7 @@ const testFiles = [
   'tests/action-ordering-and-extra-shift.test.ts',
   'tests/ai-core-engine-fixes.test.ts',
   'tests/ai-archetype-combos.test.ts',
+  'tests/multiplayer-pvp-protocol.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);

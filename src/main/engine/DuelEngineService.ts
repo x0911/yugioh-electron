@@ -114,6 +114,7 @@ export class DuelEngineService {
     lastErrorTimestamp: null as number | null,
   };
   private activeChainCards: number[] = [];
+  private isPvPMode = false;
 
   // Tracked Board States for Player 0 and Player 1
   private player0Field: PlayerFieldState = this.createEmptyPlayerState(0, 'Player 0');
@@ -308,8 +309,11 @@ export class DuelEngineService {
     }
 
     const startingLP = options.startingLP ?? 8000;
-    this.player0Field = this.createEmptyPlayerState(0, this.humanPlayerId === 0 ? 'You' : this.aiCharacterName);
-    this.player1Field = this.createEmptyPlayerState(1, this.humanPlayerId === 1 ? 'You' : this.aiCharacterName);
+    this.isPvPMode = options.isPvPMode ?? false;
+    const p0Name = options.player0Name || (this.humanPlayerId === 0 ? 'You' : this.aiCharacterName);
+    const p1Name = options.player1Name || (this.humanPlayerId === 1 ? 'You' : this.aiCharacterName);
+    this.player0Field = this.createEmptyPlayerState(0, p0Name);
+    this.player1Field = this.createEmptyPlayerState(1, p1Name);
     this.player0Field.currentLp = startingLP;
     this.player1Field.currentLp = startingLP;
     this.player0Field.deckCount = options.player0Deck.length;
@@ -1734,8 +1738,8 @@ export class DuelEngineService {
           }
 
           const isOpponent = promptPlayer !== this.humanPlayerId;
-          // If opponent player (AI) or autoPlay is active: schedule evaluated AI response
-          if (isOpponent || this.autoPlay) {
+          // If opponent player (AI) or autoPlay is active: schedule evaluated AI response (skipped in PvP mode)
+          if ((isOpponent && !this.isPvPMode) || this.autoPlay) {
             if (this.aiProvider && this.aiProvider !== 'builtin') {
               this.getAiResponseAsync(lastMsg, promptPlayer)
                 .then(({ response, delayMs, dialogue, reasoning, error, fallbackUsed }) => {
