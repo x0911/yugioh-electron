@@ -1,0 +1,70 @@
+name: Bundle & Mirror Card Assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_redownload:
+        description: 'Force re-download all cards from CDN even if cached'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  bundle-and-upload:
+    name: Package & Upload Card Images Bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # Restore Actions cache if available on main branch
+      - name: Restore Cached Card Images
+        if: ${{ !inputs.force_redownload }}
+        id: card-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: resources/cards
+          key: cards-ubuntu-${{ hashFiles('data/card-pool-whitelist.json', 'resources/cards.cdb') }}
+          restore-keys: |
+            cards-ubuntu-
+            cards-
+
+      # Download cards using GitHub datacenter high-speed network
+      - name: Download / Verify Card Images
+        run: npm run download:cards
+
+      # Package resources/cards into tar.gz
+      - name: Compress Card Images Bundle
+        run: |
+          echo "Compressing resources/cards into card-images.tar.gz..."
+          tar -czf card-images.tar.gz resources/cards
+          ls -lh card-images.tar.gz
+
+      # Upload to assets-v1 release via high-speed Azure-to-GitHub network
+      - name: Upload to assets-v1 Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Uploading card-images.tar.gz to assets-v1 release..."
+          gh release upload assets-v1 card-images.tar.gz --clobber
+          echo "✓ Successfully uploaded card-images.tar.gz to assets-v1 release!"
+
+      # Save to Actions cache on main branch
+      - name: Save Card Images to Cache
+        uses: actions/cache/save@v4
+        with:
+          path: resources/cards
+          key: cards-ubuntu-${{ hashFiles('data/card-pool-whitelist.json', 'resources/cards.cdb') }}

@@ -22,6 +22,7 @@
     "download:soundpack": "tsx scripts/download-soundpack.ts",
     "generate:manifest": "tsx scripts/generate-update-manifest.ts",
     "pack:assets": "bash scripts/pack-media-assets.sh",
+    "pack:cards": "bash scripts/pack-cards-bundle.sh",
     "package": "npm run build && electron-builder --dir",
     "package:mac": "npm run build && electron-builder --mac --dir",
     "dist": "npm run build && electron-builder",

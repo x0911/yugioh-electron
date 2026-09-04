@@ -41,18 +41,20 @@ jobs:
             echo "✓ Found game-media.tar.gz. Downloading and extracting..."
             curl -fsSL -o game-media.tar.gz "$MEDIA_URL"
             tar -xzf game-media.tar.gz
+            rm -f game-media.tar.gz
             echo "✓ Custom media assets extracted successfully."
           elif curl -fsSL -I "$ASSETS_URL" >/dev/null 2>&1; then
             echo "✓ Found game-assets.tar.gz. Downloading and extracting..."
             curl -fsSL -o game-assets.tar.gz "$ASSETS_URL"
             tar -xzf game-assets.tar.gz
+            rm -f game-assets.tar.gz
             echo "✓ Media assets bundle extracted successfully."
           else
             echo "ℹ Remote media bundle not found yet. Generating procedural BGM & SFX tracks..."
             npx tsx scripts/generate-audio-tracks.ts
           fi
 
-      # Cache card images across builds (only downloads once or when cards are added/changed)
+      # Card Images: Check GitHub Actions Cache first
       - name: Restore Cached Card Images
         id: card-cache
         uses: actions/cache/restore@v4
@@ -62,9 +64,42 @@ jobs:
           restore-keys: |
             cards-${{ runner.os }}-
 
-      - name: Download Card Images (First Run / Cache Miss)
+      # If Actions cache missed (e.g. newly published tag ref), fetch pre-packaged bundle from assets-v1 release (~15s)
+      - name: Fetch Pre-packaged Card Images Bundle (Fast Fallback)
+        if: steps.card-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          CARDS_URL="https://github.com/x0911/yugioh-electron/releases/download/assets-v1/card-images.tar.gz"
+          if curl -fsSL -I "$CARDS_URL" >/dev/null 2>&1; then
+            echo "✓ Found card-images.tar.gz in assets-v1 release. Downloading..."
+            curl -fsSL -o card-images.tar.gz "$CARDS_URL"
+            echo "✓ Extracting card images..."
+            tar -xzf card-images.tar.gz
+            rm -f card-images.tar.gz
+            touch resources/cards/.from-bundle
+            echo "✓ Pre-packaged card images extracted successfully."
+          else
+            echo "ℹ Remote card images bundle not found on release mirror."
+          fi
+
+      # Run card downloader to verify completeness & download any new cards added since base bundle
+      - name: Ensure Card Pool Completeness
         if: steps.card-cache.outputs.cache-hit != 'true'
         run: npm run download:cards
+
+      # If remote release didn't have card bundle, upload it now from cloud runner so future builds are instant
+      - name: Auto-seed Card Images to Release Mirror
+        if: steps.card-cache.outputs.cache-hit != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f "resources/cards/.from-bundle" ]; then
+            echo "Packaging and mirroring card images to assets-v1 release..."
+            tar -czf card-images.tar.gz resources/cards
+            gh release upload assets-v1 card-images.tar.gz --clobber || true
+            rm -f card-images.tar.gz
+          fi
 
       - name: Save Card Images Cache
         if: steps.card-cache.outputs.cache-hit != 'true'
