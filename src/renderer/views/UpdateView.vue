@@ -11,11 +11,11 @@
         <div class="update-header__title-group">
           <div class="update-header__badge">
             <span class="badge-icon">⚡</span>
-            <span class="badge-text">SMART DELTA PATCHER</span>
+            <span class="badge-text">OFFICIAL AUTO-UPDATER</span>
           </div>
           <h1 class="update-header__title">Game Version & Updates</h1>
           <p class="update-header__subtitle">
-            Synchronize your local Duel Arena rules, Lua scripts, card database, and 526 decks with GitHub.
+            Synchronize game engine, custom cards, card arts, summon videos, audio, and character decks directly via GitHub Releases.
           </p>
         </div>
 
@@ -96,16 +96,16 @@
               :disabled="isBusy"
               @click="onDownload"
             >
-              ⬇️ Download Update ({{ formatBytes(status.totalDownloadSize) }})
+              ⬇️ Download Update {{ status.totalDownloadSize > 0 ? `(${formatBytes(status.totalDownloadSize)})` : '' }}
             </button>
             <button
               v-if="status?.updateAvailable && currentStage !== 'downloading'"
               type="button"
               class="action-btn action-btn--secondary"
-              title="Download the full installer setup (.exe) from GitHub Releases"
+              title="View or download release assets directly on GitHub"
               @click="onDownloadInstaller"
             >
-              🌐 Download Installer (.exe)
+              🌐 GitHub Releases
             </button>
             <button
               v-else
@@ -165,12 +165,12 @@
           </div>
         </section>
 
-        <!-- Changed Files Delta Column -->
+        <!-- Changed Files / Package Information Column -->
         <section class="update-panel">
           <div class="panel-header">
             <span class="panel-icon">📦</span>
             <h2 class="panel-title">
-              File Deltas
+              {{ status?.changedFiles?.length ? 'File Deltas' : 'Package Coverage & Media' }}
               <span v-if="status?.changedFiles?.length" class="counter-badge">
                 {{ status.changedFiles.length }}
               </span>
@@ -191,9 +191,46 @@
                 <span class="delta-size">{{ formatBytes(file.size) }}</span>
               </div>
             </div>
-            <div v-else class="empty-placeholder">
-              <span class="empty-icon">🛡️</span>
-              <p>No modified or missing files detected. Everything is synchronized.</p>
+            <div v-else class="package-coverage">
+              <div class="coverage-item">
+                <span class="coverage-icon">🎴</span>
+                <div class="coverage-text">
+                  <strong>Custom Cards & CDB Database</strong>
+                  <p>Updates `cards.cdb`, card metadata, attack/defense errata, and custom Lua script effects.</p>
+                </div>
+              </div>
+
+              <div class="coverage-item">
+                <span class="coverage-icon">🎬</span>
+                <div class="coverage-text">
+                  <strong>Summon Videos & Card Art</strong>
+                  <p>High-resolution card illustrations, background arts, and signature monster summon animations.</p>
+                </div>
+              </div>
+
+              <div class="coverage-item">
+                <span class="coverage-icon">⚔️</span>
+                <div class="coverage-text">
+                  <strong>Game Engine & Rules</strong>
+                  <p>Updates ygopro-core WASM state machine, OCG/TCG rulings, and AI heuristics.</p>
+                </div>
+              </div>
+
+              <div class="coverage-item">
+                <span class="coverage-icon">👥</span>
+                <div class="coverage-text">
+                  <strong>Multiplayer Netcode</strong>
+                  <p>Real-time WebRTC P2P netcode, room discovery, and ICE/STUN/TURN connection stability.</p>
+                </div>
+              </div>
+
+              <div class="coverage-item coverage-item--safe">
+                <span class="coverage-icon">🛡️</span>
+                <div class="coverage-text">
+                  <strong>User Decks & Settings Protected</strong>
+                  <p>Your custom created decks and preferences are saved separately and never overwritten.</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -219,29 +256,31 @@ const currentStage = ref<'idle' | 'checking' | 'downloading' | 'ready' | 'error'
 const errorMessage = ref<string | null>(null);
 let unsubscribeProgress: (() => void) | null = null;
 
-const currentVersion = computed(() => status.value?.currentVersion || '0.1.0');
+const appVersion = ref('0.1.7');
+const currentVersion = computed(() => status.value?.currentVersion || appVersion.value);
 const targetVersion = computed(() => status.value?.targetVersion || '');
 
 const isBusy = computed(() => currentStage.value === 'checking' || currentStage.value === 'downloading');
 
 const statusTitle = computed(() => {
   if (currentStage.value === 'checking') return 'Checking for updates...';
-  if (currentStage.value === 'downloading') return 'Downloading patch files...';
+  if (currentStage.value === 'downloading') return 'Downloading update...';
   if (currentStage.value === 'ready') return 'Update Ready to Install!';
   if (currentStage.value === 'error') return 'Update Check Failed';
-  if (status.value?.updateAvailable) return `Update Available (${status.value.changedFiles.length} files)`;
+  if (status.value?.updateAvailable) return `New Version Available (v${status.value.targetVersion})`;
   return 'Your Game is Up to Date!';
 });
 
 const statusDescription = computed(() => {
-  if (currentStage.value === 'checking') return 'Querying GitHub manifest and verifying local cryptographic hashes...';
-  if (currentStage.value === 'downloading') return 'Streaming updated card definitions, decks, and engine code...';
-  if (currentStage.value === 'ready') return 'All files have been verified with SHA-256 checksums. Restart the game to activate.';
+  if (currentStage.value === 'checking') return 'Checking GitHub Releases for new updates...';
+  if (currentStage.value === 'downloading') return 'Downloading official update package from GitHub...';
+  if (currentStage.value === 'ready') return 'Update package verified. Restart the application to install and complete the update.';
   if (currentStage.value === 'error') return errorMessage.value || status.value?.error || 'An unexpected error occurred.';
   if (status.value?.updateAvailable) {
-    return `A delta patch of ${formatBytes(status.value.totalDownloadSize)} is ready to download (instead of full 1.2GB installer).`;
+    const sizeStr = status.value.totalDownloadSize > 0 ? ` (${formatBytes(status.value.totalDownloadSize)})` : '';
+    return `Version v${status.value.targetVersion}${sizeStr} is available. Click below to download and update automatically.`;
   }
-  return 'All card scripts, 526 prebuilt decks, and game mechanics match the latest GitHub build.';
+  return 'Your game client, card pool, summon animations, and engine code are all up to date with the latest release.';
 });
 
 function formatBytes(bytes: number): string {
@@ -314,6 +353,15 @@ async function onRollback(): Promise<void> {
 }
 
 onMounted(async () => {
+  if (window.appAPI && typeof window.appAPI.getVersion === 'function') {
+    try {
+      const v = await window.appAPI.getVersion();
+      if (v) appVersion.value = v;
+    } catch {
+      // ignore
+    }
+  }
+
   if (window.updateAPI) {
     unsubscribeProgress = window.updateAPI.onProgress((p) => {
       progress.value = p;
@@ -836,6 +884,51 @@ onUnmounted(() => {
   p {
     margin: 0;
     font-size: 0.85rem;
+  }
+}
+
+.package-coverage {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.coverage-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(2, 6, 23, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+
+  &--safe {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.25);
+  }
+}
+
+.coverage-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  margin-top: 0.1rem;
+}
+
+.coverage-text {
+  flex: 1;
+
+  strong {
+    display: block;
+    font-size: 0.82rem;
+    color: #f1f5f9;
+    margin-bottom: 0.15rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    line-height: 1.35;
   }
 }
 </style>

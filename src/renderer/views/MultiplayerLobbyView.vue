@@ -17,6 +17,14 @@
       <!-- Integrated Voice Chat & Dev Tools -->
       <div class="multiplayer-view__header-actions">
         <button
+          type="button"
+          class="network-btn"
+          title="P2P Network & TURN Relay Settings"
+          @click="isNetworkModalOpen = true"
+        >
+          🌐 Network
+        </button>
+        <button
           v-if="canLaunchGuest"
           type="button"
           class="launch-guest-btn"
@@ -134,7 +142,7 @@
 
         <!-- TAB CONTENT: HOST -->
         <div v-if="activeTab === 'host'" class="tab-pane tab-pane--host">
-          <div v-if="multiplayerStore.status !== 'waiting_for_guest'" class="host-init-box">
+          <div v-if="!multiplayerStore.roomCode" class="host-init-box">
             <p class="host-desc">
               Host an encrypted peer-to-peer duel. Your opponent will connect directly using a
               4-digit room code.
@@ -147,7 +155,7 @@
             >
               {{
                 multiplayerStore.status === 'generating_room'
-                  ? 'Generating Room...'
+                  ? (multiplayerStore.statusMessage || 'Generating Room...')
                   : 'Generate 4-Digit Room'
               }}
             </button>
@@ -164,9 +172,16 @@
               📋 {{ copyFeedback || 'Copy 4-Digit Code' }}
             </button>
 
-            <div class="waiting-indicator">
+            <!-- Connecting state with spinner -->
+            <div v-if="multiplayerStore.status === 'connecting'" class="waiting-indicator waiting-indicator--connecting">
+              <div class="pulse-loader pulse-loader--fast" />
+              <span class="connecting-pulse-text">
+                ⚔️ {{ multiplayerStore.statusMessage || 'Guest detected! Negotiating WebRTC duel link...' }}
+              </span>
+            </div>
+            <div v-else class="waiting-indicator">
               <div class="pulse-loader" />
-              <span>Waiting for opponent to connect...</span>
+              <span>{{ multiplayerStore.statusMessage || 'Waiting for opponent to connect...' }}</span>
             </div>
 
             <button type="button" class="cancel-btn" @click="handleCancelRoom">Cancel Room</button>
@@ -204,11 +219,37 @@
               multiplayerStore.status === 'connecting' ? 'Connecting to Host...' : 'Connect to Duel'
             }}
           </button>
+
+          <!-- Guest Connecting State & Cancel -->
+          <div v-if="multiplayerStore.status === 'connecting'" class="guest-connecting-box">
+            <div class="pulse-loader pulse-loader--fast" />
+            <p class="guest-connecting-subtext">
+              {{ multiplayerStore.statusMessage || 'Establishing secure direct connection...' }}
+            </p>
+            <button
+              type="button"
+              class="cancel-btn cancel-btn--guest"
+              @click="handleCancelRoom"
+            >
+              Cancel Connection
+            </button>
+          </div>
         </div>
 
-        <!-- Error Banner -->
+        <!-- Error Banner with Dismiss -->
         <div v-if="multiplayerStore.errorMessage" class="error-banner">
-          ⚠️ {{ multiplayerStore.errorMessage }}
+          <div class="error-banner__content">
+            <span class="error-icon">⚠️</span>
+            <span class="error-text">{{ multiplayerStore.errorMessage }}</span>
+          </div>
+          <button
+            type="button"
+            class="error-dismiss-btn"
+            title="Dismiss error"
+            @click="multiplayerStore.errorMessage = ''"
+          >
+            ✕
+          </button>
         </div>
       </div>
 
@@ -309,6 +350,9 @@
         :decks="allAvailableDecks"
         @select="handleSelectDeckFromModal"
       />
+
+      <!-- P2P Network & TURN Settings Dialog -->
+      <NetworkSettingsModal v-model="isNetworkModalOpen" />
     </main>
   </div>
 </template>
@@ -322,6 +366,7 @@ import { useDeckEditStore } from '../stores/deckEditStore.js';
 import { useDuelStore } from '../stores/duelStore.js';
 import VoiceChatWidget from '../components/multiplayer/VoiceChatWidget.vue';
 import PlayerDeckSelectModal from '../components/multiplayer/PlayerDeckSelectModal.vue';
+import NetworkSettingsModal from '../components/multiplayer/NetworkSettingsModal.vue';
 
 const router = useRouter();
 const multiplayerStore = useMultiplayerStore();
@@ -338,6 +383,7 @@ const copyFeedback = ref('');
 const isLaunchingGuest = ref(false);
 const launchFeedback = ref('');
 const isDeckModalOpen = ref(false);
+const isNetworkModalOpen = ref(false);
 
 const allAvailableDecks = computed<CustomDeck[]>(() => {
   return deckEditStore.customDecks;
@@ -688,6 +734,27 @@ async function handleStartMatch() {
     }
   }
 
+  .network-btn {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(52, 211, 153, 0.5);
+    color: #a7f3d0;
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(16, 185, 129, 0.3);
+      border-color: #6ee7b7;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+  }
+
   &__brand {
     display: flex;
     align-items: center;
@@ -1024,6 +1091,21 @@ async function handleStartMatch() {
   gap: 10px;
   color: #94a3b8;
   font-size: 0.85rem;
+
+  &--connecting {
+    color: #ffd700;
+  }
+}
+
+.connecting-pulse-text {
+  font-weight: 600;
+  color: #ffd700;
+  animation: pulse-glow 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; text-shadow: 0 0 10px rgba(255, 215, 0, 0.6); }
 }
 
 .pulse-loader {
@@ -1032,6 +1114,11 @@ async function handleStartMatch() {
   border-radius: 50%;
   background: #2ecc71;
   animation: pulse-dot 1.4s infinite ease-in-out;
+
+  &--fast {
+    background: #ffd700;
+    animation-duration: 0.8s;
+  }
 }
 
 @keyframes pulse-dot {
@@ -1056,6 +1143,31 @@ async function handleStartMatch() {
   cursor: pointer;
   font-size: 0.85rem;
   text-decoration: underline;
+
+  &--guest {
+    margin-top: 8px;
+    font-size: 0.8rem;
+  }
+}
+
+.guest-connecting-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.guest-connecting-subtext {
+  font-size: 0.82rem;
+  color: #ffd700;
+  margin: 0;
+  text-align: center;
+  font-weight: 500;
 }
 
 // PIN Box Inputs
@@ -1112,13 +1224,40 @@ async function handleStartMatch() {
 }
 
 .error-banner {
-  padding: 10px;
+  padding: 10px 14px;
   border-radius: 8px;
   background: rgba(239, 68, 68, 0.2);
   border: 1px solid rgba(239, 68, 68, 0.5);
   color: #fca5a5;
   font-size: 0.85rem;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    line-height: 1.3;
+  }
+}
+
+.error-dismiss-btn {
+  background: transparent;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+  }
 }
 
 // Stage Room (VS Connected)

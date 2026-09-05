@@ -1,6 +1,6 @@
 {
   "name": "yugioh-electron",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Yu-Gi-Oh! Web-Desktop Duel Simulator (DM + GX Era)",
   "private": true,
   "type": "module",
@@ -36,6 +36,7 @@
     "@google/genai": "^2.17.1",
     "better-sqlite3": "^13.0.3",
     "electron-store": "^11.0.2",
+    "electron-updater": "^6.8.9",
     "ocgcore-wasm": "^0.1.2",
     "peerjs": "^1.5.5",
     "pinia": "^3.0.4",

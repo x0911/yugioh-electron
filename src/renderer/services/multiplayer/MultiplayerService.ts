@@ -54,12 +54,40 @@ export type ConnectionStatus =
   | 'connected'
   | 'error';
 
-const ICE_SERVERS = [
+export const DEFAULT_ICE_SERVERS: { urls: string | string[]; username?: string; credential?: string }[] = [
+  // Google Global STUN Cluster
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:stun3.l.google.com:19302' },
+  { urls: 'stun:stun4.l.google.com:19302' },
+  // Cloudflare STUN
+  { urls: 'stun:stun.cloudflare.com:3478' },
+  // Twilio Global STUN
   { urls: 'stun:global.stun.twilio.com:3478' },
+  // Open Relay Project / Metered Free STUN
+  { urls: 'stun:openrelay.metered.ca:80' },
+  { urls: 'stun:global.relay.metered.ca:80' },
 ];
+
+export function getEffectiveIceServers(): { urls: string | string[]; username?: string; credential?: string }[] {
+  const servers = [...DEFAULT_ICE_SERVERS];
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const customJson = localStorage.getItem('yugioh_custom_ice_servers');
+      if (customJson) {
+        const parsed = JSON.parse(customJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Prepend user-configured custom TURN/STUN servers to prioritize them
+          servers.unshift(...parsed);
+        }
+      }
+    } catch (e) {
+      console.warn('[MultiplayerService] Failed to parse custom ICE servers from storage:', e);
+    }
+  }
+  return servers;
+}
 
 export class MultiplayerService {
   private peer: Peer | null = null;
@@ -118,12 +146,13 @@ export class MultiplayerService {
     this.roomCode = customCode || this.generateRoomCode();
     const peerId = this.getPeerIdFromRoomCode(this.roomCode);
 
-    this.setStatus('generating_room');
+    this.setStatus('generating_room', 'Registering duel room with signaling broker...');
 
     return new Promise<string>((resolve, reject) => {
       try {
+        const iceServers = getEffectiveIceServers();
         this.peer = new PeerConstructor(peerId, {
-          config: { iceServers: ICE_SERVERS },
+          config: { iceServers },
           debug: 1,
         });
 
@@ -135,7 +164,26 @@ export class MultiplayerService {
 
         this.peer.on('connection', (conn) => {
           console.log(`[MultiplayerService] Remote guest connecting: ${conn.peer}`);
-          this.setupDataConnection(conn);
+          this.setStatus('connecting', 'Challenger detected! Negotiating direct duel channel...');
+
+          // 22-second watchdog on host for incoming guest connection
+          let hostGuestTimeout: NodeJS.Timeout | null = setTimeout(() => {
+            if (this.status === 'connecting') {
+              console.warn(`[MultiplayerService] Guest connection attempt (${conn.peer}) timed out.`);
+              conn.close();
+              this.setStatus(
+                'waiting_for_guest',
+                'Connection attempt from guest timed out before opening. Still waiting for opponent...',
+              );
+            }
+          }, 22000);
+
+          this.setupDataConnection(conn, () => {
+            if (hostGuestTimeout) {
+              clearTimeout(hostGuestTimeout);
+              hostGuestTimeout = null;
+            }
+          });
         });
 
         this.peer.on('call', (call) => {
@@ -166,12 +214,36 @@ export class MultiplayerService {
     this.roomCode = code.trim();
     const hostPeerId = this.getPeerIdFromRoomCode(this.roomCode);
 
-    this.setStatus('connecting');
+    this.setStatus('connecting', 'Locating duel room on signaling network...');
 
     return new Promise<boolean>((resolve, reject) => {
+      let isResolved = false;
+      let connectionTimeout: NodeJS.Timeout | null = null;
+
+      const cleanupTimeout = () => {
+        if (connectionTimeout) {
+          clearTimeout(connectionTimeout);
+          connectionTimeout = null;
+        }
+      };
+
+      // 25-second connection watchdog
+      connectionTimeout = setTimeout(() => {
+        if (!isResolved && this.status !== 'connected') {
+          isResolved = true;
+          const msg = `Connection to room ${this.roomCode} timed out after 25s. Direct P2P link could not be established between networks (firewall/NAT).`;
+          console.warn(`[MultiplayerService] ${msg}`);
+          this.errorMessage = msg;
+          this.setStatus('error', msg);
+          this.disconnect();
+          reject(new Error(msg));
+        }
+      }, 25000);
+
       try {
+        const iceServers = getEffectiveIceServers();
         this.peer = new PeerConstructor({
-          config: { iceServers: ICE_SERVERS },
+          config: { iceServers },
           debug: 1,
         });
 
@@ -179,16 +251,21 @@ export class MultiplayerService {
           console.log(`[MultiplayerService] Guest Peer open with ID: ${myId}. Connecting to host: ${hostPeerId}`);
           if (!this.peer) return;
 
+          this.setStatus('connecting', 'Room found! Exchanging secure WebRTC handshake with Host...');
+
           const conn = this.peer.connect(hostPeerId, {
             reliable: true,
+            serialization: 'json',
           });
 
-          this.setupDataConnection(conn);
-
-          conn.on('open', () => {
-            console.log('[MultiplayerService] Data connection successfully established with host!');
-            this.setStatus('connected');
-            resolve(true);
+          this.setupDataConnection(conn, () => {
+            if (!isResolved) {
+              isResolved = true;
+              cleanupTimeout();
+              console.log('[MultiplayerService] Data connection successfully established with host!');
+              this.setStatus('connected');
+              resolve(true);
+            }
           });
         });
 
@@ -198,32 +275,49 @@ export class MultiplayerService {
 
         this.peer.on('error', (err) => {
           console.error('[MultiplayerService] Join room failed:', err);
-          this.errorMessage = err.type === 'peer-unavailable'
-            ? `Room ${this.roomCode} was not found. Please verify the 4-digit code.`
-            : (err.message || 'Connection error');
-          this.setStatus('error', this.errorMessage);
-          reject(new Error(this.errorMessage));
+          cleanupTimeout();
+          if (!isResolved) {
+            isResolved = true;
+            this.errorMessage = err.type === 'peer-unavailable'
+              ? `Room ${this.roomCode} was not found. Please verify the 4-digit code.`
+              : (err.message || 'Connection error');
+            this.setStatus('error', this.errorMessage);
+            reject(new Error(this.errorMessage));
+          }
         });
       } catch (err) {
         console.error('[MultiplayerService] Join room error:', err);
-        this.setStatus('error', String(err));
-        reject(err);
+        cleanupTimeout();
+        if (!isResolved) {
+          isResolved = true;
+          this.setStatus('error', String(err));
+          reject(err);
+        }
       }
     });
   }
 
-  private setupDataConnection(conn: DataConnection): void {
+  private setupDataConnection(conn: DataConnection, onConnectedCallback?: () => void): void {
     this.connection = conn;
 
-    conn.on('open', () => {
+    const handleOpen = () => {
       console.log('[MultiplayerService] DataChannel opened.');
       this.setStatus('connected');
+      if (onConnectedCallback) {
+        onConnectedCallback();
+      }
 
       // If local voice was already active before connecting, initiate voice call
       if (this.voiceState.enabled && this.localAudioStream && this.peer) {
         this.callPeerVoice(conn.peer);
       }
-    });
+    };
+
+    if (conn.open) {
+      handleOpen();
+    } else {
+      conn.once('open', handleOpen);
+    }
 
     conn.on('data', (data: unknown) => {
       if (typeof data === 'object' && data !== null && 'type' in data) {
@@ -244,6 +338,16 @@ export class MultiplayerService {
     conn.on('error', (err) => {
       console.error('[MultiplayerService] Data connection error:', err);
       this.setStatus('error', err.message || 'DataChannel error');
+    });
+
+    // Monitor WebRTC ICE state changes
+    conn.on('iceStateChanged', (state: string) => {
+      console.log(`[MultiplayerService] ICE state changed to: ${state}`);
+      if (state === 'failed') {
+        const msg = 'WebRTC direct connection failed between networks (ICE failed due to firewall/NAT).';
+        console.error(`[MultiplayerService] ${msg}`);
+        this.setStatus('error', msg);
+      }
     });
   }
 

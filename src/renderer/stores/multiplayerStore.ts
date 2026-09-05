@@ -13,6 +13,7 @@ export interface MultiplayerState {
   roomCode: string;
   role: 'host' | 'guest' | 'none';
   status: ConnectionStatus;
+  statusMessage: string;
   errorMessage: string;
 
   localPlayer: PlayerProfile;
@@ -35,6 +36,7 @@ export const useMultiplayerStore = defineStore('multiplayer', {
     roomCode: '',
     role: 'none',
     status: 'disconnected',
+    statusMessage: '',
     errorMessage: '',
 
     localPlayer: {
@@ -74,7 +76,15 @@ export const useMultiplayerStore = defineStore('multiplayer', {
     init(): void {
       multiplayerService.onStatusChange = (status, msg) => {
         this.status = status;
-        if (msg) this.errorMessage = msg;
+        if (status === 'error') {
+          this.errorMessage = msg || 'Connection error';
+          this.statusMessage = '';
+        } else {
+          this.statusMessage = msg || '';
+          if (status === 'connected') {
+            this.errorMessage = '';
+          }
+        }
       };
 
       multiplayerService.onVoiceChange = (voiceState) => {
@@ -248,6 +258,7 @@ export const useMultiplayerStore = defineStore('multiplayer', {
       this.role = 'none';
       this.roomCode = '';
       this.status = 'disconnected';
+      this.statusMessage = '';
       this.remotePlayer = null;
       this.isLocalReady = false;
       this.isRemoteReady = false;
