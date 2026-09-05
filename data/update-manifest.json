@@ -1,6 +1,6 @@
 {
   "version": "0.1.7",
-  "releaseDate": "2026-09-05T14:41:03.087Z",
+  "releaseDate": "2026-09-05T15:04:47.654Z",
   "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.7\n- Multi-Tribute Summon Support: Full support for monsters with multi-tribute capability (Egyptian God Slime counting as 3 tributes for Obelisk/Slifer/Ra, Double Coston & Kaiser Sea Horse counting as 2 tributes)\n- Tribute Multiplier UI: Added distinct '🔥 3x Tribute' multiplier badges on candidate cards and fixed the Confirm button to enable when tribute requirement is met\n- Real-Time Multiplayer PvP: Peer-to-peer WebRTC dueling with 4-digit room codes, zero server hosting, and full game parity\n- Voice Chat & Audio: Integrated low-latency WebRTC voice chat with microphone/deafen controls, speaking indicators, and complete SFX ducking\n- Duel Synchronization: Real-time summon and attack video sync for both host and guest, live card database hydration with full ATK/DEF stats and card lore descriptions\n- Victory & Disconnect Handling: Automatic forfeit/surrender and disconnect detection granting immediate victory celebration and SFX to the remaining player\n- Stability & Navigation: Seamless return to main menu, clean duel state reset, equipped deck auto-scrolling, and persistent Duelist name\n- 100% test verification across all 40 test suites",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {
@@ -1681,8 +1681,8 @@
     },
     "resources/scripts/official/c18144506.lua": {
       "path": "resources/scripts/official/c18144506.lua",
-      "size": 838,
-      "sha256": "4a32eeac36ca9f444ac8c2b3b1c36f010bb5465d39407766e119b09752568dc6"
+      "size": 797,
+      "sha256": "90ea7fe53073927c1a05efc8cff5c2472fec439a6e4786f630bfbab6245a21ce"
     },
     "resources/scripts/official/c18144507.lua": {
       "path": "resources/scripts/official/c18144507.lua",

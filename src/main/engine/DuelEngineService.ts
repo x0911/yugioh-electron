@@ -616,7 +616,10 @@ export class DuelEngineService {
 
     if (options.player0SpellTraps) {
       for (const st of options.player0SpellTraps) {
-        const pos = (st.position ?? OcgPosition.FACEDOWN) as OcgPosition;
+        let pos = (st.position ?? OcgPosition.FACEDOWN) as OcgPosition;
+        if (pos === 0x8 || pos === 0x4) {
+          pos = OcgPosition.FACEDOWN;
+        }
         this.lib.duelNewCard(handle, {
           team: 0,
           duelist: 0,
@@ -644,7 +647,10 @@ export class DuelEngineService {
 
     if (options.player1SpellTraps) {
       for (const st of options.player1SpellTraps) {
-        const pos = (st.position ?? OcgPosition.FACEDOWN) as OcgPosition;
+        let pos = (st.position ?? OcgPosition.FACEDOWN) as OcgPosition;
+        if (pos === 0x8 || pos === 0x4) {
+          pos = OcgPosition.FACEDOWN;
+        }
         this.lib.duelNewCard(handle, {
           team: 1,
           duelist: 0,

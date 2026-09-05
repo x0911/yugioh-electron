@@ -67,8 +67,8 @@ async function runTestSuite() {
       player0Deck: [...Array(35).fill(25652259), 18144506, 18144506, 18144506, 18144506, 18144506],
       player1Deck: Array(40).fill(25652259),
       player1SpellTraps: [
-        { code: 44095762, sequence: 0, position: 0x8 }, // Set Mirror Force
-        { code: 62279055, sequence: 1, position: 0x8 }, // Set Magic Cylinder
+        { code: 44095762, sequence: 0 }, // Set Mirror Force
+        { code: 62279055, sequence: 1 }, // Set Magic Cylinder
       ],
       noShuffle: true,
       humanPlayerId: 0,
