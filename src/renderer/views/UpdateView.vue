@@ -256,7 +256,7 @@ const currentStage = ref<'idle' | 'checking' | 'downloading' | 'ready' | 'error'
 const errorMessage = ref<string | null>(null);
 let unsubscribeProgress: (() => void) | null = null;
 
-const appVersion = ref('0.1.7');
+const appVersion = ref('0.1.8');
 const currentVersion = computed(() => status.value?.currentVersion || appVersion.value);
 const targetVersion = computed(() => status.value?.targetVersion || '');
 

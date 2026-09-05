@@ -264,7 +264,7 @@ const uiStore = useUIStore();
 const showExitModal = ref(false);
 const showAboutModal = ref(false);
 const hasUpdateAvailable = ref(false);
-const appVersion = ref('0.1.7');
+const appVersion = ref('0.1.8');
 
 onMounted(async () => {
   if (window.appAPI && typeof window.appAPI.getVersion === 'function') {
