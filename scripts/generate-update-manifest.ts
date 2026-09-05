@@ -129,12 +129,14 @@ export function generateManifest(): UpdateManifest {
     releaseDate: new Date().toISOString(),
     releaseNotes:
       `Yu-Gi-Oh! Duel Arena v${currentVersion}\n` +
+      `- Multi-Tribute Summon Support: Full support for monsters with multi-tribute capability (Egyptian God Slime counting as 3 tributes for Obelisk/Slifer/Ra, Double Coston & Kaiser Sea Horse counting as 2 tributes)\n` +
+      `- Tribute Multiplier UI: Added distinct '🔥 3x Tribute' multiplier badges on candidate cards and fixed the Confirm button to enable when tribute requirement is met\n` +
       `- Real-Time Multiplayer PvP: Peer-to-peer WebRTC dueling with 4-digit room codes, zero server hosting, and full game parity\n` +
       `- Voice Chat & Audio: Integrated low-latency WebRTC voice chat with microphone/deafen controls, speaking indicators, and complete SFX ducking\n` +
       `- Duel Synchronization: Real-time summon and attack video sync for both host and guest, live card database hydration with full ATK/DEF stats and card lore descriptions\n` +
       `- Victory & Disconnect Handling: Automatic forfeit/surrender and disconnect detection granting immediate victory celebration and SFX to the remaining player\n` +
       `- Stability & Navigation: Seamless return to main menu, clean duel state reset, equipped deck auto-scrolling, and persistent Duelist name\n` +
-      `- 100% test verification across all 39 test suites`,
+      `- 100% test verification across all 40 test suites`,
     remoteBaseUrl: 'https://raw.githubusercontent.com/x0911/yugioh-electron/main',
     files: manifestFiles,
   };
