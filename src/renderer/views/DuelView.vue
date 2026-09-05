@@ -246,7 +246,7 @@
       :model-value="duelStore.isCardSelectionModalOpen"
       :select-payload="duelStore.activeSelectionPayload"
       :selected-indices="duelStore.selectedTargetIndices"
-      :can-cancel="Boolean(duelStore.activeSelectCard?.can_cancel || duelStore.activeSelectUnselectCard?.can_cancel)"
+      :can-cancel="Boolean(duelStore.activeSelectCard?.can_cancel || duelStore.activeSelectUnselectCard?.can_cancel || duelStore.activeSelectTribute?.can_cancel)"
       :min="duelStore.activeSelectionMin"
       :max="duelStore.activeSelectionMax"
       :instruction="actionGuideInfo?.instruction || 'Select card(s) to proceed with the active effect.'"
@@ -280,7 +280,7 @@
           title="Open modal to browse and filter available cards"
           @click="duelStore.openCardSelectionModal"
         >
-          📋 Browse Cards ({{ duelStore.selectedTargetIndices.length }}/{{ duelStore.activeSelectionMax }})
+          📋 Browse Cards ({{ duelStore.activeSelectionCount }}/{{ duelStore.activeSelectionMax }})
         </button>
         <button
           v-if="duelStore.activeSelectCard?.can_cancel || duelStore.activeSelectUnselectCard?.can_cancel || duelStore.activeSelectTribute?.can_cancel || duelStore.isAttackTargetPrompt"
@@ -295,7 +295,7 @@
           :disabled="!duelStore.canConfirmActiveSelection"
           @click="duelStore.confirmActiveSelection"
         >
-          Confirm ({{ duelStore.selectedTargetIndices.length }}/{{ duelStore.activeSelectionMax }})
+          Confirm ({{ duelStore.activeSelectionCount }}/{{ duelStore.activeSelectionMax }})
         </button>
       </div>
     </div>
@@ -673,7 +673,7 @@ const actionGuideInfo = computed(() => {
       selectEffectYn: duelStore.activeSelectEffectYn,
       selectOption: duelStore.activeSelectOption,
     },
-    duelStore.selectedTargetIndices.length,
+    duelStore.activeSelectionCount,
   );
 });
 

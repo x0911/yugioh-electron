@@ -261,8 +261,14 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
 
     case OcgMessageType.SELECT_TRIBUTE: {
       const minCount = Math.max(1, msg.min ?? 1);
-      const count = Math.min(minCount, msg.selects.length);
-      const indicies = Array.from({ length: count }, (_, i) => i);
+      const indicies: number[] = [];
+      let totalTribute = 0;
+      for (let i = 0; i < (msg.selects?.length || 0); i++) {
+        indicies.push(i);
+        const param = (msg.selects[i] as any)?.release_param || 1;
+        totalTribute += param;
+        if (totalTribute >= minCount) break;
+      }
       return {
         type: OcgResponseType.SELECT_TRIBUTE,
         indicies,

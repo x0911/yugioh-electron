@@ -171,6 +171,7 @@ export interface OcgCardLocItem {
   location: number;
   sequence: number;
   cardName?: string;
+  release_param?: number;
 }
 
 export interface OcgCardLocActiveItem extends OcgCardLocItem {

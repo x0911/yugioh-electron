@@ -30,7 +30,7 @@
               'selection-counter-badge--pending': !isSelectionComplete,
             }"
           >
-            {{ selectedCount }} / {{ max }} Selected
+            {{ displaySelectedCount }} / {{ max }} {{ isTributePrompt ? 'Tributes' : 'Selected' }}
           </span>
         </div>
       </div>
@@ -103,6 +103,14 @@
               @error="handleImageError"
             />
             <div class="tile-art-glow"></div>
+            <!-- Multi-Tribute Multiplier Badge -->
+            <div
+              v-if="card.releaseParam && card.releaseParam > 1"
+              class="tile-tribute-multiplier-badge"
+              :title="`Counts as ${card.releaseParam} Tributes`"
+            >
+              🔥 {{ card.releaseParam }}x Tribute
+            </div>
           </div>
 
           <!-- Card Information Metadata -->
@@ -179,7 +187,7 @@
             @click="$emit('confirm')"
           >
             <span class="btn-icon">✓</span>
-            <span>Confirm ({{ selectedCount }}/{{ max }})</span>
+            <span>Confirm ({{ displaySelectedCount }}/{{ max }})</span>
           </button>
         </div>
       </div>
@@ -217,6 +225,7 @@ interface EnrichedSelectCard {
   desc?: string;
   isSelected: boolean;
   selectionOrder: number;
+  releaseParam?: number;
 }
 
 const props = withDefaults(
@@ -321,6 +330,7 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
       desc: detail?.desc,
       isSelected: true,
       selectionOrder: unselectIdx + 1,
+      releaseParam: item.release_param || 1,
     });
   });
 
@@ -397,6 +407,7 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
       desc: isHiddenOpponentCard ? undefined : detail?.desc,
       isSelected,
       selectionOrder: orderIdx >= 0 ? unselectCards.length + orderIdx + 1 : 0,
+      releaseParam: item.release_param || 1,
     });
   });
 
@@ -447,16 +458,44 @@ const headerTitle = computed<string>(() => {
   return 'Select Card Target';
 });
 
+const isTributePrompt = computed<boolean>(() => {
+  return Boolean(duelStore.activeSelectTribute);
+});
+
+const tributeCount = computed<number>(() => {
+  if (!isTributePrompt.value) return 0;
+  let total = 0;
+  for (const idx of props.selectedIndices) {
+    const card = enrichedCards.value.find((c) => c.selectIndex === idx);
+    total += card?.releaseParam || 1;
+  }
+  return total;
+});
+
+const displaySelectedCount = computed<number>(() => {
+  if (isTributePrompt.value) {
+    return Math.min(tributeCount.value, props.max);
+  }
+  return selectedCount.value;
+});
+
 const isSelectionValid = computed<boolean>(() => {
   if (duelStore.activeSelectUnselectCard) {
     if (duelStore.activeSelectUnselectCard.can_finish) return true;
     return selectedCount.value >= props.min && selectedCount.value <= props.max;
+  }
+  if (isTributePrompt.value) {
+    const count = props.selectedIndices.length;
+    return count > 0 && count <= props.max && tributeCount.value >= props.min;
   }
   const count = props.selectedIndices.length;
   return count >= props.min && count <= props.max;
 });
 
 const isSelectionComplete = computed<boolean>(() => {
+  if (isTributePrompt.value) {
+    return tributeCount.value >= props.max;
+  }
   return selectedCount.value >= props.max;
 });
 
@@ -776,6 +815,27 @@ function onCardDblClick(card: EnrichedSelectCard): void {
   .check-icon {
     font-size: 0.85rem;
   }
+}
+
+.tile-tribute-multiplier-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 9;
+  background: linear-gradient(135deg, #e53e3e, #dd6b20);
+  color: #ffffff;
+  font-family: $font-mono;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 6px rgba(237, 137, 54, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 @keyframes pulse-badge {

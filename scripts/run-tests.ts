@@ -42,6 +42,7 @@ const testFiles = [
   'tests/ai-core-engine-fixes.test.ts',
   'tests/ai-archetype-combos.test.ts',
   'tests/multiplayer-pvp-protocol.test.ts',
+  'tests/multi-tribute-monsters.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);

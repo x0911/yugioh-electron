@@ -291,6 +291,24 @@ export const useDuelStore = defineStore('duel', {
       return state.activeSelectSum?.max || state.activeSelectUnselectCard?.max || state.activeSelectTribute?.max || state.activeSelectCard?.max || 1;
     },
 
+    activeTributeValue(state): number {
+      if (!state.activeSelectTribute || !state.activeSelectTribute.selects) return 0;
+      let total = 0;
+      for (const idx of state.selectedTargetIndices) {
+        const item = state.activeSelectTribute.selects[idx];
+        total += item?.release_param || 1;
+      }
+      return total;
+    },
+
+    activeSelectionCount(state): number {
+      if (state.activeSelectTribute) {
+        const max = state.activeSelectTribute.max ?? 1;
+        return Math.min(this.activeTributeValue, max);
+      }
+      return state.selectedTargetIndices.length;
+    },
+
     canConfirmActiveSelection(state): boolean {
       if (state.activeSelectUnselectCard) {
         if (state.activeSelectUnselectCard.can_finish && state.selectedTargetIndices.length === 0) return true;
@@ -299,8 +317,15 @@ export const useDuelStore = defineStore('duel', {
       if (state.activeSelectSum) {
         return state.selectedTargetIndices.length > 0;
       }
-      const min = state.activeSelectTribute?.min ?? state.activeSelectCard?.min ?? 1;
-      const max = state.activeSelectTribute?.max ?? state.activeSelectCard?.max ?? 1;
+      if (state.activeSelectTribute) {
+        const min = state.activeSelectTribute.min ?? 1;
+        const max = state.activeSelectTribute.max ?? 1;
+        const cardCount = state.selectedTargetIndices.length;
+        const tributeValue = this.activeTributeValue;
+        return cardCount > 0 && cardCount <= max && tributeValue >= min;
+      }
+      const min = state.activeSelectCard?.min ?? 1;
+      const max = state.activeSelectCard?.max ?? 1;
       return state.selectedTargetIndices.length >= min && state.selectedTargetIndices.length <= max;
     },
 

@@ -1002,11 +1002,20 @@ export class AIController {
         sacrificePriority += 100000;
       }
 
-      return { index, sacrificePriority };
+      return { index, sacrificePriority, releaseParam: (c.release_param as number) || 1 };
     });
 
     scoredCandidates.sort((a, b) => b.sacrificePriority - a.sacrificePriority);
-    const indices = scoredCandidates.slice(0, minCount).map((c) => c.index);
+
+    const indices: number[] = [];
+    let currentTributes = 0;
+    for (const c of scoredCandidates) {
+      indices.push(c.index);
+      currentTributes += c.releaseParam;
+      if (currentTributes >= minCount) {
+        break;
+      }
+    }
 
     return {
       type: OcgResponseType.SELECT_TRIBUTE,

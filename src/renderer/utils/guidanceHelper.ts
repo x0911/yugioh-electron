@@ -76,8 +76,8 @@ export function getActionGuideInfo(
       categoryIcon: '🔥',
       instruction: `Tribute Summon: Select ${monsterWord} on your field to Tribute as cost to Summon your monster.`,
       subText: 'Only monsters on your own field can be chosen as Tributes.',
-      isMandatory: true,
-      canCancel: false,
+      isMandatory: !prompts.selectTribute.can_cancel,
+      canCancel: !!prompts.selectTribute.can_cancel,
       selectionProgress: {
         current: selectedCount,
         requiredMin: min,
