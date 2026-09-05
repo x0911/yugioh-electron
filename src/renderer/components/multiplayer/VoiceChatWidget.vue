@@ -5,11 +5,13 @@
       <button
         type="button"
         class="voice-btn voice-btn--join"
-        title="Join Real-Time WebRTC Voice Chat with Opponent"
+        :class="{ 'voice-btn--opponent-active': remoteVoiceActive }"
+        :title="remoteVoiceActive ? 'Opponent is in Voice Chat! Click to Join and Talk' : 'Join Real-Time WebRTC Voice Chat with Opponent'"
         @click="handleJoinVoice"
       >
         <span class="voice-btn__icon">🎙️</span>
-        <span class="voice-btn__label">Join Voice Chat</span>
+        <span class="voice-btn__label">{{ remoteVoiceActive ? 'Opponent in Voice — Join' : 'Join Voice Chat' }}</span>
+        <span v-if="remoteVoiceActive" class="voice-pulse-ring voice-pulse-ring--remote" />
       </button>
     </div>
 
@@ -86,6 +88,7 @@ import { useMultiplayerStore } from '../../stores/multiplayerStore.js';
 
 const multiplayerStore = useMultiplayerStore();
 const voiceState = computed(() => multiplayerStore.voiceState);
+const remoteVoiceActive = computed(() => multiplayerStore.remoteVoiceActive);
 
 async function handleJoinVoice() {
   await multiplayerStore.toggleVoiceChat();
@@ -168,6 +171,12 @@ function onVolumeChange(event: Event) {
     }
   }
 
+  &--opponent-active {
+    border-color: #2ecc71 !important;
+    color: #2ecc71 !important;
+    animation: voice-glow 1.8s infinite alternate ease-in-out;
+  }
+
   &--icon {
     width: 32px;
     height: 32px;
@@ -226,6 +235,15 @@ function onVolumeChange(event: Event) {
   100% {
     transform: scale(1.4);
     opacity: 0;
+  }
+}
+
+@keyframes voice-glow {
+  0% {
+    box-shadow: 0 0 6px rgba(46, 204, 113, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 16px rgba(46, 204, 113, 0.85);
   }
 }
 

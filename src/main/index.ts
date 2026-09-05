@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, protocol, net } from 'electron';
+import { app, BrowserWindow, shell, protocol, net, session } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import { Readable } from 'node:stream';
@@ -181,6 +181,21 @@ function getResourceMimeType(filePath: string): string {
 }
 
   app.whenReady().then(() => {
+    // Explicitly grant microphone media permission for WebRTC Voice Chat
+    session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+      if (permission === 'media') {
+        callback(true);
+        return;
+      }
+      callback(false);
+    });
+    session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+      if (permission === 'media') {
+        return true;
+      }
+      return false;
+    });
+
     // Protocol handler for app-resource:// with full HTTP 206 Range support for video/audio streaming
     protocol.handle('app-resource', async (request) => {
       try {

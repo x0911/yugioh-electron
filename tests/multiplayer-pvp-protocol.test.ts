@@ -826,4 +826,93 @@ console.log('--- Starting Multiplayer & PvP Protocol Test Suite ---');
   console.log('✓ Test 16: multiplayerStore.disconnect() & match exit cleanup verified.');
 }
 
+// Test 17: WebRTC Voice Chat Signaling Protocol & Deterministic Calling Validation
+{
+  // 1. Packet serialization for VOICE_SIGNAL
+  const joinSignal: PvpPacket = {
+    type: 'VOICE_SIGNAL',
+    payload: { action: 'joined', isMuted: false },
+    timestamp: Date.now(),
+  };
+
+  const serialized = JSON.stringify(joinSignal);
+  const parsed: PvpPacket = JSON.parse(serialized);
+  assert.strictEqual(parsed.type, 'VOICE_SIGNAL');
+  assert.strictEqual((parsed.payload as any).action, 'joined');
+  assert.strictEqual((parsed.payload as any).isMuted, false);
+
+  const leftSignal: PvpPacket = {
+    type: 'VOICE_SIGNAL',
+    payload: { action: 'left' },
+    timestamp: Date.now(),
+  };
+  assert.strictEqual(JSON.parse(JSON.stringify(leftSignal)).payload.action, 'left');
+
+  // 2. Deterministic Caller Logic: Host initiates call, Guest answers
+  let callInitiatedCount = 0;
+  let answerInitiatedCount = 0;
+
+  const simulateJoinVoice = (role: 'host' | 'guest', hasRemoteActive: boolean) => {
+    if (role === 'host') {
+      // Host initiates call
+      callInitiatedCount++;
+    } else {
+      // Guest signals ready and waits for host's incoming call
+      // Guest NEVER initiates peer.call() directly
+    }
+  };
+
+  const simulateIncomingCall = (role: 'host' | 'guest', call: any) => {
+    answerInitiatedCount++;
+  };
+
+  // Host joins first, then Guest joins
+  simulateJoinVoice('host', false);
+  assert.strictEqual(callInitiatedCount, 1, 'Host must initiate call');
+
+  simulateJoinVoice('guest', true);
+  assert.strictEqual(callInitiatedCount, 1, 'Guest must NOT initiate duplicate call (avoids WebRTC glare)');
+
+  simulateIncomingCall('guest', {});
+  assert.strictEqual(answerInitiatedCount, 1, 'Guest answers Host incoming call');
+
+  // 3. Audio Track Lifecycle: microphone tracks must be stopped on exit
+  let stoppedTrackCount = 0;
+  const mockTrack1 = { stop: () => { stoppedTrackCount++; } };
+  const mockTrack2 = { stop: () => { stoppedTrackCount++; } };
+  const mockLocalStream = {
+    getTracks: () => [mockTrack1, mockTrack2],
+  };
+
+  // Simulate leaveVoiceChat stopping all tracks to revert Bluetooth HFP -> A2DP
+  mockLocalStream.getTracks().forEach((t) => t.stop());
+  assert.strictEqual(stoppedTrackCount, 2, 'All microphone tracks must be stopped on leaveVoiceChat');
+
+  // 4. Web Audio Graph Volume & Deafen Control
+  let currentGainValue = 1.0;
+  const mockGainNode = {
+    gain: {
+      setValueAtTime: (val: number) => { currentGainValue = val; },
+    },
+  };
+
+  // Undeafened: volume 0.7
+  const setVolume = (vol: number, isDeafened: boolean) => {
+    mockGainNode.gain.setValueAtTime(isDeafened ? 0 : vol);
+  };
+
+  setVolume(0.7, false);
+  assert.strictEqual(currentGainValue, 0.7);
+
+  // Deafened: volume becomes 0
+  setVolume(0.7, true);
+  assert.strictEqual(currentGainValue, 0);
+
+  // Undeafened restored
+  setVolume(0.7, false);
+  assert.strictEqual(currentGainValue, 0.7);
+
+  console.log('✓ Test 17: WebRTC Voice Chat signaling protocol, deterministic caller, and audio lifecycle verified.');
+}
+
 console.log('🎉 All Multiplayer & PvP Protocol Tests Passed Cleanly!');

@@ -27,6 +27,7 @@ export interface MultiplayerState {
   startingPlayer: 'host' | 'guest' | null;
 
   voiceState: VoiceState;
+  remoteVoiceActive: boolean;
   rematchRequested: boolean;
   remoteRematchRequested: boolean;
 }
@@ -59,6 +60,7 @@ export const useMultiplayerStore = defineStore('multiplayer', {
     startingPlayer: null,
 
     voiceState: { ...multiplayerService.voiceState },
+    remoteVoiceActive: false,
     rematchRequested: false,
     remoteRematchRequested: false,
     onStartDuel: null as ((payload: any) => void) | null,
@@ -89,6 +91,14 @@ export const useMultiplayerStore = defineStore('multiplayer', {
 
       multiplayerService.onVoiceChange = (voiceState) => {
         this.voiceState = { ...voiceState };
+      };
+
+      multiplayerService.onVoiceSignal = (signal) => {
+        if (signal.action === 'joined') {
+          this.remoteVoiceActive = true;
+        } else if (signal.action === 'left') {
+          this.remoteVoiceActive = false;
+        }
       };
 
       multiplayerService.onPacketReceived = (packet) => {
@@ -264,6 +274,7 @@ export const useMultiplayerStore = defineStore('multiplayer', {
       this.isRemoteReady = false;
       this.rematchRequested = false;
       this.remoteRematchRequested = false;
+      this.remoteVoiceActive = false;
     },
 
     handleIncomingPacket(packet: PvpPacket): void {
@@ -334,6 +345,17 @@ export const useMultiplayerStore = defineStore('multiplayer', {
           const reason = (packet.payload as any)?.reason || 'surrender';
           if (this.onOpponentLeft) {
             this.onOpponentLeft(reason === 'disconnect' ? 'disconnect' : 'surrender');
+          }
+          break;
+        }
+
+        case 'VOICE_SIGNAL':
+        case 'VOICE_STATUS': {
+          const payload = packet.payload as { action?: string; enabled?: boolean };
+          if (payload?.action === 'joined' || payload?.enabled) {
+            this.remoteVoiceActive = true;
+          } else if (payload?.action === 'left' || payload?.enabled === false) {
+            this.remoteVoiceActive = false;
           }
           break;
         }

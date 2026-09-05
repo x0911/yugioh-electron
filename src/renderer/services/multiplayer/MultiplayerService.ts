@@ -18,7 +18,13 @@ export type PvpPacketType =
   | 'REMATCH_ACCEPT'
   | 'SURRENDER'
   | 'DISCONNECT'
-  | 'VOICE_STATUS';
+  | 'VOICE_STATUS'
+  | 'VOICE_SIGNAL';
+
+export interface VoiceSignalPayload {
+  action: 'joined' | 'left' | 'mute';
+  isMuted?: boolean;
+}
 
 export interface PlayerProfile {
   name: string;
@@ -107,7 +113,9 @@ export class MultiplayerService {
   private localAnalyser: AnalyserNode | null = null;
   private remoteAudioContext: AudioContext | null = null;
   private remoteAnalyser: AnalyserNode | null = null;
+  private remoteGainNode: GainNode | null = null;
   private audioMonitorInterval: number | null = null;
+  public remoteVoiceActive: boolean = false;
 
   public voiceState: VoiceState = {
     enabled: false,
@@ -124,6 +132,7 @@ export class MultiplayerService {
   public onStatusChange?: (status: ConnectionStatus, message?: string) => void;
   public onPacketReceived?: (packet: PvpPacket) => void;
   public onVoiceChange?: (state: VoiceState) => void;
+  public onVoiceSignal?: (payload: VoiceSignalPayload) => void;
   public onOpponentLeft?: (reason: 'surrender' | 'disconnect' | 'left') => void;
 
   /**
@@ -307,9 +316,12 @@ export class MultiplayerService {
         onConnectedCallback();
       }
 
-      // If local voice was already active before connecting, initiate voice call
-      if (this.voiceState.enabled && this.localAudioStream && this.peer) {
-        this.callPeerVoice(conn.peer);
+      // If local voice was already active before connecting, inform peer
+      if (this.voiceState.enabled && this.localAudioStream) {
+        this.sendPacket('VOICE_SIGNAL', { action: 'joined', isMuted: this.voiceState.isMuted });
+        if (this.role === 'host' && this.remoteVoiceActive && this.peer) {
+          this.callPeerVoice(conn.peer);
+        }
       }
     };
 
@@ -322,6 +334,9 @@ export class MultiplayerService {
     conn.on('data', (data: unknown) => {
       if (typeof data === 'object' && data !== null && 'type' in data) {
         const packet = data as PvpPacket;
+        if (packet.type === 'VOICE_SIGNAL' || packet.type === 'VOICE_STATUS') {
+          this.handleVoiceSignalPacket(packet.payload as VoiceSignalPayload);
+        }
         if (this.onPacketReceived) {
           this.onPacketReceived(packet);
         }
@@ -379,6 +394,32 @@ export class MultiplayerService {
   // WebRTC Voice Chat Implementation
   // ===========================================================================
 
+  private handleVoiceSignalPacket(payload: VoiceSignalPayload): void {
+    if (!payload || !payload.action) return;
+    console.log(`[MultiplayerService] Voice signal received: action=${payload.action}, muted=${payload.isMuted}`);
+
+    if (payload.action === 'joined') {
+      this.remoteVoiceActive = true;
+      // If we are Host and local voice is active, initiate WebRTC call
+      if (this.role === 'host' && this.voiceState.enabled && this.localAudioStream && this.peer && this.connection) {
+        this.callPeerVoice(this.connection.peer);
+      }
+    } else if (payload.action === 'left') {
+      this.remoteVoiceActive = false;
+      this.detachRemoteAudio();
+      if (this.mediaConnection) {
+        try {
+          this.mediaConnection.close();
+        } catch {}
+        this.mediaConnection = null;
+      }
+    }
+
+    if (this.onVoiceSignal) {
+      this.onVoiceSignal(payload);
+    }
+  }
+
   /**
    * Start microphone capture and join voice chat
    */
@@ -394,6 +435,7 @@ export class MultiplayerService {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
+          channelCount: 1,
         },
         video: false,
       });
@@ -404,8 +446,12 @@ export class MultiplayerService {
 
       this.setupLocalAudioAnalyser();
 
-      // If already connected to peer, initiate voice call
-      if (this.connection && this.connection.open && this.peer) {
+      // Notify peer over DataChannel that local voice is joined and active
+      this.sendPacket('VOICE_SIGNAL', { action: 'joined', isMuted: false });
+
+      // Deterministic Caller:
+      // Only the Host initiates calls. If we are Host and connected, call Guest.
+      if (this.role === 'host' && this.connection && this.connection.open && this.peer) {
         this.callPeerVoice(this.connection.peer);
       }
 
@@ -423,18 +469,40 @@ export class MultiplayerService {
 
   private callPeerVoice(remotePeerId: string): void {
     if (!this.peer || !this.localAudioStream) return;
+    if (this.role !== 'host') {
+      console.log('[MultiplayerService] Guest skips initiating call (host-driven calling avoids glare).');
+      return;
+    }
+
+    // If an active call is already open with this peer, avoid duplicate calls
+    if (this.mediaConnection && this.mediaConnection.open) {
+      console.log('[MultiplayerService] Active media connection already open, skipping duplicate call.');
+      return;
+    }
+
     try {
-      console.log(`[MultiplayerService] Calling peer for voice chat: ${remotePeerId}`);
+      console.log(`[MultiplayerService] Host initiating voice call to: ${remotePeerId}`);
+      if (this.mediaConnection) {
+        try {
+          this.mediaConnection.close();
+        } catch {}
+        this.mediaConnection = null;
+      }
+
       const call = this.peer.call(remotePeerId, this.localAudioStream);
       this.mediaConnection = call;
 
       call.on('stream', (remoteStream) => {
-        console.log('[MultiplayerService] Received remote audio stream!');
+        console.log('[MultiplayerService] Received remote audio stream from call answer!');
         this.attachRemoteAudio(remoteStream);
       });
 
       call.on('close', () => {
-        this.detachRemoteAudio();
+        console.log('[MultiplayerService] MediaConnection closed.');
+        if (this.mediaConnection === call) {
+          this.mediaConnection = null;
+          this.detachRemoteAudio();
+        }
       });
 
       call.on('error', (err) => {
@@ -446,13 +514,21 @@ export class MultiplayerService {
   }
 
   private handleIncomingCall(call: MediaConnection): void {
+    console.log(`[MultiplayerService] Handling incoming voice call from: ${call.peer}`);
+
+    // If an existing media connection exists, close it cleanly first
+    if (this.mediaConnection && this.mediaConnection !== call) {
+      try {
+        this.mediaConnection.close();
+      } catch {}
+    }
     this.mediaConnection = call;
-    console.log('[MultiplayerService] Answering incoming voice call.');
 
     if (this.localAudioStream) {
+      console.log('[MultiplayerService] Answering incoming call with local audio stream.');
       call.answer(this.localAudioStream);
     } else {
-      // Answer without microphone if user is only listening
+      console.log('[MultiplayerService] Answering incoming call in listen-only mode.');
       call.answer();
     }
 
@@ -462,26 +538,109 @@ export class MultiplayerService {
     });
 
     call.on('close', () => {
-      this.detachRemoteAudio();
+      console.log('[MultiplayerService] Incoming call closed.');
+      if (this.mediaConnection === call) {
+        this.mediaConnection = null;
+        this.detachRemoteAudio();
+      }
+    });
+
+    call.on('error', (err) => {
+      console.error('[MultiplayerService] Incoming call error:', err);
     });
   }
 
   private attachRemoteAudio(stream: MediaStream): void {
+    console.log('[MultiplayerService] Attaching remote audio stream to Web Audio graph...');
     this.remoteAudioStream = stream;
-    if (!this.remoteAudioElement) {
-      this.remoteAudioElement = new Audio();
-      this.remoteAudioElement.autoplay = true;
-    }
-    this.remoteAudioElement.srcObject = stream;
-    this.remoteAudioElement.volume = this.voiceState.isDeafened ? 0 : this.voiceState.volume;
-    this.remoteAudioElement.play().catch(() => {});
 
-    this.setupRemoteAudioAnalyser(stream);
+    // Ensure audio tracks are enabled
+    stream.getAudioTracks().forEach((track) => {
+      track.enabled = true;
+    });
+
+    // 1. Mount hidden <audio> element in DOM to keep Chromium's WebRTC demuxer actively pumping audio
+    if (typeof document !== 'undefined') {
+      let audioEl = document.getElementById('yugioh-remote-voice') as HTMLAudioElement | null;
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.id = 'yugioh-remote-voice';
+        audioEl.autoplay = true;
+        (audioEl as any).playsInline = true;
+        audioEl.style.position = 'fixed';
+        audioEl.style.pointerEvents = 'none';
+        audioEl.style.opacity = '0';
+        audioEl.style.zIndex = '-1';
+        document.body.appendChild(audioEl);
+      }
+      audioEl.muted = true; // Muted to avoid double audio; Web Audio API handles audible output
+      audioEl.srcObject = stream;
+      audioEl.play().catch((err) => {
+        console.warn('[MultiplayerService] Remote audio element keep-alive play warning:', err);
+      });
+      this.remoteAudioElement = audioEl;
+    }
+
+    // 2. Route stream through Web Audio API to AudioContext.destination
+    try {
+      const AudioContextClass =
+        window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+
+      if (!this.remoteAudioContext || this.remoteAudioContext.state === 'closed') {
+        this.remoteAudioContext = new AudioContextClass();
+      }
+
+      if (this.remoteAudioContext.state === 'suspended') {
+        this.remoteAudioContext.resume().catch((err) => {
+          console.warn('[MultiplayerService] Remote AudioContext resume failed:', err);
+        });
+      }
+
+      // Cleanup existing gain node before re-connecting
+      if (this.remoteGainNode) {
+        try {
+          this.remoteGainNode.disconnect();
+        } catch {}
+      }
+
+      const source = this.remoteAudioContext.createMediaStreamSource(stream);
+
+      this.remoteGainNode = this.remoteAudioContext.createGain();
+      const currentVol = this.voiceState.isDeafened ? 0 : this.voiceState.volume;
+      this.remoteGainNode.gain.setValueAtTime(currentVol, this.remoteAudioContext.currentTime);
+
+      this.remoteAnalyser = this.remoteAudioContext.createAnalyser();
+      this.remoteAnalyser.fftSize = 256;
+
+      // Connect: source -> gain -> destination (Audible to headphones/speakers)
+      source.connect(this.remoteGainNode);
+      this.remoteGainNode.connect(this.remoteAudioContext.destination);
+
+      // Connect: source -> analyser (Speaking detection)
+      source.connect(this.remoteAnalyser);
+
+      console.log('[MultiplayerService] Remote audio successfully routed to AudioContext.destination!');
+    } catch (e) {
+      console.warn('[MultiplayerService] Web Audio remote routing failed, falling back to direct audio element:', e);
+      if (this.remoteAudioElement) {
+        this.remoteAudioElement.muted = this.voiceState.isDeafened;
+        this.remoteAudioElement.volume = this.voiceState.isDeafened ? 0 : this.voiceState.volume;
+        this.remoteAudioElement.play().catch(() => {});
+      }
+    }
+
     this.voiceState.connected = true;
     this.notifyVoiceChange();
   }
 
   private detachRemoteAudio(): void {
+    console.log('[MultiplayerService] Detaching remote audio...');
+    if (this.remoteGainNode) {
+      try {
+        this.remoteGainNode.disconnect();
+      } catch {}
+      this.remoteGainNode = null;
+    }
     if (this.remoteAudioElement) {
       this.remoteAudioElement.srcObject = null;
     }
@@ -492,18 +651,29 @@ export class MultiplayerService {
   }
 
   public leaveVoiceChat(): void {
+    console.log('[MultiplayerService] Leaving voice chat...');
     if (this.audioMonitorInterval) {
       window.clearInterval(this.audioMonitorInterval);
       this.audioMonitorInterval = null;
     }
 
+    this.sendPacket('VOICE_SIGNAL', { action: 'left' });
+
+    // CRITICAL: Stop all microphone tracks so macOS/Windows releases the mic
+    // and Bluetooth headsets revert from HFP/HSP to high-fidelity A2DP stereo!
     if (this.localAudioStream) {
-      this.localAudioStream.getTracks().forEach((track) => track.stop());
+      this.localAudioStream.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch {}
+      });
       this.localAudioStream = null;
     }
 
     if (this.mediaConnection) {
-      this.mediaConnection.close();
+      try {
+        this.mediaConnection.close();
+      } catch {}
       this.mediaConnection = null;
     }
 
@@ -532,21 +702,35 @@ export class MultiplayerService {
         track.enabled = !muted;
       });
     }
+    this.sendPacket('VOICE_SIGNAL', { action: 'mute', isMuted: muted });
     this.notifyVoiceChange();
   }
 
   public setDeafened(deafened: boolean): void {
     this.voiceState.isDeafened = deafened;
-    if (this.remoteAudioElement) {
-      this.remoteAudioElement.volume = deafened ? 0 : this.voiceState.volume;
+    const vol = deafened ? 0 : this.voiceState.volume;
+    if (this.remoteGainNode && this.remoteAudioContext) {
+      try {
+        this.remoteGainNode.gain.setValueAtTime(vol, this.remoteAudioContext.currentTime);
+      } catch {}
+    }
+    if (this.remoteAudioElement && !this.remoteGainNode) {
+      this.remoteAudioElement.volume = vol;
     }
     this.notifyVoiceChange();
   }
 
   public setVolume(volume: number): void {
     this.voiceState.volume = Math.max(0, Math.min(1, volume));
-    if (this.remoteAudioElement && !this.voiceState.isDeafened) {
-      this.remoteAudioElement.volume = this.voiceState.volume;
+    if (!this.voiceState.isDeafened) {
+      if (this.remoteGainNode && this.remoteAudioContext) {
+        try {
+          this.remoteGainNode.gain.setValueAtTime(this.voiceState.volume, this.remoteAudioContext.currentTime);
+        } catch {}
+      }
+      if (this.remoteAudioElement && !this.remoteGainNode) {
+        this.remoteAudioElement.volume = this.voiceState.volume;
+      }
     }
     this.notifyVoiceChange();
   }
@@ -554,28 +738,26 @@ export class MultiplayerService {
   private setupLocalAudioAnalyser(): void {
     if (!this.localAudioStream) return;
     try {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      this.localAudioContext = new AudioContextClass();
+      const AudioContextClass =
+        window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!this.localAudioContext || this.localAudioContext.state === 'closed') {
+        this.localAudioContext = new AudioContextClass();
+      }
+      if (this.localAudioContext.state === 'suspended') {
+        this.localAudioContext.resume().catch(() => {});
+      }
       const source = this.localAudioContext.createMediaStreamSource(this.localAudioStream);
       this.localAnalyser = this.localAudioContext.createAnalyser();
       this.localAnalyser.fftSize = 256;
       source.connect(this.localAnalyser);
+      // Note: do not connect local mic to destination to avoid feedback echo
     } catch (e) {
       console.warn('[MultiplayerService] AudioContext analyser init failed:', e);
     }
   }
 
   private setupRemoteAudioAnalyser(stream: MediaStream): void {
-    try {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      this.remoteAudioContext = new AudioContextClass();
-      const source = this.remoteAudioContext.createMediaStreamSource(stream);
-      this.remoteAnalyser = this.remoteAudioContext.createAnalyser();
-      this.remoteAnalyser.fftSize = 256;
-      source.connect(this.remoteAnalyser);
-    } catch (e) {
-      console.warn('[MultiplayerService] Remote analyser init failed:', e);
-    }
+    // Handled directly inside attachRemoteAudio via Web Audio graph
   }
 
   private startAudioMonitoring(): void {
@@ -625,6 +807,7 @@ export class MultiplayerService {
 
   public disconnect(): void {
     this.leaveVoiceChat();
+    this.remoteVoiceActive = false;
 
     if (this.connection) {
       this.connection.close();
