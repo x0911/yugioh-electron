@@ -43,7 +43,14 @@ export function registerIpcHandlers(): void {
   });
 
   // App
-  ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => app.getVersion());
+  ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, async () => {
+    try {
+      const { updateService } = await import('../services/UpdateService.js');
+      return updateService.getInstalledVersion().version;
+    } catch {
+      return app.getVersion();
+    }
+  });
   ipcMain.handle(IPC_CHANNELS.APP_INIT_ENGINE, async () => {
     try {
       const status = await duelEngineService.init();

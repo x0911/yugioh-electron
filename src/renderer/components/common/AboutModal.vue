@@ -109,7 +109,7 @@ function openUpdater(): void {
   router.push('/update');
 }
 
-const appVersion = ref('0.1.0');
+const appVersion = ref('0.1.6');
 
 onMounted(async () => {
   if (window.appAPI && typeof window.appAPI.getVersion === 'function') {
