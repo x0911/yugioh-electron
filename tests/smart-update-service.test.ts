@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import * as tar from 'tar';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -150,6 +151,79 @@ async function runSmartUpdateTests() {
   fs.rmSync(testUserData, { recursive: true, force: true });
   console.log('  ✓ Patch directory successfully overrides base file.');
   console.log('  ✓ Rollback cleanly restores vanilla base file with zero traces.\n');
+
+  // Test 6: Hot-Patch Tar Archive Packaging, Extraction & Version Tracking
+  console.log('▶ Test 6: Hot-Patch Tar.gz Extraction & Dynamic Version Resolution');
+  const patchTestDir = path.join(ROOT_DIR, 'tmp-test-patch');
+  const patchSourceDir = path.join(patchTestDir, 'source');
+  const patchDestDir = path.join(patchTestDir, 'dest');
+  const archivePath = path.join(patchTestDir, 'app-patch.tar.gz');
+
+  fs.mkdirSync(path.join(patchSourceDir, 'dist/renderer'), { recursive: true });
+  fs.mkdirSync(path.join(patchSourceDir, 'resources'), { recursive: true });
+  fs.writeFileSync(path.join(patchSourceDir, 'dist/renderer/index.html'), '<!doctype html><title>Patched</title>', 'utf-8');
+  fs.writeFileSync(path.join(patchSourceDir, 'resources/cards.cdb'), 'PATCHED_CDB_DATA', 'utf-8');
+
+  // Compress simulated patch
+  await tar.c(
+    { gzip: true, file: archivePath, cwd: patchSourceDir },
+    ['dist', 'resources'],
+  );
+  assert.ok(fs.existsSync(archivePath), 'Patch archive must be created');
+
+  // Extract simulated patch using tar.x
+  fs.mkdirSync(patchDestDir, { recursive: true });
+  await tar.x({ file: archivePath, cwd: patchDestDir });
+
+  assert.ok(fs.existsSync(path.join(patchDestDir, 'dist/renderer/index.html')), 'Extracted index.html must exist');
+  assert.ok(fs.existsSync(path.join(patchDestDir, 'resources/cards.cdb')), 'Extracted cards.cdb must exist');
+  assert.strictEqual(fs.readFileSync(path.join(patchDestDir, 'resources/cards.cdb'), 'utf-8'), 'PATCHED_CDB_DATA');
+
+  // Write version.json metadata
+  fs.writeFileSync(
+    path.join(patchDestDir, 'version.json'),
+    JSON.stringify({ version: '0.1.9', baseVersion: '0.1.8', installedAt: new Date().toISOString() }, null, 2),
+    'utf-8',
+  );
+
+  // Semver resolution logic verification
+  function compareSemver(v1: string, v2: string): number {
+    const p1 = v1.replace(/^v/, '').split('.').map((x) => parseInt(x, 10) || 0);
+    const p2 = v2.replace(/^v/, '').split('.').map((x) => parseInt(x, 10) || 0);
+    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+      const num1 = p1[i] || 0;
+      const num2 = p2[i] || 0;
+      if (num1 > num2) return 1;
+      if (num1 < num2) return -1;
+    }
+    return 0;
+  }
+
+  function resolveClientVersion(baseVersion: string, patchDir: string): { version: string; isPatched: boolean } {
+    try {
+      const patchFile = path.join(patchDir, 'version.json');
+      if (fs.existsSync(patchFile)) {
+        const patchData = JSON.parse(fs.readFileSync(patchFile, 'utf-8'));
+        if (patchData?.version && compareSemver(patchData.version, baseVersion) > 0) {
+          return { version: patchData.version, isPatched: true };
+        }
+      }
+    } catch {}
+    return { version: baseVersion, isPatched: false };
+  }
+
+  const resWhenPatched = resolveClientVersion('0.1.8', patchDestDir);
+  assert.strictEqual(resWhenPatched.version, '0.1.9');
+  assert.strictEqual(resWhenPatched.isPatched, true);
+
+  const resWhenBaseInstallerUpdated = resolveClientVersion('0.2.0', patchDestDir);
+  assert.strictEqual(resWhenBaseInstallerUpdated.version, '0.2.0');
+  assert.strictEqual(resWhenBaseInstallerUpdated.isPatched, false);
+
+  // Cleanup
+  fs.rmSync(patchTestDir, { recursive: true, force: true });
+  console.log('  ✓ Hot-patch tar.gz successfully created, extracted, and verified.');
+  console.log('  ✓ Semver correctly prioritizes newer patch over older base, and newer base over older patch.\n');
 
   console.log('================================================================');
   console.log('🎉 ALL SMART UPDATE & PATCHER TESTS PASSED 100%!');

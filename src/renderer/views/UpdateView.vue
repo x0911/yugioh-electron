@@ -96,16 +96,26 @@
               :disabled="isBusy"
               @click="onDownload"
             >
-              ⬇️ Download Update {{ status.totalDownloadSize > 0 ? `(${formatBytes(status.totalDownloadSize)})` : '' }}
+              <template v-if="status.isPatchUpdate">
+                ⚡ Download Fast Update ({{ formatBytes(status.totalDownloadSize) }})
+              </template>
+              <template v-else>
+                ⬇️ Download Update {{ status.totalDownloadSize > 0 ? `(${formatBytes(status.totalDownloadSize)})` : '' }}
+              </template>
             </button>
             <button
               v-if="status?.updateAvailable && currentStage !== 'downloading'"
               type="button"
               class="action-btn action-btn--secondary"
-              title="View or download release assets directly on GitHub"
+              title="Download or view full setup installer"
               @click="onDownloadInstaller"
             >
-              🌐 GitHub Releases
+              <template v-if="status.fullInstallerSize">
+                💾 Full Installer ({{ formatBytes(status.fullInstallerSize) }})
+              </template>
+              <template v-else>
+                🌐 GitHub Releases
+              </template>
             </button>
             <button
               v-else
@@ -273,12 +283,23 @@ const statusTitle = computed(() => {
 
 const statusDescription = computed(() => {
   if (currentStage.value === 'checking') return 'Checking GitHub Releases for new updates...';
-  if (currentStage.value === 'downloading') return 'Downloading official update package from GitHub...';
+  if (currentStage.value === 'downloading') {
+    return status.value?.isPatchUpdate
+      ? 'Downloading fast patch package (~3.6 MB) containing game engine, custom cards, and scripts...'
+      : 'Downloading official update package from GitHub...';
+  }
   if (currentStage.value === 'ready') return 'Update package verified. Restart the application to install and complete the update.';
   if (currentStage.value === 'error') return errorMessage.value || status.value?.error || 'An unexpected error occurred.';
   if (status.value?.updateAvailable) {
+    if (status.value.isPatchUpdate) {
+      const installerNote = status.value.fullInstallerSize ? ` (vs ${formatBytes(status.value.fullInstallerSize)} full installer)` : '';
+      return `Version v${status.value.targetVersion} is available! Fast update is only ${formatBytes(status.value.totalDownloadSize)}${installerNote}. Click below to update in seconds.`;
+    }
     const sizeStr = status.value.totalDownloadSize > 0 ? ` (${formatBytes(status.value.totalDownloadSize)})` : '';
     return `Version v${status.value.targetVersion}${sizeStr} is available. Click below to download and update automatically.`;
+  }
+  if (status.value?.hasPatchInstalled) {
+    return 'Your game is running on an active hot-patch overlay. All cards, scripts, and duel engine features are up to date.';
   }
   return 'Your game client, card pool, summon animations, and engine code are all up to date with the latest release.';
 });
@@ -326,7 +347,11 @@ async function onDownload(): Promise<void> {
 }
 
 function onDownloadInstaller(): void {
-  window.open('https://github.com/x0911/yugioh-electron/releases/latest');
+  if (status.value?.installerDownloadUrl) {
+    window.open(status.value.installerDownloadUrl);
+  } else {
+    window.open('https://github.com/x0911/yugioh-electron/releases/latest');
+  }
 }
 
 async function onApplyRestart(): Promise<void> {

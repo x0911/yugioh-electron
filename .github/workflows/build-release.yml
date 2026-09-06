@@ -114,7 +114,24 @@ jobs:
       - name: Run Test Suite
         run: npm test
 
+      - name: Package Fast In-Game Patch Bundle (~3.6 MB)
+        shell: bash
+        run: |
+          echo "Compressing compiled UI, engine, card database, and scripts into app-patch.tar.gz..."
+          tar -czf app-patch.tar.gz dist/ data/ resources/cards.cdb resources/scripts/ package.json
+          ls -lh app-patch.tar.gz
+
       - name: Package & Publish Windows Installer
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --win --x64 --publish always
+
+      - name: Upload Fast Patch to Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Uploading app-patch.tar.gz to release ${{ github.ref_name }}..."
+          gh release upload ${{ github.ref_name }} app-patch.tar.gz --clobber
+          echo "✓ Successfully uploaded fast patch bundle!"

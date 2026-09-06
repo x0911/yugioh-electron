@@ -1,6 +1,6 @@
 {
   "name": "yugioh-electron",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Yu-Gi-Oh! Web-Desktop Duel Simulator (DM + GX Era)",
   "private": true,
   "type": "module",
@@ -40,6 +40,7 @@
     "ocgcore-wasm": "^0.1.2",
     "peerjs": "^1.5.5",
     "pinia": "^3.0.4",
+    "tar": "^7.5.22",
     "vue": "^3.5.29",
     "vue-router": "^4.6.4"
   },
@@ -49,6 +50,7 @@
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.13.4",
     "@types/sharp": "^0.31.1",
+    "@types/tar": "^6.1.13",
     "@vitejs/plugin-vue": "^5.2.4",
     "concurrently": "^9.1.2",
     "cross-env": "^10.1.0",

@@ -39,7 +39,9 @@ let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
-  const preloadPath = path.resolve(__dirname, '../preload/index.cjs');
+  const defaultPreload = path.resolve(__dirname, '../preload/index.cjs');
+  const patchPreload = path.join(app.getPath('userData'), 'patch', 'dist', 'preload', 'index.cjs');
+  const preloadPath = fs.existsSync(patchPreload) ? patchPreload : defaultPreload;
 
   const iconPath = app.isPackaged
     ? path.join(process.resourcesPath, 'build/icon.png')
@@ -114,7 +116,14 @@ function createWindow(): void {
       mainWindow.webContents.openDevTools({ mode: 'detach' });
     }
   } else {
-    mainWindow.loadFile(path.resolve(__dirname, '../renderer/index.html'));
+    const defaultHtml = path.resolve(__dirname, '../renderer/index.html');
+    const patchHtml = path.join(app.getPath('userData'), 'patch', 'dist', 'renderer', 'index.html');
+    if (fs.existsSync(patchHtml)) {
+      console.log('[Main] Booting patched renderer from:', patchHtml);
+      mainWindow.loadFile(patchHtml);
+    } else {
+      mainWindow.loadFile(defaultHtml);
+    }
   }
 
   mainWindow.on('closed', () => {

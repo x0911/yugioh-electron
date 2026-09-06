@@ -1,7 +1,7 @@
 {
-  "version": "0.1.8",
-  "releaseDate": "2026-09-05T21:50:57.643Z",
-  "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.8\n- WebRTC Voice Chat Fix: Resolved call glare, two-way connection collisions, and media overwriting with deterministic Host caller protocol\n- Crystal-Clear Audio Output: Routed remote incoming voice stream through Web Audio API to AudioContext.destination for guaranteed speaker/headphone playback\n- Bluetooth Headset & Mic Optimization: Strict microphone track lifecycle shutdown on exit to immediately restore Bluetooth stereo fidelity (A2DP profile)\n- Opponent Voice Status: Dynamic 'Opponent in Voice — Join' indicator with live green pulse when opponent is in voice chat\n- Real-Time Multiplayer PvP: Peer-to-peer WebRTC dueling with 4-digit room codes, zero server hosting, and full game parity\n- Multi-Tribute Summon Support: Full support for monsters with multi-tribute capability (Egyptian God Slime, Double Coston, Kaiser Sea Horse)\n- 100% test verification across all 40 test suites",
+  "version": "0.1.9",
+  "releaseDate": "2026-09-06T13:09:32.210Z",
+  "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.9\n- WebRTC Voice Chat Fix: Resolved call glare, two-way connection collisions, and media overwriting with deterministic Host caller protocol\n- Crystal-Clear Audio Output: Routed remote incoming voice stream through Web Audio API to AudioContext.destination for guaranteed speaker/headphone playback\n- Bluetooth Headset & Mic Optimization: Strict microphone track lifecycle shutdown on exit to immediately restore Bluetooth stereo fidelity (A2DP profile)\n- Opponent Voice Status: Dynamic 'Opponent in Voice — Join' indicator with live green pulse when opponent is in voice chat\n- Real-Time Multiplayer PvP: Peer-to-peer WebRTC dueling with 4-digit room codes, zero server hosting, and full game parity\n- Multi-Tribute Summon Support: Full support for monsters with multi-tribute capability (Egyptian God Slime, Double Coston, Kaiser Sea Horse)\n- 100% test verification across all 40 test suites",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {
     "data/card-pool-whitelist.json": {

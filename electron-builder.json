@@ -63,7 +63,8 @@
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "Yu-Gi-Oh! Duel Arena"
+    "shortcutName": "Yu-Gi-Oh! Duel Arena",
+    "differentialPackage": true
   },
   "linux": {
     "target": [

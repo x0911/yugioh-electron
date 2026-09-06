@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { ipcMain, app, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '../../shared/types/ipc.js';
 import type { DuelInitOptions } from '../../shared/types/duel.js';
@@ -44,6 +46,17 @@ export function registerIpcHandlers(): void {
 
   // App
   ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => {
+    try {
+      const patchVersionFile = path.join(app.getPath('userData'), 'patch', 'version.json');
+      if (fs.existsSync(patchVersionFile)) {
+        const data = JSON.parse(fs.readFileSync(patchVersionFile, 'utf-8'));
+        if (data && typeof data.version === 'string' && data.version.trim()) {
+          return data.version.trim();
+        }
+      }
+    } catch {
+      // ignore
+    }
     return app.getVersion();
   });
   ipcMain.handle(IPC_CHANNELS.APP_INIT_ENGINE, async () => {

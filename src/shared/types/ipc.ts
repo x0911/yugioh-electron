@@ -160,6 +160,10 @@ export interface UpdateCheckResult {
   releaseDate?: string;
   releaseNotes?: string;
   totalDownloadSize: number;
+  fullInstallerSize?: number;
+  patchDownloadUrl?: string;
+  installerDownloadUrl?: string;
+  isPatchUpdate?: boolean;
   changedFiles: UpdateFileDelta[];
   hasPatchInstalled: boolean;
   installedPatchVersion?: string;
