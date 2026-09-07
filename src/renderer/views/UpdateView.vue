@@ -122,7 +122,7 @@
               type="button"
               class="action-btn action-btn--accent"
               :disabled="isBusy"
-              @click="onCheckUpdates"
+              @click="onCheckUpdates(true)"
             >
               <span v-if="currentStage === 'checking'">Checking...</span>
               <span v-else>🔍 Check for Updates</span>
@@ -312,13 +312,13 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-async function onCheckUpdates(): Promise<void> {
+async function onCheckUpdates(force = false): Promise<void> {
   if (!window.updateAPI) return;
   currentStage.value = 'checking';
   errorMessage.value = null;
 
   try {
-    const res = await window.updateAPI.checkForUpdates();
+    const res = await window.updateAPI.checkForUpdates(undefined, force);
     status.value = res;
     if (res.error) {
       currentStage.value = 'error';

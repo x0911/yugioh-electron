@@ -93,3 +93,49 @@ test('3. Reset to Random: setOpponentDeck(null) resets isOpponentDeckManual to f
   assert.strictEqual(duelStore.isOpponentDeckManual, false);
   assert.ok(duelStore.selectedOpponentDeck !== null);
 });
+
+test('4. In-Page Opponent Switching: setOpponent switches opponent and re-initializes decks', async () => {
+  setActivePinia(createPinia());
+  const duelStore = useDuelStore();
+  const settingsStore = useSettingsStore();
+
+  const kaibaCharacter: CharacterData = {
+    id: 'seto-kaiba',
+    name: 'Seto Kaiba',
+    series: 'DM',
+    title: 'KaibaCorp President',
+    tagline: 'Blue-Eyes White Dragon Dominance',
+    description: 'KaibaCorp President',
+    avatar: 'resources/characters/portraits/seto-kaiba.png',
+    video: 'resources/videos/characters/seto-kaiba.mp4',
+    themeColor: '#2f80ed',
+    decks: [
+      {
+        id: 'kaiba_deck_1',
+        name: 'Blue-Eyes White Dragon Supreme Burst',
+        archetype: 'Dragon / High ATK Beatdown',
+        description: 'Summons Blue-Eyes White Dragon',
+        characterId: 'seto-kaiba',
+        order: 1,
+        mainCards: Array(40).fill(89631139),
+        extraCards: [],
+        signatureCards: [89631139],
+      },
+    ],
+  };
+
+  settingsStore.characters = [mockCharacter, kaibaCharacter];
+  settingsStore.selectedOpponentId = 'yugi-muto';
+  settingsStore.isInitialized = true;
+
+  await duelStore.setupMatch(mockCharacter);
+  assert.strictEqual(duelStore.selectedOpponent?.id, 'yugi-muto');
+
+  // Switch opponent to Kaiba
+  duelStore.setOpponent(kaibaCharacter);
+  assert.strictEqual(duelStore.selectedOpponent?.id, 'seto-kaiba');
+  assert.strictEqual(duelStore.opponentName, 'Seto Kaiba');
+  assert.strictEqual(duelStore.isOpponentDeckManual, false);
+  assert.strictEqual(duelStore.selectedOpponentDeck?.id, 'kaiba_deck_1');
+});
+

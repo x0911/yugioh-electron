@@ -1100,6 +1100,10 @@ export class AIController {
     if (code === 10397227 && aiField.currentLp <= 5000) {
       return { type: responseType, yes: false };
     }
+    // Imperial Order (61740673) Standby Phase maintenance cost: 700 LP
+    if (code === 61740673 && aiField.currentLp <= 1400) {
+      return { type: responseType, yes: false };
+    }
     // Generic LP costs: if AI LP <= 1000 and effect asks for significant LP
     if (aiField.currentLp <= 1000 && (code === 70828912 || code === 87910978)) {
       return { type: responseType, yes: false };

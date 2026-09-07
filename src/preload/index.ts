@@ -141,8 +141,8 @@ const appAPI: AppAPI = {
 };
 
 const updateAPI: UpdateAPI = {
-  checkForUpdates: (customManifestUrl?: string) => {
-    return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CHECK, customManifestUrl);
+  checkForUpdates: (customManifestUrl?: string, force?: boolean) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CHECK, customManifestUrl, force);
   },
   downloadUpdate: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_DOWNLOAD);

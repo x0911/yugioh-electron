@@ -79,8 +79,8 @@ export class ScriptReaderService {
   private preprocessScript(rawContent: string): string {
     // 1. Replace bitwise OR on uppercase constants: e.g. REASON_EFFECT|REASON_DISCARD -> REASON_EFFECT+REASON_DISCARD
     let content = rawContent.replace(/([A-Z_0-9]+)\s*\|\s*([A-Z_0-9]+)/g, '$1+$2');
-    // 2. Replace `#variable` length operator on userdata groups with `aux.GetCount(variable)`
-    content = content.replace(/#([a-zA-Z0-9_]+)/g, 'aux.GetCount($1)');
+    // 2. Replace `#variable` length operator on userdata groups with `Auxiliary.GetCount(variable)`
+    content = content.replace(/#([a-zA-Z0-9_]+)/g, 'Auxiliary.GetCount($1)');
     // 3. Polyfill modern methods IsSpellTrap and IsMonster for ocgcore 11.0
     content = content.replace(/:IsSpellTrap\(\)/g, ':IsType(TYPE_SPELL+TYPE_TRAP)');
     content = content.replace(/:IsMonster\(\)/g, ':IsType(TYPE_MONSTER)');

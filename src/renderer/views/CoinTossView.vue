@@ -193,8 +193,13 @@
     <!-- Bottom Footer Navigation -->
     <footer class="coin-toss-view__footer">
       <div class="coin-toss-view__footer-actions">
-        <YugiButton variant="ghost" size="sm" to="/settings">
-          ⚙️ Change Opponent ({{ opponentName }})
+        <YugiButton
+          variant="ghost"
+          size="sm"
+          icon="👑"
+          @click="showOpponentSelectModal = true"
+        >
+          Change Opponent ({{ opponentName }})
         </YugiButton>
 
         <YugiButton
@@ -216,6 +221,14 @@
       </div>
     </footer>
 
+    <!-- Opponent Select Modal -->
+    <OpponentSelectModal
+      v-model="showOpponentSelectModal"
+      :characters="settingsStore.characters"
+      :selected-id="duelStore.selectedOpponent?.id || settingsStore.selectedOpponentId"
+      @select="handleSelectOpponent"
+    />
+
     <!-- Opponent Deck Select Modal -->
     <OpponentDeckSelectModal
       v-model="showDeckSelectModal"
@@ -232,12 +245,13 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDuelStore } from '../stores/duelStore.js';
 import { useSettingsStore } from '../stores/settingsStore.js';
-import type { CharacterDeckData } from '../../shared/types/character.js';
+import type { CharacterData, CharacterDeckData } from '../../shared/types/character.js';
 import type { CoinChoice } from '../../shared/types/duel.js';
 import { getCoinHeadsUrl, getCoinTailsUrl } from '../utils/media.js';
 import { audioManager } from '../audio/index.js';
 import YugiButton from '../components/common/YugiButton.vue';
 import LoadingSpinner from '../components/common/LoadingSpinner.vue';
+import OpponentSelectModal from '../components/common/OpponentSelectModal.vue';
 import OpponentDeckSelectModal from '../components/common/OpponentDeckSelectModal.vue';
 
 const router = useRouter();
@@ -251,6 +265,7 @@ const selectedChoice = ref<CoinChoice | null>(null);
 const pendingOutcome = ref<CoinChoice | null>(null);
 const isFlipping = ref(false);
 const hasLanded = ref(false);
+const showOpponentSelectModal = ref(false);
 const showDeckSelectModal = ref(false);
 let autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -266,11 +281,19 @@ const opponentDeckLabel = computed(() => {
   return `Random: ${duelStore.selectedOpponentDeck?.name || 'Default'}`;
 });
 
+async function handleSelectOpponent(character: CharacterData): Promise<void> {
+  duelStore.setOpponent(character);
+  await settingsStore.setSelectedOpponent(character.id);
+}
+
 function handleSelectOpponentDeck(deck: CharacterDeckData | null): void {
   duelStore.setOpponentDeck(deck);
 }
 
 onMounted(async () => {
+  if (!settingsStore.isInitialized) {
+    await settingsStore.initializeSettings();
+  }
   // Ensure match data (opponent, decks) is pre-configured
   await duelStore.setupMatch();
 });

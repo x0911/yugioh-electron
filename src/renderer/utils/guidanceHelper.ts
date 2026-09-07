@@ -259,12 +259,27 @@ export function getActionGuideInfo(
 
   // 5. Battle Position Selection Prompt
   if (prompts.selectPosition) {
+    const positions = prompts.selectPosition.positions || [];
+    const hasFaceupDef = positions.includes(4);
+    const hasFacedownDef = positions.includes(8);
+
+    let instruction = `Select Battle Position: Choose Attack Position ⚔️ or Defense Position 🛡️ for ${prompts.selectPosition.cardName || 'your monster'}.`;
+    let subText = 'Monsters in Attack Position can declare attacks; monsters in Defense Position protect your Life Points.';
+
+    if (hasFacedownDef && !hasFaceupDef) {
+      instruction = `Select Battle Position: Choose Attack Position ⚔️ or Set (Face-Down Defense) 🛡️ for ${prompts.selectPosition.cardName || 'your monster'}.`;
+      subText = 'Monsters in Attack Position can declare attacks; face-down monsters conceal their stats and effects.';
+    } else if (hasFacedownDef && hasFaceupDef) {
+      instruction = `Select Battle Position: Choose Attack Position ⚔️, Defense Position 🛡️, or Set 🃏 for ${prompts.selectPosition.cardName || 'your monster'}.`;
+      subText = 'Choose between active combat, open defense, or concealing your monster face-down.';
+    }
+
     return {
       category: 'position',
       categoryLabel: 'Battle Position',
       categoryIcon: '🛡️',
-      instruction: `Select Battle Position: Choose Attack Position ⚔️ or Defense Position 🛡️ for ${prompts.selectPosition.cardName || 'your monster'}.`,
-      subText: 'Monsters in Attack Position can declare attacks; monsters in Defense Position protect your Life Points.',
+      instruction,
+      subText,
       isMandatory: true,
       canCancel: false,
     };
@@ -272,6 +287,20 @@ export function getActionGuideInfo(
 
   // 6. Optional Effect Trigger Prompt (Yes/No)
   if (prompts.selectEffectYn) {
+    if (prompts.selectEffectYn.isMaintenanceCost) {
+      const cardName = prompts.selectEffectYn.cardName || 'this card';
+      const costText = prompts.selectEffectYn.yesText?.replace(/^Pay\s*/i, '') || 'LP';
+      return {
+        category: 'cost',
+        categoryLabel: 'Maintenance Cost',
+        categoryIcon: '🪙',
+        instruction: `Maintenance Cost: Pay ${costText} to maintain "${cardName}", or decline to destroy it.`,
+        subText: 'Paying the cost keeps this card active; declining destroys it immediately.',
+        isMandatory: false,
+        canCancel: false,
+      };
+    }
+
     return {
       category: 'effect-yn',
       categoryLabel: 'Optional Trigger',

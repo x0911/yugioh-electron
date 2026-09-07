@@ -183,7 +183,7 @@ export interface UpdateProgressPayload {
 }
 
 export interface UpdateAPI {
-  checkForUpdates: (customManifestUrl?: string) => Promise<UpdateCheckResult>;
+  checkForUpdates: (customManifestUrl?: string, force?: boolean) => Promise<UpdateCheckResult>;
   downloadUpdate: () => Promise<boolean>;
   applyUpdate: () => Promise<void>;
   rollback: () => Promise<boolean>;

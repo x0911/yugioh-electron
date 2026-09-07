@@ -43,9 +43,9 @@
         </div>
 
         <div class="position-showcase">
-          <!-- Attack Position Option -->
+          <!-- Attack Position Option (POS_FACEUP_ATTACK = 1) -->
           <button
-            v-if="selectPosition.positions.includes(1)"
+            v-if="hasPosition(1)"
             type="button"
             class="stance-card stance-card--atk"
             @mouseenter="onCardHoverByCode(selectPosition.code)"
@@ -74,14 +74,14 @@
             <div class="stance-card__glow-border" />
           </button>
 
-          <!-- Defense Position Option -->
+          <!-- Face-Up Defense Position Option (POS_FACEUP_DEFENSE = 4) -->
           <button
-            v-if="selectPosition.positions.includes(2)"
+            v-if="hasPosition(4)"
             type="button"
             class="stance-card stance-card--def"
             @mouseenter="onCardHoverByCode(selectPosition.code)"
             @mouseleave="onCardHoverByCode(null)"
-            @click="$emit('select-position', 2)"
+            @click="$emit('select-position', 4)"
           >
             <div class="stance-card__preview">
               <div class="stance-card__art stance-card__art--horizontal">
@@ -105,12 +105,14 @@
             <div class="stance-card__glow-border" />
           </button>
 
-          <!-- Set (Face-Down DEF) Option -->
+          <!-- Set (Face-Down DEF) Option (POS_FACEDOWN_DEFENSE = 8) -->
           <button
-            v-if="selectPosition.positions.includes(4)"
+            v-if="hasPosition(8)"
             type="button"
             class="stance-card stance-card--set"
-            @click="$emit('select-position', 4)"
+            @mouseenter="onCardHoverByCode(selectPosition.code)"
+            @mouseleave="onCardHoverByCode(null)"
+            @click="$emit('select-position', 8)"
           >
             <div class="stance-card__preview">
               <div class="stance-card__art stance-card__art--horizontal">
@@ -129,6 +131,36 @@
                 <span class="stance-name">SET (FACE-DOWN DEF)</span>
               </div>
               <span class="stance-desc">Placed face-down in defense. Conceals stats and effects from opponent.</span>
+            </div>
+            <div class="stance-card__glow-border" />
+          </button>
+
+          <!-- Set (Face-Down ATK) Option (POS_FACEDOWN_ATTACK = 2) -->
+          <button
+            v-if="hasPosition(2)"
+            type="button"
+            class="stance-card stance-card--set"
+            @mouseenter="onCardHoverByCode(selectPosition.code)"
+            @mouseleave="onCardHoverByCode(null)"
+            @click="$emit('select-position', 2)"
+          >
+            <div class="stance-card__preview">
+              <div class="stance-card__art stance-card__art--vertical">
+                <img
+                  :src="getCardBackUrl()"
+                  alt="Card Back"
+                  class="stance-img"
+                />
+                <div class="stance-sheen" />
+              </div>
+              <div class="stance-aura stance-aura--set" />
+            </div>
+            <div class="stance-card__info">
+              <div class="stance-card__type">
+                <span class="stance-icon">🃏</span>
+                <span class="stance-name">SET (FACE-DOWN ATK)</span>
+              </div>
+              <span class="stance-desc">Placed face-down in attack. Conceals stats and effects from opponent.</span>
             </div>
             <div class="stance-card__glow-border" />
           </button>
@@ -241,10 +273,10 @@
           <div class="prompt-header__top-row">
             <div
               class="prompt-header__badge"
-              :class="selectEffectYn.isDirectAttack || selectEffectYn.isReplay ? 'prompt-header__badge--battle' : 'prompt-header__badge--effect'"
+              :class="selectEffectYn.isMaintenanceCost ? 'prompt-header__badge--maintenance' : selectEffectYn.isDirectAttack || selectEffectYn.isReplay ? 'prompt-header__badge--battle' : 'prompt-header__badge--effect'"
             >
-              <span class="badge-icon">{{ selectEffectYn.badgeIcon || (selectEffectYn.isDirectAttack ? '⚔️' : '✨') }}</span>
-              <span class="badge-label">{{ selectEffectYn.badgeLabel || (selectEffectYn.isDirectAttack ? 'DIRECT ATTACK CHOICE' : 'CARD EFFECT TRIGGER') }}</span>
+              <span class="badge-icon">{{ selectEffectYn.badgeIcon || (selectEffectYn.isMaintenanceCost ? '🪙' : selectEffectYn.isDirectAttack ? '⚔️' : '✨') }}</span>
+              <span class="badge-label">{{ selectEffectYn.badgeLabel || (selectEffectYn.isMaintenanceCost ? 'MAINTENANCE COST' : selectEffectYn.isDirectAttack ? 'DIRECT ATTACK CHOICE' : 'CARD EFFECT TRIGGER') }}</span>
             </div>
             <button
               type="button"
@@ -260,7 +292,10 @@
             {{ selectEffectYn.promptTitle || (selectEffectYn.isDirectAttack ? 'Declare Direct Attack' : 'Optional Card Effect') }}
           </h3>
           <p class="prompt-header__subtitle">
-            <template v-if="selectEffectYn.isDirectAttack">
+            <template v-if="selectEffectYn.isMaintenanceCost">
+              Choose whether to pay the maintenance cost for <strong class="highlight-text">{{ effectiveCardName || 'this card' }}</strong> or allow it to be destroyed.
+            </template>
+            <template v-else-if="selectEffectYn.isDirectAttack">
               Do you wish to declare a direct attack on opponent Life Points with <strong class="highlight-text">{{ effectiveCardName || 'your monster' }}</strong>?
             </template>
             <template v-else-if="selectEffectYn.isReplay">
@@ -608,6 +643,16 @@ const emit = defineEmits<{
 }>();
 
 const duelStore = useDuelStore();
+
+function hasPosition(pos: number): boolean {
+  if (!props.selectPosition?.positions) return false;
+  const positions = props.selectPosition.positions;
+  if (Array.isArray(positions)) {
+    return positions.includes(pos) || positions.some((p) => typeof p === 'number' && (p & pos) === pos);
+  }
+  const numericPos = Number(positions);
+  return !isNaN(numericPos) && (numericPos & pos) === pos;
+}
 
 const effectiveCardCode = computed(() => {
   if (!props.selectEffectYn) return null;
@@ -964,6 +1009,12 @@ function toRomanNumeral(num: number): string {
       background: rgba(39, 174, 96, 0.2);
       border-color: rgba(39, 174, 96, 0.5);
       color: #b7f4cc;
+    }
+
+    &--maintenance {
+      background: rgba(242, 153, 74, 0.2);
+      border-color: rgba(242, 153, 74, 0.5);
+      color: #ffe0b2;
     }
 
     &--option,

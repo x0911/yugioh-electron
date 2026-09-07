@@ -684,6 +684,25 @@ export const useDuelStore = defineStore('duel', {
     },
 
     /**
+     * Updates the selected opponent character and resets deck selection to default random.
+     */
+    setOpponent(opponent: CharacterData): void {
+      this.selectedOpponent = opponent;
+      this.isOpponentDeckManual = false;
+      if (opponent.decks && opponent.decks.length > 0) {
+        const idx = Math.floor(Math.random() * opponent.decks.length);
+        this.selectedOpponentDeck = opponent.decks[idx];
+        this.selectedOpponentDeckIndex = idx;
+      } else {
+        this.selectedOpponentDeck = null;
+        this.selectedOpponentDeckIndex = 0;
+      }
+      if (this.boardState && this.boardState.opponentField) {
+        this.boardState.opponentField.name = opponent.name;
+      }
+    },
+
+    /**
      * Manually sets or resets the opponent's chosen deck.
      */
     setOpponentDeck(deck: CharacterDeckData | null): void {

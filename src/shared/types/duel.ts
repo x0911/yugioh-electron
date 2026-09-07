@@ -252,6 +252,7 @@ export interface SelectEffectYnPayload {
   noText?: string;
   isDirectAttack?: boolean;
   isReplay?: boolean;
+  isMaintenanceCost?: boolean;
 }
 
 export interface SelectOptionPayload {

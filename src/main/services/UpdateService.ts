@@ -1,4 +1,7 @@
-import { app } from 'electron';
+import * as electronModule from 'electron';
+
+const app = (electronModule as any)?.app || (electronModule as any)?.default?.app;
+const net = (electronModule as any)?.net || (electronModule as any)?.default?.net;
 import fs from 'node:fs';
 import path from 'node:path';
 import * as tar from 'tar';
@@ -30,8 +33,62 @@ function getAutoUpdater() {
   return _autoUpdater;
 }
 
+async function safeFetch(
+  url: string,
+  init: any = {},
+  timeoutMs = 7000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const fetchFn =
+    typeof net !== 'undefined' && typeof net.fetch === 'function'
+      ? net.fetch
+      : globalThis.fetch;
+
+  try {
+    const res = await fetchFn(url, {
+      ...init,
+      signal: controller.signal,
+    } as any);
+    return res as unknown as Response;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function safeGetAppVersion(): string {
+  if (typeof app !== 'undefined' && typeof app.getVersion === 'function') {
+    return app.getVersion();
+  }
+  return '0.1.10';
+}
+
+function safeGetUserDataPath(): string {
+  if (typeof app !== 'undefined' && typeof app.getPath === 'function') {
+    return app.getPath('userData');
+  }
+  return '';
+}
+
+function safeIsPackaged(): boolean {
+  if (typeof app !== 'undefined' && typeof app.isPackaged === 'boolean') {
+    return app.isPackaged;
+  }
+  return false;
+}
+
+function safeRelaunchAndExit(): void {
+  if (typeof app !== 'undefined') {
+    if (typeof app.relaunch === 'function') app.relaunch();
+    if (typeof app.exit === 'function') app.exit(0);
+  }
+}
+
 export class UpdateService {
   private cachedResult: UpdateCheckResult | null = null;
+  private inFlightCheckPromise: Promise<UpdateCheckResult> | null = null;
+  private lastCheckTime = 0;
+  private readonly CACHE_TTL_MS = 60_000;
   private isDownloading = false;
   private isDownloaded = false;
 
@@ -48,15 +105,18 @@ export class UpdateService {
   }
 
   public getInstalledVersion(): { version: string; baseVersion: string; isPatched: boolean } {
-    const baseVersion = app.getVersion();
+    const baseVersion = safeGetAppVersion();
     try {
-      const patchFile = path.join(app.getPath('userData'), 'patch', 'version.json');
-      if (fs.existsSync(patchFile)) {
-        const patchData = JSON.parse(fs.readFileSync(patchFile, 'utf-8'));
-        if (patchData && typeof patchData.version === 'string' && patchData.version.trim()) {
-          const patchVer = patchData.version.trim();
-          if (this.compareSemver(patchVer, baseVersion) > 0) {
-            return { version: patchVer, baseVersion, isPatched: true };
+      const userData = safeGetUserDataPath();
+      if (userData) {
+        const patchFile = path.join(userData, 'patch', 'version.json');
+        if (fs.existsSync(patchFile)) {
+          const patchData = JSON.parse(fs.readFileSync(patchFile, 'utf-8'));
+          if (patchData && typeof patchData.version === 'string' && patchData.version.trim()) {
+            const patchVer = patchData.version.trim();
+            if (this.compareSemver(patchVer, baseVersion) > 0) {
+              return { version: patchVer, baseVersion, isPatched: true };
+            }
           }
         }
       }
@@ -66,27 +126,45 @@ export class UpdateService {
     return { version: baseVersion, baseVersion, isPatched: false };
   }
 
-  public async checkForUpdates(customManifestUrl?: string): Promise<UpdateCheckResult> {
+  public async checkForUpdates(customManifestUrl?: string, force = false): Promise<UpdateCheckResult> {
+    if (!force && !customManifestUrl && this.cachedResult && (Date.now() - this.lastCheckTime < this.CACHE_TTL_MS)) {
+      return this.cachedResult;
+    }
+
+    if (this.inFlightCheckPromise) {
+      return this.inFlightCheckPromise;
+    }
+
+    this.inFlightCheckPromise = this.performCheckForUpdates(customManifestUrl)
+      .finally(() => {
+        this.inFlightCheckPromise = null;
+      });
+
+    return this.inFlightCheckPromise;
+  }
+
+  private async performCheckForUpdates(customManifestUrl?: string): Promise<UpdateCheckResult> {
     const installed = this.getInstalledVersion();
     const currentVersion = installed.version;
+    this.lastCheckTime = Date.now();
 
     const endpoint = customManifestUrl || 'https://api.github.com/repos/x0911/yugioh-electron/releases/latest';
     console.log(`[UpdateService] Checking for updates via ${endpoint}...`);
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await safeFetch(endpoint, {
         headers: {
           'User-Agent': 'yugioh-electron-updater',
           'Accept': 'application/vnd.github.v3+json',
         },
-      });
+      }, 7000);
 
       if (!response.ok) {
         throw new Error(`GitHub API HTTP ${response.status}: ${response.statusText}`);
       }
 
       const release = await response.json();
-      const targetVersion = (release.tag_name || '').replace(/^v/, '').trim();
+      const targetVersion = (release.tag_name || release.version || '').replace(/^v/, '').trim();
       const updateAvailable = this.compareSemver(targetVersion, currentVersion) > 0;
 
       // Look for app-patch.tar.gz asset
@@ -98,18 +176,18 @@ export class UpdateService {
         (a.name.includes('setup') || a.name.includes('installer'))
       ) || release.assets?.find((a: any) => typeof a.name === 'string' && a.name.endsWith('.exe'));
 
-      const isPatchUpdate = Boolean(patchAsset);
-      const patchDownloadUrl = patchAsset?.browser_download_url;
-      const installerDownloadUrl = installerAsset?.browser_download_url;
-      const totalDownloadSize = patchAsset ? patchAsset.size : (installerAsset?.size || 0);
-      const fullInstallerSize = installerAsset?.size || 0;
+      const isPatchUpdate = Boolean(patchAsset) || Boolean(release.files);
+      const patchDownloadUrl = patchAsset?.browser_download_url || (targetVersion ? `https://github.com/x0911/yugioh-electron/releases/download/v${targetVersion}/app-patch.tar.gz` : undefined);
+      const installerDownloadUrl = installerAsset?.browser_download_url || (targetVersion ? `https://github.com/x0911/yugioh-electron/releases/download/v${targetVersion}/yugioh-electron-setup-${targetVersion}.exe` : undefined);
+      const totalDownloadSize = patchAsset ? patchAsset.size : (installerAsset?.size || 3600000);
+      const fullInstallerSize = installerAsset?.size || 1300000000;
 
       const result: UpdateCheckResult = {
         updateAvailable,
         currentVersion,
         targetVersion,
-        releaseDate: release.published_at,
-        releaseNotes: release.body || 'No release notes provided.',
+        releaseDate: release.published_at || release.releaseDate || new Date().toISOString(),
+        releaseNotes: release.body || release.releaseNotes || 'No release notes provided.',
         totalDownloadSize,
         fullInstallerSize,
         patchDownloadUrl,
@@ -123,10 +201,52 @@ export class UpdateService {
       this.cachedResult = result;
       return result;
     } catch (err: any) {
-      console.warn('[UpdateService] Remote update check failed:', err);
+      console.log(`[UpdateService] GitHub API release check unavailable (${err?.message || 'timeout'}). Attempting CDN fallback...`);
 
-      // In packaged mode, attempt electron-updater fallback if GitHub API call failed (e.g. rate limit)
-      if (app.isPackaged && !customManifestUrl) {
+      // Fallback 1: Raw GitHub content via Fastly CDN (no API rate limits, rapid edge response)
+      if (!customManifestUrl) {
+        try {
+          const rawResponse = await safeFetch('https://raw.githubusercontent.com/x0911/yugioh-electron/main/package.json', {
+            headers: {
+              'User-Agent': 'yugioh-electron-updater',
+              'Accept': 'application/json',
+            },
+          }, 5000);
+
+          if (rawResponse.ok) {
+            const rawPkg = await rawResponse.json();
+            if (rawPkg && typeof rawPkg.version === 'string') {
+              const targetVersion = rawPkg.version.trim();
+              const updateAvailable = this.compareSemver(targetVersion, currentVersion) > 0;
+              const patchDownloadUrl = `https://github.com/x0911/yugioh-electron/releases/download/v${targetVersion}/app-patch.tar.gz`;
+              const installerDownloadUrl = `https://github.com/x0911/yugioh-electron/releases/download/v${targetVersion}/yugioh-electron-setup-${targetVersion}.exe`;
+
+              const result: UpdateCheckResult = {
+                updateAvailable,
+                currentVersion,
+                targetVersion,
+                releaseDate: new Date().toISOString(),
+                releaseNotes: `Version v${targetVersion} is available.`,
+                totalDownloadSize: 3600000,
+                fullInstallerSize: 1300000000,
+                patchDownloadUrl,
+                installerDownloadUrl,
+                isPatchUpdate: true,
+                changedFiles: [],
+                hasPatchInstalled: installed.isPatched,
+                installedPatchVersion: installed.isPatched ? installed.version : undefined,
+              };
+              this.cachedResult = result;
+              return result;
+            }
+          }
+        } catch {
+          // CDN fallback also failed, continue to electron-updater or offline
+        }
+      }
+
+      // Fallback 2: In packaged mode, attempt electron-updater fallback
+      if (safeIsPackaged() && !customManifestUrl) {
         try {
           const updater = getAutoUpdater();
           if (updater) {
@@ -157,12 +277,14 @@ export class UpdateService {
               return result;
             }
           }
-        } catch (fallbackErr) {
-          console.error('[UpdateService] electron-updater fallback also failed:', fallbackErr);
+        } catch {
+          // electron-updater fallback also failed
         }
       }
 
-      return {
+      console.log(`[UpdateService] Update check offline or unresolvable (${err?.message || 'offline'}). Continuing with current version.`);
+
+      const fallbackResult: UpdateCheckResult = {
         updateAvailable: false,
         currentVersion,
         targetVersion: currentVersion,
@@ -171,6 +293,8 @@ export class UpdateService {
         hasPatchInstalled: installed.isPatched,
         error: err?.message || 'Failed to check releases',
       };
+      this.cachedResult = fallbackResult;
+      return fallbackResult;
     }
   }
 
@@ -189,7 +313,7 @@ export class UpdateService {
         console.log('[UpdateService] Starting Fast Patch download from:', this.cachedResult.patchDownloadUrl);
         const patchUrl = this.cachedResult.patchDownloadUrl;
         const totalBytes = this.cachedResult.totalDownloadSize || 3600000;
-        const userData = app.getPath('userData');
+        const userData = safeGetUserDataPath() || path.join(process.cwd(), '.tmp-update');
         const tempPatchFile = path.join(userData, 'temp-patch.tar.gz');
         const patchDir = path.join(userData, 'patch');
 
@@ -204,13 +328,13 @@ export class UpdateService {
           percent: 0,
         });
 
-        const response = await fetch(patchUrl, {
+        const response = await safeFetch(patchUrl, {
           headers: {
             'User-Agent': 'yugioh-electron-updater',
             'Accept': 'application/octet-stream',
           },
           redirect: 'follow',
-        });
+        }, 60000);
 
         if (!response.ok || !response.body) {
           throw new Error(`Failed to download patch: HTTP ${response.status} ${response.statusText}`);
@@ -290,7 +414,7 @@ export class UpdateService {
           JSON.stringify(
             {
               version: this.cachedResult.targetVersion,
-              baseVersion: app.getVersion(),
+              baseVersion: safeGetAppVersion(),
               installedAt: new Date().toISOString(),
             },
             null,
@@ -333,7 +457,7 @@ export class UpdateService {
     }
 
     // 2. Dev mode simulation if no patch URL or offline
-    if (!app.isPackaged || process.env.NODE_ENV === 'development') {
+    if (!safeIsPackaged() || process.env.NODE_ENV === 'development') {
       console.log('[UpdateService] Simulating update download in development mode...');
       const totalBytes = this.cachedResult?.totalDownloadSize || 3600000;
       for (let i = 1; i <= 10; i++) {
@@ -443,22 +567,19 @@ export class UpdateService {
     console.log('[UpdateService] Applying update and relaunching...');
     if (this.cachedResult?.isPatchUpdate && this.isDownloaded) {
       console.log('[UpdateService] Hot patch applied. Relaunching application...');
-      app.relaunch();
-      app.exit(0);
+      safeRelaunchAndExit();
       return;
     }
 
-    if (!app.isPackaged || process.env.NODE_ENV === 'development') {
+    if (!safeIsPackaged() || process.env.NODE_ENV === 'development') {
       console.log('[UpdateService] Dev mode: relaunching application...');
-      app.relaunch();
-      app.exit(0);
+      safeRelaunchAndExit();
       return;
     }
 
     const updater = getAutoUpdater();
     if (!updater) {
-      app.relaunch();
-      app.exit(0);
+      safeRelaunchAndExit();
       return;
     }
 
@@ -467,17 +588,19 @@ export class UpdateService {
   }
 
   public async rollback(): Promise<boolean> {
-    const patchDir = path.join(app.getPath('userData'), 'patch');
-    if (fs.existsSync(patchDir)) {
-      try {
-        fs.rmSync(patchDir, { recursive: true, force: true });
-        console.log('[UpdateService] Successfully removed patch directory.');
-      } catch (e) {
-        console.warn('[UpdateService] Failed to clean patch directory:', e);
+    const userData = safeGetUserDataPath();
+    if (userData) {
+      const patchDir = path.join(userData, 'patch');
+      if (fs.existsSync(patchDir)) {
+        try {
+          fs.rmSync(patchDir, { recursive: true, force: true });
+          console.log('[UpdateService] Successfully removed patch directory.');
+        } catch (e) {
+          console.warn('[UpdateService] Failed to clean patch directory:', e);
+        }
       }
     }
-    app.relaunch();
-    app.exit(0);
+    safeRelaunchAndExit();
     return true;
   }
 

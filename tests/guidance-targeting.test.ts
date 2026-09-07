@@ -323,4 +323,115 @@ console.log('=== Running Phase 11 Targeting & Guidance Tests ===\n');
   console.log('✓ The Flute of Summoning Dragon translates to "Select up to 2 card(s) from your hand" with cancel/pass.');
 }
 
+// -----------------------------------------------------------------------------
+// Test 8: Battle Position Selection - Standard (Attack or Defense)
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 8: Battle Position Guidance (Standard: [1, 4])...');
+  const board = createDummyBoard();
+  const selectPosition: SelectPositionPayload = {
+    player: 0,
+    code: 89631139,
+    cardName: 'Blue-Eyes White Dragon',
+    positions: [1, 4],
+  };
+
+  const posInfo = getActionGuideInfo(
+    board,
+    true,
+    {
+      selectCard: null,
+      selectTribute: null,
+      selectChain: null,
+      selectPosition,
+      selectEffectYn: null,
+      selectOption: null,
+    },
+    0,
+  );
+
+  assert.equal(posInfo.category, 'position');
+  assert.equal(posInfo.categoryLabel, 'Battle Position');
+  assert.ok(posInfo.instruction.includes('Choose Attack Position ⚔️ or Defense Position 🛡️ for Blue-Eyes White Dragon'));
+  console.log('✓ Standard battle position guidance formatted correctly.');
+}
+
+// -----------------------------------------------------------------------------
+// Test 9: Battle Position Selection - Cyber Jar (Face-Up Attack or Face-Down Defense: [1, 8])
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 9: Battle Position Guidance (Cyber Jar: [1, 8])...');
+  const board = createDummyBoard();
+  const selectPosition: SelectPositionPayload = {
+    player: 0,
+    code: 27346636,
+    cardName: 'Spear Cretin',
+    positions: [1, 8],
+  };
+
+  const posInfo = getActionGuideInfo(
+    board,
+    true,
+    {
+      selectCard: null,
+      selectTribute: null,
+      selectChain: null,
+      selectPosition,
+      selectEffectYn: null,
+      selectOption: null,
+    },
+    0,
+  );
+
+  assert.equal(posInfo.category, 'position');
+  assert.equal(posInfo.categoryLabel, 'Battle Position');
+  assert.ok(posInfo.instruction.includes('Choose Attack Position ⚔️ or Set (Face-Down Defense) 🛡️ for Spear Cretin'));
+  assert.ok(posInfo.subText?.includes('face-down monsters conceal their stats and effects'));
+  console.log('✓ Cyber Jar face-down defense position guidance formatted correctly.');
+}
+
+// -----------------------------------------------------------------------------
+// Test 10: Maintenance Cost Selection (Imperial Order: 700 LP)
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 10: Maintenance Cost Guidance (Imperial Order: 700 LP)...');
+  const board = createDummyBoard();
+  const selectEffectYn: SelectEffectYnPayload = {
+    player: 0,
+    code: 61740673,
+    cardName: 'Imperial Order',
+    isMaintenanceCost: true,
+    promptTitle: 'Maintenance Cost',
+    badgeLabel: 'MAINTENANCE COST',
+    badgeIcon: '🪙',
+    yesText: 'Pay 700 LP',
+    noText: 'Do Not Pay (Destroy)',
+  };
+
+  const costInfo = getActionGuideInfo(
+    board,
+    true,
+    {
+      selectCard: null,
+      selectTribute: null,
+      selectChain: null,
+      selectPosition: null,
+      selectEffectYn,
+      selectOption: null,
+    },
+    0,
+  );
+
+  assert.equal(costInfo.category, 'cost');
+  assert.equal(costInfo.categoryLabel, 'Maintenance Cost');
+  assert.equal(costInfo.categoryIcon, '🪙');
+  assert.equal(
+    costInfo.instruction,
+    'Maintenance Cost: Pay 700 LP to maintain "Imperial Order", or decline to destroy it.',
+  );
+  assert.ok(costInfo.subText?.includes('declining destroys it immediately'));
+  assert.equal(costInfo.canCancel, false);
+  console.log('✓ Imperial Order maintenance cost guidance formatted correctly.');
+}
+
 console.log('\n🎉 ALL PHASE 11 TARGETING & GUIDANCE TESTS PASSED SUCCESSFULLY!');

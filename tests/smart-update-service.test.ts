@@ -225,6 +225,33 @@ async function runSmartUpdateTests() {
   console.log('  ✓ Hot-patch tar.gz successfully created, extracted, and verified.');
   console.log('  ✓ Semver correctly prioritizes newer patch over older base, and newer base over older patch.\n');
 
+  // Test 5: In-flight Request Deduplication and Cache TTL
+  console.log('▶ Test 5: UpdateService In-Flight Deduplication and Cache TTL');
+  const { updateService } = await import('../src/main/services/UpdateService.js');
+
+  assert.strictEqual(updateService.compareSemver('0.1.9', '0.1.8'), 1);
+  assert.strictEqual(updateService.compareSemver('0.1.9', '0.1.9'), 0);
+  assert.strictEqual(updateService.compareSemver('0.1.9', '0.2.0'), -1);
+
+  // In-flight deduplication: multiple concurrent calls must reuse the active promise
+  const [p1, p2, p3] = await Promise.all([
+    updateService.checkForUpdates(undefined, true),
+    updateService.checkForUpdates(undefined, true),
+    updateService.checkForUpdates(undefined, true),
+  ]);
+  assert.strictEqual(p1, p2, 'Concurrent callers must receive identical response object');
+  assert.strictEqual(p2, p3, 'Concurrent callers must receive identical response object');
+
+  // Cache verification: immediate non-forced check returns cached object reference
+  const tStart = Date.now();
+  const pCached = await updateService.checkForUpdates(undefined, false);
+  const duration = Date.now() - tStart;
+  assert.strictEqual(pCached, p1, 'Cached check must return cached reference without new network call');
+  assert.ok(duration < 25, `Cached check must return under 25ms, took ${duration}ms`);
+
+  console.log('  ✓ Verified in-flight request deduplication across concurrent callers.');
+  console.log('  ✓ Verified 60s TTL memory caching with immediate response.\n');
+
   console.log('================================================================');
   console.log('🎉 ALL SMART UPDATE & PATCHER TESTS PASSED 100%!');
   console.log('================================================================\n');

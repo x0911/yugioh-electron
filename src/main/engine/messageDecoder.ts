@@ -1191,6 +1191,15 @@ export class MessageDecoder {
           numDesc === 30 ||
           (typeof resolvedString === 'string' && resolvedString.toLowerCase().includes('replay'));
 
+        const isMaintenanceCost =
+          typeof resolvedString === 'string' &&
+          /pay\s*(\d+)?\s*lp/i.test(resolvedString);
+        let lpCost = '';
+        if (isMaintenanceCost && typeof resolvedString === 'string') {
+          const m = resolvedString.match(/\d+/);
+          if (m) lpCost = m[0];
+        }
+
         if (!code) {
           if ((isDirectAttack || isReplay) && this.lastAttackCard?.code) {
             code = this.lastAttackCard.code;
@@ -1231,6 +1240,15 @@ export class MessageDecoder {
           finalDescription = cardName
             ? `A battle replay occurred. Do you want to continue the attack with "${cardName}"?`
             : `A battle replay occurred. Do you wish to continue the attack?`;
+        } else if (isMaintenanceCost) {
+          promptTitle = 'Maintenance Cost';
+          badgeLabel = 'MAINTENANCE COST';
+          badgeIcon = '🪙';
+          yesText = lpCost ? `Pay ${lpCost} LP` : 'Pay LP Cost';
+          noText = 'Do Not Pay (Destroy)';
+          finalDescription = cardName
+            ? `Pay ${lpCost ? lpCost + ' ' : ''}LP to maintain "${cardName}", or decline to destroy it.`
+            : `Pay ${lpCost ? lpCost + ' ' : ''}LP to maintain this card, or decline to destroy it.`;
         } else if (resolvedString && !resolvedString.startsWith('Option #') && isNaN(Number(resolvedString))) {
           finalDescription = resolvedString;
         } else if (cardName) {
@@ -1253,6 +1271,7 @@ export class MessageDecoder {
           noText,
           isDirectAttack,
           isReplay,
+          isMaintenanceCost,
         };
 
         return {

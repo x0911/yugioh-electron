@@ -1,7 +1,7 @@
 {
-  "version": "0.1.9",
-  "releaseDate": "2026-09-06T13:09:32.210Z",
-  "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.9\n- WebRTC Voice Chat Fix: Resolved call glare, two-way connection collisions, and media overwriting with deterministic Host caller protocol\n- Crystal-Clear Audio Output: Routed remote incoming voice stream through Web Audio API to AudioContext.destination for guaranteed speaker/headphone playback\n- Bluetooth Headset & Mic Optimization: Strict microphone track lifecycle shutdown on exit to immediately restore Bluetooth stereo fidelity (A2DP profile)\n- Opponent Voice Status: Dynamic 'Opponent in Voice — Join' indicator with live green pulse when opponent is in voice chat\n- Real-Time Multiplayer PvP: Peer-to-peer WebRTC dueling with 4-digit room codes, zero server hosting, and full game parity\n- Multi-Tribute Summon Support: Full support for monsters with multi-tribute capability (Egyptian God Slime, Double Coston, Kaiser Sea Horse)\n- 100% test verification across all 40 test suites",
+  "version": "0.1.10",
+  "releaseDate": "2026-09-07T12:53:44.181Z",
+  "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.10\n- Fast Delta Hot-Patcher: Download lightweight patch archive (~3.6 MB) via in-game updater instead of full 1.23 GB installer\n- Resilient Updater Engine: Switched to Chromium net.fetch stack with 60s memory TTL cache and in-flight request deduplication\n- Pre-Duel Opponent Modal: Quick modal dialog with 3-4 column grid, DM/GX series filters, and duelist cards without leaving coin toss\n- 2-Column Opponent Deck Browser: Deck Inspector with card artwork grid, stats breakdown, and hover previews\n- Cyber Jar Mechanics: Dual-position choice dialog (Face-Up Attack or Face-Down Defense) for each summoned monster\n- Imperial Order Standby Cost: Standby Phase prompt to pay 700 LP to maintain or destroy the card\n- 100% test verification across all 40 test suites",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {
     "data/card-pool-whitelist.json": {
@@ -32,7 +32,7 @@
     "resources/cards.cdb": {
       "path": "resources/cards.cdb",
       "size": 1609728,
-      "sha256": "942e2a7579fcb08020c387a5c28e019b47240949d655e8eb8e53c1f7cd1eb5ab"
+      "sha256": "81300c6557c3f778a606efd647381a0d482698cb43ab5827aeaaabf0309272ac"
     },
     "resources/scripts/archetype_setcode_constants.lua": {
       "path": "resources/scripts/archetype_setcode_constants.lua",
@@ -10501,8 +10501,8 @@
     },
     "resources/scripts/official/c61740673.lua": {
       "path": "resources/scripts/official/c61740673.lua",
-      "size": 1397,
-      "sha256": "731fe817220645dda0fc86d804d7a3cdfacc4ed3d223924c9465e905e09d7e9f"
+      "size": 1447,
+      "sha256": "54a376adb95b881fd8fe81855037ff472d1093ec6456ebe7b9786ea094ee565d"
     },
     "resources/scripts/official/c61802346.lua": {
       "path": "resources/scripts/official/c61802346.lua",

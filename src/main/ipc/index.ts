@@ -242,9 +242,9 @@ export function registerIpcHandlers(): void {
   });
 
   // Smart Delta Update handlers (Phase 16)
-  ipcMain.handle(IPC_CHANNELS.UPDATE_CHECK, async (_event, customUrl?: string) => {
+  ipcMain.handle(IPC_CHANNELS.UPDATE_CHECK, async (_event, customUrl?: string, force?: boolean) => {
     const { updateService } = await import('../services/UpdateService.js');
-    return updateService.checkForUpdates(customUrl);
+    return updateService.checkForUpdates(customUrl, force);
   });
 
   ipcMain.handle(IPC_CHANNELS.UPDATE_DOWNLOAD, async () => {

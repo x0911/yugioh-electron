@@ -42,7 +42,7 @@ function s.disoperation(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function s.mtop(e,tp,eg,ep,ev,re,r,rp)
-	if Duel.CheckLPCost(tp,700) then
+	if Duel.CheckLPCost(tp,700) and Duel.SelectYesNo(tp,Auxiliary.Stringid(id,0)) then
 		Duel.PayLPCost(tp,700)
 	else
 		Duel.Destroy(e:GetHandler(),REASON_COST)

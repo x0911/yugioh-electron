@@ -9,6 +9,7 @@ import {
   SelectIdleCMDAction,
   SelectBattleCMDAction,
   OcgPosition,
+  ocgPositionParse,
 } from 'ocgcore-wasm';
 import { createEmptyPlayerField } from '../src/shared/types/field.js';
 import type { EvaluatorContext } from '../src/main/ai/types.js';
@@ -1240,8 +1241,148 @@ async function runTestSuite() {
     );
     console.log('  ✓ Opponent Field Spell (Toon Kingdom) successfully targeted and destroyed by Wild Wingman.');
 
+    // 20. Cyber Jar Position Selection Stances (POS_FACEUP_ATTACK & POS_FACEDOWN_DEFENSE)
+    console.log('\n▶ Test 20: Cyber Jar Position Selection Stances (POS_FACEUP_ATTACK & POS_FACEDOWN_DEFENSE)');
+    const cjPosMask = 1 | 8;
+    const parsedPositions = ocgPositionParse(cjPosMask);
+    assert.deepEqual(parsedPositions, [1, 8], 'Cyber Jar positions must parse to [1, 8]');
+
+    const testProps = {
+      selectPosition: {
+        player: 0,
+        code: 27346636, // Spear Cretin
+        positions: parsedPositions,
+      },
+    };
+    const hasPosition = (pos: number) => {
+      const positions = testProps.selectPosition.positions;
+      if (Array.isArray(positions)) {
+        return positions.includes(pos) || positions.some((p) => typeof p === 'number' && (p & pos) === pos);
+      }
+      const numericPos = Number(positions);
+      return !isNaN(numericPos) && (numericPos & pos) === pos;
+    };
+
+    assert.equal(hasPosition(1), true, 'Must offer Face-Up Attack Position (1)');
+    assert.equal(hasPosition(4), false, 'Must NOT offer Face-Up Defense Position (4)');
+    assert.equal(hasPosition(8), true, 'Must offer Face-Down Defense Position (8)');
+    assert.equal(hasPosition(2), false, 'Must NOT offer Face-Down Attack Position (2)');
+
+    // Test bitmask fallback
+    const bitmaskProps = {
+      selectPosition: {
+        player: 0,
+        code: 27346636,
+        positions: [9],
+      },
+    };
+    const hasBitmaskPosition = (pos: number) => {
+      const positions = bitmaskProps.selectPosition.positions;
+      if (Array.isArray(positions)) {
+        return positions.includes(pos) || positions.some((p) => typeof p === 'number' && (p & pos) === pos);
+      }
+      const numericPos = Number(positions);
+      return !isNaN(numericPos) && (numericPos & pos) === pos;
+    };
+    assert.equal(hasBitmaskPosition(1), true, 'Bitmask must offer Face-Up Attack Position (1)');
+    assert.equal(hasBitmaskPosition(8), true, 'Bitmask must offer Face-Down Defense Position (8)');
+    assert.equal(hasBitmaskPosition(4), false, 'Bitmask must NOT offer Face-Up Defense Position (4)');
+
+    // Test Standard Monster Position Change (1 | 4 = 5 -> [1, 4])
+    const normalPosMask = 1 | 4;
+    const normalParsed = ocgPositionParse(normalPosMask);
+    assert.deepEqual(normalParsed, [1, 4], 'Normal monster position change must parse to [1, 4]');
+    const normalProps = {
+      selectPosition: {
+        player: 0,
+        code: 89631139,
+        positions: normalParsed,
+      },
+    };
+    const hasNormalPosition = (pos: number) => {
+      const positions = normalProps.selectPosition.positions;
+      if (Array.isArray(positions)) {
+        return positions.includes(pos) || positions.some((p) => typeof p === 'number' && (p & pos) === pos);
+      }
+      const numericPos = Number(positions);
+      return !isNaN(numericPos) && (numericPos & pos) === pos;
+    };
+    assert.equal(hasNormalPosition(1), true, 'Normal must offer Face-Up Attack (1)');
+    assert.equal(hasNormalPosition(4), true, 'Normal must offer Face-Up Defense (4)');
+    assert.equal(hasNormalPosition(8), false, 'Normal must NOT offer Face-Down Defense (8)');
+    console.log('  ✓ Cyber Jar and standard position stances verified completely.');
+
+    // 21. Imperial Order Standby Phase Maintenance Cost Prompt & Options
+    console.log('\n▶ Test 21: Imperial Order Standby Phase Maintenance Cost (SELECT_YESNO)');
+    
+    // Scenario 21A: Player declines to pay 700 LP -> 0 LP deducted, Imperial Order destroyed
+    service.startNewDuel({
+      player0Deck: Array(40).fill(25652259),
+      player1Deck: Array(40).fill(25652259),
+      player0SpellTraps: [
+        { code: 61740673, sequence: 0, position: 1 }, // Face-up Imperial Order
+      ],
+      noShuffle: true,
+      humanPlayerId: 0,
+      startingLP: 8000,
+    });
+
+    let ioPrompt = (service as any).lastPromptMessage;
+    assert.equal(ioPrompt?.type, OcgMessageType.SELECT_YESNO, 'Imperial Order must prompt SELECT_YESNO on Standby Phase');
+    assert.equal(ioPrompt?.player, 0, 'Prompt must target controller (player 0)');
+
+    const decodedPromptA = (service as any).messageDecoder.decode(ioPrompt);
+    assert.equal(decodedPromptA?.type, 'SELECT_YESNO');
+    assert.equal(decodedPromptA?.promptData?.isMaintenanceCost, true, 'isMaintenanceCost flag must be set');
+    assert.equal(decodedPromptA?.promptData?.yesText, 'Pay 700 LP');
+    assert.equal(decodedPromptA?.promptData?.noText, 'Do Not Pay (Destroy)');
+    assert.equal(decodedPromptA?.promptData?.badgeLabel, 'MAINTENANCE COST');
+    assert.equal(decodedPromptA?.promptData?.promptTitle, 'Maintenance Cost');
+
+    // Respond NO (decline payment)
+    service.sendResponse({
+      type: OcgResponseType.SELECT_YESNO,
+      yes: false,
+    });
+    service.processStep();
+
+    const boardA = service.getBoardState();
+    assert.equal(boardA.userField.currentLp, 8000, 'LP must remain 8000 when payment is declined');
+    assert.equal(boardA.userField.spellTrapZones[0], null, 'Imperial Order must be destroyed');
+    assert(boardA.userField.graveyard.some((c: any) => c.code === 61740673), 'Imperial Order must be sent to GY');
+    service.destroyCurrentDuel();
+    console.log('  ✓ Imperial Order decline payment: 0 LP lost, card destroyed.');
+
+    // Scenario 21B: Player pays 700 LP -> 700 LP deducted, Imperial Order remains on field
+    service.startNewDuel({
+      player0Deck: Array(40).fill(25652259),
+      player1Deck: Array(40).fill(25652259),
+      player0SpellTraps: [
+        { code: 61740673, sequence: 0, position: 1 }, // Face-up Imperial Order
+      ],
+      noShuffle: true,
+      humanPlayerId: 0,
+      startingLP: 8000,
+    });
+
+    ioPrompt = (service as any).lastPromptMessage;
+    assert.equal(ioPrompt?.type, OcgMessageType.SELECT_YESNO, 'Imperial Order must prompt SELECT_YESNO on Standby Phase');
+
+    // Respond YES (pay 700 LP)
+    service.sendResponse({
+      type: OcgResponseType.SELECT_YESNO,
+      yes: true,
+    });
+    service.processStep();
+
+    const boardB = service.getBoardState();
+    assert.equal(boardB.userField.currentLp, 7300, 'LP must be 7300 after paying 700 LP');
+    assert.equal(boardB.userField.spellTrapZones[0]?.code, 61740673, 'Imperial Order must remain on field');
+    service.destroyCurrentDuel();
+    console.log('  ✓ Imperial Order pay payment: 700 LP deducted, card remains active.');
+
     console.log('================================================================');
-    console.log('🎉 ALL 19 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
+    console.log('🎉 ALL 21 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');
     console.log('================================================================\n');
   } finally {
     service.close();

@@ -129,12 +129,12 @@ export function generateManifest(): UpdateManifest {
     releaseDate: new Date().toISOString(),
     releaseNotes:
       `Yu-Gi-Oh! Duel Arena v${currentVersion}\n` +
-      `- WebRTC Voice Chat Fix: Resolved call glare, two-way connection collisions, and media overwriting with deterministic Host caller protocol\n` +
-      `- Crystal-Clear Audio Output: Routed remote incoming voice stream through Web Audio API to AudioContext.destination for guaranteed speaker/headphone playback\n` +
-      `- Bluetooth Headset & Mic Optimization: Strict microphone track lifecycle shutdown on exit to immediately restore Bluetooth stereo fidelity (A2DP profile)\n` +
-      `- Opponent Voice Status: Dynamic 'Opponent in Voice — Join' indicator with live green pulse when opponent is in voice chat\n` +
-      `- Real-Time Multiplayer PvP: Peer-to-peer WebRTC dueling with 4-digit room codes, zero server hosting, and full game parity\n` +
-      `- Multi-Tribute Summon Support: Full support for monsters with multi-tribute capability (Egyptian God Slime, Double Coston, Kaiser Sea Horse)\n` +
+      `- Fast Delta Hot-Patcher: Download lightweight patch archive (~3.6 MB) via in-game updater instead of full 1.23 GB installer\n` +
+      `- Resilient Updater Engine: Switched to Chromium net.fetch stack with 60s memory TTL cache and in-flight request deduplication\n` +
+      `- Pre-Duel Opponent Modal: Quick modal dialog with 3-4 column grid, DM/GX series filters, and duelist cards without leaving coin toss\n` +
+      `- 2-Column Opponent Deck Browser: Deck Inspector with card artwork grid, stats breakdown, and hover previews\n` +
+      `- Cyber Jar Mechanics: Dual-position choice dialog (Face-Up Attack or Face-Down Defense) for each summoned monster\n` +
+      `- Imperial Order Standby Cost: Standby Phase prompt to pay 700 LP to maintain or destroy the card\n` +
       `- 100% test verification across all 40 test suites`,
     remoteBaseUrl: 'https://raw.githubusercontent.com/x0911/yugioh-electron/main',
     files: manifestFiles,
