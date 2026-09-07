@@ -1,6 +1,6 @@
 {
   "version": "0.1.10",
-  "releaseDate": "2026-09-07T12:53:44.181Z",
+  "releaseDate": "2026-09-07T13:03:18.226Z",
   "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.10\n- Fast Delta Hot-Patcher: Download lightweight patch archive (~3.6 MB) via in-game updater instead of full 1.23 GB installer\n- Resilient Updater Engine: Switched to Chromium net.fetch stack with 60s memory TTL cache and in-flight request deduplication\n- Pre-Duel Opponent Modal: Quick modal dialog with 3-4 column grid, DM/GX series filters, and duelist cards without leaving coin toss\n- 2-Column Opponent Deck Browser: Deck Inspector with card artwork grid, stats breakdown, and hover previews\n- Cyber Jar Mechanics: Dual-position choice dialog (Face-Up Attack or Face-Down Defense) for each summoned monster\n- Imperial Order Standby Cost: Standby Phase prompt to pay 700 LP to maintain or destroy the card\n- 100% test verification across all 40 test suites",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {
@@ -1681,8 +1681,8 @@
     },
     "resources/scripts/official/c18144506.lua": {
       "path": "resources/scripts/official/c18144506.lua",
-      "size": 797,
-      "sha256": "90ea7fe53073927c1a05efc8cff5c2472fec439a6e4786f630bfbab6245a21ce"
+      "size": 838,
+      "sha256": "4a32eeac36ca9f444ac8c2b3b1c36f010bb5465d39407766e119b09752568dc6"
     },
     "resources/scripts/official/c18144507.lua": {
       "path": "resources/scripts/official/c18144507.lua",
