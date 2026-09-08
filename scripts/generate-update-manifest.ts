@@ -95,6 +95,10 @@ export function generateManifest(): UpdateManifest {
   const uiDir = path.join(ROOT_DIR, 'resources/ui');
   walkDirectory(uiDir, targetFiles);
 
+  // 6. Card cutscene videos (Summon & Attack cutscenes)
+  const cardVideosDir = path.join(ROOT_DIR, 'resources/videos/cards');
+  walkDirectory(cardVideosDir, targetFiles);
+
   // Filter out ANY file that is gitignored to guarantee 100% availability on GitHub raw CDN
   const relPaths = targetFiles.map((abs) => path.relative(ROOT_DIR, abs).replace(/\\/g, '/'));
   const ignoreCheck = spawnSync('git', ['check-ignore', '--stdin'], {
@@ -129,11 +133,11 @@ export function generateManifest(): UpdateManifest {
     releaseDate: new Date().toISOString(),
     releaseNotes:
       `Yu-Gi-Oh! Duel Arena v${currentVersion}\n` +
+      `- Buster Blader Full Cutscenes: Bundled high-definition Summon and Attack cutscenes for Buster Blader in the fast update package\n` +
       `- AI Battle Phase Freeze Fix: Resolved missing import in CyberDragonExecutor preventing turn progression when declaring attacks\n` +
       `- Dual-Layer AI Fail-Safe: Added per-hook executor isolation and automatic engine recovery so AI turns never stall\n` +
       `- Card Evaluation Improvements: Corrected hand card object type checks across AIController, Cyber Dragon, Hero, and Volcanic executors\n` +
-      `- Buster Blader Cutscene Support: Pre-registered Buster Blader in the video registry with custom summon and attack cutscene hooks\n` +
-      `- Fast Delta Hot-Patcher: Lightweight patch archive (~3.6 MB) available via in-game updater instead of full 1.23 GB installer\n` +
+      `- Fast Delta Hot-Patcher: Lightweight patch archive including all card cutscene media available via in-game updater\n` +
       `- 100% test verification across all 40 test suites`,
     remoteBaseUrl: 'https://raw.githubusercontent.com/x0911/yugioh-electron/main',
     files: manifestFiles,

@@ -1,7 +1,7 @@
 {
-  "version": "0.1.11",
-  "releaseDate": "2026-09-08T11:36:41.718Z",
-  "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.11\n- AI Battle Phase Freeze Fix: Resolved missing import in CyberDragonExecutor preventing turn progression when declaring attacks\n- Dual-Layer AI Fail-Safe: Added per-hook executor isolation and automatic engine recovery so AI turns never stall\n- Card Evaluation Improvements: Corrected hand card object type checks across AIController, Cyber Dragon, Hero, and Volcanic executors\n- Buster Blader Cutscene Support: Pre-registered Buster Blader in the video registry with custom summon and attack cutscene hooks\n- Fast Delta Hot-Patcher: Lightweight patch archive (~3.6 MB) available via in-game updater instead of full 1.23 GB installer\n- 100% test verification across all 40 test suites",
+  "version": "0.1.12",
+  "releaseDate": "2026-09-08T13:27:14.231Z",
+  "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.12\n- Buster Blader Full Cutscenes: Bundled high-definition Summon and Attack cutscenes for Buster Blader in the fast update package\n- AI Battle Phase Freeze Fix: Resolved missing import in CyberDragonExecutor preventing turn progression when declaring attacks\n- Dual-Layer AI Fail-Safe: Added per-hook executor isolation and automatic engine recovery so AI turns never stall\n- Card Evaluation Improvements: Corrected hand card object type checks across AIController, Cyber Dragon, Hero, and Volcanic executors\n- Fast Delta Hot-Patcher: Lightweight patch archive including all card cutscene media available via in-game updater\n- 100% test verification across all 40 test suites",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {
     "data/card-pool-whitelist.json": {
@@ -11,8 +11,8 @@
     },
     "data/card-videos.json": {
       "path": "data/card-videos.json",
-      "size": 2879,
-      "sha256": "96f14148ccb2694f035799700945f2480055461d8bee6e404f8bec9b13153d29"
+      "size": 2880,
+      "sha256": "46873de3899b260cb860522b8ce8c15a599a4e5a0cbf838c8c32500528d31c7b"
     },
     "data/characters.json": {
       "path": "data/characters.json",

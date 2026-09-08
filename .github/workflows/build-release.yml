@@ -114,11 +114,11 @@ jobs:
       - name: Run Test Suite
         run: npm test
 
-      - name: Package Fast In-Game Patch Bundle (~3.6 MB)
+      - name: Package Fast In-Game Patch Bundle
         shell: bash
         run: |
-          echo "Compressing compiled UI, engine, card database, and scripts into app-patch.tar.gz..."
-          tar -czf app-patch.tar.gz dist/ data/ resources/cards.cdb resources/scripts/ package.json
+          echo "Compressing compiled UI, engine, card database, scripts, and card videos into app-patch.tar.gz..."
+          tar -czf app-patch.tar.gz dist/ data/ resources/cards.cdb resources/scripts/ resources/videos/cards package.json
           ls -lh app-patch.tar.gz
 
       # Pre-create the GitHub Release container if it does not exist yet.
