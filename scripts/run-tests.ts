@@ -43,6 +43,7 @@ const testFiles = [
   'tests/ai-archetype-combos.test.ts',
   'tests/multiplayer-pvp-protocol.test.ts',
   'tests/multi-tribute-monsters.test.ts',
+  'tests/buster-blader-and-deck-count-fixes.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);

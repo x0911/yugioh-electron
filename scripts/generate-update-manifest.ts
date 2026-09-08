@@ -133,12 +133,11 @@ export function generateManifest(): UpdateManifest {
     releaseDate: new Date().toISOString(),
     releaseNotes:
       `Yu-Gi-Oh! Duel Arena v${currentVersion}\n` +
-      `- Buster Blader Full Cutscenes: Bundled high-definition Summon and Attack cutscenes for Buster Blader in the fast update package\n` +
-      `- AI Battle Phase Freeze Fix: Resolved missing import in CyberDragonExecutor preventing turn progression when declaring attacks\n` +
-      `- Dual-Layer AI Fail-Safe: Added per-hook executor isolation and automatic engine recovery so AI turns never stall\n` +
-      `- Card Evaluation Improvements: Corrected hand card object type checks across AIController, Cyber Dragon, Hero, and Volcanic executors\n` +
-      `- Fast Delta Hot-Patcher: Lightweight patch archive including all card cutscene media available via in-game updater\n` +
-      `- 100% test verification across all 40 test suites`,
+      `- Buster Blader In-Game Patch Fix: Resolved ESM dynamic require error in packaged builds to reliably load patch assets from userData/patch/\n` +
+      `- Persistent Cutscene Video Triggering: Ensured summon and attack cutscene payloads persist and play through automatic chain resolution\n` +
+      `- Deck Count Synchronization: Fixed false deck-out defeats by tracking milled, searched, and excavated cards in real-time without WASM faults\n` +
+      `- Fast Delta Hot-Patcher: Lightweight patch archive including Buster Blader cutscenes available via in-game internal updater\n` +
+      `- 100% test verification across all 41 test suites`,
     remoteBaseUrl: 'https://raw.githubusercontent.com/x0911/yugioh-electron/main',
     files: manifestFiles,
   };

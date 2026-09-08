@@ -5,6 +5,10 @@ import { Readable } from 'node:stream';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { registerIpcHandlers } from './ipc/index';
 import { APP_CONFIG } from '../shared/constants/index';
+import { setElectronApp } from './decks/deckLoader.js';
+
+setElectronApp(app);
+(globalThis as any).electronApp = app;
 
 // Register custom protocol for local game resources (cards, audio, videos, ui)
 protocol.registerSchemesAsPrivileged([

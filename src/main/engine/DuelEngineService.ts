@@ -324,6 +324,7 @@ export class DuelEngineService {
     this.player1Field.currentLp = startingLP;
     this.player0Field.deckCount = options.player0Deck.length;
     this.player1Field.deckCount = options.player1Deck.length;
+    this.loadCardVideos();
 
     this.state = {
       isActive: true,
@@ -1042,6 +1043,8 @@ export class DuelEngineService {
           movedCard = fromPf.extraDeck.splice(idx, 1)[0];
         }
         fromPf.extraDeckCount = fromPf.extraDeck.length;
+      } else if (from.location === OcgLocation.DECK) {
+        fromPf.deckCount = Math.max(0, fromPf.deckCount - 1);
       }
     }
 
@@ -1223,6 +1226,8 @@ export class DuelEngineService {
         movedCard.position = 'facedown_spell';
         toPf.extraDeck.unshift(movedCard);
         toPf.extraDeckCount = toPf.extraDeck.length;
+      } else if (to.location === OcgLocation.DECK) {
+        toPf.deckCount++;
       }
     }
   }
@@ -1592,12 +1597,11 @@ export class DuelEngineService {
 
     // Process engine steps
     let maxSubSteps = 100;
+    let pendingVideoPayload: CardVideoPayload | null = null;
     while (this.state.isActive && !this.isVideoPlaying && maxSubSteps > 0) {
       maxSubSteps--;
       const status = this.lib.duelProcess(handle);
       const rawMessages = this.lib.duelGetMessage(handle);
-
-      let pendingVideoPayload: CardVideoPayload | null = null;
 
       for (const msg of rawMessages) {
         const decoded = this.messageDecoder.decode(msg);
@@ -1827,6 +1831,16 @@ export class DuelEngineService {
       }
     }
 
+    if (pendingVideoPayload && !this.isVideoPlaying) {
+      this.isVideoPlaying = true;
+      this.state.isVideoPlaying = true;
+      if (this.aiStepTimer) {
+        clearTimeout(this.aiStepTimer);
+        this.aiStepTimer = null;
+      }
+      this.emitVideoEvent(pendingVideoPayload);
+    }
+
     return allDecodedEvents;
   }
 
@@ -1895,6 +1909,10 @@ export class DuelEngineService {
 
   public getState(): DuelState {
     return { ...this.state, isVideoPlaying: this.isVideoPlaying };
+  }
+
+  public syncDeckCounts(): void {
+    // Deck counts are accurately tracked in real-time by handleCardMove and DRAW messages.
   }
 
   public syncFieldCardStats(): Array<{

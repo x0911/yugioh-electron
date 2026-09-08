@@ -20,6 +20,7 @@ export interface DecodedDuelEvent {
   rawType: number;
   player?: number;
   controller?: number;
+  fromController?: number;
   code?: number;
   cardName?: string;
   location?: number;
@@ -672,6 +673,7 @@ export class MessageDecoder {
           code: msg.card,
           cardName: name,
           controller: msg.to.controller,
+          fromController: msg.from.controller,
           fromLocation: msg.from.location,
           fromSequence: msg.from.sequence,
           toLocation: msg.to.location,

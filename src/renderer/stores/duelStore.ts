@@ -827,6 +827,11 @@ export const useDuelStore = defineStore('duel', {
         this.boardState.opponentField.characterId = this.selectedOpponent.id;
       }
 
+      const userDeckLen = this.userPlayerId === 0 ? p0Deck.length : p1Deck.length;
+      const oppDeckLen = this.userPlayerId === 0 ? p1Deck.length : p0Deck.length;
+      this.boardState.userField.deckCount = userDeckLen;
+      this.boardState.opponentField.deckCount = oppDeckLen;
+
       if (window.duelAPI) {
         try {
           const p0Plain = Array.from(p0Deck).map((c) => Number(c));
@@ -1119,6 +1124,7 @@ export const useDuelStore = defineStore('duel', {
       code?: number;
       cardName?: string;
       controller?: number;
+      fromController?: number;
       fromLocation?: number;
       fromSequence?: number;
       toLocation?: number;
@@ -1140,8 +1146,8 @@ export const useDuelStore = defineStore('duel', {
       // Issue 3: For cross-controller moves (e.g. Monster Reborn takes from opponent's GY),
       // the source and destination can belong to different players.
       // The MOVE event's `controller` is always the TO-controller (who gets the card).
-      // The FROM-controller is available in event.raw.from.controller (raw OCG message).
-      const fromController = ((moveEvt as any).raw?.from?.controller ?? controller) as 0 | 1;
+      // The FROM-controller is available in moveEvt.fromController or event.raw.from.controller (raw OCG message).
+      const fromController = (moveEvt.fromController ?? (moveEvt as any).raw?.from?.controller ?? controller) as 0 | 1;
       const fromPf = getPf(fromController);
       const toPf = getPf(controller);
 

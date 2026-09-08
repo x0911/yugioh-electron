@@ -2,12 +2,22 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { CharacterData, CharacterDeckData } from '../../shared/types/character.js';
 
+import { createRequire } from 'node:module';
+
 let cachedCharacters: CharacterData[] | null = null;
+let customAppInstance: any = null;
+
+export function setElectronApp(appInstance: any): void {
+  customAppInstance = appInstance;
+}
 
 function getElectronApp(): any {
+  if (customAppInstance) return customAppInstance;
+  if ((globalThis as any).electronApp) return (globalThis as any).electronApp;
+  if ((globalThis as any).electron?.app) return (globalThis as any).electron.app;
   try {
-    // @ts-ignore
-    const electron = globalThis.electron || (typeof process !== 'undefined' && (process as any).type ? require('electron') : null);
+    const req = createRequire(import.meta.url);
+    const electron = req('electron');
     return electron?.app || electron?.default?.app || null;
   } catch {
     return null;
