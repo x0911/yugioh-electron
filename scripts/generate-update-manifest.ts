@@ -129,12 +129,11 @@ export function generateManifest(): UpdateManifest {
     releaseDate: new Date().toISOString(),
     releaseNotes:
       `Yu-Gi-Oh! Duel Arena v${currentVersion}\n` +
-      `- Fast Delta Hot-Patcher: Download lightweight patch archive (~3.6 MB) via in-game updater instead of full 1.23 GB installer\n` +
-      `- Resilient Updater Engine: Switched to Chromium net.fetch stack with 60s memory TTL cache and in-flight request deduplication\n` +
-      `- Pre-Duel Opponent Modal: Quick modal dialog with 3-4 column grid, DM/GX series filters, and duelist cards without leaving coin toss\n` +
-      `- 2-Column Opponent Deck Browser: Deck Inspector with card artwork grid, stats breakdown, and hover previews\n` +
-      `- Cyber Jar Mechanics: Dual-position choice dialog (Face-Up Attack or Face-Down Defense) for each summoned monster\n` +
-      `- Imperial Order Standby Cost: Standby Phase prompt to pay 700 LP to maintain or destroy the card\n` +
+      `- AI Battle Phase Freeze Fix: Resolved missing import in CyberDragonExecutor preventing turn progression when declaring attacks\n` +
+      `- Dual-Layer AI Fail-Safe: Added per-hook executor isolation and automatic engine recovery so AI turns never stall\n` +
+      `- Card Evaluation Improvements: Corrected hand card object type checks across AIController, Cyber Dragon, Hero, and Volcanic executors\n` +
+      `- Buster Blader Cutscene Support: Pre-registered Buster Blader in the video registry with custom summon and attack cutscene hooks\n` +
+      `- Fast Delta Hot-Patcher: Lightweight patch archive (~3.6 MB) available via in-game updater instead of full 1.23 GB installer\n` +
       `- 100% test verification across all 40 test suites`,
     remoteBaseUrl: 'https://raw.githubusercontent.com/x0911/yugioh-electron/main',
     files: manifestFiles,

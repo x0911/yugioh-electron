@@ -153,7 +153,7 @@ export class HeroFusionExecutor extends DefaultExecutor {
         if (malIdx >= 0) return [malIdx];
       }
 
-      const handHasStratos = aiField.hand.some((c) => c === 40044918);
+      const handHasStratos = aiField.hand.some((c: any) => c === 40044918 || c?.code === 40044918);
       if (!handHasStratos) {
         const stratosIdx = rawSelects.findIndex((s: any) => s.code === 40044918);
         if (stratosIdx >= 0) return [stratosIdx];

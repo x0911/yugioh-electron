@@ -1405,49 +1405,55 @@ export class DuelEngineService {
   }
 
   private getAiResponse(msg: OcgMessage, promptPlayer: number): { response: OcgResponse; delayMs: number } {
-    const aiPlayerId = promptPlayer;
-    const humanPlayerId = 1 - aiPlayerId;
+    try {
+      const aiPlayerId = promptPlayer;
+      const humanPlayerId = 1 - aiPlayerId;
 
-    // Enriched stats & statuses
-    this.enrichStatusesForField(this.player0Field);
-    this.enrichStatusesForField(this.player1Field);
-    this.syncFieldCardStats();
-    this.enrichDynamicStatsForField(this.player0Field, this.player1Field);
-    this.enrichDynamicStatsForField(this.player1Field, this.player0Field);
+      // Enriched stats & statuses
+      this.enrichStatusesForField(this.player0Field);
+      this.enrichStatusesForField(this.player1Field);
+      this.syncFieldCardStats();
+      this.enrichDynamicStatsForField(this.player0Field, this.player1Field);
+      this.enrichDynamicStatsForField(this.player1Field, this.player0Field);
 
-    // Build strictly redacted AI-side board state
-    const aiBoardState: DuelBoardState = {
-      userField: this.viewFilter.filterPlayerFieldForViewer(this.player0Field, aiPlayerId),
-      opponentField: this.viewFilter.filterPlayerFieldForViewer(this.player1Field, aiPlayerId),
-      extraMonsterZones: [null, null],
-      turnNumber: this.state.currentTurn,
-      currentPhase: this.state.currentPhase,
-      activePrompt: null,
-      phaseGuideText: '',
-      winner: this.state.winner,
-      winReason: this.state.winReason,
-    };
+      // Build strictly redacted AI-side board state
+      const aiBoardState: DuelBoardState = {
+        userField: this.viewFilter.filterPlayerFieldForViewer(this.player0Field, aiPlayerId),
+        opponentField: this.viewFilter.filterPlayerFieldForViewer(this.player1Field, aiPlayerId),
+        extraMonsterZones: [null, null],
+        turnNumber: this.state.currentTurn,
+        currentPhase: this.state.currentPhase,
+        activePrompt: null,
+        phaseGuideText: '',
+        winner: this.state.winner,
+        winReason: this.state.winReason,
+      };
 
-    // Assert anti-cheat verification: throws loudly if unrevealed human cards leaked
-    assertAiStateSanitized(aiBoardState, aiPlayerId);
+      // Assert anti-cheat verification: throws loudly if unrevealed human cards leaked
+      assertAiStateSanitized(aiBoardState, aiPlayerId);
 
-    const context: EvaluatorContext = {
-      aiPlayerId,
-      humanPlayerId,
-      boardState: aiBoardState,
-      personality: this.aiPersonality,
-      cardReader: this.cardReader,
-      currentPhase: this.state.currentPhase,
-      currentTurn: this.state.currentTurn,
-      signatureCardIds: this.aiSignatureCards,
-      deckArchetype: this.aiDeckArchetype,
-      aiDeckCards: this.aiDeckCards,
-      activeChainCards: [...this.activeChainCards],
-    };
+      const context: EvaluatorContext = {
+        aiPlayerId,
+        humanPlayerId,
+        boardState: aiBoardState,
+        personality: this.aiPersonality,
+        cardReader: this.cardReader,
+        currentPhase: this.state.currentPhase,
+        currentTurn: this.state.currentTurn,
+        signatureCardIds: this.aiSignatureCards,
+        deckArchetype: this.aiDeckArchetype,
+        aiDeckCards: this.aiDeckCards,
+        activeChainCards: [...this.activeChainCards],
+      };
 
-    const response = this.aiController.decideResponse(msg, context);
-    const delayMs = this.aiController.getThinkDelay(this.aiPersonality, OcgMessageType[msg.type]);
-    return { response, delayMs };
+      const response = this.aiController.decideResponse(msg, context);
+      const delayMs = this.aiController.getThinkDelay(this.aiPersonality, OcgMessageType[msg.type]);
+      return { response, delayMs };
+    } catch (err) {
+      console.error('[DuelEngineService] Emergency recovery in getAiResponse:', err);
+      const auto = getAutoResponse(msg) ?? { type: OcgResponseType.SELECT_CHAIN, index: null };
+      return { response: auto, delayMs: 200 };
+    }
   }
 
   private async getAiResponseAsync(
@@ -1788,14 +1794,26 @@ export class DuelEngineService {
                 })
                 .catch((err) => {
                   console.warn('[DuelEngineService] getAiResponseAsync error, using fast fallback:', err);
-                  const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
-                  this.scheduleAiResponse(handle, response, delayMs);
+                  try {
+                    const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
+                    this.scheduleAiResponse(handle, response, delayMs);
+                  } catch (fallbackErr) {
+                    console.error('[DuelEngineService] Emergency fallback error:', fallbackErr);
+                    const auto = getAutoResponse(lastMsg) ?? { type: OcgResponseType.SELECT_CHAIN, index: null };
+                    this.scheduleAiResponse(handle, auto, 200);
+                  }
                 });
             } else {
-              const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
-              console.log(`[AI Debug] Prompt: ${OcgMessageType[lastMsg.type]} for P${promptPlayer}`, JSON.stringify(lastMsg, (k, v) => typeof v === 'bigint' ? v.toString() : v));
-              console.log(`[AI Debug] Response: ${OcgResponseType[response.type]}`, JSON.stringify(response, (k, v) => typeof v === 'bigint' ? v.toString() : v));
-              this.scheduleAiResponse(handle, response, delayMs);
+              try {
+                const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
+                console.log(`[AI Debug] Prompt: ${OcgMessageType[lastMsg.type]} for P${promptPlayer}`, JSON.stringify(lastMsg, (k, v) => typeof v === 'bigint' ? v.toString() : v));
+                console.log(`[AI Debug] Response: ${OcgResponseType[response.type]}`, JSON.stringify(response, (k, v) => typeof v === 'bigint' ? v.toString() : v));
+                this.scheduleAiResponse(handle, response, delayMs);
+              } catch (err) {
+                console.error('[DuelEngineService] Critical error in AI prompt handling, sending auto-response:', err);
+                const auto = getAutoResponse(lastMsg) ?? { type: OcgResponseType.SELECT_CHAIN, index: null };
+                this.scheduleAiResponse(handle, auto, 200);
+              }
             }
             break;
           }

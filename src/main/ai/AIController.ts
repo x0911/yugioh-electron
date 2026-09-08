@@ -15,7 +15,7 @@ import type { EvaluatorContext, ScoredAction } from './types.js';
 import { getAiAndOpponentFields } from './types.js';
 import type { CharacterPersonality } from '../../shared/types/character.js';
 import type { FieldCard, PlayerFieldState } from '../../shared/types/field.js';
-import { parseFieldMask } from '../engine/messageDecoder.js';
+import { parseFieldMask, getAutoResponse } from '../engine/messageDecoder.js';
 import { evaluateBoard } from './evaluators/boardEvaluator.js';
 import { evaluateAdvantage } from './evaluators/advantageEvaluator.js';
 import { evaluateAttackOption, type AttackCandidate } from './evaluators/combatEvaluator.js';
@@ -95,8 +95,9 @@ export class AIController {
     // 1. Anti-cheat assertion verification
     assertAiStateSanitized(context.boardState, context.aiPlayerId);
 
-    // 2. Route prompt to specialized evaluators
-    switch (msg.type) {
+    // 2. Route prompt to specialized evaluators with safe fallback
+    try {
+      switch (msg.type) {
       case OcgMessageType.SELECT_IDLECMD:
         return this.decideIdleCmd(msg, context);
 
@@ -252,11 +253,23 @@ export class AIController {
         };
       }
 
-      default:
-        return {
-          type: OcgResponseType.SELECT_CHAIN,
-          index: null,
-        };
+        default: {
+          const auto = getAutoResponse(msg);
+          if (auto) return auto;
+          return {
+            type: OcgResponseType.SELECT_CHAIN,
+            index: null,
+          };
+        }
+      }
+    } catch (err) {
+      console.error('[AIController] Unexpected error in decideResponse, falling back to emergency auto-response:', err);
+      const auto = getAutoResponse(msg);
+      if (auto) return auto;
+      return {
+        type: OcgResponseType.SELECT_CHAIN,
+        index: null,
+      };
     }
   }
 
@@ -280,10 +293,16 @@ export class AIController {
   // ===========================================================================
   // SELECT_IDLECMD
   // ===========================================================================
-
   private decideIdleCmd(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
     const executor = getExecutorForDeck(context, context.aiDeckCards);
-    const executorActions = executor.onIdleCmd ? executor.onIdleCmd(msg, context) : null;
+    let executorActions: ScoredAction[] | null = null;
+    try {
+      if (executor.onIdleCmd) {
+        executorActions = executor.onIdleCmd(msg, context);
+      }
+    } catch (err) {
+      console.error(`[AIController] Error in executor.onIdleCmd (${executor.name}):`, err);
+    }
     if (executorActions && executorActions.length > 0) {
       return this.selectWeightedAction(executorActions, context);
     }
@@ -654,7 +673,14 @@ export class AIController {
 
   private decideBattleCmd(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
     const executor = getExecutorForDeck(context, context.aiDeckCards);
-    const executorActions = executor.onBattleCmd ? executor.onBattleCmd(msg, context) : null;
+    let executorActions: ScoredAction[] | null = null;
+    try {
+      if (executor.onBattleCmd) {
+        executorActions = executor.onBattleCmd(msg, context);
+      }
+    } catch (err) {
+      console.error(`[AIController] Error in executor.onBattleCmd (${executor.name}):`, err);
+    }
     if (executorActions && executorActions.length > 0) {
       return this.selectWeightedAction(executorActions, context);
     }
@@ -738,7 +764,14 @@ export class AIController {
 
   private decideSelectCard(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
     const executor = getExecutorForDeck(context, context.aiDeckCards);
-    const customCards = executor.onSelectCard ? executor.onSelectCard(msg, context) : null;
+    let customCards: number[] | null = null;
+    try {
+      if (executor.onSelectCard) {
+        customCards = executor.onSelectCard(msg, context);
+      }
+    } catch (err) {
+      console.error(`[AIController] Error in executor.onSelectCard (${executor.name}):`, err);
+    }
     if (customCards && customCards.length > 0) {
       return {
         type: OcgResponseType.SELECT_CARD,
@@ -762,7 +795,7 @@ export class AIController {
 
     // Check if AI controls or holds a Graveyard revival card (Monster Reborn, Premature Burial, Call of the Haunted)
     const hasRevivalEnabler =
-      aiField.hand.some((c) => c === 83764719 || c === 70828912 || c === 97077563) ||
+      aiField.hand.some((c: any) => c === 83764719 || c?.code === 83764719 || c === 70828912 || c?.code === 70828912 || c === 97077563 || c?.code === 97077563) ||
       aiField.spellTrapZones.some((s) => s && (s.code === 83764719 || s.code === 70828912 || s.code === 97077563));
 
     // Score each candidate in msg.selects
@@ -963,7 +996,14 @@ export class AIController {
 
   private decideSelectTribute(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
     const executor = getExecutorForDeck(context, context.aiDeckCards);
-    const customTributes = executor.onSelectTribute ? executor.onSelectTribute(msg, context) : null;
+    let customTributes: number[] | null = null;
+    try {
+      if (executor.onSelectTribute) {
+        customTributes = executor.onSelectTribute(msg, context);
+      }
+    } catch (err) {
+      console.error(`[AIController] Error in executor.onSelectTribute (${executor.name}):`, err);
+    }
     if (customTributes && customTributes.length > 0) {
       return {
         type: OcgResponseType.SELECT_TRIBUTE,
@@ -1029,7 +1069,14 @@ export class AIController {
 
   private decideSelectChain(msg: OcgMessage, context: EvaluatorContext): OcgResponse {
     const executor = getExecutorForDeck(context, context.aiDeckCards);
-    const executorActions = executor.onSelectChain ? executor.onSelectChain(msg, context) : null;
+    let executorActions: ScoredAction[] | null = null;
+    try {
+      if (executor.onSelectChain) {
+        executorActions = executor.onSelectChain(msg, context);
+      }
+    } catch (err) {
+      console.error(`[AIController] Error in executor.onSelectChain (${executor.name}):`, err);
+    }
     if (executorActions && executorActions.length > 0) {
       return this.selectWeightedAction(executorActions, context);
     }
@@ -1090,7 +1137,14 @@ export class AIController {
 
     // 0. Deck Executor custom override
     const executor = getExecutorForDeck(context, context.aiDeckCards);
-    const customYesNo = executor.onSelectYesNo ? executor.onSelectYesNo(msg, context) : null;
+    let customYesNo: boolean | null = null;
+    try {
+      if (executor.onSelectYesNo) {
+        customYesNo = executor.onSelectYesNo(msg, context);
+      }
+    } catch (err) {
+      console.error(`[AIController] Error in executor.onSelectYesNo (${executor.name}):`, err);
+    }
     if (customYesNo !== null && customYesNo !== undefined) {
       return { type: responseType, yes: customYesNo };
     }
@@ -1128,7 +1182,14 @@ export class AIController {
 
     // 0. Deck Executor custom override
     const executor = getExecutorForDeck(context, context.aiDeckCards);
-    const customOption = executor.onSelectOption ? executor.onSelectOption(msg, context) : null;
+    let customOption: number | null = null;
+    try {
+      if (executor.onSelectOption) {
+        customOption = executor.onSelectOption(msg, context);
+      }
+    } catch (err) {
+      console.error(`[AIController] Error in executor.onSelectOption (${executor.name}):`, err);
+    }
     if (customOption !== null && customOption !== undefined) {
       return {
         type: OcgResponseType.SELECT_OPTION,

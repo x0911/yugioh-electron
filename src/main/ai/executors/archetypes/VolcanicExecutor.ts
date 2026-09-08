@@ -41,7 +41,7 @@ export class VolcanicExecutor extends DefaultExecutor {
       }
       // 2. Blaze Accelerator / Tri-Blaze Accelerator (Activate Spell or Ignition Effect)
       else if (code === 69537999 || code === 21420702) {
-        const hasAmmunition = aiField.hand.some((h) => h === 69750546 || h === 33365932);
+        const hasAmmunition = aiField.hand.some((h: any) => h === 69750546 || h?.code === 69750546 || h === 33365932 || h?.code === 33365932);
         if (oppMonsters.length > 0 && hasAmmunition) {
           c.score += 3800;
           c.reason = `[BLAZE ACCELERATOR] Fire Pyro ammunition to destroy opponent monsters and burn LP!`;

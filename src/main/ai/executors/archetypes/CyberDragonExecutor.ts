@@ -6,6 +6,7 @@ import {
 } from 'ocgcore-wasm';
 import { DefaultExecutor } from '../DefaultExecutor.js';
 import type { EvaluatorContext, ScoredAction } from '../../types.js';
+import { getAiAndOpponentFields } from '../../types.js';
 
 export class CyberDragonExecutor extends DefaultExecutor {
   public override readonly id = 'cyber-dragon';
@@ -65,7 +66,7 @@ export class CyberDragonExecutor extends DefaultExecutor {
     // When Normal Summoned: Add 1 "Cyber" Spell/Trap from Deck to hand.
     // Priority: Power Bond (37630732) > Cyber Emergency (60312991) > Cyber Repair Plant (77603950)
     if (activeChainCards?.includes(23893227)) {
-      const hasPowerBond = aiField.hand.some((c) => c === 37630732);
+      const hasPowerBond = aiField.hand.some((c: any) => c === 37630732 || c?.code === 37630732);
       if (!hasPowerBond) {
         const pbIdx = rawSelects.findIndex((s: any) => s.code === 37630732);
         if (pbIdx >= 0) return [pbIdx];
