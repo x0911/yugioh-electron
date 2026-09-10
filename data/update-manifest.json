@@ -1,6 +1,6 @@
 {
   "version": "0.1.14",
-  "releaseDate": "2026-09-10T04:07:20.790Z",
+  "releaseDate": "2026-09-10T11:05:14.480Z",
   "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.14\n- Buster Blader In-Game Patch Fix: Resolved ESM dynamic require error in packaged builds to reliably load patch assets from userData/patch/\n- Persistent Cutscene Video Triggering: Ensured summon and attack cutscene payloads persist and play through automatic chain resolution\n- Deck Count Synchronization: Fixed false deck-out defeats by tracking milled, searched, and excavated cards in real-time without WASM faults\n- Fast Delta Hot-Patcher: Lightweight patch archive including Buster Blader cutscenes available via in-game internal updater\n- 100% test verification across all 41 test suites",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {

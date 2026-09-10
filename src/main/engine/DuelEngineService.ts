@@ -62,6 +62,7 @@ export interface DuelOptions {
   player0SpellTraps?: Array<{ code: number; sequence: number; position?: number }>;
   player1SpellTraps?: Array<{ code: number; sequence: number; position?: number }>;
   noShuffle?: boolean;
+  seed?: [bigint, bigint, bigint, bigint];
   startingLP?: number;
   startingDrawCount?: number;
   drawCountPerTurn?: number;
@@ -352,9 +353,13 @@ export class DuelEngineService {
       lastErrorTimestamp: null,
     };
 
+    const flags = options.noShuffle
+      ? (OcgDuelMode.MODE_MR5 | OcgDuelMode.PSEUDO_SHUFFLE)
+      : OcgDuelMode.MODE_MR5;
+
     const handle = this.lib.createDuel({
-      flags: OcgDuelMode.MODE_MR5,
-      seed: [
+      flags,
+      seed: options.seed ?? [
         BigInt(Math.floor(Math.random() * 1000000)),
         BigInt(Math.floor(Math.random() * 1000000)),
         BigInt(Math.floor(Math.random() * 1000000)),

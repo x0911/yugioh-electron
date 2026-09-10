@@ -65,11 +65,11 @@ async function runTestSuite() {
     // 2. Harpie's Feather Duster
     console.log("▶ Test 2: Harpie's Feather Duster (Destroy all opponent Spell/Traps)");
     service.startNewDuel({
-      player0Deck: [...Array(35).fill(25652259), 18144506, 18144506, 18144506, 18144506, 18144506],
+      player0Deck: Array(40).fill(18144506),
       player1Deck: Array(40).fill(25652259),
       player1SpellTraps: [
-        { code: 44095762, sequence: 0 }, // Set Mirror Force
-        { code: 62279055, sequence: 1 }, // Set Magic Cylinder
+        { code: 44095762, sequence: 0, position: OcgPosition.FACEDOWN }, // Set Mirror Force
+        { code: 62279055, sequence: 1, position: OcgPosition.FACEDOWN }, // Set Magic Cylinder
       ],
       noShuffle: true,
       humanPlayerId: 0,
