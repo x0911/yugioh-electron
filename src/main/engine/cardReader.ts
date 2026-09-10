@@ -326,9 +326,9 @@ export class CardReaderService {
     }
   }
 
-  private manifestCache: Record<string, { id: number; name: string; era?: 'DM' | 'GX' }> | null = null;
+  private manifestCache: Record<string, { id: number; name: string; era?: 'DM' | 'GX' | '5Ds' }> | null = null;
 
-  private loadWhitelistManifest(): Record<string, { id: number; name: string; era?: 'DM' | 'GX' }> {
+  private loadWhitelistManifest(): Record<string, { id: number; name: string; era?: 'DM' | 'GX' | '5Ds' }> {
     if (this.manifestCache) return this.manifestCache;
     try {
       const manifestPath = getResourcePath('data/card-pool-whitelist.json');
@@ -344,7 +344,7 @@ export class CardReaderService {
 
   public mapRowToCardDetail(
     row: CardRecord,
-    manifest?: Record<string, { id: number; name: string; era?: 'DM' | 'GX' }>,
+    manifest?: Record<string, { id: number; name: string; era?: 'DM' | 'GX' | '5Ds' }>,
   ): CardDetail {
     const isMonster = (row.type & CARD_TYPES.MONSTER) !== 0;
     const isSpell = (row.type & CARD_TYPES.SPELL) !== 0;
@@ -352,6 +352,8 @@ export class CardReaderService {
     const isNormal = (row.type & CARD_TYPES.NORMAL) !== 0;
     const isEffect = (row.type & CARD_TYPES.EFFECT) !== 0;
     const isFusion = (row.type & CARD_TYPES.FUSION) !== 0;
+    const isSynchro = (row.type & CARD_TYPES.SYNCHRO) !== 0;
+    const isTuner = (row.type & CARD_TYPES.TUNER) !== 0;
     const isRitual = (row.type & CARD_TYPES.RITUAL) !== 0;
     const isFlip = (row.type & CARD_TYPES.FLIP) !== 0;
     const isToon = (row.type & CARD_TYPES.TOON) !== 0;
@@ -363,7 +365,7 @@ export class CardReaderService {
     const isEquip = (row.type & CARD_TYPES.EQUIP) !== 0;
     const isField = (row.type & CARD_TYPES.FIELD) !== 0;
     const isCounter = (row.type & CARD_TYPES.COUNTER) !== 0;
-    const isExtraDeck = isFusion;
+    const isExtraDeck = isFusion || isSynchro;
 
     const attributeName =
       ATTRIBUTE_NAME_MAP[row.attribute] || (isSpell ? 'SPELL' : isTrap ? 'TRAP' : 'UNKNOWN');
@@ -378,6 +380,8 @@ export class CardReaderService {
       if (isNormal) typeLabels.push('Normal');
       if (isEffect) typeLabels.push('Effect');
       if (isFusion) typeLabels.push('Fusion');
+      if (isSynchro) typeLabels.push('Synchro');
+      if (isTuner) typeLabels.push('Tuner');
       if (isRitual) typeLabels.push('Ritual');
       if (isFlip) typeLabels.push('Flip');
       if (isToon) typeLabels.push('Toon');
@@ -416,6 +420,8 @@ export class CardReaderService {
       isSpell,
       isTrap,
       isFusion,
+      isSynchro,
+      isTuner,
       isRitual,
       isEffect,
       isNormal,

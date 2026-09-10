@@ -27,7 +27,7 @@
           class="pre-duel-video-view__series-pill"
           :class="`pre-duel-video-view__series-pill--${opponentSeries.toLowerCase()}`"
         >
-          {{ opponentSeries === 'DM' ? 'ORIGINAL SERIES' : 'YU-GI-OH! GX' }}
+          {{ opponentSeries === 'DM' ? 'ORIGINAL SERIES' : opponentSeries === 'GX' ? 'YU-GI-OH! GX' : "YU-GI-OH! 5D'S" }}
         </span>
         <h2 class="pre-duel-video-view__intro-heading">DUELIST CHALLENGE</h2>
       </header>

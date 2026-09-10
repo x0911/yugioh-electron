@@ -232,10 +232,9 @@ export class AIController {
 
       case OcgMessageType.SORT_CHAIN:
       case OcgMessageType.SORT_CARD: {
-        const order = msg.cards ? Array.from({ length: msg.cards.length }, (_, i) => i) : null;
         return {
           type: OcgResponseType.SORT_CARD,
-          order,
+          order: null,
         };
       }
 

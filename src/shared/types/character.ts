@@ -2,7 +2,7 @@
 // Character and Character Deck Shared Types
 // =============================================================================
 
-export type CharacterSeries = 'DM' | 'GX';
+export type CharacterSeries = 'DM' | 'GX' | '5Ds';
 
 export interface CharacterDeckData {
   id: string;
@@ -62,7 +62,7 @@ export interface SettingsConfig {
   isSfxMuted: boolean;
   duckingIntensity: 'normal' | 'mute' | 'off';
   selectedOpponentId: string;
-  selectedSeriesFilter: 'ALL' | 'DM' | 'GX';
+  selectedSeriesFilter: 'ALL' | 'DM' | 'GX' | '5Ds';
   devMode: boolean;
   skipPreDuelVideo: boolean;
   chainConfirmationMode?: 'auto' | 'on' | 'off';

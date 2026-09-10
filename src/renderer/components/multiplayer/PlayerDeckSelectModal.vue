@@ -369,7 +369,7 @@ const deckEditStore = useDeckEditStore();
 
 const deckListScrollRef = ref<HTMLElement | null>(null);
 const searchQuery = ref('');
-const activeCategory = ref<'all' | 'dm' | 'gx' | 'popular' | 'custom'>('all');
+const activeCategory = ref<'all' | 'dm' | 'gx' | '5ds' | 'popular' | 'custom'>('all');
 const previewDeck = ref<CustomDeck | null>(null);
 const cardTab = ref<'all' | 'monsters' | 'spells' | 'traps' | 'extra'>('all');
 
@@ -382,7 +382,7 @@ interface GroupedCard {
 
 const hoveredCard = ref<GroupedCard | null>(null);
 
-// Canonical DM / GX sorting
+// Canonical DM / GX / 5D's sorting
 const DM_IDS = [
   'yugi-muto',
   'yami-yugi',
@@ -429,7 +429,30 @@ const GX_IDS = [
   'supreme-king-jaden',
 ];
 
-function getCategoryOfDeck(d: CustomDeck): 'dm' | 'gx' | 'popular' | 'custom' {
+const FIVED_IDS = [
+  'yusei-fudo',
+  'jack-atlas',
+  'crow-hogan',
+  'akiza-izinski',
+  'leo',
+  'luna',
+  'kalin-kessler',
+  'antinomy',
+  'sherry-leblanc',
+  'zone',
+  'carly-carmine',
+  'rex-goodwin',
+  'roman-goodwin',
+  'misty-tredwell',
+  'greiger',
+  'aporia',
+  'paradox',
+  'tetsu-trudge',
+  'sayer',
+  'halldor',
+];
+
+function getCategoryOfDeck(d: CustomDeck): 'dm' | 'gx' | '5ds' | 'popular' | 'custom' {
   if (
     d.category === 'character-dm' ||
     (d.series === 'DM' && d.characterName && d.characterName !== 'Community Popular')
@@ -441,6 +464,12 @@ function getCategoryOfDeck(d: CustomDeck): 'dm' | 'gx' | 'popular' | 'custom' {
     (d.series === 'GX' && d.characterName && d.characterName !== 'Community Popular')
   ) {
     return 'gx';
+  }
+  if (
+    d.category === 'character-5ds' ||
+    ((d.series === '5Ds' || d.series === "5D's") && d.characterName && d.characterName !== 'Community Popular')
+  ) {
+    return '5ds';
   }
   if (
     d.category?.startsWith('popular') ||
@@ -456,6 +485,7 @@ function getCategoryOfDeck(d: CustomDeck): 'dm' | 'gx' | 'popular' | 'custom' {
 const categoryList = computed(() => {
   let dmCount = 0;
   let gxCount = 0;
+  let fiveDsCount = 0;
   let popCount = 0;
   let customCount = 0;
 
@@ -463,6 +493,7 @@ const categoryList = computed(() => {
     const c = getCategoryOfDeck(d);
     if (c === 'dm') dmCount++;
     else if (c === 'gx') gxCount++;
+    else if (c === '5ds') fiveDsCount++;
     else if (c === 'popular') popCount++;
     else customCount++;
   }
@@ -471,6 +502,7 @@ const categoryList = computed(() => {
     { id: 'all' as const, label: 'All', count: props.decks.length },
     { id: 'dm' as const, label: 'DM Series', count: dmCount },
     { id: 'gx' as const, label: 'GX Series', count: gxCount },
+    { id: '5ds' as const, label: "5D's Series", count: fiveDsCount },
     { id: 'popular' as const, label: 'Popular Meta', count: popCount },
     { id: 'custom' as const, label: 'My Custom', count: customCount },
   ];
@@ -579,6 +611,7 @@ function getCardCategory(card?: CardDetail): 'monster' | 'spell' | 'trap' | 'ext
 
 function formatCardType(card?: CardDetail): string {
   if (!card) return 'Card';
+  if (card.type & 0x2000) return 'Synchro Monster';
   if (card.type & 0x40) return 'Fusion Monster';
   if (card.type & 0x80) return 'Ritual Monster';
   if (card.type & 0x4) {
@@ -598,7 +631,8 @@ function formatCardType(card?: CardDetail): string {
 
 function formatCardCategoryShort(card?: CardDetail): string {
   if (!card) return 'Card';
-  if (card.type & 0x40 || card.type & 0x2000) return 'Fusion';
+  if (card.type & 0x2000) return 'Synchro';
+  if (card.type & 0x40) return 'Fusion';
   if (card.type & 0x4) return 'Trap';
   if (card.type & 0x2) return 'Spell';
   return `${card.attribute || 'Monster'}`;
@@ -1015,6 +1049,10 @@ const activeCardCount = computed<number>(() => {
         &--gx {
           background: rgba(239, 68, 68, 0.2);
           color: #fca5a5;
+        }
+        &--5ds {
+          background: rgba(14, 165, 233, 0.2);
+          color: #38bdf8;
         }
       }
 

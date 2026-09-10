@@ -344,25 +344,25 @@ const enrichedCards = computed<EnrichedSelectCard[]>(() => {
       loc === 4 &&
       (item.position === 8 ||
         (item.position !== undefined && (item.position & 0x8) !== 0) ||
-        duelStore.boardState.opponentField.monsterZones[item.sequence]?.position === 'facedown_defense' ||
-        item.code === 0);
+        duelStore.boardState.opponentField.monsterZones[item.sequence]?.position === 'facedown_defense');
 
     const isFacedownSpell =
       loc === 8 &&
       (item.position === 8 ||
         (item.position !== undefined && (item.position & 0x8) !== 0) ||
         duelStore.boardState.opponentField.spellTrapZones[item.sequence]?.position === 'facedown_spell' ||
-        duelStore.boardState.opponentField.spellTrapZones[item.sequence]?.position === 'facedown_defense' ||
-        item.code === 0);
+        duelStore.boardState.opponentField.spellTrapZones[item.sequence]?.position === 'facedown_defense');
 
     const isHiddenOpponentCard =
       owner === 'ai' &&
-      (isFacedownMonster || isFacedownSpell || loc === 2 || loc === 1 || loc === 64 || item.code === 0);
+      (item.code === 0 || ((loc === 4 || loc === 8) && (isFacedownMonster || isFacedownSpell)));
 
     const cardName = isHiddenOpponentCard
       ? isFacedownMonster
         ? 'Face-down Monster'
-        : 'Face-down Card'
+        : loc === 2
+          ? 'Card in Hand'
+          : 'Face-down Card'
       : item.cardName && item.cardName !== 'Card'
         ? item.cardName
         : detail?.name || `Card #${item.code}`;

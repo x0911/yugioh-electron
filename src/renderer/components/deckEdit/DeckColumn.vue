@@ -261,7 +261,7 @@
     >
       <div class="section-title-bar">
         <div class="title-left">
-          <span class="section-title">Extra Deck (Fusion)</span>
+          <span class="section-title">Extra Deck</span>
           <span
             class="count-badge"
             :class="{
@@ -272,9 +272,14 @@
             {{ store.extraDeckCount }} / 15
           </span>
         </div>
-        <span class="stat-pill stat-pill--fusions">
-          🌀 {{ store.deckStats.fusions }}
-        </span>
+        <div class="stat-pills-row" style="display: flex; gap: 6px;">
+          <span v-if="store.deckStats.fusions > 0" class="stat-pill stat-pill--fusions" title="Fusion Monsters">
+            🌀 {{ store.deckStats.fusions }}
+          </span>
+          <span v-if="store.deckStats.synchros > 0" class="stat-pill stat-pill--synchros" title="Synchro Monsters">
+            ⭐ {{ store.deckStats.synchros }}
+          </span>
+        </div>
       </div>
 
       <!-- Extra Deck Grid (Cards arranged in columns) -->
@@ -283,10 +288,13 @@
           <div
             v-for="item in extraDeckCards"
             :key="item.id"
-            class="deck-card-tile deck-card-tile--fusion"
-            :class="{
-              'deck-card-tile--dragging': store.isDragging && store.draggingCard?.id === item.id,
-            }"
+            class="deck-card-tile"
+            :class="[
+              item.card?.isSynchro ? 'deck-card-tile--synchro' : 'deck-card-tile--fusion',
+              {
+                'deck-card-tile--dragging': store.isDragging && store.draggingCard?.id === item.id,
+              }
+            ]"
             draggable="true"
             title="Drag to remove from deck"
             @mouseenter="onCardHover(item.card)"
@@ -334,7 +342,7 @@
         </div>
 
         <div v-else class="section-empty">
-          <span class="empty-hint">Extra Deck empty (optional, max 15 Fusions). Drag fusion cards here.</span>
+          <span class="empty-hint">Extra Deck empty (optional, max 15 cards). Drag Fusion or Synchro cards here.</span>
         </div>
 
         <!-- Extra Deck Dropzone Overlay Highlight -->
@@ -552,6 +560,7 @@ function handleSaveDeck(): void {
 
 function getCardKindClass(card: CardDetail | null): string {
   if (!card) return 'unknown';
+  if (card.isSynchro) return 'synchro';
   if (card.isFusion) return 'fusion';
   if (card.isSpell) return 'spell';
   if (card.isTrap) return 'trap';
@@ -1033,6 +1042,9 @@ function onTrashDrop(e: DragEvent): void {
   &--fusions {
     color: #d2b4de;
   }
+  &--synchros {
+    color: #e2e8f0;
+  }
 }
 
 .deck-cards-scrollable {
@@ -1108,6 +1120,10 @@ function onTrashDrop(e: DragEvent): void {
   }
   &--fusion {
     border-top: 2px solid #9b59b6;
+  }
+  &--synchro {
+    border-top: 2px solid #f8fafc;
+    box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.12);
   }
 
   &--dragging {

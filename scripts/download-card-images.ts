@@ -1,11 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
+import Database from 'better-sqlite3';
 
 interface CardEntry {
   id: number;
   name: string;
-  era: 'DM' | 'GX';
+  era: 'DM' | 'GX' | '5Ds';
+  alias?: number;
   type?: string;
   atk?: number;
   def?: number;
@@ -28,6 +30,12 @@ const CARD_WHITELIST_PATH = path.resolve(process.cwd(), 'data/card-pool-whitelis
 const FULL_DIR = path.resolve(process.cwd(), 'resources/cards/full');
 const ART_DIR = path.resolve(process.cwd(), 'resources/cards/art');
 const MINI_DIR = path.resolve(process.cwd(), 'resources/cards/mini');
+
+const PLACEHOLDER_FULL_SIZES = new Set([87124]);
+const PLACEHOLDER_MINI_SIZES = new Set([3278, 3133]);
+const PLACEHOLDER_ART_SIZES = new Set([38031, 20957]);
+
+const CUSTOM_CARD_IDS = new Set([99900001]);
 
 const CDN_FULL_URL = (id: number | string) =>
   `https://images.ygoprodeck.com/images/cards/${id}.jpg`;
@@ -145,12 +153,18 @@ async function fetchWithRetry(
 }
 
 /**
- * Helper to check if a file exists and has non-zero size.
+ * Helper to check if a file exists, has non-zero size, and is not a placeholder file.
  */
-function fileIsValid(filePath: string): boolean {
+function fileIsValid(filePath: string, placeholderSizes?: Set<number> | number): boolean {
   try {
     const stat = fs.statSync(filePath);
-    return stat.size > 0;
+    if (stat.size <= 0) return false;
+    if (placeholderSizes instanceof Set) {
+      if (placeholderSizes.has(stat.size)) return false;
+    } else if (placeholderSizes !== undefined) {
+      if (stat.size === placeholderSizes) return false;
+    }
+    return true;
   } catch {
     return false;
   }
@@ -183,6 +197,81 @@ function copyFallback(targetPath: string, variant: 'full' | 'art' | 'mini') {
   }
 }
 
+const nameLookupCache = new Map<
+  string,
+  { fullUrl?: string; artUrl?: string; smallUrl?: string } | null
+>();
+
+/**
+ * Fallback to query YGOPRODeck API by card name if ID/alias both 404.
+ */
+async function lookupByCardName(
+  cardName: string,
+  rateLimiter: RateLimiter,
+): Promise<{ fullUrl?: string; artUrl?: string; smallUrl?: string } | null> {
+  const cleanName = cardName.trim();
+  if (!cleanName) return null;
+  if (nameLookupCache.has(cleanName)) {
+    return nameLookupCache.get(cleanName) || null;
+  }
+
+  await rateLimiter.acquire();
+  try {
+    const res = await fetch(
+      `https://db.ygoprodeck.com/api/v7/cardinfo.php?name=${encodeURIComponent(cleanName)}`,
+      {
+        headers: {
+          'User-Agent': 'YGO-Desktop-Duel-Offline-Client/0.1.0 (Asset-Pipeline)',
+        },
+      },
+    );
+    if (!res.ok) {
+      nameLookupCache.set(cleanName, null);
+      return null;
+    }
+    const data = (await res.json()) as any;
+    if (data?.data?.[0]?.card_images?.[0]) {
+      const img = data.data[0].card_images[0];
+      const result = {
+        fullUrl: img.image_url as string,
+        artUrl: img.image_url_cropped as string,
+        smallUrl: img.image_url_small as string,
+      };
+      nameLookupCache.set(cleanName, result);
+      return result;
+    }
+  } catch {
+    // Ignore network / parse errors
+  }
+  nameLookupCache.set(cleanName, null);
+  return null;
+}
+
+/**
+ * Helper to crop the card art frame from a full card image when cropped CDN asset is missing.
+ */
+async function cropArtFromFull(fullInput: Buffer | string, targetPath: string): Promise<boolean> {
+  try {
+    const img = sharp(fullInput);
+    const meta = await img.metadata();
+    if (!meta.width || !meta.height) return false;
+
+    // Standard Yu-Gi-Oh card artwork frame proportions
+    const left = Math.round(meta.width * (95 / 813));
+    const top = Math.round(meta.height * (217 / 1185));
+    const size = Math.round(meta.width * (624 / 813));
+
+    await img
+      .extract({ left, top, width: size, height: size })
+      .resize(624, 624)
+      .jpeg({ quality: 90, mozjpeg: true })
+      .toFile(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Download all 3 variants for a single card.
  */
@@ -195,17 +284,48 @@ async function processCard(
   const artPath = path.join(ART_DIR, `${card.id}.jpg`);
   const miniPath = path.join(MINI_DIR, `${card.id}.jpg`);
 
-  const fullExists = !force && fileIsValid(fullPath);
-  const artExists = !force && fileIsValid(artPath);
-  const miniExists = !force && fileIsValid(miniPath);
+  let fullExists = !force && fileIsValid(fullPath, PLACEHOLDER_FULL_SIZES);
+  let artExists = !force && fileIsValid(artPath, PLACEHOLDER_ART_SIZES);
+  let miniExists = !force && fileIsValid(miniPath, PLACEHOLDER_MINI_SIZES);
 
   if (fullExists && artExists && miniExists) {
     return { full: true, art: true, mini: true, skipped: true };
   }
 
+  // If this card has an alias and the alias images already exist locally, copy them directly
+  if (card.alias && card.alias > 0) {
+    const aliasFullPath = path.join(FULL_DIR, `${card.alias}.jpg`);
+    const aliasArtPath = path.join(ART_DIR, `${card.alias}.jpg`);
+    const aliasMiniPath = path.join(MINI_DIR, `${card.alias}.jpg`);
+
+    if (!fullExists && fileIsValid(aliasFullPath, PLACEHOLDER_FULL_SIZES)) {
+      try {
+        fs.copyFileSync(aliasFullPath, fullPath);
+        fullExists = true;
+      } catch {}
+    }
+    if (!artExists && fileIsValid(aliasArtPath, PLACEHOLDER_ART_SIZES)) {
+      try {
+        fs.copyFileSync(aliasArtPath, artPath);
+        artExists = true;
+      } catch {}
+    }
+    if (!miniExists && fileIsValid(aliasMiniPath, PLACEHOLDER_MINI_SIZES)) {
+      try {
+        fs.copyFileSync(aliasMiniPath, miniPath);
+        miniExists = true;
+      } catch {}
+    }
+
+    if (fullExists && artExists && miniExists) {
+      return { full: true, art: true, mini: true, skipped: false };
+    }
+  }
+
   // Custom cards (e.g. 99900001 Egyxos) have no official CDN imagery; preserve local files
-  if (card.id >= 99000000) {
+  if (CUSTOM_CARD_IDS.has(card.id)) {
     let miniSuccess = miniExists;
+    let artSuccessCustom = artExists;
     if (fullExists && !miniExists) {
       try {
         const fullLocalBuf = fs.readFileSync(fullPath);
@@ -215,9 +335,14 @@ async function processCard(
         copyFallback(miniPath, 'mini');
       }
     }
+    if (fullExists && !artExists) {
+      const cropped = await cropArtFromFull(fullPath, artPath);
+      if (cropped) artSuccessCustom = true;
+      else copyFallback(artPath, 'art');
+    }
     return {
       full: fullExists,
-      art: artExists,
+      art: artSuccessCustom,
       mini: miniSuccess,
       skipped: true,
     };
@@ -226,13 +351,30 @@ async function processCard(
   let fullSuccess = fullExists;
   let artSuccess = artExists;
   let miniSuccess = miniExists;
+  let downloadedFullBuf: Buffer | null = null;
+  let nameFallbackAttempted = false;
+  let nameInfo: { fullUrl?: string; artUrl?: string; smallUrl?: string } | null = null;
 
   // 1. Full Image
   if (!fullExists) {
-    const fullBuf = await fetchWithRetry(CDN_FULL_URL(card.id), rateLimiter);
+    let fullBuf = await fetchWithRetry(CDN_FULL_URL(card.id), rateLimiter);
+    if (!fullBuf && card.alias && card.alias > 0) {
+      fullBuf = await fetchWithRetry(CDN_FULL_URL(card.alias), rateLimiter);
+    }
+    if (!fullBuf) {
+      if (!nameFallbackAttempted) {
+        nameFallbackAttempted = true;
+        nameInfo = await lookupByCardName(card.name, rateLimiter);
+      }
+      if (nameInfo?.fullUrl) {
+        fullBuf = await fetchWithRetry(nameInfo.fullUrl, rateLimiter);
+      }
+    }
+
     if (fullBuf) {
       fs.writeFileSync(fullPath, fullBuf);
       fullSuccess = true;
+      downloadedFullBuf = fullBuf;
     } else {
       copyFallback(fullPath, 'full');
     }
@@ -240,30 +382,65 @@ async function processCard(
 
   // 2. Cropped Art Image
   if (!artExists) {
-    const artBuf = await fetchWithRetry(CDN_ART_URL(card.id), rateLimiter);
+    let artBuf = await fetchWithRetry(CDN_ART_URL(card.id), rateLimiter);
+    if (!artBuf && card.alias && card.alias > 0) {
+      artBuf = await fetchWithRetry(CDN_ART_URL(card.alias), rateLimiter);
+    }
+    if (!artBuf) {
+      if (!nameFallbackAttempted) {
+        nameFallbackAttempted = true;
+        nameInfo = await lookupByCardName(card.name, rateLimiter);
+      }
+      if (nameInfo?.artUrl) {
+        artBuf = await fetchWithRetry(nameInfo.artUrl, rateLimiter);
+      }
+    }
+
     if (artBuf) {
       fs.writeFileSync(artPath, artBuf);
       artSuccess = true;
+    } else if (downloadedFullBuf) {
+      const cropped = await cropArtFromFull(downloadedFullBuf, artPath);
+      if (cropped) artSuccess = true;
+      else copyFallback(artPath, 'art');
+    } else if (fileIsValid(fullPath, PLACEHOLDER_FULL_SIZES)) {
+      const cropped = await cropArtFromFull(fullPath, artPath);
+      if (cropped) artSuccess = true;
+      else copyFallback(artPath, 'art');
     } else {
       copyFallback(artPath, 'art');
     }
   }
 
-  // 3. Mini Image (fetch small CDN variant, re-encode to 96x140 JPEG with Sharp)
+  // 3. Mini Image (generate from full image buffer or local full file, with fallback to small CDN URL)
   if (!miniExists) {
-    // Prefer small CDN image as source for resizing to save bandwidth, fallback to full buffer if needed
-    const smallBuf = await fetchWithRetry(CDN_SMALL_URL(card.id), rateLimiter);
-    if (smallBuf) {
+    let sourceBuf = downloadedFullBuf;
+    if (!sourceBuf && fileIsValid(fullPath, PLACEHOLDER_FULL_SIZES)) {
       try {
-        await saveMiniVariant(smallBuf, miniPath);
-        miniSuccess = true;
-      } catch {
-        copyFallback(miniPath, 'mini');
+        sourceBuf = fs.readFileSync(fullPath);
+      } catch {}
+    }
+
+    if (!sourceBuf) {
+      let smallBuf = await fetchWithRetry(CDN_SMALL_URL(card.id), rateLimiter);
+      if (!smallBuf && card.alias && card.alias > 0) {
+        smallBuf = await fetchWithRetry(CDN_SMALL_URL(card.alias), rateLimiter);
       }
-    } else if (fileIsValid(fullPath)) {
+      if (!smallBuf) {
+        if (!nameFallbackAttempted) {
+          nameFallbackAttempted = true;
+          nameInfo = await lookupByCardName(card.name, rateLimiter);
+        }
+        if (nameInfo?.smallUrl) {
+          smallBuf = await fetchWithRetry(nameInfo.smallUrl, rateLimiter);
+        }
+      }
+      sourceBuf = smallBuf;
+    }
+
+    if (sourceBuf) {
       try {
-        const fullLocalBuf = fs.readFileSync(fullPath);
-        await saveMiniVariant(fullLocalBuf, miniPath);
+        await saveMiniVariant(sourceBuf, miniPath);
         miniSuccess = true;
       } catch {
         copyFallback(miniPath, 'mini');
@@ -362,9 +539,96 @@ async function main() {
     }
   });
 
+  const eraIndex = args.indexOf('--era');
+  const targetEra = eraIndex !== -1 ? args[eraIndex + 1] : undefined;
+
+  const decksOnly = args.includes('--decks-only');
+
   const whitelistContent = fs.readFileSync(CARD_WHITELIST_PATH, 'utf-8');
   const whitelist: CardPoolWhitelist = JSON.parse(whitelistContent);
   let cardList = Object.values(whitelist);
+
+  // Read alias information and any extra cards from resources/cards.cdb
+  const CDB_PATH = path.resolve(process.cwd(), 'resources/cards.cdb');
+  if (fs.existsSync(CDB_PATH)) {
+    try {
+      const db = new Database(CDB_PATH, { readonly: true });
+      const rows = db.prepare('SELECT id, alias FROM datas').all() as Array<{
+        id: number;
+        alias: number;
+      }>;
+      const names = db.prepare('SELECT id, name FROM texts').all() as Array<{
+        id: number;
+        name: string;
+      }>;
+      const nameMap = new Map<number, string>();
+      for (const n of names) nameMap.set(n.id, n.name);
+
+      const aliasMap = new Map<number, number>();
+      for (const r of rows) {
+        if (r.alias > 0) aliasMap.set(r.id, r.alias);
+      }
+
+      for (const card of cardList) {
+        const alias = aliasMap.get(card.id);
+        if (alias) {
+          card.alias = alias;
+        }
+      }
+
+      const existingIds = new Set(cardList.map((c) => c.id));
+      let addedFromCdb = 0;
+      for (const r of rows) {
+        if (!existingIds.has(r.id)) {
+          cardList.push({
+            id: r.id,
+            name: nameMap.get(r.id) || `Card #${r.id}`,
+            era: 'DM',
+            alias: r.alias > 0 ? r.alias : undefined,
+          });
+          existingIds.add(r.id);
+          addedFromCdb++;
+        }
+      }
+
+      console.log(
+        `[INFO] Loaded ${aliasMap.size} card aliases from ${CDB_PATH}` +
+          (addedFromCdb > 0 ? ` (${addedFromCdb} added from CDB)` : ''),
+      );
+      db.close();
+    } catch (err) {
+      console.warn('[WARN] Could not read aliases from cards.cdb:', err);
+    }
+  }
+
+  if (targetEra) {
+    cardList = cardList.filter((c) => c.era === targetEra);
+    console.log(`[INFO] Filtering by era: ${targetEra} (${cardList.length} cards matched).`);
+  }
+
+  if (decksOnly) {
+    const deckCards = new Set<number>();
+    const charsPath = path.resolve(process.cwd(), 'data/characters.json');
+    if (fs.existsSync(charsPath)) {
+      const chars = JSON.parse(fs.readFileSync(charsPath, 'utf-8'));
+      for (const char of chars) {
+        for (const d of char.decks || []) {
+          for (const id of d.mainCards || []) deckCards.add(id);
+          for (const id of d.extraCards || []) deckCards.add(id);
+        }
+      }
+    }
+    const prebuiltPath = path.resolve(process.cwd(), 'data/prebuilt-decks.json');
+    if (fs.existsSync(prebuiltPath)) {
+      const prebuilt = JSON.parse(fs.readFileSync(prebuiltPath, 'utf-8'));
+      for (const d of prebuilt) {
+        for (const id of d.main || []) deckCards.add(id);
+        for (const id of d.extra || []) deckCards.add(id);
+      }
+    }
+    cardList = cardList.filter((c) => deckCards.has(c.id));
+    console.log(`[INFO] Filtering to deck cards only (${cardList.length} cards matched).`);
+  }
 
   if (options.limit && options.limit > 0) {
     cardList = cardList.slice(0, options.limit);

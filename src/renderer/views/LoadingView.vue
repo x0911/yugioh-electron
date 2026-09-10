@@ -114,7 +114,7 @@
       <footer class="loading-view__footer">
         <span>Powered by ProjectIgnis ygopro-core (WASM)</span>
         <span>•</span>
-        <span>Duel Monsters & GX Series Pool</span>
+        <span>DM, GX & 5D's Series Pool</span>
       </footer>
     </GlassPanel>
   </div>

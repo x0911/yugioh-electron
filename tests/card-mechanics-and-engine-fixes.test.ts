@@ -1170,11 +1170,12 @@ async function runTestSuite() {
     });
     service.processStep();
 
-    // The remaining excavated cards are moved to deck bottom; prompt may be SORT_CARD (25) or SELECT_IDLECMD
+    // The remaining excavated cards are moved to deck bottom; engine auto-resolves SORT_CARD and returns to SELECT_IDLECMD
     const postPopPrompt = (service as any).lastPromptMessage;
-    assert(
-      postPopPrompt && postPopPrompt.type !== OcgMessageType.RETRY,
-      'Duel must not freeze or emit RETRY during Pot of Prosperity resolution',
+    assert.equal(
+      postPopPrompt?.type,
+      OcgMessageType.SELECT_IDLECMD,
+      'Duel must auto-resolve SORT_CARD and return to SELECT_IDLECMD without freeze or RETRY errors',
     );
     console.log('  ✓ Pot of Prosperity resolved successfully without freeze or RETRY errors.');
 
@@ -1379,7 +1380,7 @@ async function runTestSuite() {
     assert.equal(boardB.userField.currentLp, 7300, 'LP must be 7300 after paying 700 LP');
     assert.equal(boardB.userField.spellTrapZones[0]?.code, 61740673, 'Imperial Order must remain on field');
     service.destroyCurrentDuel();
-    console.log('  ✓ Imperial Order pay payment: 700 LP deducted, card remains active.');
+    console.log('  ✓ Imperial Order pay payment: 700 LP deducted, card remains active.\n');
 
     console.log('================================================================');
     console.log('🎉 ALL 21 CARD MECHANICS & ENGINE INTEGRATION TESTS PASSED 100%!');

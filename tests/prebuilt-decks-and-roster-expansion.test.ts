@@ -15,7 +15,7 @@ const DECKS_DIR = path.resolve(ROOT_DIR, 'resources/decks');
 
 async function runRosterAndPrebuiltTests() {
   console.log('================================================================');
-  console.log('=== RUNNING 40-DUELIST ROSTER & 400-PREBUILT DECKS TEST SUITE ===');
+  console.log('=== RUNNING 60-DUELIST ROSTER & 700-PREBUILT DECKS TEST SUITE ===');
   console.log('================================================================\n');
 
   const characters: CharacterData[] = JSON.parse(fs.readFileSync(CHARACTERS_PATH, 'utf-8'));
@@ -25,15 +25,17 @@ async function runRosterAndPrebuiltTests() {
   const checkDbStmt = db.prepare('SELECT datas.id, texts.name FROM datas JOIN texts ON datas.id = texts.id WHERE datas.id = ?');
 
   try {
-    // 1. Roster Verification: Exactly 40 Characters (20 DM + 20 GX)
+    // 1. Roster Verification: Exactly 60 Characters (20 DM + 20 GX + 20 5Ds)
     console.log('▶ Test 1: Roster Count and Series Distribution');
-    assert.equal(characters.length, 40, `Expected 40 characters, found ${characters.length}`);
+    assert.equal(characters.length, 60, `Expected 60 characters, found ${characters.length}`);
     
     const dmChars = characters.filter((c) => c.series === 'DM');
     const gxChars = characters.filter((c) => c.series === 'GX');
+    const fiveDsChars = characters.filter((c) => c.series === '5Ds');
     assert.equal(dmChars.length, 20, `Expected 20 DM characters, found ${dmChars.length}`);
     assert.equal(gxChars.length, 20, `Expected 20 GX characters, found ${gxChars.length}`);
-    console.log(`  ✓ 40 Characters Verified: 20 DM characters & 20 GX characters.\n`);
+    assert.equal(fiveDsChars.length, 20, `Expected 20 5D's characters, found ${fiveDsChars.length}`);
+    console.log(`  ✓ 60 Characters Verified: 20 DM characters, 20 GX characters & 20 5D's characters.\n`);
 
     // 2. Pre-Built Decks Completeness & Legality
     console.log('▶ Test 2: Deck Completeness (>= 40 Cards) & Database Legality');
@@ -78,7 +80,7 @@ async function runRosterAndPrebuiltTests() {
 
     // 3. Prebuilt Decks File Integrity
     console.log('▶ Test 3: data/prebuilt-decks.json Completeness');
-    assert(prebuiltDecks.length >= 400, `Expected at least 400 prebuilt decks, found ${prebuiltDecks.length}`);
+    assert(prebuiltDecks.length >= 700, `Expected at least 700 prebuilt decks, found ${prebuiltDecks.length}`);
 
     for (const deck of prebuiltDecks) {
       assert(deck.main && deck.main.length >= 40, `Prebuilt deck "${deck.name}" must have >= 40 main cards`);
@@ -88,7 +90,7 @@ async function runRosterAndPrebuiltTests() {
     console.log(`  ✓ ${prebuiltDecks.length} prebuilt decks verified with complete metadata and >= 40 main cards.\n`);
 
     // 4. AI Personality Coverage
-    console.log('▶ Test 4: AI Personality Profiles for All 40 Characters');
+    console.log('▶ Test 4: AI Personality Profiles for All 60 Characters');
     for (const char of characters) {
       const personality = getPersonalityForCharacter(char.id);
       assert(personality, `Missing personality for character ${char.id}`);
@@ -96,7 +98,7 @@ async function runRosterAndPrebuiltTests() {
       assert(personality.defensiveness >= 0 && personality.defensiveness <= 1, `Invalid defensiveness for ${char.id}`);
       assert(personality.riskTolerance >= 0 && personality.riskTolerance <= 1, `Invalid riskTolerance for ${char.id}`);
     }
-    console.log(`  ✓ All 40 characters have distinct, validated AI personalities.\n`);
+    console.log(`  ✓ All 60 characters have distinct, validated AI personalities.\n`);
 
     // 5. Random Deck Selection Distribution
     console.log('▶ Test 5: Uniform Random Deck Selection Across Character Decks');

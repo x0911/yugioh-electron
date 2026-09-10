@@ -483,7 +483,8 @@ function getCardCategory(card?: CardDetail): 'monster' | 'spell' | 'trap' | 'ext
 
 function formatCardCategoryShort(card?: CardDetail): string {
   if (!card) return 'Card';
-  if (card.type & 0x40 || card.type & 0x2000) return 'Fusion';
+  if (card.type & 0x2000) return 'Synchro';
+  if (card.type & 0x40) return 'Fusion';
   if (card.type & 0x4) return 'Trap';
   if (card.type & 0x2) return 'Spell';
   return `${card.attribute || 'Monster'}`;
@@ -975,6 +976,10 @@ onUnmounted(() => {
         &--gx {
           background: rgba(239, 68, 68, 0.2);
           color: #fca5a5;
+        }
+        &--5ds {
+          background: rgba(14, 165, 233, 0.2);
+          color: #7dd3fc;
         }
         &--gold {
           background: rgba(201, 162, 39, 0.25);

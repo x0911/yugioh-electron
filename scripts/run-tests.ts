@@ -44,6 +44,9 @@ const testFiles = [
   'tests/multiplayer-pvp-protocol.test.ts',
   'tests/multi-tribute-monsters.test.ts',
   'tests/buster-blader-and-deck-count-fixes.test.ts',
+  'tests/link-monster-and-emz.test.ts',
+  'tests/synchro-and-5ds-roster.test.ts',
+  'tests/painful-choice-reveal.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);

@@ -366,6 +366,19 @@ function onClick(event: MouseEvent): void {
     }
   }
 
+  // Extra Monster Zone (Cyan Hex Glow)
+  &--extra-monster .slot-frame {
+    border-color: rgba(0, 210, 255, 0.35);
+    box-shadow: inset 0 0 14px rgba(0, 210, 255, 0.08);
+
+    &:hover {
+      border-color: rgba(0, 210, 255, 0.85);
+      box-shadow:
+        inset 0 0 18px rgba(0, 210, 255, 0.2),
+        0 0 12px rgba(0, 210, 255, 0.35);
+    }
+  }
+
   // Inert Zone (EMZ, Pendulum)
   &--inert {
     opacity: 0.65;

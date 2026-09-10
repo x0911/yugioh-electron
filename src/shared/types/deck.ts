@@ -9,13 +9,13 @@ export interface CustomDeck {
   extra: number[]; // card code IDs (Fusion / Extra deck)
   createdAt: number;
   updatedAt: number;
-  series?: 'DM' | 'GX' | 'ALL';
+  series?: 'DM' | 'GX' | '5Ds' | 'ALL' | string;
   archetype?: string;
   characterId?: string;
   characterName?: string;
   avatar?: string;
   portrait?: string;
-  category?: 'character-dm' | 'character-gx' | 'popular-dm' | 'popular-gx' | 'custom' | string;
+  category?: 'character-dm' | 'character-gx' | 'character-5ds' | 'popular-dm' | 'popular-gx' | 'popular-5ds' | 'custom' | string;
 }
 
 export interface DeckValidity {

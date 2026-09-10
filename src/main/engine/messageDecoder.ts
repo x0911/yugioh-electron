@@ -39,7 +39,7 @@ export interface DecodedDuelEvent {
   reason?: number;
   target?: unknown;
   drawnCards?: { code: number; cardName: string }[];
-  cards?: number[];
+  cards?: any[];
   fieldStats?: Array<{
     controller: 0 | 1;
     sequence: number;
@@ -59,11 +59,15 @@ export interface DecodedDuelEvent {
 
 /**
  * Parses the ocgcore field_mask bitmask for SELECT_PLACE / SELECT_DISFIELD.
- * The mask is encoded relative to the requesting player:
+ * The standard OCGCORE bit layout:
  * - Bits 0..4 (0x1F): Player's own Main Monster Zones (0..4)
+ * - Bit 5 (0x20): Player's own Extra Monster Zone 0 (sequence 5)
+ * - Bit 6 (0x40): Player's own Extra Monster Zone 1 (sequence 6)
  * - Bits 8..12 (0x1F00): Player's own Spell/Trap Zones (0..4)
  * - Bit 13 (0x2000): Player's own Field Spell Zone (0)
  * - Bits 16..20 (0x1F0000): Opponent's Main Monster Zones (0..4)
+ * - Bit 21 (0x200000): Opponent's Extra Monster Zone 0 (sequence 5)
+ * - Bit 22 (0x400000): Opponent's Extra Monster Zone 1 (sequence 6)
  * - Bits 24..28 (0x1F000000): Opponent's Spell/Trap Zones (0..4)
  * - Bit 29 (0x20000000): Opponent's Field Spell Zone (0)
  */
@@ -75,8 +79,8 @@ export function parseFieldMask(
   const places: SelectFieldPlace[] = [];
   const mask = ~fieldMask >>> 0;
 
-  // 1. Player's own Monster Zones (bits 0..4)
-  for (let seq = 0; seq < 5; seq++) {
+  // 1. Player's own Monster Zones (bits 0..6: 0..4 = MMZ, 5..6 = EMZ)
+  for (let seq = 0; seq < 7; seq++) {
     if ((mask & (1 << seq)) !== 0) {
       places.push({ player, location: OcgLocation.MZONE, sequence: seq });
       if (places.length === count) return places;
@@ -97,8 +101,8 @@ export function parseFieldMask(
     if (places.length === count) return places;
   }
 
-  // 4. Opponent's Monster Zones (bits 16..20)
-  for (let seq = 0; seq < 5; seq++) {
+  // 4. Opponent's Monster Zones (bits 16..22: 16..20 = MMZ, 21..22 = EMZ)
+  for (let seq = 0; seq < 7; seq++) {
     if ((mask & (1 << (seq + 16))) !== 0) {
       places.push({ player: 1 - player, location: OcgLocation.MZONE, sequence: seq });
       if (places.length === count) return places;
@@ -278,7 +282,9 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
 
     case OcgMessageType.SELECT_PLACE:
     case OcgMessageType.SELECT_DISFIELD: {
-      const places = parseFieldMask(msg.player, msg.field_mask, msg.count);
+      const minCount = Math.max(1, msg.count || 1);
+      const places = parseFieldMask(msg.player, msg.field_mask, minCount);
+      if (!places || places.length < minCount) return null;
       return {
         type: OcgResponseType.SELECT_PLACE,
         places,
@@ -414,10 +420,9 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
 
     case OcgMessageType.SORT_CHAIN:
     case OcgMessageType.SORT_CARD: {
-      const order = msg.cards ? Array.from({ length: msg.cards.length }, (_, i) => i) : null;
       return {
         type: OcgResponseType.SORT_CARD,
-        order,
+        order: null,
       };
     }
 
@@ -466,8 +471,60 @@ export class MessageDecoder {
   private lastHintCard: number | null = null;
   private lastActivatedCard: { code: number; player?: number } | null = null;
 
+  // Tracks confirmed cards known to each player: confirmedCards[viewerPlayerId].get(`${controller}:${location}:${sequence}`) -> code
+  private confirmedCards: [Map<string, number>, Map<string, number>] = [new Map(), new Map()];
+
   constructor(cardReader: CardReaderService) {
     this.cardReader = cardReader;
+  }
+
+  public resetConfirmedCards(): void {
+    this.confirmedCards[0].clear();
+    this.confirmedCards[1].clear();
+  }
+
+  public recordConfirmedCards(
+    viewerPlayer: number,
+    cards: Array<{ code: number; controller: number; location: number; sequence: number }>,
+  ): void {
+    if (!cards || !Array.isArray(cards)) return;
+    for (const c of cards) {
+      if (c && c.code > 0) {
+        const key = `${c.controller}:${c.location}:${c.sequence}`;
+        if (this.confirmedCards[viewerPlayer]) {
+          this.confirmedCards[viewerPlayer].set(key, c.code);
+        }
+        if (this.confirmedCards[c.controller]) {
+          this.confirmedCards[c.controller].set(key, c.code);
+        }
+      }
+    }
+  }
+
+  public getConfirmedCode(viewerPlayer: number, controller: number, location: number, sequence: number): number {
+    const key = `${controller}:${location}:${sequence}`;
+    return this.confirmedCards[viewerPlayer]?.get(key) ?? 0;
+  }
+
+  public isConfirmed(viewerPlayer: number, controller: number, location: number, sequence: number): boolean {
+    return this.getConfirmedCode(viewerPlayer, controller, location, sequence) > 0;
+  }
+
+  public removeConfirmedCardAt(controller: number, location: number, sequence: number): void {
+    const key = `${controller}:${location}:${sequence}`;
+    this.confirmedCards[0].delete(key);
+    this.confirmedCards[1].delete(key);
+  }
+
+  public clearConfirmedLocation(controller: number, location: number): void {
+    const prefix = `${controller}:${location}:`;
+    for (const p of [0, 1]) {
+      for (const key of Array.from(this.confirmedCards[p].keys())) {
+        if (key.startsWith(prefix)) {
+          this.confirmedCards[p].delete(key);
+        }
+      }
+    }
   }
 
   public setLastAttackCard(card: { code: number; controller?: number; location?: number; sequence?: number; can_direct?: boolean } | null): void {
@@ -665,6 +722,9 @@ export class MessageDecoder {
 
       case OcgMessageType.MOVE: {
         type = 'MOVE';
+        if (msg.from) {
+          this.removeConfirmedCardAt(msg.from.controller, msg.from.location, msg.from.sequence);
+        }
         const name = msg.card > 0 ? this.cardReader.getCardName(msg.card) : 'Card';
         description = `Card moved to new location.`;
         return {
@@ -1014,10 +1074,17 @@ export class MessageDecoder {
           min: msg.min,
           max: msg.max,
           isDiscardPrompt: false,
-          selects: msg.selects.map((s) => ({
-            ...s,
-            cardName: s.code > 0 ? this.cardReader.getCardName(s.code) : 'Card',
-          })),
+          selects: msg.selects.map((s) => {
+            const resolvedCode = s.code > 0 ? s.code : this.getConfirmedCode(msg.player, s.controller, s.location, s.sequence);
+            if (s.code === 0 && resolvedCode > 0) {
+              s.code = resolvedCode;
+            }
+            return {
+              ...s,
+              code: resolvedCode,
+              cardName: resolvedCode > 0 ? this.cardReader.getCardName(resolvedCode) : 'Card',
+            };
+          }),
         };
 
         return {
@@ -1049,14 +1116,28 @@ export class MessageDecoder {
           can_cancel: msg.can_cancel,
           min: msg.min,
           max: msg.max,
-          selects: (msg.select_cards || []).map((s) => ({
-            ...s,
-            cardName: s.code > 0 ? this.cardReader.getCardName(s.code) : 'Card',
-          })),
-          unselects: (msg.unselect_cards || []).map((u) => ({
-            ...u,
-            cardName: u.code > 0 ? this.cardReader.getCardName(u.code) : 'Card',
-          })),
+          selects: (msg.select_cards || []).map((s) => {
+            const resolvedCode = s.code > 0 ? s.code : this.getConfirmedCode(msg.player, s.controller, s.location, s.sequence);
+            if (s.code === 0 && resolvedCode > 0) {
+              s.code = resolvedCode;
+            }
+            return {
+              ...s,
+              code: resolvedCode,
+              cardName: resolvedCode > 0 ? this.cardReader.getCardName(resolvedCode) : 'Card',
+            };
+          }),
+          unselects: (msg.unselect_cards || []).map((u) => {
+            const resolvedCode = u.code > 0 ? u.code : this.getConfirmedCode(msg.player, u.controller, u.location, u.sequence);
+            if (u.code === 0 && resolvedCode > 0) {
+              u.code = resolvedCode;
+            }
+            return {
+              ...u,
+              code: resolvedCode,
+              cardName: resolvedCode > 0 ? this.cardReader.getCardName(resolvedCode) : 'Card',
+            };
+          }),
         };
 
         return {
@@ -1407,7 +1488,8 @@ export class MessageDecoder {
 
       case OcgMessageType.SHUFFLE_HAND: {
         type = 'SHUFFLE_HAND';
-        const p = msg.player;
+        const p = msg.player ?? 0;
+        this.clearConfirmedLocation(p, OcgLocation.HAND);
         const cards = Array.isArray(msg.cards) ? msg.cards.map((c: any) => Number(c)) : [];
         return {
           type,
@@ -1637,21 +1719,88 @@ export class MessageDecoder {
       case OcgMessageType.CONFIRM_CARDS: {
         type = 'CONFIRM_CARDS';
         const p = msg.player ?? 0;
-        description = `Player ${p} revealed card(s).`;
-        return { type, rawType, player: p, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+        const rawCards = (msg as any).cards || [];
+        this.recordConfirmedCards(p, rawCards);
+        const confirmedCards = rawCards.map((c: any) => ({
+          code: c.code,
+          controller: c.controller,
+          location: c.location,
+          sequence: c.sequence,
+          cardName: c.code > 0 ? this.cardReader.getCardName(c.code) : 'Card',
+        }));
+        const cardOwner = rawCards[0]?.controller ?? (1 - p);
+        description =
+          rawCards.length === 1
+            ? `Player ${cardOwner} revealed ${confirmedCards[0]?.cardName || 'a card'} to Player ${p}.`
+            : `Player ${cardOwner} revealed ${rawCards.length} card(s) to Player ${p}.`;
+        return {
+          type,
+          rawType,
+          player: p,
+          controller: cardOwner,
+          cards: confirmedCards,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
       }
 
       case OcgMessageType.CONFIRM_DECKTOP: {
         type = 'CONFIRM_DECKTOP';
         const p = msg.player ?? 0;
-        const count = msg.count ?? 1;
+        const rawCards = (msg as any).cards || [];
+        this.recordConfirmedCards(p, rawCards);
+        const confirmedCards = rawCards.map((c: any) => ({
+          code: c.code,
+          controller: c.controller,
+          location: c.location,
+          sequence: c.sequence,
+          cardName: c.code > 0 ? this.cardReader.getCardName(c.code) : 'Card',
+        }));
+        const count = confirmedCards.length || msg.count || 1;
         description = `Player ${p} revealed top ${count} card(s) of Deck.`;
-        return { type, rawType, player: p, count, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+        return {
+          type,
+          rawType,
+          player: p,
+          count,
+          cards: confirmedCards,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.CONFIRM_EXTRATOP: {
+        type = 'CONFIRM_EXTRATOP';
+        const p = msg.player ?? 0;
+        const rawCards = (msg as any).cards || [];
+        this.recordConfirmedCards(p, rawCards);
+        const confirmedCards = rawCards.map((c: any) => ({
+          code: c.code,
+          controller: c.controller,
+          location: c.location,
+          sequence: c.sequence,
+          cardName: c.code > 0 ? this.cardReader.getCardName(c.code) : 'Card',
+        }));
+        const count = confirmedCards.length || 1;
+        description = `Player ${p} revealed top ${count} card(s) of Extra Deck.`;
+        return {
+          type,
+          rawType,
+          player: p,
+          count,
+          cards: confirmedCards,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
       }
 
       case OcgMessageType.SHUFFLE_DECK: {
         type = 'SHUFFLE_DECK';
         const p = msg.player ?? 0;
+        this.clearConfirmedLocation(p, OcgLocation.DECK);
         description = `Player ${p} shuffled Deck.`;
         return { type, rawType, player: p, isPrompt: false, description, raw: sanitizeBigInts(msg) };
       }

@@ -37,6 +37,16 @@
         >
           Yu-Gi-Oh! GX ({{ gxCount }})
         </button>
+        <button
+          type="button"
+          class="opponent-carousel__filter-pill opponent-carousel__filter-pill--5ds"
+          :class="{ 'opponent-carousel__filter-pill--active': activeSeries === '5Ds' }"
+          role="tab"
+          :aria-selected="activeSeries === '5Ds'"
+          @click="setFilter('5Ds')"
+        >
+          Yu-Gi-Oh! 5D's ({{ fiveDsCount }})
+        </button>
       </div>
 
       <!-- Arrow Controls -->
@@ -101,7 +111,7 @@ import CharacterCard from './CharacterCard.vue';
 interface Props {
   characters: CharacterData[];
   selectedId: string;
-  seriesFilter?: 'ALL' | 'DM' | 'GX';
+  seriesFilter?: 'ALL' | 'DM' | 'GX' | '5Ds';
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -110,10 +120,10 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'select', id: string): void;
-  (e: 'update:seriesFilter', filter: 'ALL' | 'DM' | 'GX'): void;
+  (e: 'update:seriesFilter', filter: 'ALL' | 'DM' | 'GX' | '5Ds'): void;
 }>();
 
-const activeSeries = ref<'ALL' | 'DM' | 'GX'>(props.seriesFilter);
+const activeSeries = ref<'ALL' | 'DM' | 'GX' | '5Ds'>(props.seriesFilter);
 const trackRef = ref<HTMLElement | null>(null);
 const cardElements = ref<HTMLElement[]>([]);
 
@@ -126,6 +136,7 @@ function setCardRef(el: unknown, index: number): void {
 const allCount = computed(() => props.characters.length);
 const dmCount = computed(() => props.characters.filter((c) => c.series === 'DM').length);
 const gxCount = computed(() => props.characters.filter((c) => c.series === 'GX').length);
+const fiveDsCount = computed(() => props.characters.filter((c) => c.series === '5Ds').length);
 
 const filteredCharacters = computed(() => {
   if (activeSeries.value === 'ALL') return props.characters;
@@ -137,7 +148,7 @@ const selectedIndex = computed(() => {
   return idx >= 0 ? idx : 0;
 });
 
-function setFilter(filter: 'ALL' | 'DM' | 'GX'): void {
+function setFilter(filter: 'ALL' | 'DM' | 'GX' | '5Ds'): void {
   activeSeries.value = filter;
   emit('update:seriesFilter', filter);
   nextTick(() => {
@@ -275,6 +286,13 @@ watch(
       border-color: #b8e2f2;
       color: #0a141e;
       box-shadow: 0 0 12px rgba(86, 204, 242, 0.4);
+    }
+
+    &--5ds.opponent-carousel__filter-pill--active {
+      background: #0ea5e9;
+      border-color: #7dd3fc;
+      color: #082f49;
+      box-shadow: 0 0 12px rgba(14, 165, 233, 0.4);
     }
   }
 

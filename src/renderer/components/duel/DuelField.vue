@@ -179,18 +179,16 @@
     <div class="field-center-divider">
       <div class="emz-container">
         <!-- EMZ 1 (Above MMZ 2 / Col 2) -->
-        <!-- Hidden by default: reserved for future release -->
         <FieldZoneSlot
-          v-if="false"
           zone-type="extra-monster"
           :zone-index="0"
           zone-label="EMZ 1"
           zone-sub-label="EXTRA"
-          player="user"
+          :player="extraMonsterZones[0]?.controller === opponentState.playerId ? 'ai' : 'user'"
           :card="extraMonsterZones[0] || null"
-          :is-inert="true"
-          inert-tooltip="Extra Monster Zone 1 (Reserved for future release)"
+          :is-inert="false"
           @hover-card="$emit('hover-card', $event)"
+          @click-card="$emit('click-card', $event)"
         />
 
         <!-- Arena Center Hologram Emblem -->
@@ -199,18 +197,16 @@
         </div>
 
         <!-- EMZ 2 (Above MMZ 4 / Col 4) -->
-        <!-- Hidden by default: reserved for future release -->
         <FieldZoneSlot
-          v-if="false"
           zone-type="extra-monster"
           :zone-index="1"
           zone-label="EMZ 2"
           zone-sub-label="EXTRA"
-          player="user"
+          :player="extraMonsterZones[1]?.controller === opponentState.playerId ? 'ai' : 'user'"
           :card="extraMonsterZones[1] || null"
-          :is-inert="true"
-          inert-tooltip="Extra Monster Zone 2 (Reserved for future release)"
+          :is-inert="false"
           @hover-card="$emit('hover-card', $event)"
+          @click-card="$emit('click-card', $event)"
         />
       </div>
     </div>

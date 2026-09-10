@@ -1,7 +1,7 @@
 {
   "name": "yugioh-electron",
-  "version": "0.1.13",
-  "description": "Yu-Gi-Oh! Web-Desktop Duel Simulator (DM + GX Era)",
+  "version": "0.1.14",
+  "description": "Yu-Gi-Oh! Web-Desktop Duel Simulator (DM + GX + 5D's Era)",
   "private": true,
   "type": "module",
   "main": "dist/main/index.js",
@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "test": "tsx scripts/run-tests.ts",
     "generate:decks": "tsx scripts/generate-all-character-decks.ts",
+    "generate:5ds": "tsx scripts/generate-5ds-character-decks.ts",
     "build:cards": "tsx scripts/build-card-pool.ts",
     "download:cards": "tsx scripts/download-card-images.ts",
     "generate:videos": "tsx scripts/generate-character-videos.ts",

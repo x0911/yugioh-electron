@@ -122,6 +122,8 @@ export interface CardDetail {
   isSpell: boolean;
   isTrap: boolean;
   isFusion: boolean;
+  isSynchro: boolean;
+  isTuner: boolean;
   isRitual: boolean;
   isEffect: boolean;
   isNormal: boolean;
@@ -136,12 +138,12 @@ export interface CardDetail {
   isField: boolean;
   isCounter: boolean;
   isExtraDeck: boolean;
-  era: 'DM' | 'GX';
+  era: 'DM' | 'GX' | '5Ds';
   typeLabels: string[];
 }
 
 export type CardKindFilter = 'ALL' | 'MONSTER' | 'SPELL' | 'TRAP' | 'EXTRA';
-export type CardEraFilter = 'ALL' | 'DM' | 'GX';
+export type CardEraFilter = 'ALL' | 'DM' | 'GX' | '5Ds';
 export type CardSortBy = 'name' | 'id' | 'atk' | 'def' | 'level' | 'type';
 export type CardSortOrder = 'asc' | 'desc';
 

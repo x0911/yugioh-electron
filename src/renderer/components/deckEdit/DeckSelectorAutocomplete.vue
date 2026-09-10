@@ -26,13 +26,13 @@ const store = useDeckEditStore();
 
 const isOpen = ref(false);
 const searchQuery = ref('');
-const activeCategory = ref<'ALL' | 'character-dm' | 'character-gx' | 'popular' | 'custom'>('ALL');
+const activeCategory = ref<'ALL' | 'character-dm' | 'character-gx' | 'character-5ds' | 'popular' | 'custom'>('ALL');
 const highlightedIndex = ref(0);
 const inputRef = ref<HTMLInputElement | null>(null);
 const listContainerRef = ref<HTMLDivElement | null>(null);
 const rootRef = ref<HTMLDivElement | null>(null);
 
-// Canonical DM and GX character ordering for grouped sorting
+// Canonical DM, GX, and 5D's character ordering for grouped sorting
 const DM_CHARACTER_ORDER = [
   'yugi-muto', 'yami-yugi', 'seto-kaiba', 'joey-wheeler', 'tea-gardner',
   'tristan-taylor', 'mai-valentine', 'yami-bakura', 'marik-ishtar', 'maximillion-pegasus',
@@ -47,11 +47,19 @@ const GX_CHARACTER_ORDER = [
   'sartorius-kumar', 'yubel', 'nightshroud', 'yusuke-fujiwara', 'supreme-king-jaden'
 ];
 
-function getDeckCategory(d: CustomDeck | null): 'character-dm' | 'character-gx' | 'popular' | 'custom' {
+const FIVED_CHARACTER_ORDER = [
+  'yusei-fudo', 'jack-atlas', 'crow-hogan', 'akiza-izinski', 'leo',
+  'luna', 'kalin-kessler', 'antinomy', 'sherry-leblanc', 'zone',
+  'carly-carmine', 'rex-goodwin', 'roman-goodwin', 'misty-tredwell', 'greiger',
+  'aporia', 'paradox', 'tetsu-trudge', 'sayer', 'halldor'
+];
+
+function getDeckCategory(d: CustomDeck | null): 'character-dm' | 'character-gx' | 'character-5ds' | 'popular' | 'custom' {
   if (!d) return 'custom';
   if (d.category === 'character-dm' || (d.series === 'DM' && d.characterName && d.characterName !== 'Community Popular')) return 'character-dm';
   if (d.category === 'character-gx' || (d.series === 'GX' && d.characterName && d.characterName !== 'Community Popular')) return 'character-gx';
-  if (d.category === 'popular-dm' || d.category === 'popular-gx' || d.id.startsWith('pop-') || d.characterName === 'Community Popular') return 'popular';
+  if (d.category === 'character-5ds' || ((d.series === '5Ds' || d.series === "5D's") && d.characterName && d.characterName !== 'Community Popular')) return 'character-5ds';
+  if (d.category === 'popular-dm' || d.category === 'popular-gx' || d.category === 'popular-5ds' || d.id.startsWith('pop-') || d.characterName === 'Community Popular') return 'popular';
   return 'custom';
 }
 
@@ -61,11 +69,14 @@ function getDeckSortWeight(d: CustomDeck): number {
     if (dmIdx !== -1) return 1000 + dmIdx * 20;
     const gxIdx = GX_CHARACTER_ORDER.indexOf(d.characterId);
     if (gxIdx !== -1) return 2000 + gxIdx * 20;
+    const fiveDsIdx = FIVED_CHARACTER_ORDER.indexOf(d.characterId);
+    if (fiveDsIdx !== -1) return 3000 + fiveDsIdx * 20;
   }
   if (d.category === 'character-dm' || d.series === 'DM') return 1500;
   if (d.category === 'character-gx' || d.series === 'GX') return 2500;
-  if (d.category?.startsWith('popular') || d.id.startsWith('pop-') || d.characterName === 'Community Popular') return 3000;
-  return 4000;
+  if (d.category === 'character-5ds' || d.series === '5Ds' || d.series === "5D's") return 3500;
+  if (d.category?.startsWith('popular') || d.id.startsWith('pop-') || d.characterName === 'Community Popular') return 4000;
+  return 5000;
 }
 
 // Find currently selected deck
@@ -86,6 +97,7 @@ const candidateDecks = computed(() => {
 const counts = computed(() => {
   let dmCount = 0;
   let gxCount = 0;
+  let fiveDsCount = 0;
   let popCount = 0;
   let customCount = 0;
 
@@ -93,6 +105,7 @@ const counts = computed(() => {
     const cat = getDeckCategory(d);
     if (cat === 'character-dm') dmCount++;
     else if (cat === 'character-gx') gxCount++;
+    else if (cat === 'character-5ds') fiveDsCount++;
     else if (cat === 'popular') popCount++;
     else customCount++;
   }
@@ -101,6 +114,7 @@ const counts = computed(() => {
     all: candidateDecks.value.length,
     dm: dmCount,
     gx: gxCount,
+    fiveDs: fiveDsCount,
     popular: popCount,
     custom: customCount,
   };
@@ -269,11 +283,17 @@ function getCategoryBadge(deck: CustomDeck): { text: string; classModifier: stri
   if (deck.category === 'character-gx' || (deck.series === 'GX' && deck.characterName && deck.characterName !== 'Community Popular')) {
     return { text: 'GX HERO', classModifier: 'gx' };
   }
+  if (deck.category === 'character-5ds' || ((deck.series === '5Ds' || deck.series === "5D's") && deck.characterName && deck.characterName !== 'Community Popular')) {
+    return { text: "5D'S", classModifier: 'five-ds' };
+  }
   if (deck.category === 'popular-dm' || (deck.series === 'DM' && (deck.id.startsWith('pop-') || deck.characterName === 'Community Popular'))) {
     return { text: 'DM META', classModifier: 'pop-dm' };
   }
   if (deck.category === 'popular-gx' || (deck.series === 'GX' && (deck.id.startsWith('pop-') || deck.characterName === 'Community Popular'))) {
     return { text: 'GX META', classModifier: 'pop-gx' };
+  }
+  if (deck.category === 'popular-5ds' || ((deck.series === '5Ds' || deck.series === "5D's") && (deck.id.startsWith('pop-') || deck.characterName === 'Community Popular'))) {
+    return { text: "5D'S META", classModifier: 'five-ds' };
   }
   return { text: 'CUSTOM', classModifier: 'custom' };
 }
@@ -454,6 +474,15 @@ onUnmounted(() => {
             @click="activeCategory = 'character-gx'"
           >
             GX Duelists <span class="deck-autocomplete__tab-count">({{ counts.gx }})</span>
+          </button>
+          <button
+            type="button"
+            class="deck-autocomplete__tab"
+            :class="{ 'deck-autocomplete__tab--active': activeCategory === 'character-5ds' }"
+            role="tab"
+            @click="activeCategory = 'character-5ds'"
+          >
+            5D's Duelists <span class="deck-autocomplete__tab-count">({{ counts.fiveDs }})</span>
           </button>
           <button
             type="button"

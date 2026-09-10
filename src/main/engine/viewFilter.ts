@@ -166,19 +166,24 @@ export class ViewFilterService {
       }
     }
 
-    // Redact opponent face-down / hidden cards in selection prompt targets
-    if (event.promptData && (event.promptData as any).selects && Array.isArray((event.promptData as any).selects)) {
-      const sanitizedSelects = (event.promptData as any).selects.map((s: any) => {
+    // Redact opponent face-down / hidden cards in selection prompt targets (both selects and unselects)
+    if (event.promptData) {
+      const pData = event.promptData as any;
+      const sanitizeItem = (s: any) => {
+        if (!s) return s;
         const isOwner = s.controller === viewerPlayerId;
-        const isFacedown =
-          s.position === 8 ||
-          (s.position !== undefined && (s.position & 0x8) !== 0) ||
-          s.location === 1 || // deck
-          s.location === 2 || // hand
-          s.location === 64; // extra-deck
+        if (isOwner) {
+          return { ...s };
+        }
 
-        if (!isOwner && isFacedown) {
-          const loc = s.location;
+        const loc = s.location;
+        const isFieldFacedown =
+          (loc === 4 || loc === 8) &&
+          (s.position === 8 || (s.position !== undefined && (s.position & 0x8) !== 0));
+
+        // If it's an unrevealed face-down card on field (monster/spell), or code is explicitly 0 (unrevealed hidden card)
+        // or it's an opponent card in private hand when hand is not public and code is unrevealed:
+        if (isFieldFacedown || s.code === 0 || (!isOpponentHandPublic && loc === 2 && !s.code)) {
           return {
             ...s,
             code: 0,
@@ -192,16 +197,29 @@ export class ViewFilterService {
                     : 'Face-down Card',
           };
         }
-        return { ...s };
-      });
 
-      return {
-        ...event,
-        promptData: {
-          ...event.promptData,
-          selects: sanitizedSelects,
-        },
+        // Card is revealed/known to viewerPlayerId (e.g. s.code > 0 revealed from Deck, Hand, GY, Banished, or face-up field)
+        return { ...s };
       };
+
+      let modified = false;
+      const newPromptData = { ...pData };
+
+      if (Array.isArray(pData.selects)) {
+        newPromptData.selects = pData.selects.map(sanitizeItem);
+        modified = true;
+      }
+      if (Array.isArray(pData.unselects)) {
+        newPromptData.unselects = pData.unselects.map(sanitizeItem);
+        modified = true;
+      }
+
+      if (modified) {
+        return {
+          ...event,
+          promptData: newPromptData,
+        };
+      }
     }
 
     return event;

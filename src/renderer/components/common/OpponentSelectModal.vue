@@ -40,7 +40,7 @@
                 v-model="searchQuery"
                 type="text"
                 class="opponent-search-input"
-                placeholder="Search 40 duelists by name, title, or archetype..."
+                :placeholder="`Search ${allCount} duelists by name, title, or archetype...`"
                 spellcheck="false"
               />
               <button
@@ -80,6 +80,14 @@
               >
                 Yu-Gi-Oh! GX ({{ gxCount }})
               </button>
+              <button
+                type="button"
+                class="series-tab series-tab--5ds"
+                :class="{ 'series-tab--active': activeSeries === '5Ds' }"
+                @click="setSeries('5Ds')"
+              >
+                Yu-Gi-Oh! 5D's ({{ fiveDsCount }})
+              </button>
             </div>
 
             <!-- Total Match Badge -->
@@ -101,6 +109,7 @@
                   'opponent-card--selected': char.id === selectedId,
                   'opponent-card--dm': char.series === 'DM',
                   'opponent-card--gx': char.series === 'GX',
+                  'opponent-card--5ds': char.series === '5Ds',
                 }"
                 :style="{ '--char-theme-color': char.themeColor || '#c9a227' }"
                 tabindex="0"
@@ -241,6 +250,7 @@ const gridScrollRef = ref<HTMLElement | null>(null);
 const allCount = computed(() => props.characters.length);
 const dmCount = computed(() => props.characters.filter((c) => c.series === 'DM').length);
 const gxCount = computed(() => props.characters.filter((c) => c.series === 'GX').length);
+const fiveDsCount = computed(() => props.characters.filter((c) => c.series === '5Ds').length);
 
 const filteredCharacters = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
@@ -532,6 +542,12 @@ onUnmounted(() => {
           border-color: #f87171;
           color: #fecaca;
         }
+
+        &--5ds.series-tab--active {
+          background: linear-gradient(135deg, rgba(249, 115, 22, 0.35) 0%, rgba(249, 115, 22, 0.15) 100%);
+          border-color: #fb923c;
+          color: #ffedd5;
+        }
       }
     }
 
@@ -663,6 +679,12 @@ onUnmounted(() => {
         background: rgba(239, 68, 68, 0.2);
         border-color: rgba(239, 68, 68, 0.5);
         color: #fca5a5;
+      }
+
+      &--5ds {
+        background: rgba(249, 115, 22, 0.2);
+        border-color: rgba(249, 115, 22, 0.5);
+        color: #fdba74;
       }
     }
 

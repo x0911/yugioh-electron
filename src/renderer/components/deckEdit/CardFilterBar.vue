@@ -49,6 +49,14 @@
         >
           GX
         </button>
+        <button
+          type="button"
+          class="era-btn era-btn--5ds"
+          :class="{ 'era-btn--active': store.filters.era === '5Ds' }"
+          @click="store.setFilter('era', '5Ds')"
+        >
+          5D's
+        </button>
       </div>
 
       <!-- Advanced Toggle -->
@@ -121,6 +129,8 @@
               <option value="NORMAL">Normal</option>
               <option value="EFFECT">Effect</option>
               <option value="FUSION">Fusion</option>
+              <option value="SYNCHRO">Synchro</option>
+              <option value="TUNER">Tuner</option>
               <option value="RITUAL">Ritual</option>
               <option value="QUICKPLAY">Quick-Play (Spell)</option>
               <option value="CONTINUOUS">Continuous</option>
@@ -290,7 +300,7 @@ const kindTabs = computed<{ label: string; value: CardKindFilter; count?: number
     { label: 'Monsters', value: 'MONSTER' },
     { label: 'Spells', value: 'SPELL' },
     { label: 'Traps', value: 'TRAP' },
-    { label: 'Extra (Fusion)', value: 'EXTRA' },
+    { label: 'Extra Deck', value: 'EXTRA' },
   ];
 });
 
@@ -485,6 +495,12 @@ function toggleSortOrder(): void {
   &--gx.era-btn--active {
     background: rgba(86, 204, 242, 0.3);
     color: #a4e5fb;
+  }
+
+  &--5ds.era-btn--active {
+    background: rgba(243, 156, 18, 0.35);
+    color: #fdebd0;
+    box-shadow: 0 0 6px rgba(243, 156, 18, 0.4);
   }
 }
 

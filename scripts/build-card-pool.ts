@@ -145,6 +145,85 @@ const ICONIC_ALLOWLIST_MAP = new Map<number, 'DM' | 'GX'>([
   [43791861, 'GX'], // Cybernetic Overflow
   [29491031, 'GX'], // Cybernetic Revolution
   [40227329, 'GX'], // Super Strident Blaze
+
+  // 5D's Iconic Signer & Anime Aces
+  [44508094, '5Ds'], // Stardust Dragon
+  [60800381, '5Ds'], // Junk Warrior
+  [24696029, '5Ds'], // Shooting Star Dragon
+  [50091196, '5Ds'], // Formula Synchron
+  [63977008, '5Ds'], // Junk Synchron
+  [20932152, '5Ds'], // Quickdraw Synchron
+  [3989465, '5Ds'],  // Nitro Warrior
+  [6387204, '5Ds'],  // Junk Archer
+  [37412656, '5Ds'], // Junk Berserker
+  [21155323, '5Ds'], // Junk Destroyer
+  [56655675, '5Ds'], // Drill Warrior
+  [70902743, '5Ds'], // Red Dragon Archfiend
+  [97489701, '5Ds'], // Red Nova Dragon
+  [85489096, '5Ds'], // Crimson Resonator
+  [43702890, '5Ds'], // Vice Dragon
+  [732302, '5Ds'],   // Exploder Dragonwing
+  [69031175, '5Ds'], // Blackwing - Armor Master
+  [7691398, '5Ds'],  // Blackwing - Armed Wing
+  [33236860, '5Ds'], // Blackwing - Silverwind the Ascendant
+  [9012916, '5Ds'],  // Black-Winged Dragon
+  [34206604, '5Ds'], // Blackwing - Gale the Whirlwind
+  [63854005, '5Ds'], // Blackwing - Bora the Spear
+  [81994591, '5Ds'], // Blackwing - Sirocco the Dawn
+  [49003716, '5Ds'], // Blackwing - Blizzard the Far North
+  [72714392, '5Ds'], // Blackwing - Vayu the Emblem of Honor
+  [73580471, '5Ds'], // Black Rose Dragon
+  [37478723, '5Ds'], // Splendid Rose
+  [46548598, '5Ds'], // Queen of Thorns
+  [2694423, '5Ds'],  // Botanical Lion
+  [48686504, '5Ds'], // Lonefire Blossom
+  [1174075, '5Ds'],  // Spore
+  [84013237, '5Ds'], // Glow-Up Bulb
+  [15341821, '5Ds'], // Dandylion
+  [2403771, '5Ds'],  // Power Tool Dragon
+  [25165047, '5Ds'], // Life Stream Dragon
+  [4941482, '5Ds'],  // Morphtronic Celfon
+  [44447466, '5Ds'], // Morphtronic Boomboxen
+  [55749927, '5Ds'], // Double Tool C&D
+  [25862681, '5Ds'], // Ancient Fairy Dragon
+  [50920465, '5Ds'], // Kuribon
+  [1929294, '5Ds'],  // Regulus
+  [72896720, '5Ds'], // Infernity Doom Dragon
+  [95453143, '5Ds'], // Hundred-Eyes Dragon
+  [99177923, '5Ds'], // Infernity Archfiend
+  [85475641, '5Ds'], // Infernity Mirage
+  [56585806, '5Ds'], // Infernity Necromancer
+  [74402414, '5Ds'], // Infernity Barrier
+  [12598370, '5Ds'], // Infernity Launcher
+  [51447164, '5Ds'], // T.G. Blade Blaster
+  [97836201, '5Ds'], // T.G. Halberd Cannon
+  [98558751, '5Ds'], // T.G. Wonder Magician
+  [90953320, '5Ds'], // T.G. Hyper Librarian
+  [44952065, '5Ds'], // T.G. Striker
+  [60242619, '5Ds'], // T.G. Warwolf
+  [45103815, '5Ds'], // Chevalier de Fleur
+  [84815190, '5Ds'], // Baronne de Fleur
+  [16353197, '5Ds'], // Centaur Mina
+  [72443568, '5Ds'], // Sorciere de Fleur
+  [19642774, '5Ds'], // Fleur Synchron
+  [8967776, '5Ds'],  // Sephylon, the Ultimate Timelord
+  [23064604, '5Ds'], // Metaion, the Timelord
+  [91440242, '5Ds'], // Kamion, the Timelord
+  [33015627, '5Ds'], // Sandaion, the Timelord
+  [60967717, '5Ds'], // Michion, the Timelord
+  [87383137, '5Ds'], // Zaphion, the Timelord
+  [16638212, '5Ds'], // Sadion, the Timelord
+  [57482479, '5Ds'], // Gabrion, the Timelord
+  [84143008, '5Ds'], // Raphion, the Timelord
+  [20509030, '5Ds'], // Hailon, the Timelord
+  // 5D's Format Staples
+  [50321796, '5Ds'], // Brionac, Dragon of the Ice Barrier
+  [52687916, '5Ds'], // Trishula, Dragon of the Ice Barrier
+  [73915051, '5Ds'], // Goyo Guardian
+  [88033975, '5Ds'], // Colossal Fighter
+  [95685352, '5Ds'], // Thought Ruler Archfiend
+  [97268402, '5Ds'], // Effect Veiler
+  [33420078, '5Ds'], // Plaguespreader Zombie
 ]);
 
 interface SetInfo {
@@ -157,6 +236,7 @@ interface SetInfo {
 interface SetWhitelist {
   DM: SetInfo[];
   GX: SetInfo[];
+  '5Ds'?: SetInfo[];
 }
 
 interface YgoprodeckCardSet {
@@ -182,7 +262,7 @@ interface YgoprodeckCard {
 interface FilteredCardEntry {
   id: number;
   name: string;
-  era: 'DM' | 'GX';
+  era: 'DM' | 'GX' | '5Ds';
   type: string;
   atk?: number;
   def?: number;
@@ -309,8 +389,9 @@ export async function buildCardPool(): Promise<void> {
 
   const dmSetCodes = new Set(whitelistData.DM.map((s) => s.code.toUpperCase()));
   const gxSetCodes = new Set(whitelistData.GX.map((s) => s.code.toUpperCase()));
+  const fiveDsSetCodes = new Set(whitelistData['5Ds'] ? whitelistData['5Ds'].map((s) => s.code.toUpperCase()) : []);
   console.log(
-    `      ✓ Loaded ${dmSetCodes.size} DM set codes and ${gxSetCodes.size} GX set codes.`,
+    `      ✓ Loaded ${dmSetCodes.size} DM set codes, ${gxSetCodes.size} GX set codes, and ${fiveDsSetCodes.size} 5D's set codes.`,
   );
 
   // 2. Fetch full BabelCDB cards.cdb
@@ -386,13 +467,11 @@ export async function buildCardPool(): Promise<void> {
     const cardId = row.id;
     const ygoCard = cardMap.get(cardId);
 
-    // Filter out modern card mechanics (Synchro, Xyz, Pendulum, Link)
-    const TYPE_SYNCHRO = 0x2000;
+    // Filter out post-5D's card mechanics (Xyz, Pendulum, Link)
     const TYPE_XYZ = 0x800000;
     const TYPE_PENDULUM = 0x1000000;
     const TYPE_LINK = 0x4000000;
     if (
-      row.type & TYPE_SYNCHRO ||
       row.type & TYPE_XYZ ||
       row.type & TYPE_PENDULUM ||
       row.type & TYPE_LINK
@@ -401,15 +480,16 @@ export async function buildCardPool(): Promise<void> {
     }
 
     let isMatched = false;
-    let era: 'DM' | 'GX' = 'DM';
+    let era: 'DM' | 'GX' | '5Ds' = 'DM';
 
     if (ICONIC_ALLOWLIST_MAP.has(cardId)) {
       isMatched = true;
       era = ICONIC_ALLOWLIST_MAP.get(cardId)!;
     } else if (ygoCard && ygoCard.card_sets && ygoCard.card_sets.length > 0) {
-      // Check if any set code belongs to DM or GX
+      // Check if any set code belongs to DM, GX, or 5Ds
       let isDM = false;
       let isGX = false;
+      let is5Ds = false;
 
       for (const set of ygoCard.card_sets) {
         const prefix = set.set_code.split('-')[0].toUpperCase();
@@ -420,6 +500,9 @@ export async function buildCardPool(): Promise<void> {
         if (gxSetCodes.has(prefix)) {
           isGX = true;
         }
+        if (fiveDsSetCodes.has(prefix)) {
+          is5Ds = true;
+        }
       }
 
       if (isDM) {
@@ -428,6 +511,9 @@ export async function buildCardPool(): Promise<void> {
       } else if (isGX) {
         isMatched = true;
         era = 'GX';
+      } else if (is5Ds) {
+        isMatched = true;
+        era = '5Ds';
       }
     }
 

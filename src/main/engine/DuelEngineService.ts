@@ -97,6 +97,7 @@ export class DuelEngineService {
   private viewFilter: ViewFilterService;
   private aiController: AIController;
   private lastPromptMessage: OcgMessage | null = null;
+  private priorPromptMessage: OcgMessage | null = null;
   private humanPlayerId = 0;
   private aiCharacterId = 'yugi-muto';
   private aiCharacterName = 'Yugi Muto';
@@ -176,7 +177,7 @@ export class DuelEngineService {
       currentLp: 8000,
       maxLp: 8000,
       isTurn: playerId === 0,
-      monsterZones: [null, null, null, null, null],
+      monsterZones: [null, null, null, null, null, null, null],
       spellTrapZones: [null, null, null, null, null],
       fieldZone: null,
       graveyard: [],
@@ -289,7 +290,9 @@ export class DuelEngineService {
     this.autoPlay = options.autoPlay ?? false;
     this.humanPlayerId = options.humanPlayerId ?? 0;
     this.lastPromptMessage = null;
+    this.priorPromptMessage = null;
     this.isVideoPlaying = false;
+    this.messageDecoder.resetConfirmedCards();
     this.aiCharacterId = options.aiCharacterId ?? 'yugi-muto';
     this.aiDeckArchetype = options.aiDeckArchetype ?? '';
     this.aiProvider = options.aiProvider || (options.aiEngineType as any) || 'builtin';
@@ -1246,6 +1249,8 @@ export class DuelEngineService {
     this.state.isVideoPlaying = false;
     this.isVideoPlaying = false;
     this.lastPromptMessage = null;
+    this.priorPromptMessage = null;
+    this.messageDecoder.resetConfirmedCards();
   }
 
   private normalizeResponse(response: OcgResponse): OcgResponse {
@@ -1401,6 +1406,7 @@ export class DuelEngineService {
         this.lib.duelSetResponse(handle, this.normalizeResponse(response));
         this.state.isWaitingResponse = false;
         this.state.waitingPlayer = null;
+        this.priorPromptMessage = this.lastPromptMessage;
         this.lastPromptMessage = null;
         this.processStep();
       } catch (err) {
@@ -1421,11 +1427,23 @@ export class DuelEngineService {
       this.enrichDynamicStatsForField(this.player0Field, this.player1Field);
       this.enrichDynamicStatsForField(this.player1Field, this.player0Field);
 
+      const rawAiField1 = aiPlayerId === 0 ? this.player0Field : this.player1Field;
+      const rawHumanField1 = aiPlayerId === 0 ? this.player1Field : this.player0Field;
+      const rawEmz0_1 = rawAiField1.monsterZones[5] || rawHumanField1.monsterZones[6] || null;
+      const rawEmz1_1 = rawAiField1.monsterZones[6] || rawHumanField1.monsterZones[5] || null;
+      const emz0_1 = rawEmz0_1 ? this.viewFilter.filterFieldCardForViewer(rawEmz0_1, aiPlayerId) : null;
+      const emz1_1 = rawEmz1_1 ? this.viewFilter.filterFieldCardForViewer(rawEmz1_1, aiPlayerId) : null;
+
+      const userField1 = this.viewFilter.filterPlayerFieldForViewer(this.player0Field, aiPlayerId);
+      const opponentField1 = this.viewFilter.filterPlayerFieldForViewer(this.player1Field, aiPlayerId);
+      userField1.monsterZones = userField1.monsterZones.slice(0, 5);
+      opponentField1.monsterZones = opponentField1.monsterZones.slice(0, 5);
+
       // Build strictly redacted AI-side board state
       const aiBoardState: DuelBoardState = {
-        userField: this.viewFilter.filterPlayerFieldForViewer(this.player0Field, aiPlayerId),
-        opponentField: this.viewFilter.filterPlayerFieldForViewer(this.player1Field, aiPlayerId),
-        extraMonsterZones: [null, null],
+        userField: userField1,
+        opponentField: opponentField1,
+        extraMonsterZones: [emz0_1, emz1_1],
         turnNumber: this.state.currentTurn,
         currentPhase: this.state.currentPhase,
         activePrompt: null,
@@ -1474,10 +1492,22 @@ export class DuelEngineService {
     this.enrichDynamicStatsForField(this.player0Field, this.player1Field);
     this.enrichDynamicStatsForField(this.player1Field, this.player0Field);
 
+    const rawAiField2 = aiPlayerId === 0 ? this.player0Field : this.player1Field;
+    const rawHumanField2 = aiPlayerId === 0 ? this.player1Field : this.player0Field;
+    const rawEmz0_2 = rawAiField2.monsterZones[5] || rawHumanField2.monsterZones[6] || null;
+    const rawEmz1_2 = rawAiField2.monsterZones[6] || rawHumanField2.monsterZones[5] || null;
+    const emz0_2 = rawEmz0_2 ? this.viewFilter.filterFieldCardForViewer(rawEmz0_2, aiPlayerId) : null;
+    const emz1_2 = rawEmz1_2 ? this.viewFilter.filterFieldCardForViewer(rawEmz1_2, aiPlayerId) : null;
+
+    const userField2 = this.viewFilter.filterPlayerFieldForViewer(this.player0Field, aiPlayerId);
+    const opponentField2 = this.viewFilter.filterPlayerFieldForViewer(this.player1Field, aiPlayerId);
+    userField2.monsterZones = userField2.monsterZones.slice(0, 5);
+    opponentField2.monsterZones = opponentField2.monsterZones.slice(0, 5);
+
     const aiBoardState: DuelBoardState = {
-      userField: this.viewFilter.filterPlayerFieldForViewer(this.player0Field, aiPlayerId),
-      opponentField: this.viewFilter.filterPlayerFieldForViewer(this.player1Field, aiPlayerId),
-      extraMonsterZones: [null, null],
+      userField: userField2,
+      opponentField: opponentField2,
+      extraMonsterZones: [emz0_2, emz1_2],
       turnNumber: this.state.currentTurn,
       currentPhase: this.state.currentPhase,
       activePrompt: null,
@@ -1589,6 +1619,7 @@ export class DuelEngineService {
         this.lib.duelSetResponse(handle, response);
         this.state.isWaitingResponse = false;
         this.state.waitingPlayer = null;
+        this.priorPromptMessage = this.lastPromptMessage;
         this.lastPromptMessage = null;
       } else {
         return [];
@@ -1705,8 +1736,15 @@ export class DuelEngineService {
           const fallback = rawMessages[rawMessages.length - 1];
           if (fallback.type !== OcgMessageType.RETRY) {
             lastMsg = fallback;
+          } else if (this.lastPromptMessage || this.priorPromptMessage) {
+            const restored = (this.lastPromptMessage || this.priorPromptMessage)!;
+            console.warn(
+              '[DuelEngineService] OCGCORE emitted RETRY; restoring last prompt:',
+              OcgMessageType[restored.type],
+            );
+            lastMsg = restored;
           } else {
-            console.warn('[DuelEngineService] OCGCORE emitted RETRY message without new prompt');
+            console.warn('[DuelEngineService] OCGCORE emitted RETRY message without new prompt or prior prompt');
           }
         }
 
@@ -1716,16 +1754,33 @@ export class DuelEngineService {
           this.state.waitingPlayer = promptPlayer;
           this.lastPromptMessage = lastMsg;
 
+          // Auto-resolve SORT_CARD and SORT_CHAIN with default order
+          if (
+            lastMsg.type === OcgMessageType.SORT_CARD ||
+            lastMsg.type === OcgMessageType.SORT_CHAIN
+          ) {
+            this.lib.duelSetResponse(handle, {
+              type: OcgResponseType.SORT_CARD,
+              order: null,
+            });
+            this.state.isWaitingResponse = false;
+            this.state.waitingPlayer = null;
+            this.priorPromptMessage = this.lastPromptMessage;
+            this.lastPromptMessage = null;
+            continue;
+          }
+
           // Auto-resolve SELECT_PLACE and SELECT_DISFIELD for smooth card placement
           if (
             lastMsg.type === OcgMessageType.SELECT_PLACE ||
             lastMsg.type === OcgMessageType.SELECT_DISFIELD
           ) {
-            const autoPlace = getAutoResponse(lastMsg);
-            if (autoPlace) {
+            const autoPlace = getAutoResponse(lastMsg) as { type: OcgResponseType.SELECT_PLACE; places: SelectFieldPlace[] } | null;
+            if (autoPlace && autoPlace.places && autoPlace.places.length >= (lastMsg.count || 1)) {
               this.lib.duelSetResponse(handle, autoPlace);
               this.state.isWaitingResponse = false;
               this.state.waitingPlayer = null;
+              this.priorPromptMessage = this.lastPromptMessage;
               this.lastPromptMessage = null;
               continue;
             }
@@ -1743,6 +1798,7 @@ export class DuelEngineService {
             });
             this.state.isWaitingResponse = false;
             this.state.waitingPlayer = null;
+            this.priorPromptMessage = this.lastPromptMessage;
             this.lastPromptMessage = null;
             continue;
           }
@@ -1885,6 +1941,7 @@ export class DuelEngineService {
       this.lib.duelSetResponse(this.currentDuel, this.normalizeResponse(response));
       this.state.isWaitingResponse = false;
       this.state.waitingPlayer = null;
+      this.priorPromptMessage = this.lastPromptMessage;
       this.lastPromptMessage = null;
 
       // Process next messages after response
@@ -2099,10 +2156,23 @@ export class DuelEngineService {
     const userField = this.viewFilter.filterPlayerFieldForViewer(rawUserField, this.humanPlayerId, rawOpponentField);
     const opponentField = this.viewFilter.filterPlayerFieldForViewer(rawOpponentField, this.humanPlayerId, rawUserField);
 
+    // Extract Extra Monster Zones (seq 5 & 6)
+    // From viewer's perspective:
+    // EMZ 0 (left): viewer seq 5 or opposite player seq 6
+    // EMZ 1 (right): viewer seq 6 or opposite player seq 5
+    const rawEmz0 = rawUserField.monsterZones[5] || rawOpponentField.monsterZones[6] || null;
+    const rawEmz1 = rawUserField.monsterZones[6] || rawOpponentField.monsterZones[5] || null;
+
+    const emz0 = rawEmz0 ? this.viewFilter.filterFieldCardForViewer(rawEmz0, this.humanPlayerId) : null;
+    const emz1 = rawEmz1 ? this.viewFilter.filterFieldCardForViewer(rawEmz1, this.humanPlayerId) : null;
+
+    userField.monsterZones = userField.monsterZones.slice(0, 5);
+    opponentField.monsterZones = opponentField.monsterZones.slice(0, 5);
+
     return {
       userField,
       opponentField,
-      extraMonsterZones: [null, null],
+      extraMonsterZones: [emz0, emz1],
       turnNumber: this.state.currentTurn,
       currentPhase: this.state.currentPhase,
       activePrompt: null,

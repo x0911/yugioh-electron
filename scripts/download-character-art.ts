@@ -254,6 +254,128 @@ const CHARACTER_ART_DEFS: CharacterArtDef[] = [
     url: 'https://static.wikia.nocookie.net/yugioh/images/2/2e/SupremeKing-DULI.png/revision/latest',
     cropHeightRatio: 0.45,
   },
+  // 10 5D's Characters
+  {
+    id: 'yusei-fudo',
+    name: 'Yusei Fudo',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/0/09/YuseiFudo-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'jack-atlas',
+    name: 'Jack Atlas',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/e/ef/JackAtlas-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'crow-hogan',
+    name: 'Crow Hogan',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/3/33/CrowHogan-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'akiza-izinski',
+    name: 'Akiza Izinski',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/0/0e/AkizaIzinski-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'leo',
+    name: 'Leo',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/6/64/Leo-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'luna',
+    name: 'Luna',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/2/2f/Luna-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'kalin-kessler',
+    name: 'Kalin Kessler',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/f/f5/KalinKessler-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'antinomy',
+    name: 'Antinomy',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/e/ef/Antinomy-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'sherry-leblanc',
+    name: 'Sherry LeBlanc',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/5/51/SherryLeBlanc-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'zone',
+    name: 'Zone',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/1/17/Z-one-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  // Next 10 5D's Characters
+  {
+    id: 'carly-carmine',
+    name: 'Carly Carmine',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/9/98/CarlyCarmine-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'rex-goodwin',
+    name: 'Rex Goodwin',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/3/30/DarkSignerRexGoodwin-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'roman-goodwin',
+    name: 'Roman Goodwin',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/5/53/R_Profile_57.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'misty-tredwell',
+    name: 'Misty Tredwell',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/1/1b/MistyLola.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'greiger',
+    name: 'Greiger',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/3/39/Bommer1.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'aporia',
+    name: 'Aporia',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/8/8f/Aporia-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'paradox',
+    name: 'Paradox',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/3/3b/Paradox3d.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'tetsu-trudge',
+    name: 'Tetsu Trudge',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/2/2f/OfficerTetsuTrudge-DULI.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'sayer',
+    name: 'Sayer',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/6/64/Divine_Profile_Ep_36.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
+  {
+    id: 'halldor',
+    name: 'Halldor',
+    url: 'https://static.wikia.nocookie.net/yugioh/images/3/37/Halldor.png/revision/latest',
+    cropHeightRatio: 0.45,
+  },
 ];
 
 async function downloadBuffer(url: string): Promise<Buffer> {
@@ -276,12 +398,17 @@ async function main(): Promise<void> {
   fs.mkdirSync(portraitsDir, { recursive: true });
   fs.mkdirSync(avatarsDir, { recursive: true });
 
-  console.log(`Starting character art download and avatar generation for 40 duelists...`);
+  console.log(`Starting character art download and avatar generation for ${CHARACTER_ART_DEFS.length} duelists...`);
 
   for (let i = 0; i < CHARACTER_ART_DEFS.length; i++) {
     const char = CHARACTER_ART_DEFS[i];
     const portraitPath = path.join(portraitsDir, `${char.id}.png`);
     const avatarPath = path.join(avatarsDir, `${char.id}.png`);
+
+    if (fs.existsSync(portraitPath) && fs.existsSync(avatarPath)) {
+      console.log(`[${i + 1}/${CHARACTER_ART_DEFS.length}] Skipping ${char.name} (${char.id}) - already exists.`);
+      continue;
+    }
 
     console.log(`[${i + 1}/${CHARACTER_ART_DEFS.length}] Processing ${char.name} (${char.id})...`);
 

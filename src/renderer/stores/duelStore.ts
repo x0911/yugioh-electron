@@ -511,6 +511,9 @@ export const useDuelStore = defineStore('duel', {
             if (this.boardState.opponentField) {
               this.boardState.opponentField = this.hydratePlayerField(this.boardState.opponentField);
             }
+            if (this.boardState.extraMonsterZones) {
+              this.boardState.extraMonsterZones = this.boardState.extraMonsterZones.map((c) => this.hydrateFieldCard(c));
+            }
           }
         }
       } catch (err) {
@@ -897,6 +900,17 @@ export const useDuelStore = defineStore('duel', {
 
             this.boardState.userField = newUserField;
             this.boardState.opponentField = newOpponentField;
+
+            if (snapshot.extraMonsterZones && Array.isArray(snapshot.extraMonsterZones)) {
+              const newEmz = snapshot.extraMonsterZones.map((c) => this.hydrateFieldCard(c));
+              for (let i = 0; i < 2; i++) {
+                const ex = this.boardState.extraMonsterZones[i];
+                const inc = newEmz[i];
+                if (ex && inc) inc.id = ex.id;
+              }
+              this.boardState.extraMonsterZones = newEmz;
+            }
+
             this.boardState.turnNumber = snapshot.turnNumber;
             this.boardState.currentPhase = snapshot.currentPhase;
             this.boardState.winner = snapshot.winner;
@@ -1171,8 +1185,16 @@ export const useDuelStore = defineStore('duel', {
         }
       } else if (fromLoc === 4) {
         // Monster Zone
-        card = fromPf.monsterZones[fromSeq] ?? null;
-        fromPf.monsterZones[fromSeq] = null;
+        if (fromSeq >= 5) {
+          const emzIdx = fromSeq === 5
+            ? (fromController === this.userPlayerId ? 0 : 1)
+            : (fromController === this.userPlayerId ? 1 : 0);
+          card = this.boardState.extraMonsterZones[emzIdx] ?? null;
+          this.boardState.extraMonsterZones[emzIdx] = null;
+        } else {
+          card = fromPf.monsterZones[fromSeq] ?? null;
+          fromPf.monsterZones[fromSeq] = null;
+        }
       } else if (fromLoc === 8) {
         // Spell/Trap Zone or Field Zone
         if (fromSeq === 5) {
@@ -1310,10 +1332,17 @@ export const useDuelStore = defineStore('duel', {
         if ((pos & 0x1) !== 0) pState = 'faceup_attack';
         else if ((pos & 0x4) !== 0) pState = 'faceup_defense';
         else if ((pos & 0x8) !== 0) pState = 'facedown_defense';
-        card.location = 'monster';
+        card.location = toSeq >= 5 ? 'extra-monster' : 'monster';
         card.sequence = toSeq;
         card.position = pState;
-        toPf.monsterZones[toSeq] = card;
+        if (toSeq >= 5) {
+          const emzIdx = toSeq === 5
+            ? (controller === this.userPlayerId ? 0 : 1)
+            : (controller === this.userPlayerId ? 1 : 0);
+          this.boardState.extraMonsterZones[emzIdx] = card;
+        } else {
+          toPf.monsterZones[toSeq] = card;
+        }
       } else if (toLoc === 8) {
         // Spell Zone
         if (toSeq === 5) {
@@ -1414,7 +1443,12 @@ export const useDuelStore = defineStore('duel', {
       if (event.fieldStats && Array.isArray(event.fieldStats)) {
         for (const s of event.fieldStats) {
           const pf = s.controller === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
-          const card = pf.monsterZones[s.sequence];
+          const emzIdx = s.sequence === 5
+            ? (s.controller === this.userPlayerId ? 0 : 1)
+            : (s.controller === this.userPlayerId ? 1 : 0);
+          const card = s.sequence >= 5
+            ? this.boardState.extraMonsterZones[emzIdx]
+            : pf.monsterZones[s.sequence];
           if (card) {
             if (typeof s.atk === 'number') card.atk = s.atk;
             if (typeof s.def === 'number') card.def = s.def;
@@ -1488,7 +1522,12 @@ export const useDuelStore = defineStore('duel', {
         const p = (event.controller ?? this.userPlayerId) as 0 | 1;
         const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
         const seq = event.sequence ?? 0;
-        const card = pf.monsterZones[seq];
+        const emzIdx = seq === 5
+          ? (p === this.userPlayerId ? 0 : 1)
+          : (p === this.userPlayerId ? 1 : 0);
+        const card = seq >= 5
+          ? this.boardState.extraMonsterZones[emzIdx]
+          : pf.monsterZones[seq];
         if (card) {
           if (event.code && event.code > 0) {
             card.code = event.code;
@@ -2046,11 +2085,14 @@ export const useDuelStore = defineStore('duel', {
         if (owner === 'user') return item.cardName || 'Card';
 
         // If owner is AI (opponent): check if card is face-down / hidden
+        const oppCard = seq >= 5
+          ? this.boardState.extraMonsterZones[seq === 5 ? 1 : 0]
+          : this.boardState.opponentField.monsterZones[seq];
         const isFacedownMonster =
           loc === 4 &&
           (item.position === 8 ||
             (item.position !== undefined && (item.position & 0x8) !== 0) ||
-            this.boardState.opponentField.monsterZones[seq]?.position === 'facedown_defense' ||
+            oppCard?.position === 'facedown_defense' ||
             item.code === 0);
 
         const isFacedownSpell =
@@ -2062,8 +2104,9 @@ export const useDuelStore = defineStore('duel', {
             (loc === 256 && this.boardState.opponentField.fieldZone?.position === 'facedown_spell') ||
             item.code === 0);
 
-        if (isFacedownMonster) return 'Face-down Monster';
-        if (isFacedownSpell) return 'Face-down Card';
+        if (loc === 4 && isFacedownMonster) return 'Face-down Monster';
+        if ((loc === 8 || loc === 256) && isFacedownSpell) return 'Face-down Card';
+        if (item.code > 0 && item.cardName && item.cardName !== 'Card') return item.cardName;
         if (loc === 2) return 'Card in Hand';
         if (loc === 1) return "Opponent's Deck";
         if (loc === 64) return "Opponent's Extra Deck";

@@ -151,12 +151,23 @@ export function isCardImageCached(cardId: number, variant: CardImageVariant = 'f
 }
 
 /**
- * Handles image error events by swapping to placeholder.
+ * Handles image error events with progressive fallback:
+ * If 'mini' or 'art' variant fails to load, gracefully attempts to load 'full' card image
+ * before falling back to the generic placeholder.
  */
 export function handleImageError(event: Event): void {
   const target = event.target as HTMLImageElement | null;
-  if (target) {
-    target.src = getCardPlaceholderUrl();
+  if (!target) return;
+
+  const src = target.src || '';
+  if (src.includes('/cards/mini/') || src.includes('/cards/art/')) {
+    const fullUrl = src.replace('/cards/mini/', '/cards/full/').replace('/cards/art/', '/cards/full/');
+    if (target.src !== fullUrl) {
+      target.src = fullUrl;
+      return;
+    }
   }
+
+  target.src = getCardPlaceholderUrl();
 }
 

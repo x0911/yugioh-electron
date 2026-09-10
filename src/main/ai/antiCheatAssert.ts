@@ -59,4 +59,22 @@ export function assertAiStateSanitized(boardState: DuelBoardState, aiPlayerId: n
       }
     }
   }
+
+  // 4. Check human face-down cards in Extra Monster Zones
+  if (boardState.extraMonsterZones) {
+    for (let i = 0; i < boardState.extraMonsterZones.length; i++) {
+      const card = boardState.extraMonsterZones[i];
+      if (
+        card &&
+        card.controller !== aiPlayerId &&
+        (card.position === 'facedown_defense' || card.position === 'facedown_spell')
+      ) {
+        if (card.code !== 0) {
+          throw new Error(
+            `[ANTI-CHEAT ASSERTION FAILED] AIController was handed face-down human card in EMZ ${i + 1} (code=${card.code}, name="${card.name}")!`,
+          );
+        }
+      }
+    }
+  }
 }

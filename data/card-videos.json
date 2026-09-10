@@ -88,5 +88,145 @@
     "summon": "resources/videos/cards/summon_78193831.mp4",
     "attack": "resources/videos/cards/attack_78193831.mp4",
     "isPlaceholder": false
+  },
+  "44508094": {
+    "cardName": "Stardust Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_44508094.mp4",
+    "attack": "resources/videos/cards/attack_44508094.mp4",
+    "isPlaceholder": false
+  },
+  "70902743": {
+    "cardName": "Red Dragon Archfiend",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_70902743.mp4",
+    "attack": "resources/videos/cards/attack_70902743.mp4",
+    "isPlaceholder": false
+  },
+  "73580471": {
+    "cardName": "Black Rose Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_73580471.mp4",
+    "attack": "resources/videos/cards/attack_73580471.mp4",
+    "isPlaceholder": true
+  },
+  "25862681": {
+    "cardName": "Ancient Fairy Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_25862681.mp4",
+    "attack": "resources/videos/cards/attack_25862681.mp4",
+    "isPlaceholder": true
+  },
+  "2403771": {
+    "cardName": "Power Tool Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_2403771.mp4",
+    "attack": "resources/videos/cards/attack_2403771.mp4",
+    "isPlaceholder": true
+  },
+  "69031175": {
+    "cardName": "Blackwing Armor Master",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_69031175.mp4",
+    "attack": "resources/videos/cards/attack_69031175.mp4",
+    "isPlaceholder": true
+  },
+  "60800381": {
+    "cardName": "Junk Warrior",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_60800381.mp4",
+    "attack": "resources/videos/cards/attack_60800381.mp4",
+    "isPlaceholder": true
+  },
+  "74860293": {
+    "cardName": "Junk Destroyer",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_74860293.mp4",
+    "attack": "resources/videos/cards/attack_74860293.mp4",
+    "isPlaceholder": true
+  },
+  "24696097": {
+    "cardName": "Shooting Star Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_24696097.mp4",
+    "attack": "resources/videos/cards/attack_24696097.mp4",
+    "isPlaceholder": true
+  },
+  "97489701": {
+    "cardName": "Red Nova Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_97489701.mp4",
+    "attack": "resources/videos/cards/attack_97489701.mp4",
+    "isPlaceholder": true
+  },
+  "7391448": {
+    "cardName": "Goyo Guardian",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_7391448.mp4",
+    "attack": "resources/videos/cards/attack_7391448.mp4",
+    "isPlaceholder": true
+  },
+  "70780151": {
+    "cardName": "Thought Ruler Archfiend",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_70780151.mp4",
+    "attack": "resources/videos/cards/attack_70780151.mp4",
+    "isPlaceholder": true
+  },
+  "72896720": {
+    "cardName": "Infernity Doom Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_72896720.mp4",
+    "attack": "resources/videos/cards/attack_72896720.mp4",
+    "isPlaceholder": true
+  },
+  "51447164": {
+    "cardName": "T.G. Blade Blaster",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_51447164.mp4",
+    "attack": "resources/videos/cards/attack_51447164.mp4",
+    "isPlaceholder": true
+  },
+  "97836203": {
+    "cardName": "T.G. Halberd Cannon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_97836203.mp4",
+    "attack": "resources/videos/cards/attack_97836203.mp4",
+    "isPlaceholder": true
+  },
+  "45037489": {
+    "cardName": "Chevalier de Fleur",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_45037489.mp4",
+    "attack": "resources/videos/cards/attack_45037489.mp4",
+    "isPlaceholder": true
+  },
+  "84815190": {
+    "cardName": "Baronne de Fleur",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_84815190.mp4",
+    "attack": "resources/videos/cards/attack_84815190.mp4",
+    "isPlaceholder": true
+  },
+  "74530899": {
+    "cardName": "Metaion, the Timelord",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_74530899.mp4",
+    "attack": "resources/videos/cards/attack_74530899.mp4",
+    "isPlaceholder": true
+  },
+  "8967776": {
+    "cardName": "Sephylon, the Ultimate Timelord",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_8967776.mp4",
+    "attack": "resources/videos/cards/attack_8967776.mp4",
+    "isPlaceholder": true
+  },
+  "93483212": {
+    "cardName": "Odin, Father of the Aesir",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_93483212.mp4",
+    "attack": "resources/videos/cards/attack_93483212.mp4",
+    "isPlaceholder": true
   }
 }

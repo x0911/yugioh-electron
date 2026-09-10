@@ -530,7 +530,7 @@ function getSelectedDeck(): {
   name: string;
   cards: number[];
   extraCards: number[];
-  series?: 'DM' | 'GX';
+  series?: 'DM' | 'GX' | '5Ds';
 } {
   const d = currentDeckObject.value;
   if (d) {
@@ -544,7 +544,7 @@ function getSelectedDeck(): {
       name: d.name,
       cards: mainCards,
       extraCards,
-      series: d.series === 'GX' ? 'GX' : 'DM',
+      series: d.series === '5Ds' ? '5Ds' : d.series === 'GX' ? 'GX' : 'DM',
     };
   }
   return { name: 'Starter Deck', cards: [], extraCards: [] };
@@ -964,6 +964,10 @@ async function handleStartMatch() {
           &--gx {
             background: rgba(239, 68, 68, 0.2);
             color: #fca5a5;
+          }
+          &--5ds {
+            background: rgba(249, 115, 22, 0.2);
+            color: #fdba74;
           }
         }
 

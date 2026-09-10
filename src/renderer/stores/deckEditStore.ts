@@ -114,6 +114,10 @@ export const useDeckEditStore = defineStore('deckEdit', {
           list = list.filter((c) => c.isRitual);
         } else if (subType === 'FUSION') {
           list = list.filter((c) => c.isFusion);
+        } else if (subType === 'SYNCHRO') {
+          list = list.filter((c) => c.isSynchro);
+        } else if (subType === 'TUNER') {
+          list = list.filter((c) => c.isTuner);
         } else if (subType === 'CONTINUOUS') {
           list = list.filter((c) => c.isContinuous);
         } else if (subType === 'EQUIP') {
@@ -251,11 +255,14 @@ export const useDeckEditStore = defineStore('deckEdit', {
       spells: number;
       traps: number;
       fusions: number;
+      synchros: number;
+      totalExtra: number;
     } {
       let monsters = 0;
       let spells = 0;
       let traps = 0;
       let fusions = 0;
+      let synchros = 0;
 
       const cardMap = this.cardMap;
       for (const id of state.activeDeck.main) {
@@ -268,10 +275,13 @@ export const useDeckEditStore = defineStore('deckEdit', {
       }
       for (const id of state.activeDeck.extra) {
         const c = cardMap.get(id);
-        if (c && c.isFusion) fusions++;
+        if (c) {
+          if (c.isFusion) fusions++;
+          else if (c.isSynchro) synchros++;
+        }
       }
 
-      return { monsters, spells, traps, fusions };
+      return { monsters, spells, traps, fusions, synchros, totalExtra: fusions + synchros };
     },
 
     deckValidity(state): DeckValidity {
@@ -594,9 +604,10 @@ export const useDeckEditStore = defineStore('deckEdit', {
       const card = this.cardMap.get(id);
       if (!card) return false;
 
-      // Auto-route Fusions to extra deck or notify
+      // Auto-route Fusions / Synchros to extra deck or notify
       if (card.isExtraDeck) {
-        this.showToast(`"${card.name}" is a Fusion Monster — placed into Extra Deck!`, 'info');
+        const typeStr = card.isSynchro ? 'Synchro' : 'Fusion';
+        this.showToast(`"${card.name}" is a ${typeStr} Monster — placed into Extra Deck!`, 'info');
         return this.addCardToDeck(id);
       }
 
