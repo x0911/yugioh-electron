@@ -53,6 +53,8 @@ jobs:
             echo "ℹ Remote media bundle not found yet. Generating procedural BGM & SFX tracks..."
             npx tsx scripts/generate-audio-tracks.ts
           fi
+          # Ensure repository-tracked files are never overridden by external media archives
+          git checkout HEAD -- resources/
 
       # Card Images: Check GitHub Actions Cache first
       - name: Restore Cached Card Images
@@ -81,6 +83,8 @@ jobs:
           else
             echo "ℹ Remote card images bundle not found on release mirror."
           fi
+          # Ensure repository-tracked files (custom card images/art) are preserved
+          git checkout HEAD -- resources/
 
       # Run card downloader to verify completeness & download any new cards added since base bundle
       - name: Ensure Card Pool Completeness
@@ -110,6 +114,13 @@ jobs:
 
       - name: Build Application Bundle
         run: npm run build
+
+      - name: Ensure Tracked Resources Integrity
+        shell: bash
+        run: |
+          echo "Restoring any git-tracked resources clobbered by build or download steps..."
+          git checkout HEAD -- resources/
+          git status --short
 
       - name: Run Test Suite
         run: npm test

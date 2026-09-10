@@ -35,7 +35,7 @@ const PLACEHOLDER_FULL_SIZES = new Set([87124]);
 const PLACEHOLDER_MINI_SIZES = new Set([3278, 3133]);
 const PLACEHOLDER_ART_SIZES = new Set([38031, 20957]);
 
-const CUSTOM_CARD_IDS = new Set([99900001]);
+const CUSTOM_CARD_IDS = new Set([99900001, 99937011]);
 
 const CDN_FULL_URL = (id: number | string) =>
   `https://images.ygoprodeck.com/images/cards/${id}.jpg`;
