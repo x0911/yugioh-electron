@@ -17,8 +17,8 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    port: 5173,
-    strictPort: true,
+    port: 5174,
+    strictPort: false,
   },
   css: {
     preprocessorOptions: {

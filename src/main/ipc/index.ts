@@ -83,7 +83,7 @@ export function registerIpcHandlers(): void {
     try {
       const { spawn } = await import('node:child_process');
       const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
-      const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+      const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5174';
       const electronBin = process.execPath;
       const appPath = app.getAppPath();
       const args = isDev

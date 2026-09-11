@@ -47,6 +47,7 @@ const testFiles = [
   'tests/link-monster-and-emz.test.ts',
   'tests/synchro-and-5ds-roster.test.ts',
   'tests/painful-choice-reveal.test.ts',
+  'tests/release-asset-integrity.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);

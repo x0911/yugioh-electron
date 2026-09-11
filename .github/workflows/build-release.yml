@@ -122,6 +122,9 @@ jobs:
           git checkout HEAD -- resources/
           git status --short
 
+      - name: Verify Release Assets Completeness
+        run: npm run verify:assets -- --strict
+
       - name: Run Test Suite
         run: npm test
 

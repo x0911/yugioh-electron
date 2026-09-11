@@ -22,8 +22,15 @@ async function isPortOpen(port: number): Promise<boolean> {
 }
 
 async function startGuestDev() {
-  const port = 5173;
-  const isViteUp = await isPortOpen(port);
+  const defaultPort = parseInt(process.env.VITE_PORT || '5174', 10);
+  let port = defaultPort;
+  let isViteUp = await isPortOpen(port);
+  if (!isViteUp && defaultPort !== 5173) {
+    if (await isPortOpen(5173)) {
+      port = 5173;
+      isViteUp = true;
+    }
+  }
 
   if (!isViteUp) {
     console.warn(`\n[dev:guest] Vite dev server not detected on http://localhost:${port}.`);

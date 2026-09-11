@@ -14,7 +14,7 @@ async function startDev() {
   });
   await viteServer.listen();
   const address = viteServer.httpServer?.address();
-  const port = typeof address === 'object' && address ? address.port : 5173;
+  const port = typeof address === 'object' && address ? address.port : 5174;
   console.log(`[dev] Vite server listening on http://localhost:${port}`);
 
   console.log('[dev] Compiling main process and preload...');

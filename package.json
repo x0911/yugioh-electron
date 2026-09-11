@@ -1,6 +1,6 @@
 {
   "name": "yugioh-electron",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Yu-Gi-Oh! Web-Desktop Duel Simulator (DM + GX + 5D's Era)",
   "private": true,
   "type": "module",
@@ -23,7 +23,9 @@
     "generate:audio": "tsx scripts/generate-audio-tracks.ts",
     "download:soundpack": "tsx scripts/download-soundpack.ts",
     "generate:manifest": "tsx scripts/generate-update-manifest.ts",
+    "verify:assets": "tsx scripts/verify-release-assets.ts",
     "pack:assets": "bash scripts/pack-media-assets.sh",
+    "pack:media": "bash scripts/pack-media-assets.sh",
     "pack:cards": "bash scripts/pack-cards-bundle.sh",
     "package": "npm run build && electron-builder --dir",
     "package:mac": "npm run build && electron-builder --mac --dir",

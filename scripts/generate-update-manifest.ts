@@ -133,11 +133,11 @@ export function generateManifest(): UpdateManifest {
     releaseDate: new Date().toISOString(),
     releaseNotes:
       `Yu-Gi-Oh! Duel Arena v${currentVersion}\n` +
-      `- Buster Blader In-Game Patch Fix: Resolved ESM dynamic require error in packaged builds to reliably load patch assets from userData/patch/\n` +
-      `- Persistent Cutscene Video Triggering: Ensured summon and attack cutscene payloads persist and play through automatic chain resolution\n` +
-      `- Deck Count Synchronization: Fixed false deck-out defeats by tracking milled, searched, and excavated cards in real-time without WASM faults\n` +
-      `- Fast Delta Hot-Patcher: Lightweight patch archive including Buster Blader cutscenes available via in-game internal updater\n` +
-      `- 100% test verification across all 41 test suites`,
+      `- Complete 5D's Monster Cutscenes: Integrated Stardust Dragon and Red Dragon Archfiend summon and attack animations into installer and patch bundles\n` +
+      `- Automated Asset Verification: Added pre-flight and CI asset validation pipeline (npm run verify:assets) to prevent missing binaries\n` +
+      `- Dynamic Dev Port Selection: Resolved port 5173 collisions by defaulting to 5174 with non-strict automatic port discovery\n` +
+      `- Cloud Media Mirror Sync: Updated assets-v1 mirror with latest game media archives\n` +
+      `- 100% test verification across all 45 test suites`,
     remoteBaseUrl: 'https://raw.githubusercontent.com/x0911/yugioh-electron/main',
     files: manifestFiles,
   };
