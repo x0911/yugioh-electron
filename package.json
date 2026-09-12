@@ -6,6 +6,7 @@
   "type": "module",
   "main": "dist/main/index.js",
   "scripts": {
+    "postinstall": "tsx scripts/patch-ocgcore.ts",
     "dev": "tsx scripts/dev.ts",
     "dev:guest": "tsx scripts/dev-guest.ts",
     "build": "tsx scripts/build.ts",

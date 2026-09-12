@@ -3,6 +3,7 @@ import electronPath from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import http from 'node:http';
+import { patchOcgcore } from './patch-ocgcore.js';
 
 const rootDir = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 
@@ -22,6 +23,7 @@ async function isPortOpen(port: number): Promise<boolean> {
 }
 
 async function startGuestDev() {
+  patchOcgcore();
   const defaultPort = parseInt(process.env.VITE_PORT || '5174', 10);
   let port = defaultPort;
   let isViteUp = await isPortOpen(port);

@@ -2,10 +2,12 @@ import { build as esbuild } from 'esbuild';
 import { build as viteBuild } from 'vite';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { patchOcgcore } from './patch-ocgcore.js';
 
 const rootDir = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 async function main() {
+  patchOcgcore();
   console.log('[build] Bundling main process...');
   await esbuild({
     entryPoints: [path.join(rootDir, 'src/main/index.ts')],

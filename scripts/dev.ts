@@ -4,10 +4,12 @@ import { spawn } from 'node:child_process';
 import electronPath from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { patchOcgcore } from './patch-ocgcore.js';
 
 const rootDir = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 async function startDev() {
+  patchOcgcore();
   console.log('[dev] Starting Vite dev server for renderer...');
   const viteServer = await createServer({
     configFile: path.join(rootDir, 'vite.config.ts'),

@@ -255,6 +255,9 @@ export class AIController {
         default: {
           const auto = getAutoResponse(msg);
           if (auto) return auto;
+          console.warn(
+            `[AIController] Unrecognized or non-prompt message in decideResponse: ${OcgMessageType[msg.type] ?? msg.type}`,
+          );
           return {
             type: OcgResponseType.SELECT_CHAIN,
             index: null,

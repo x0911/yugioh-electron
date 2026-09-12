@@ -197,6 +197,15 @@ export class DuelEngineService {
   public async init(): Promise<EngineInitStatus> {
     if (!this.lib) {
       this.lib = await createCore({ sync: true });
+      const rawDuelGetMessage = this.lib.duelGetMessage.bind(this.lib);
+      this.lib.duelGetMessage = (duel: any) => {
+        try {
+          return rawDuelGetMessage(duel);
+        } catch (err) {
+          console.error('[DuelEngineService] Error inside ocgcore duelGetMessage:', err);
+          return [];
+        }
+      };
       const [maj, min] = this.lib.getVersion();
       console.log(`[DuelEngineService] ocgcore-wasm initialized (v${maj}.${min})`);
     }
@@ -865,6 +874,34 @@ export class DuelEngineService {
         pf.hand = newHand;
       } else {
         this.reindexHand(pf);
+      }
+    } else if (rawType === OcgMessageType.SHUFFLE_SET_CARD && Array.isArray((msg as any).cards)) {
+      const cards = (msg as any).cards as Array<{ from: any; to: any }>;
+      const loc = (msg as any).location ?? OcgLocation.MZONE;
+      const isMonsterZone = loc === OcgLocation.MZONE;
+      const moves: Array<{ card: FieldCard; toController: 0 | 1; toSeq: number }> = [];
+
+      for (const pair of cards) {
+        if (!pair.from || !pair.to) continue;
+        const fromPf = this.getPlayerField(pair.from.controller);
+        const fromList = isMonsterZone ? fromPf.monsterZones : fromPf.spellTrapZones;
+        const card = fromList[pair.from.sequence];
+        if (card) {
+          moves.push({
+            card,
+            toController: pair.to.controller as 0 | 1,
+            toSeq: pair.to.sequence,
+          });
+          fromList[pair.from.sequence] = null;
+        }
+      }
+
+      for (const move of moves) {
+        const toPf = this.getPlayerField(move.toController);
+        const toList = isMonsterZone ? toPf.monsterZones : toPf.spellTrapZones;
+        move.card.controller = move.toController;
+        move.card.sequence = move.toSeq;
+        toList[move.toSeq] = move.card;
       }
     } else if (rawType === OcgMessageType.MOVE && 'from' in msg && 'to' in msg && 'card' in msg) {
       const reason = typeof m.reason === 'number' ? m.reason : 0;
@@ -1739,17 +1776,21 @@ export class DuelEngineService {
         }
         if (!lastMsg && rawMessages.length > 0) {
           const fallback = rawMessages[rawMessages.length - 1];
-          if (fallback.type !== OcgMessageType.RETRY) {
-            lastMsg = fallback;
-          } else if (this.lastPromptMessage || this.priorPromptMessage) {
-            const restored = (this.lastPromptMessage || this.priorPromptMessage)!;
-            console.warn(
-              '[DuelEngineService] OCGCORE emitted RETRY; restoring last prompt:',
-              OcgMessageType[restored.type],
-            );
-            lastMsg = restored;
+          if (fallback.type === OcgMessageType.RETRY) {
+            if (this.lastPromptMessage || this.priorPromptMessage) {
+              const restored = (this.lastPromptMessage || this.priorPromptMessage)!;
+              console.warn(
+                '[DuelEngineService] OCGCORE emitted RETRY; restoring last prompt:',
+                OcgMessageType[restored.type],
+              );
+              lastMsg = restored;
+            } else {
+              console.warn('[DuelEngineService] OCGCORE emitted RETRY message without new prompt or prior prompt');
+            }
           } else {
-            console.warn('[DuelEngineService] OCGCORE emitted RETRY message without new prompt or prior prompt');
+            console.warn(
+              `[DuelEngineService] Status is WAITING but last message (${OcgMessageType[fallback.type] ?? fallback.type}) is not a recognized prompt`,
+            );
           }
         }
 

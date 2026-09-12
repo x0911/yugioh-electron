@@ -1502,6 +1502,30 @@ export class MessageDecoder {
         };
       }
 
+      case OcgMessageType.SHUFFLE_SET_CARD: {
+        type = 'SHUFFLE_SET_CARD';
+        const loc = (msg as any).location ?? OcgLocation.MZONE;
+        this.clearConfirmedLocation(0, loc);
+        this.clearConfirmedLocation(1, loc);
+        const cards = Array.isArray((msg as any).cards)
+          ? (msg as any).cards.map((c: any) => ({
+              from: c.from ? sanitizeBigInts(c.from) : undefined,
+              to: c.to ? sanitizeBigInts(c.to) : undefined,
+            }))
+          : [];
+        const locName = loc === OcgLocation.SZONE ? 'Spell & Trap Zone' : 'Monster Zone';
+        description = `Face-down cards in ${locName} were shuffled.`;
+        return {
+          type,
+          rawType,
+          location: loc,
+          cards,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
       case OcgMessageType.ANNOUNCE_CARD: {
         isPrompt = true;
         type = 'ANNOUNCE_CARD';

@@ -1,6 +1,9 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
+import { patchOcgcore } from './patch-ocgcore.js';
+
+patchOcgcore();
 
 const testFiles = [
   'tests/guidance-targeting.test.ts',
@@ -48,6 +51,7 @@ const testFiles = [
   'tests/synchro-and-5ds-roster.test.ts',
   'tests/painful-choice-reveal.test.ts',
   'tests/release-asset-integrity.test.ts',
+  'tests/cyber-jar-shuffle-set-card.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);
