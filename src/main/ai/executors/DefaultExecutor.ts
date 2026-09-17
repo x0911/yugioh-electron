@@ -10,7 +10,7 @@ import type { EvaluatorContext, ScoredAction } from '../types.js';
 import { getAiAndOpponentFields } from '../types.js';
 import type { PlayerFieldState, FieldCard } from '../../../shared/types/field.js';
 import { evaluateAttackOption, type AttackCandidate } from '../evaluators/combatEvaluator.js';
-import { evaluateSpellTrapSet, evaluateSpellActivation } from '../evaluators/spellTrapEvaluator.js';
+import { evaluateSpellTrapSet, evaluateSpellActivation, evaluateBoardDominance } from '../evaluators/spellTrapEvaluator.js';
 
 /**
  * Universal Competitive AI Executor.
@@ -466,23 +466,38 @@ export class DefaultExecutor implements DeckExecutor {
     // 5. PHASE TRANSITIONS (Battle Phase / End Phase)
     // =========================================================================
     if (msg.to_bp) {
+      const dominance = evaluateBoardDominance(context);
       const aiAttackers = aiField.monsterZones.filter(
         (m) => !!m && m.position === 'faceup_attack' && (m.atk ?? 0) > 0,
       );
       const aiMaxAtk = Math.max(0, ...aiAttackers.map((m) => m?.atk ?? 0));
+      const aiTotalAtk = aiAttackers.reduce((acc, m) => acc + (m?.atk ?? 0), 0);
       const oppFaceUpAttack = oppField.monsterZones.filter(
         (m) => !!m && m.position === 'faceup_attack' && (m.atk ?? 0) > 0,
       );
       const oppStrongerCount = oppFaceUpAttack.filter((m) => (m?.atk ?? 0) > aiMaxAtk).length;
 
       let bpScore = 0;
+      let bpReason = '';
+
       if (aiAttackers.length === 0) {
         bpScore = -500;
+        bpReason = 'Hold in Main Phase (no ready attackers)';
+      } else if (dominance.isLethalOnBoard) {
+        // Direct lethal or combat lethal on board: PUSH FOR GAME IMMEDIATELY!
+        bpScore = 25000;
+        bpReason = `[LETHAL RUSH] Advance to Battle Phase to win the duel! (${dominance.reason})`;
+      } else if (dominance.isDominating) {
+        // Overwhelming board dominance: enter Battle Phase to press advantage
+        bpScore = 5500 + aiTotalAtk * 0.4 * (aggression + 0.5);
+        bpReason = `[DOMINANCE ATTACK] Advance to Battle Phase with superior board (${dominance.reason})`;
       } else if (oppFaceUpAttack.length > 0 && oppStrongerCount === oppFaceUpAttack.length && oppMonsters.length === oppFaceUpAttack.length) {
         // Opponent has only stronger face-up attack monsters; entering BP would lead to suicide
         bpScore = -2500;
+        bpReason = 'Hold in Main Phase (opposing field is superior)';
       } else {
-        bpScore = 1400 + aiAttackers.length * 200 + aiMaxAtk * 0.2;
+        bpScore = 1800 + aiAttackers.length * 250 + aiMaxAtk * 0.25;
+        bpReason = `Advance to Battle Phase (${aiAttackers.length} ready attackers, ${aiTotalAtk} total ATK)`;
       }
 
       candidates.push({
@@ -491,18 +506,31 @@ export class DefaultExecutor implements DeckExecutor {
           action: SelectIdleCMDAction.TO_BP,
         },
         score: bpScore,
-        reason: bpScore < 0 ? 'Hold in Main Phase (opposing field is superior)' : `Advance to Battle Phase (${aiAttackers.length} ready attackers)`,
+        reason: bpReason,
       });
     }
 
     if (msg.to_ep) {
+      const dominance = evaluateBoardDominance(context);
+      const currentPhase = context.currentPhase || context.boardState.currentPhase;
+      const isMainPhase2 = currentPhase === 'M2' || currentPhase === 'MAIN2';
+
+      let epScore = 0;
+      let epReason = 'End turn (no further productive Main Phase actions)';
+
+      if (isMainPhase2 && dominance.isDominating) {
+        // In MP2, when holding dominance, prioritize passing to EP over risky spell plays
+        epScore = 1500;
+        epReason = `[DISCIPLINE PASS] End turn in MP2 while controlling dominant board (${dominance.aiTotalAtk} ATK)`;
+      }
+
       candidates.push({
         action: {
           type: OcgResponseType.SELECT_IDLECMD,
           action: SelectIdleCMDAction.TO_EP,
         },
-        score: 0,
-        reason: 'End turn (no further productive Main Phase actions)',
+        score: epScore,
+        reason: epReason,
       });
     }
 

@@ -2,6 +2,89 @@ import type { EvaluatorContext } from '../types.js';
 import { getAiAndOpponentFields } from '../types.js';
 import type { PlayerFieldState } from '../../../shared/types/field.js';
 
+export interface DominanceState {
+  isDominating: boolean;
+  isLethalOnBoard: boolean;
+  aiTotalAtk: number;
+  oppVisibleAtk: number;
+  oppMonsterCount: number;
+  reason: string;
+}
+
+export function evaluateBoardDominance(context: EvaluatorContext): DominanceState {
+  const { aiField, oppField } = getAiAndOpponentFields(context);
+  const oppLp = oppField.currentLp;
+
+  const aiReadyAttackers = aiField.monsterZones
+    .filter((m) => !!m && (m.position === 'faceup_attack' || m.position === 'attack'))
+    .map((m) => m?.atk ?? 0);
+  const aiTotalAtk = aiReadyAttackers.reduce((acc, a) => acc + a, 0);
+
+  const oppMonsters = oppField.monsterZones.filter((m) => !!m);
+  const oppMonsterCount = oppMonsters.length;
+  const oppVisibleAtk = oppMonsters
+    .filter((m) => m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'))
+    .reduce((acc, m) => acc + (m?.atk ?? 0), 0);
+  const oppMaxAtk = Math.max(0, ...oppMonsters.map((m) => m?.atk ?? 0));
+
+  // Condition 1: Direct lethal on board (opponent field empty and AI total ATK >= opponent LP)
+  if (oppMonsterCount === 0 && aiTotalAtk >= oppLp && aiTotalAtk > 0) {
+    return {
+      isDominating: true,
+      isLethalOnBoard: true,
+      aiTotalAtk,
+      oppVisibleAtk,
+      oppMonsterCount,
+      reason: `AI controls direct lethal on board (${aiTotalAtk} ready ATK vs ${oppLp} opponent LP with empty enemy field)`,
+    };
+  }
+
+  // Condition 2: Overwhelming board advantage against empty field
+  if (oppMonsterCount === 0 && aiTotalAtk >= 4000) {
+    return {
+      isDominating: true,
+      isLethalOnBoard: false,
+      aiTotalAtk,
+      oppVisibleAtk,
+      oppMonsterCount,
+      reason: `AI dominates board with ${aiTotalAtk} uncontested ATK against empty enemy field`,
+    };
+  }
+
+  // Condition 3: Total combat lethal capability (AI ATK overcomes defender ATK and finishes opponent LP)
+  if (aiTotalAtk >= oppLp + oppVisibleAtk && aiTotalAtk >= 2500 && aiReadyAttackers.some(atk => atk > oppMaxAtk)) {
+    return {
+      isDominating: true,
+      isLethalOnBoard: true,
+      aiTotalAtk,
+      oppVisibleAtk,
+      oppMonsterCount,
+      reason: `AI holds combat lethal capability (${aiTotalAtk} total ATK capable of clearing enemy field and depleting ${oppLp} LP)`,
+    };
+  }
+
+  // Condition 4: Clear board dominance (AI controls >= 2 attackers with >= 3000 total ATK against empty field)
+  if (oppMonsterCount === 0 && aiReadyAttackers.length >= 2 && aiTotalAtk >= 3000) {
+    return {
+      isDominating: true,
+      isLethalOnBoard: false,
+      aiTotalAtk,
+      oppVisibleAtk,
+      oppMonsterCount,
+      reason: `AI controls superior board presence with ${aiReadyAttackers.length} attackers (${aiTotalAtk} ATK) vs empty field`,
+    };
+  }
+
+  return {
+    isDominating: false,
+    isLethalOnBoard: false,
+    aiTotalAtk,
+    oppVisibleAtk,
+    oppMonsterCount,
+    reason: '',
+  };
+}
+
 export function evaluateSpellActivation(
   code: number,
   cardName: string,
@@ -76,8 +159,25 @@ export function evaluateSpellActivation(
     };
   }
 
-  // 1b. Hand Refresh & Disruption: Card Destruction (72892420)
-  if (code === 72892420 || cardName.includes('Card Destruction')) {
+  // 1b. Hand Refresh & Disruption: Card Destruction (72892420 / 72892473)
+  if (code === 72892420 || code === 72892473 || cardName.includes('Card Destruction')) {
+    const dominance = evaluateBoardDominance(context);
+    if (dominance.isDominating || dominance.isLethalOnBoard) {
+      return {
+        score: -15000,
+        reason: `[DOMINANCE VETO] Hold ${cardName}: ${dominance.reason}. Symmetrical hand refresh risks gifting opponent board wipes, hand traps, or combo outs!`,
+      };
+    }
+
+    const currentPhase = context.currentPhase || context.boardState.currentPhase;
+    const isMainPhase2 = currentPhase === 'M2' || currentPhase === 'MAIN2';
+    if (isMainPhase2 && (aiMonsterCount > 0 || aiField.currentLp >= oppField.currentLp)) {
+      return {
+        score: -12000,
+        reason: `[MP2 VETO] Hold ${cardName} in Main Phase 2: would give opponent a brand new hand right before their turn begins!`,
+      };
+    }
+
     const aiHandCount = aiField.hand.length;
     const oppHandCount = oppField.hand.length;
 
@@ -107,6 +207,83 @@ export function evaluateSpellActivation(
       score: -2000,
       reason: `Hold ${cardName}`,
     };
+  }
+
+  // 1c. Symmetrical Hand Disruption: Hand Destruction (74519184)
+  if (code === 74519184 || cardName.includes('Hand Destruction')) {
+    const dominance = evaluateBoardDominance(context);
+    if (dominance.isDominating || dominance.isLethalOnBoard) {
+      return {
+        score: -15000,
+        reason: `[DOMINANCE VETO] Hold ${cardName}: ${dominance.reason}. Symmetrical draw risks giving opponent outs!`,
+      };
+    }
+    const currentPhase = context.currentPhase || context.boardState.currentPhase;
+    const isMainPhase2 = currentPhase === 'M2' || currentPhase === 'MAIN2';
+    if (isMainPhase2 && (aiMonsterCount > 0 || aiField.currentLp >= oppField.currentLp)) {
+      return {
+        score: -12000,
+        reason: `[MP2 VETO] Hold ${cardName} in Main Phase 2: gives opponent fresh cards right before their turn!`,
+      };
+    }
+    if (boardState.turnNumber === 1 || aiField.hand.length < 3 || oppField.hand.length < 2) {
+      return {
+        score: -6000,
+        reason: `Hold ${cardName}: requires discarding 2 cards each and giving opponent fresh cards`,
+      };
+    }
+    return {
+      score: 600 * personality.cardAdvantageWeight,
+      reason: `Activate ${cardName} to filter AI hand and discard Graveyard setup`,
+    };
+  }
+
+  // 1d. Hand Reshuffle Spells: Reload (22589918) & Magical Mallet (85852291)
+  if (code === 22589918 || code === 85852291 || cardName.includes('Reload') || cardName.includes('Magical Mallet')) {
+    const dominance = evaluateBoardDominance(context);
+    if (dominance.isDominating || dominance.isLethalOnBoard) {
+      return {
+        score: -8000,
+        reason: `[DOMINANCE VETO] Hold ${cardName}: AI holds dominant board presence; do not waste cards reshuffling`,
+      };
+    }
+    const currentPhase = context.currentPhase || context.boardState.currentPhase;
+    const isMainPhase2 = currentPhase === 'M2' || currentPhase === 'MAIN2';
+    if (isMainPhase2) {
+      return {
+        score: -5000,
+        reason: `Hold ${cardName} in MP2: unneeded reshuffle after battle`,
+      };
+    }
+    if (aiField.hand.length >= 3 && aiMonsterCount === 0) {
+      return {
+        score: 800 * (personality.comboFocus + 0.3),
+        reason: `Activate ${cardName} to unbrick hand and dig for playable monsters/extenders`,
+      };
+    }
+    return {
+      score: -2000,
+      reason: `Hold ${cardName}: current hand is playable or too small`,
+    };
+  }
+
+  // 1e. Symmetrical Flip Draw: Morphing Jar (33508719 / 79106360)
+  if (code === 33508719 || code === 79106360 || cardName.includes('Morphing Jar')) {
+    const dominance = evaluateBoardDominance(context);
+    if (dominance.isDominating || dominance.isLethalOnBoard) {
+      return {
+        score: -15000,
+        reason: `[DOMINANCE VETO] Hold ${cardName}: ${dominance.reason}. Refilling opponent hand to 5 cards is suicidal when dominating!`,
+      };
+    }
+    const currentPhase = context.currentPhase || context.boardState.currentPhase;
+    const isMainPhase2 = currentPhase === 'M2' || currentPhase === 'MAIN2';
+    if (isMainPhase2 && (aiMonsterCount > 0 || aiField.currentLp >= oppField.currentLp)) {
+      return {
+        score: -12000,
+        reason: `[MP2 VETO] Hold ${cardName} in Main Phase 2: giving opponent 5 fresh cards right before their turn is suicidal!`,
+      };
+    }
   }
 
   // 2. Mass Monster Removal: Raigeki (12580477)
@@ -410,6 +587,26 @@ export function evaluateSpellActivation(
         score: -8000,
         reason: `[HOLD] Do not activate ${cardName}: opponent controls 0 Spell/Trap cards to target`,
       };
+    }
+
+    // In a chain response: check what triggered the chain
+    if (context.activeChainCards && context.activeChainCards.length > 0) {
+      const lastChainCode = context.activeChainCards[context.activeChainCards.length - 1];
+      const lastDetail = context.cardReader.getCardDetail(lastChainCode);
+      const isContinuousOrField =
+        !!lastDetail?.type &&
+        ((lastDetail.type & 0x20000) !== 0 || // TYPE_CONTINUOUS
+          (lastDetail.type & 0x40000) !== 0 || // TYPE_EQUIP
+          (lastDetail.type & 0x80000) !== 0); // TYPE_FIELD
+
+      // If opponent just activated a normal spell / normal trap / quick-play spell (NOT continuous/field):
+      // MST destroys but does NOT negate! Chaining MST to a normal spell does not stop it and wastes MST!
+      if (!isContinuousOrField && oppFaceupContinuous.length === 0 && !hasOppFieldSpell) {
+        return {
+          score: -8000,
+          reason: `[HOLD] Do not chain ${cardName} to non-continuous spell/trap (destroying does not negate resolution)`,
+        };
+      }
     }
 
     if (oppFaceupContinuous.length > 0 || hasOppFieldSpell) {

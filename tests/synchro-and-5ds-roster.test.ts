@@ -103,7 +103,7 @@ async function run() {
   assert.ok(fs.existsSync(CHARACTERS_JSON_PATH), 'characters.json must exist');
   const allCharacters: CharacterData[] = JSON.parse(fs.readFileSync(CHARACTERS_JSON_PATH, 'utf-8'));
 
-  assert.equal(allCharacters.length, 60, 'Total roster should be exactly 60 characters (20 DM + 20 GX + 20 5Ds)');
+  assert.equal(allCharacters.length, 61, 'Total roster should be 61 characters (20 DM + 20 GX + 20 5Ds + 1 Legends)');
 
   const fiveDsCharacters = allCharacters.filter((c) => c.series === '5Ds');
   assert.equal(fiveDsCharacters.length, 20, 'There must be exactly 20 5D\'s characters');

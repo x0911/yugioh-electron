@@ -622,6 +622,16 @@ export const CHARACTER_PERSONALITIES: Record<string, CharacterPersonality> = {
     thinkDelayBaseMs: 700,
     thinkDelayJitterMs: 200,
   },
+  'dash': {
+    aggression: 0.90,
+    defensiveness: 0.75,
+    riskTolerance: 0.80,
+    comboFocus: 0.98,
+    cardAdvantageWeight: 1.80,
+    signatureFavoritism: 0.80,
+    thinkDelayBaseMs: 450,
+    thinkDelayJitterMs: 100,
+  },
 };
 
 export function getPersonalityForCharacter(characterId?: string): CharacterPersonality {

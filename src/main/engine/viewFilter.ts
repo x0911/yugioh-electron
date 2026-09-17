@@ -37,13 +37,13 @@ export class ViewFilterService {
    * Filters a FieldCard instance for a viewer player.
    * If the card is in a private/hidden zone of the opponent, redacts code, stats, description, and statuses.
    */
-  public filterFieldCardForViewer(card: FieldCard | null, viewerPlayerId: number): FieldCard | null {
+  public filterFieldCardForViewer(card: FieldCard | null, viewerPlayerId: number, isConfirmed = false): FieldCard | null {
     if (!card) return null;
     const isOwner = card.controller === viewerPlayerId;
     const isFaceup = card.position === 'faceup_attack' || card.position === 'faceup_defense' || card.position === 'faceup_spell';
     const isPublicLocation = card.location === 'graveyard' || card.location === 'banished' || (isFaceup && (card.location === 'monster' || card.location === 'spell-trap' || card.location === 'field'));
 
-    if (isOwner || isPublicLocation) {
+    if (isOwner || isPublicLocation || isConfirmed) {
       return { ...card };
     }
 
@@ -119,6 +119,7 @@ export class ViewFilterService {
     pf: PlayerFieldState,
     viewerPlayerId: number,
     otherPf?: PlayerFieldState,
+    getConfirmedCode?: (viewer: number, controller: number, location: number, seq: number) => number,
   ): PlayerFieldState {
     const isOwner = pf.playerId === viewerPlayerId;
     if (isOwner) {
@@ -131,7 +132,13 @@ export class ViewFilterService {
       ...pf,
       hand: isHandPublic
         ? pf.hand.map((c) => ({ ...c }))
-        : pf.hand.map((c) => this.filterFieldCardForViewer(c, viewerPlayerId)!),
+        : pf.hand.map((c, idx) => {
+            const confirmed = Boolean(
+              getConfirmedCode &&
+              getConfirmedCode(viewerPlayerId, pf.playerId, 2 /* HAND */, c.sequence ?? idx) > 0,
+            );
+            return this.filterFieldCardForViewer(c, viewerPlayerId, confirmed)!;
+          }),
       monsterZones: pf.monsterZones.map((c) => this.filterFieldCardForViewer(c, viewerPlayerId)),
       spellTrapZones: pf.spellTrapZones.map((c) => this.filterFieldCardForViewer(c, viewerPlayerId)),
       fieldZone: this.filterFieldCardForViewer(pf.fieldZone, viewerPlayerId),

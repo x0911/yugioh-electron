@@ -20,6 +20,7 @@ const testFiles = [
   'tests/battle-selection-and-variable-stats.test.ts',
   'tests/battle-attack-cancellation.test.ts',
   'tests/elemental-hero-egyxos.test.ts',
+  'tests/kindred-summoning.test.ts',
   'tests/ritual-summon-ai.test.ts',
   'tests/announcements-and-field-mechanics.test.ts',
   'tests/ai-opponent-personality.test.ts',
@@ -52,6 +53,11 @@ const testFiles = [
   'tests/painful-choice-reveal.test.ts',
   'tests/release-asset-integrity.test.ts',
   'tests/cyber-jar-shuffle-set-card.test.ts',
+  'tests/dash-character-and-legends.test.ts',
+  'tests/ai-intelligence-and-blunder-fixes.test.ts',
+  'tests/spell-trap-activation-and-lua-polyfills.test.ts',
+  'tests/stratos-single-option-retry.test.ts',
+  'tests/message-types-comprehensive-audit.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);

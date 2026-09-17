@@ -25,17 +25,20 @@ async function runRosterAndPrebuiltTests() {
   const checkDbStmt = db.prepare('SELECT datas.id, texts.name FROM datas JOIN texts ON datas.id = texts.id WHERE datas.id = ?');
 
   try {
-    // 1. Roster Verification: Exactly 60 Characters (20 DM + 20 GX + 20 5Ds)
+    // 1. Roster Verification: Exactly 61 Characters (20 DM + 20 GX + 20 5Ds + 1 Legends)
     console.log('▶ Test 1: Roster Count and Series Distribution');
-    assert.equal(characters.length, 60, `Expected 60 characters, found ${characters.length}`);
+    assert.equal(characters.length, 61, `Expected 61 characters, found ${characters.length}`);
     
     const dmChars = characters.filter((c) => c.series === 'DM');
     const gxChars = characters.filter((c) => c.series === 'GX');
     const fiveDsChars = characters.filter((c) => c.series === '5Ds');
+    const legendsChars = characters.filter((c) => c.series === 'Legends');
     assert.equal(dmChars.length, 20, `Expected 20 DM characters, found ${dmChars.length}`);
     assert.equal(gxChars.length, 20, `Expected 20 GX characters, found ${gxChars.length}`);
     assert.equal(fiveDsChars.length, 20, `Expected 20 5D's characters, found ${fiveDsChars.length}`);
-    console.log(`  ✓ 60 Characters Verified: 20 DM characters, 20 GX characters & 20 5D's characters.\n`);
+    assert.equal(legendsChars.length, 1, `Expected 1 Legends character, found ${legendsChars.length}`);
+    assert.equal(legendsChars[0].id, 'dash', `Expected dash in Legends`);
+    console.log(`  ✓ 61 Characters Verified: 20 DM, 20 GX, 20 5D's & 1 Legends character (Dash).\n`);
 
     // 2. Pre-Built Decks Completeness & Legality
     console.log('▶ Test 2: Deck Completeness (>= 40 Cards) & Database Legality');

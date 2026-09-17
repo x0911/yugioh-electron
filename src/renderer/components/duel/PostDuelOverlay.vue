@@ -1,8 +1,13 @@
 <template>
-  <div class="post-duel-overlay" :class="isWinner ? 'post-duel-overlay--winner' : 'post-duel-overlay--loser'">
+  <div
+    class="post-duel-overlay"
+    :class="[
+      isDraw ? 'post-duel-overlay--draw' : isWinner ? 'post-duel-overlay--winner' : 'post-duel-overlay--loser'
+    ]"
+  >
     <!-- Atmospheric Background Effects -->
-    <div v-if="isWinner" class="celebration-rays" />
-    <div v-if="isWinner" class="confetti-container">
+    <div v-if="isWinner || isDraw" class="celebration-rays" />
+    <div v-if="isWinner || isDraw" class="confetti-container">
       <span v-for="n in 36" :key="n" class="confetti-piece" :style="getConfettiStyle(n)" />
     </div>
 
@@ -11,11 +16,17 @@
     </div>
 
     <!-- Main Card Modal -->
-    <div class="post-duel-card glass-panel" :class="isWinner ? 'post-duel-card--winner' : 'post-duel-card--loser'">
+    <div
+      class="post-duel-card glass-panel"
+      :class="[
+        isDraw ? 'post-duel-card--draw' : isWinner ? 'post-duel-card--winner' : 'post-duel-card--loser'
+      ]"
+    >
       <!-- Emblem Banner -->
       <div class="post-duel-card__emblem-wrap">
-        <div class="post-duel-card__emblem">
-          <span v-if="isWinner" class="emblem-glyph">👑</span>
+        <div class="post-duel-card__emblem" :class="{ 'post-duel-card__emblem--draw': isDraw }">
+          <span v-if="isDraw" class="emblem-glyph">⚖️</span>
+          <span v-else-if="isWinner" class="emblem-glyph">👑</span>
           <span v-else class="emblem-glyph emblem-glyph--dark">💀</span>
         </div>
         <div class="post-duel-card__crest-glow" />
@@ -23,17 +34,19 @@
 
       <!-- Titles -->
       <h1 class="post-duel-card__title">
-        {{ isWinner ? 'CONGRATULATIONS, DUELIST!' : 'HARD LUCK, DUELIST...' }}
+        {{ isDraw ? "IT'S A DRAW!" : isWinner ? 'CONGRATULATIONS, DUELIST!' : 'HARD LUCK, DUELIST...' }}
       </h1>
       <p class="post-duel-card__subtitle">
-        {{ isWinner
-          ? 'A magnificent display of tactical mastery! You have triumphed in the Sacred Arena!'
-          : 'Even legendary champions face hardship. Reflect upon your moves, refine your deck, and rise again!'
+        {{ isDraw
+          ? 'A hard-fought duel of equal measure! Neither duelist yielded in the Sacred Arena.'
+          : isWinner
+            ? 'A magnificent display of tactical mastery! You have triumphed in the Sacred Arena!'
+            : 'Even legendary champions face hardship. Reflect upon your moves, refine your deck, and rise again!'
         }}
       </p>
 
       <div class="post-duel-card__reason-badge">
-        <span class="reason-icon">{{ isWinner ? '✨' : '⚔️' }}</span>
+        <span class="reason-icon">{{ isDraw ? '⚖️' : isWinner ? '✨' : '⚔️' }}</span>
         <span>{{ reasonText }}</span>
       </div>
 
@@ -41,7 +54,7 @@
       <div class="post-duel-card__stats-grid">
         <div class="stat-box">
           <span class="stat-box__label">Your Life Points</span>
-          <span class="stat-box__value" :class="{ 'stat-box__value--gold': isWinner }">
+          <span class="stat-box__value" :class="{ 'stat-box__value--gold': isWinner || isDraw }">
             {{ userLp }} LP
           </span>
         </div>
@@ -97,6 +110,7 @@ import { computed } from 'vue';
 
 const props = defineProps<{
   isWinner: boolean;
+  isDraw?: boolean;
   userLp: number;
   opponentLp: number;
   turnCount: number;
@@ -111,6 +125,7 @@ defineEmits<{
 
 const reasonText = computed(() => {
   if (props.winReason) return props.winReason;
+  if (props.isDraw) return 'Duel Ended in a Mutual Draw';
   return props.isWinner ? 'Victory by Zero Opponent Life Points' : 'Defeat by Zero Life Points';
 });
 
@@ -265,6 +280,12 @@ function getEmberStyle(index: number) {
     box-shadow: 0 0 40px rgba(212, 175, 55, 0.35), 0 20px 50px rgba(0, 0, 0, 0.8);
   }
 
+  &--draw {
+    background: linear-gradient(170deg, rgba(28, 25, 35, 0.95), rgba(16, 14, 22, 0.98));
+    border: 2px solid rgba(220, 190, 90, 0.6);
+    box-shadow: 0 0 40px rgba(220, 190, 90, 0.35), 0 20px 50px rgba(0, 0, 0, 0.8);
+  }
+
   &--loser {
     background: linear-gradient(170deg, rgba(25, 10, 10, 0.95), rgba(12, 6, 6, 0.98));
     border: 2px solid rgba(231, 76, 60, 0.5);
@@ -298,6 +319,11 @@ function getEmberStyle(index: number) {
   background: rgba(255, 255, 255, 0.06);
   border: 2px solid rgba(255, 215, 0, 0.4);
   box-shadow: 0 0 24px rgba(255, 215, 0, 0.4);
+
+  &--draw {
+    border-color: rgba(220, 190, 90, 0.6);
+    box-shadow: 0 0 24px rgba(220, 190, 90, 0.4);
+  }
 }
 
 .emblem-glyph {

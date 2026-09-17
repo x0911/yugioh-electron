@@ -20,6 +20,7 @@
     "build:cards": "tsx scripts/build-card-pool.ts",
     "download:cards": "tsx scripts/download-card-images.ts",
     "generate:videos": "tsx scripts/generate-character-videos.ts",
+    "generate:cutscenes": "tsx scripts/generate-monster-cutscenes.ts",
     "generate:icons": "tsx scripts/generate-icons.ts",
     "generate:audio": "tsx scripts/generate-audio-tracks.ts",
     "download:soundpack": "tsx scripts/download-soundpack.ts",

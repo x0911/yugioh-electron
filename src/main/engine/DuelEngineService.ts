@@ -29,6 +29,7 @@ import {
   type EvaluatorContext,
 } from '../ai/index.js';
 import { parseTrapMonsterStats } from '../../shared/utils/cardStats.js';
+import { RACE_NAME_MAP, ATTRIBUTE_NAME_MAP } from '../../shared/types/card.js';
 import type { CharacterPersonality, AiProviderType } from '../../shared/types/character.js';
 import { getPersistedSettings } from '../persistence/store.js';
 
@@ -72,6 +73,8 @@ export interface DuelOptions {
   aiDeckArchetype?: string;
   aiEngineType?: 'builtin' | 'gemini';
   aiProvider?: AiProviderType;
+  interactiveSort?: boolean;
+  interactiveDisfield?: boolean;
 }
 
 export interface DuelState {
@@ -121,6 +124,7 @@ export class DuelEngineService {
   // Tracked Board States for Player 0 and Player 1
   private player0Field: PlayerFieldState = this.createEmptyPlayerState(0, 'Player 0');
   private player1Field: PlayerFieldState = this.createEmptyPlayerState(1, 'Player 1');
+  private disabledExtraMonsterZones: number[] = [];
 
   private state: DuelState = {
     isActive: false,
@@ -138,10 +142,13 @@ export class DuelEngineService {
   };
 
   private autoPlay = false;
+  public interactiveSort = false;
+  public interactiveDisfield = true;
   private isVideoPlaying = false;
   private eventListeners: ((event: DecodedDuelEvent) => void)[] = [];
   private videoEventListeners: ((payload: CardVideoPayload) => void)[] = [];
   private aiStepTimer: NodeJS.Timeout | null = null;
+  private consecutiveRetryCount = 0;
 
   constructor() {
     this.cardReader = new CardReaderService();
@@ -187,6 +194,8 @@ export class DuelEngineService {
       deckCount: 40,
       extraDeckCount: 0,
       hand: [],
+      disabledMonsterZones: [],
+      disabledSpellTrapZones: [],
     };
   }
 
@@ -298,6 +307,8 @@ export class DuelEngineService {
     }
 
     this.autoPlay = options.autoPlay ?? false;
+    this.interactiveSort = options.interactiveSort ?? false;
+    this.interactiveDisfield = options.interactiveDisfield ?? true;
     this.humanPlayerId = options.humanPlayerId ?? 0;
     this.lastPromptMessage = null;
     this.priorPromptMessage = null;
@@ -337,6 +348,7 @@ export class DuelEngineService {
     this.player1Field.currentLp = startingLP;
     this.player0Field.deckCount = options.player0Deck.length;
     this.player1Field.deckCount = options.player1Deck.length;
+    this.disabledExtraMonsterZones = [];
     this.loadCardVideos();
 
     this.state = {
@@ -354,6 +366,7 @@ export class DuelEngineService {
       isVideoPlaying: false,
     };
     this.activeChainCards = [];
+    this.consecutiveRetryCount = 0;
     this.aiDiagnostics = {
       totalCalls: 0,
       successfulCalls: 0,
@@ -388,6 +401,13 @@ export class DuelEngineService {
       scriptReader: (name: string) => this.scriptReader.readScript(name),
       errorHandler: (type: number, text: string) => {
         console.warn(`[DuelEngineService Lua Error (${type})]: ${text}`);
+        this.emitEvent({
+          type: 'HINT',
+          rawType: OcgMessageType.HINT,
+          description: `[LUA ERROR]: ${text}`,
+          isPrompt: false,
+          raw: { type, text },
+        });
       },
     });
 
@@ -746,15 +766,20 @@ export class DuelEngineService {
       const canonicalCode = this.cardReader.getCanonicalCode(code);
       const entry = this.cardVideos[String(code)] || (canonicalCode > 0 ? this.cardVideos[String(canonicalCode)] : undefined);
       if (entry && entry.summon) {
-        const hasRealFile = this.isVideoFileExisting(entry.summon);
-        return {
-          code,
-          cardName: entry.cardName || this.cardReader.getCardName(code),
-          videoType: 'summon',
-          videoPath: entry.summon,
-          controller: msg.controller,
-          isPlaceholder: hasRealFile ? false : !!entry.isPlaceholder,
-        };
+        // For Holactie (10000040): if summon video file is not on disk, defer to the victory trigger
+        if (code === 10000040 && !this.isVideoFileExisting(entry.summon)) {
+          // Defer to WIN event
+        } else {
+          const hasRealFile = this.isVideoFileExisting(entry.summon);
+          return {
+            code,
+            cardName: entry.cardName || this.cardReader.getCardName(code),
+            videoType: 'summon',
+            videoPath: entry.summon,
+            controller: msg.controller,
+            isPlaceholder: hasRealFile ? false : !!entry.isPlaceholder,
+          };
+        }
       }
     }
 
@@ -783,7 +808,7 @@ export class DuelEngineService {
       }
     }
 
-    // 3. Victory Cutscene Video Trigger (e.g. Exodia 0x10)
+    // 3. Victory Cutscene Video Trigger (e.g. Exodia 0x10, Holactie 0x13)
     if (rawType === OcgMessageType.WIN && 'reason' in msg) {
       const reason = msg.reason as number;
       if (reason === 0x10) {
@@ -792,6 +817,21 @@ export class DuelEngineService {
         return {
           code: 33396948,
           cardName: 'Exodia the Forbidden One',
+          videoType: 'victory',
+          videoPath: victoryPath,
+          controller: typeof msg.player === 'number' ? msg.player : 0,
+          isPlaceholder: hasRealFile ? false : true,
+        };
+      }
+      if (reason === 0x13) {
+        let victoryPath = 'resources/videos/cards/victory_10000040.mp4';
+        if (!this.isVideoFileExisting(victoryPath) && this.isVideoFileExisting('resources/videos/cards/summon_10000040.mp4')) {
+          victoryPath = 'resources/videos/cards/summon_10000040.mp4';
+        }
+        const hasRealFile = this.isVideoFileExisting(victoryPath);
+        return {
+          code: 10000040,
+          cardName: 'Holactie the Creator of Light',
           videoType: 'victory',
           videoPath: victoryPath,
           controller: typeof msg.player === 'number' ? msg.player : 0,
@@ -818,7 +858,7 @@ export class DuelEngineService {
   }
 
   private updateBoardStateFromMessage(msg: OcgMessage): void {
-    const rawType = msg.type;
+    const rawType = (msg as any).rawType ?? msg.type;
     const m = msg as unknown as Record<string, unknown>;
 
     if (rawType === OcgMessageType.NEW_TURN && 'player' in msg) {
@@ -853,6 +893,7 @@ export class DuelEngineService {
       this.reindexHand(pf);
     } else if (rawType === OcgMessageType.SHUFFLE_HAND && 'player' in msg && Array.isArray((msg as any).cards)) {
       const pf = this.getPlayerField(msg.player);
+      this.messageDecoder.clearConfirmedLocation(msg.player, OcgLocation.HAND);
       const newCodes = (msg as any).cards as number[];
       if (newCodes && newCodes.length > 0 && msg.player === this.humanPlayerId) {
         const remaining = [...pf.hand];
@@ -879,33 +920,133 @@ export class DuelEngineService {
       const cards = (msg as any).cards as Array<{ from: any; to: any }>;
       const loc = (msg as any).location ?? OcgLocation.MZONE;
       const isMonsterZone = loc === OcgLocation.MZONE;
-      const moves: Array<{ card: FieldCard; toController: 0 | 1; toSeq: number }> = [];
 
-      for (const pair of cards) {
-        if (!pair.from || !pair.to) continue;
-        const fromPf = this.getPlayerField(pair.from.controller);
-        const fromList = isMonsterZone ? fromPf.monsterZones : fromPf.spellTrapZones;
-        const card = fromList[pair.from.sequence];
-        if (card) {
-          moves.push({
-            card,
-            toController: pair.to.controller as 0 | 1,
-            toSeq: pair.to.sequence,
-          });
-          fromList[pair.from.sequence] = null;
+      // Check if destination info is explicitly provided (non-zero location)
+      const hasExplicitDestinations =
+        cards.length > 0 &&
+        cards.every(
+          (pair) =>
+            pair.to &&
+            pair.to.location &&
+            pair.to.location !== 0 &&
+            (pair.to.controller === 0 || pair.to.controller === 1),
+        );
+
+      if (hasExplicitDestinations) {
+        const moves: Array<{ card: FieldCard; toController: 0 | 1; toSeq: number }> = [];
+        for (const pair of cards) {
+          if (!pair.from || !pair.to) continue;
+          const fromPf = this.getPlayerField(pair.from.controller);
+          const fromList = isMonsterZone ? fromPf.monsterZones : fromPf.spellTrapZones;
+          const card = fromList[pair.from.sequence];
+          if (card) {
+            moves.push({
+              card,
+              toController: pair.to.controller,
+              toSeq: pair.to.sequence,
+            });
+            fromList[pair.from.sequence] = null;
+          }
         }
-      }
+        for (const move of moves) {
+          const toPf = this.getPlayerField(move.toController);
+          const toList = isMonsterZone ? toPf.monsterZones : toPf.spellTrapZones;
+          move.card.controller = move.toController;
+          move.card.sequence = move.toSeq;
+          toList[move.toSeq] = move.card;
+        }
+      } else {
+        // Shuffled face-down cards with masked destinations (e.g. Cyber Jar, Magical Hats)
+        // Group cards by controller
+        const byController = new Map<0 | 1, number[]>();
+        for (const pair of cards) {
+          if (pair.from && (pair.from.controller === 0 || pair.from.controller === 1)) {
+            const c = pair.from.controller as 0 | 1;
+            if (!byController.has(c)) byController.set(c, []);
+            byController.get(c)!.push(pair.from.sequence);
+          }
+        }
 
-      for (const move of moves) {
-        const toPf = this.getPlayerField(move.toController);
-        const toList = isMonsterZone ? toPf.monsterZones : toPf.spellTrapZones;
-        move.card.controller = move.toController;
-        move.card.sequence = move.toSeq;
-        toList[move.toSeq] = move.card;
+        for (const [c, affectedSeqs] of byController.entries()) {
+          const pf = this.getPlayerField(c);
+          const zoneList = isMonsterZone ? pf.monsterZones : pf.spellTrapZones;
+          const currentCards: FieldCard[] = [];
+
+          for (const seq of affectedSeqs) {
+            const card = zoneList[seq];
+            if (card) {
+              currentCards.push(card);
+              zoneList[seq] = null;
+            }
+          }
+
+          const unassigned = [...currentCards];
+          const assignedBySeq = new Map<number, FieldCard>();
+
+          if (this.lib && this.currentDuel) {
+            for (const seq of affectedSeqs) {
+              try {
+                const q = this.lib.duelQuery(this.currentDuel, {
+                  flags: OcgQueryFlags.CODE | OcgQueryFlags.ALIAS,
+                  controller: c,
+                  location: loc,
+                  sequence: seq,
+                  overlaySequence: 0,
+                });
+                if (q && (q.code || q.alias)) {
+                  const code = q.code || q.alias;
+                  const matchIdx = unassigned.findIndex(
+                    (card) => card.code === code || card.code === q.alias || (card as any).alias === code,
+                  );
+                  if (matchIdx !== -1) {
+                    assignedBySeq.set(seq, unassigned.splice(matchIdx, 1)[0]);
+                  }
+                }
+              } catch {
+                // Ignore query error, fallback to remaining unassigned
+              }
+            }
+          }
+
+          // For any remaining sequences that weren't assigned by code match:
+          for (const seq of affectedSeqs) {
+            if (!assignedBySeq.has(seq) && unassigned.length > 0) {
+              assignedBySeq.set(seq, unassigned.shift()!);
+            }
+          }
+
+          // Place all cards back into zoneList at their new sequences
+          for (const [seq, card] of assignedBySeq.entries()) {
+            card.controller = c;
+            card.sequence = seq;
+            zoneList[seq] = card;
+          }
+        }
       }
     } else if (rawType === OcgMessageType.MOVE && 'from' in msg && 'to' in msg && 'card' in msg) {
       const reason = typeof m.reason === 'number' ? m.reason : 0;
       this.handleCardMove(msg.card, msg.from, msg.to, reason);
+    } else if (rawType === OcgMessageType.SWAP && 'card1' in msg && 'card2' in msg) {
+      const c1 = (msg as any).card1;
+      const c2 = (msg as any).card2;
+      if (c1 && c2) {
+        const pf1 = this.getPlayerField(c1.controller);
+        const pf2 = this.getPlayerField(c2.controller);
+        const list1 = c1.location === OcgLocation.MZONE ? pf1.monsterZones : pf1.spellTrapZones;
+        const list2 = c2.location === OcgLocation.MZONE ? pf2.monsterZones : pf2.spellTrapZones;
+        const cardObj1 = list1[c1.sequence];
+        const cardObj2 = list2[c2.sequence];
+        if (cardObj1) {
+          cardObj1.controller = c2.controller;
+          cardObj1.sequence = c2.sequence;
+        }
+        if (cardObj2) {
+          cardObj2.controller = c1.controller;
+          cardObj2.sequence = c1.sequence;
+        }
+        list2[c2.sequence] = cardObj1 || null;
+        list1[c1.sequence] = cardObj2 || null;
+      }
     } else if (rawType === OcgMessageType.FLIPSUMMONING && 'code' in msg) {
       const { controller, sequence, code } = msg;
       const pf = this.getPlayerField(controller);
@@ -1017,19 +1158,92 @@ export class DuelEngineService {
           pf.fieldZone.counters = Math.max(0, (pf.fieldZone.counters || 0) - (count || 1));
         }
       }
-    } else if (rawType === OcgMessageType.CARD_HINT && 'location' in msg) {
-      const { controller, location, sequence, card_hint, description } = msg as any;
-      const pf = this.getPlayerField(controller);
-      const targetList = location === OcgLocation.MZONE ? pf.monsterZones : (location === OcgLocation.SZONE && sequence < 5 ? pf.spellTrapZones : null);
-      const val = Number(description);
-      if (targetList && targetList[sequence]) {
-        const card = targetList[sequence]!;
-        if (card_hint === 1) { // OcgCardHintType.TURN
-          card.turnCounter = val;
+    } else if (rawType === OcgMessageType.FIELD_DISABLED) {
+      const mask = (msg as any).field_mask ?? (msg as any).fieldMask ?? (msg as any).bitmask ?? 0;
+      const p0M: number[] = [];
+      const p0ST: number[] = [];
+      const p1M: number[] = [];
+      const p1ST: number[] = [];
+      const emz: number[] = [];
+
+      for (let i = 0; i < 5; i++) {
+        if ((mask & (1 << i)) !== 0) p0M.push(i);
+        if ((mask & (1 << (i + 8))) !== 0) p0ST.push(i);
+        if ((mask & (1 << (i + 16))) !== 0) p1M.push(i);
+        if ((mask & (1 << (i + 24))) !== 0) p1ST.push(i);
+      }
+      if ((mask & (1 << 5)) !== 0 || (mask & (1 << 21)) !== 0) emz.push(0);
+      if ((mask & (1 << 6)) !== 0 || (mask & (1 << 22)) !== 0) emz.push(1);
+
+      this.player0Field.disabledMonsterZones = p0M;
+      this.player0Field.disabledSpellTrapZones = p0ST;
+      this.player1Field.disabledMonsterZones = p1M;
+      this.player1Field.disabledSpellTrapZones = p1ST;
+      this.disabledExtraMonsterZones = emz;
+    } else if (rawType === OcgMessageType.EQUIP) {
+      const cardLoc = (msg as any).card ?? (msg as any).equipCard;
+      const targetLoc = (msg as any).target ?? (msg as any).targetCard;
+      if (cardLoc && targetLoc) {
+        const equipController = cardLoc.controller ?? cardLoc.player ?? 0;
+        const targetController = targetLoc.controller ?? targetLoc.player ?? 0;
+        const equipPf = this.getPlayerField(equipController);
+        const targetPf = this.getPlayerField(targetController);
+        const equipCard = (cardLoc.location === OcgLocation.MZONE || cardLoc.location === 'monster' ? equipPf.monsterZones : equipPf.spellTrapZones)?.[cardLoc.sequence];
+        const targetCard = (targetLoc.location === OcgLocation.MZONE || targetLoc.location === 'monster' ? targetPf.monsterZones : targetPf.spellTrapZones)?.[targetLoc.sequence];
+        if (equipCard && targetCard) {
+          equipCard.equippedTo = {
+            location: targetLoc.location === OcgLocation.MZONE || targetLoc.location === 'monster' ? 'monster' : 'spell-trap',
+            sequence: targetLoc.sequence,
+            controller: targetController,
+            code: targetCard.code,
+          };
+          if (!targetCard.equippedCards) targetCard.equippedCards = [];
+          if (!targetCard.equippedCards.some((e) => e.controller === equipController && e.sequence === cardLoc.sequence && e.location === (cardLoc.location === OcgLocation.MZONE || cardLoc.location === 'monster' ? 'monster' : 'spell-trap'))) {
+            targetCard.equippedCards.push({
+              location: cardLoc.location === OcgLocation.MZONE || cardLoc.location === 'monster' ? 'monster' : 'spell-trap',
+              sequence: cardLoc.sequence,
+              controller: equipController,
+              code: equipCard.code,
+            });
+          }
         }
-      } else if (location === OcgLocation.FZONE || (location === OcgLocation.SZONE && sequence === 5)) {
-        if (pf.fieldZone && card_hint === 1) {
-          pf.fieldZone.turnCounter = val;
+      }
+    } else if (rawType === OcgMessageType.CARD_HINT && 'location' in msg) {
+      const controller = (msg as any).controller ?? (msg as any).player ?? 0;
+      const { location, sequence } = msg as any;
+      const card_hint = (msg as any).card_hint ?? (msg as any).hintType;
+      const pf = this.getPlayerField(controller);
+      const targetList = location === OcgLocation.MZONE || location === 'monster' ? pf.monsterZones : ((location === OcgLocation.SZONE || location === 'spell-trap') && sequence < 5 ? pf.spellTrapZones : null);
+      const rawVal = (msg as any).value !== undefined ? (msg as any).value : (msg as any).description;
+      const val = Number(rawVal ?? 0);
+      const card = targetList ? targetList[sequence] : (location === OcgLocation.FZONE || location === 'field' || (location === OcgLocation.SZONE && sequence === 5) ? pf.fieldZone : null);
+
+      if (card) {
+        if (card_hint === 1) {
+          card.turnCounter = val;
+        } else {
+          let hintText = '';
+          if (card_hint === 2) {
+            hintText = `Declared: ${this.cardReader.getCardName(val) || val}`;
+          } else if (card_hint === 3) {
+            hintText = `Type: ${RACE_NAME_MAP[val] || `0x${val.toString(16)}`}`;
+          } else if (card_hint === 4) {
+            hintText = `Attr: ${ATTRIBUTE_NAME_MAP[val] || `0x${val.toString(16)}`}`;
+          } else if (card_hint === 5) {
+            hintText = `Num: ${val}`;
+          } else if (card_hint === 6) {
+            const resolved = this.cardReader.resolveString((msg as any).description ?? (msg as any).value);
+            hintText = resolved && !resolved.startsWith('Option #') ? resolved : 'Granted Effect';
+          } else if (card_hint === 7) {
+            card.cardHints = [];
+          }
+
+          if (hintText) {
+            if (!card.cardHints) card.cardHints = [];
+            if (!card.cardHints.includes(hintText)) {
+              card.cardHints.push(hintText);
+            }
+          }
         }
       }
     }
@@ -1090,6 +1304,33 @@ export class DuelEngineService {
         fromPf.extraDeckCount = fromPf.extraDeck.length;
       } else if (from.location === OcgLocation.DECK) {
         fromPf.deckCount = Math.max(0, fromPf.deckCount - 1);
+      }
+
+      // If card was moved from field, unlink equipped relations and hints
+      if (movedCard && (from.location === OcgLocation.MZONE || from.location === OcgLocation.SZONE || from.location === OcgLocation.FZONE)) {
+        if (to.location !== from.location || to.sequence !== from.sequence || to.controller !== from.controller) {
+          if (movedCard.equippedTo) {
+            const targetPf = this.getPlayerField(movedCard.equippedTo.controller);
+            const targetList = movedCard.equippedTo.location === 'monster' ? targetPf.monsterZones : targetPf.spellTrapZones;
+            const target = targetList[movedCard.equippedTo.sequence];
+            if (target && target.equippedCards) {
+              target.equippedCards = target.equippedCards.filter((e) => !(e.sequence === from.sequence && e.controller === from.controller));
+            }
+            movedCard.equippedTo = undefined;
+          }
+          if (movedCard.equippedCards && movedCard.equippedCards.length > 0) {
+            for (const eq of movedCard.equippedCards) {
+              const eqPf = this.getPlayerField(eq.controller);
+              const eqList = eq.location === 'monster' ? eqPf.monsterZones : eqPf.spellTrapZones;
+              const eqCard = eqList[eq.sequence];
+              if (eqCard) eqCard.equippedTo = undefined;
+            }
+            movedCard.equippedCards = undefined;
+          }
+          if (to.location !== OcgLocation.MZONE && to.location !== OcgLocation.SZONE && to.location !== OcgLocation.FZONE) {
+            movedCard.cardHints = undefined;
+          }
+        }
       }
     }
 
@@ -1292,6 +1533,7 @@ export class DuelEngineService {
     this.isVideoPlaying = false;
     this.lastPromptMessage = null;
     this.priorPromptMessage = null;
+    this.disabledExtraMonsterZones = [];
     this.messageDecoder.resetConfirmedCards();
   }
 
@@ -1392,18 +1634,39 @@ export class DuelEngineService {
         }
         break;
       case OcgResponseType.SORT_CARD:
-        if ((response as any).order) {
+        if ((response as any).order && Array.isArray((response as any).order)) {
           return {
             ...response,
             order: (response as any).order.map((o: any) => Number(o)),
           };
         }
-        break;
-      case OcgResponseType.SELECT_OPTION:
         return {
           ...response,
-          index: Number((response as any).index),
+          order: null,
         };
+      case OcgResponseType.SELECT_DISFIELD:
+      case OcgResponseType.SELECT_PLACE:
+        if ((response as any).places && Array.isArray((response as any).places)) {
+          return {
+            ...response,
+            places: (response as any).places.map((p: any) => ({
+              player: Number(p.player),
+              location: Number(p.location),
+              sequence: Number(p.sequence),
+            })),
+          };
+        }
+        break;
+      case OcgResponseType.SELECT_OPTION: {
+        const rawIdx = Number((response as any).index ?? 0);
+        const optCount = this.lastPromptMessage?.options?.length ?? 1;
+        const maxIdx = Math.max(0, optCount - 1);
+        const safeIdx = isNaN(rawIdx) ? 0 : Math.max(0, Math.min(rawIdx, maxIdx));
+        return {
+          type: OcgResponseType.SELECT_OPTION,
+          index: safeIdx,
+        };
+      }
       case OcgResponseType.SELECT_POSITION:
         return {
           ...response,
@@ -1432,6 +1695,35 @@ export class DuelEngineService {
         };
     }
     return response;
+  }
+
+  private getEmergencyFallbackResponse(msg: OcgMessage): OcgResponse {
+    const auto = getAutoResponse(msg);
+    if (auto) return auto;
+    switch (msg.type) {
+      case OcgMessageType.SELECT_OPTION:
+        return { type: OcgResponseType.SELECT_OPTION, index: 0 };
+      case OcgMessageType.SELECT_CHAIN:
+        return { type: OcgResponseType.SELECT_CHAIN, index: -1 };
+      case OcgMessageType.SELECT_EFFECTYN:
+      case OcgMessageType.SELECT_YESNO:
+        return { type: OcgResponseType.SELECT_YESNO, yes: false };
+      case OcgMessageType.SELECT_CARD: {
+        const min = Math.max(1, (msg as any).min ?? 1);
+        const count = Math.min(min, (msg as any).selects?.length ?? 1);
+        return {
+          type: OcgResponseType.SELECT_CARD,
+          indicies: Array.from({ length: count }, (_, i) => i),
+        };
+      }
+      case OcgMessageType.SELECT_POSITION:
+        return {
+          type: OcgResponseType.SELECT_POSITION,
+          position: (msg as any).positions?.[0] ?? 1,
+        };
+      default:
+        return { type: OcgResponseType.SELECT_CHAIN, index: -1 };
+    }
   }
 
   private scheduleAiResponse(handle: OcgDuelHandle, response: OcgResponse, delayMs?: number): void {
@@ -1730,9 +2022,17 @@ export class DuelEngineService {
           if (decoded.player === 1) this.state.p1LP += decoded.amount;
         }
         if (decoded.type === 'WIN') {
-          this.state.winner = (decoded.player as 0 | 1) ?? null;
+          this.state.winner = decoded.player === 2 ? 'draw' : ((decoded.player as 0 | 1) ?? null);
           this.state.winReason = decoded.reason ?? null;
           this.state.isActive = false;
+        }
+        if (decoded.type === 'MATCH_KILL') {
+          this.state.winner = (decoded.player as 0 | 1) ?? 0;
+          this.state.winReason = 1;
+          this.state.isActive = false;
+        }
+        if (decoded.type === 'SWAP_GRAVE_DECK') {
+          this.syncDeckCounts();
         }
 
         if (!decoded.isPrompt) {
@@ -1766,6 +2066,10 @@ export class DuelEngineService {
       }
 
       if (status === OcgProcessResult.WAITING) {
+        if (rawMessages.some((m) => m.type !== OcgMessageType.RETRY && m.type !== OcgMessageType.WAITING)) {
+          this.consecutiveRetryCount = 0;
+        }
+
         let lastMsg: OcgMessage | null = null;
         for (let i = rawMessages.length - 1; i >= 0; i--) {
           const decoded = this.messageDecoder.decode(rawMessages[i]);
@@ -1777,10 +2081,11 @@ export class DuelEngineService {
         if (!lastMsg && rawMessages.length > 0) {
           const fallback = rawMessages[rawMessages.length - 1];
           if (fallback.type === OcgMessageType.RETRY) {
+            this.consecutiveRetryCount++;
             if (this.lastPromptMessage || this.priorPromptMessage) {
               const restored = (this.lastPromptMessage || this.priorPromptMessage)!;
               console.warn(
-                '[DuelEngineService] OCGCORE emitted RETRY; restoring last prompt:',
+                `[DuelEngineService] OCGCORE emitted RETRY (count=${this.consecutiveRetryCount}); restoring last prompt:`,
                 OcgMessageType[restored.type],
               );
               lastMsg = restored;
@@ -1800,10 +2105,28 @@ export class DuelEngineService {
           this.state.waitingPlayer = promptPlayer;
           this.lastPromptMessage = lastMsg;
 
-          // Auto-resolve SORT_CARD and SORT_CHAIN with default order
+          const isOpponent = promptPlayer !== this.humanPlayerId;
+          const isAiOrAuto = (isOpponent && !this.isPvPMode) || this.autoPlay;
+
+          // RETRY Circuit Breaker: If consecutive RETRYs occur >= 2 for AI/Auto, inject guaranteed safe fallback
+          if (isAiOrAuto && this.consecutiveRetryCount >= 2) {
+            console.warn(
+              `[DuelEngineService] RETRY Circuit Breaker triggered (retryCount=${this.consecutiveRetryCount}) for prompt ${OcgMessageType[lastMsg.type]}. Submitting safe emergency fallback response.`,
+            );
+            const safeResponse = this.getEmergencyFallbackResponse(lastMsg);
+            this.lib.duelSetResponse(handle, this.normalizeResponse(safeResponse));
+            this.state.isWaitingResponse = false;
+            this.state.waitingPlayer = null;
+            this.priorPromptMessage = this.lastPromptMessage;
+            this.lastPromptMessage = null;
+            return events;
+          }
+
+          // Auto-resolve SORT_CARD and SORT_CHAIN with default order for AI or when not interactive
           if (
-            lastMsg.type === OcgMessageType.SORT_CARD ||
-            lastMsg.type === OcgMessageType.SORT_CHAIN
+            (lastMsg.type === OcgMessageType.SORT_CARD ||
+              lastMsg.type === OcgMessageType.SORT_CHAIN) &&
+            (isAiOrAuto || !this.interactiveSort)
           ) {
             this.lib.duelSetResponse(handle, {
               type: OcgResponseType.SORT_CARD,
@@ -1816,12 +2139,12 @@ export class DuelEngineService {
             continue;
           }
 
-          // Auto-resolve SELECT_PLACE and SELECT_DISFIELD for smooth card placement
+          // Auto-resolve SELECT_PLACE (and SELECT_DISFIELD for AI/autoPlay or when not interactive) for smooth card placement
           if (
             lastMsg.type === OcgMessageType.SELECT_PLACE ||
-            lastMsg.type === OcgMessageType.SELECT_DISFIELD
+            (lastMsg.type === OcgMessageType.SELECT_DISFIELD && (isAiOrAuto || !this.interactiveDisfield))
           ) {
-            const autoPlace = getAutoResponse(lastMsg) as { type: OcgResponseType.SELECT_PLACE; places: SelectFieldPlace[] } | null;
+            const autoPlace = getAutoResponse(lastMsg) as { type: OcgResponseType.SELECT_PLACE | OcgResponseType.SELECT_DISFIELD; places: SelectFieldPlace[] } | null;
             if (autoPlace && autoPlace.places && autoPlace.places.length >= (lastMsg.count || 1)) {
               this.lib.duelSetResponse(handle, autoPlace);
               this.state.isWaitingResponse = false;
@@ -1861,9 +2184,8 @@ export class DuelEngineService {
             break;
           }
 
-          const isOpponent = promptPlayer !== this.humanPlayerId;
           // If opponent player (AI) or autoPlay is active: schedule evaluated AI response (skipped in PvP mode)
-          if ((isOpponent && !this.isPvPMode) || this.autoPlay) {
+          if (isAiOrAuto) {
             if (this.aiProvider && this.aiProvider !== 'builtin') {
               this.getAiResponseAsync(lastMsg, promptPlayer)
                 .then(({ response, delayMs, dialogue, reasoning, error, fallbackUsed }) => {
@@ -2043,7 +2365,10 @@ export class DuelEngineService {
       OcgQueryFlags.DEFENSE |
       OcgQueryFlags.BASE_ATTACK |
       OcgQueryFlags.BASE_DEFENSE |
-      OcgQueryFlags.LEVEL;
+      OcgQueryFlags.LEVEL |
+      OcgQueryFlags.RACE |
+      OcgQueryFlags.ATTRIBUTE |
+      OcgQueryFlags.COUNTERS;
 
     for (const p of [0, 1] as const) {
       const pf = this.getPlayerField(p);
@@ -2076,6 +2401,18 @@ export class DuelEngineService {
             if (typeof query.level === 'number') {
               card.level = query.level;
             }
+            if (typeof query.race === 'number' && query.race > 0) {
+              card.race = RACE_NAME_MAP[query.race] || card.race;
+            }
+            if (typeof query.attribute === 'number' && query.attribute > 0) {
+              card.attribute = ATTRIBUTE_NAME_MAP[query.attribute] || card.attribute;
+            }
+            if (query.counters && typeof query.counters === 'object') {
+              const total = Object.values(query.counters).reduce((s, c) => s + (c || 0), 0);
+              if (total > 0 || card.counters !== undefined) {
+                card.counters = total;
+              }
+            }
 
             // If card in MZONE has missing attribute or race (e.g. Trap Monster), parse from description
             if ((!card.attribute || !card.race) && card.description) {
@@ -2089,8 +2426,9 @@ export class DuelEngineService {
         }
       }
 
-      // Ensure Spell/Trap and Field zones never leak monster combat stats
-      for (const st of pf.spellTrapZones) {
+      // Ensure Spell/Trap and Field zones do not leak combat stats
+      for (let seq = 0; seq < pf.spellTrapZones.length; seq++) {
+        const st = pf.spellTrapZones[seq];
         if (st) {
           st.atk = undefined;
           st.def = undefined;
@@ -2199,8 +2537,9 @@ export class DuelEngineService {
     this.enrichDynamicStatsForField(rawUserField, rawOpponentField);
     this.enrichDynamicStatsForField(rawOpponentField, rawUserField);
 
-    const userField = this.viewFilter.filterPlayerFieldForViewer(rawUserField, this.humanPlayerId, rawOpponentField);
-    const opponentField = this.viewFilter.filterPlayerFieldForViewer(rawOpponentField, this.humanPlayerId, rawUserField);
+    const getConfirmed = (v: number, c: number, l: number, s: number) => this.messageDecoder.getConfirmedCode(v, c, l, s);
+    const userField = this.viewFilter.filterPlayerFieldForViewer(rawUserField, this.humanPlayerId, rawOpponentField, getConfirmed);
+    const opponentField = this.viewFilter.filterPlayerFieldForViewer(rawOpponentField, this.humanPlayerId, rawUserField, getConfirmed);
 
     // Extract Extra Monster Zones (seq 5 & 6)
     // From viewer's perspective:
@@ -2219,6 +2558,7 @@ export class DuelEngineService {
       userField,
       opponentField,
       extraMonsterZones: [emz0, emz1],
+      disabledExtraMonsterZones: [...this.disabledExtraMonsterZones],
       turnNumber: this.state.currentTurn,
       currentPhase: this.state.currentPhase,
       activePrompt: null,

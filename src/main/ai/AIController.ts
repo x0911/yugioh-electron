@@ -19,7 +19,7 @@ import { parseFieldMask, getAutoResponse } from '../engine/messageDecoder.js';
 import { evaluateBoard } from './evaluators/boardEvaluator.js';
 import { evaluateAdvantage } from './evaluators/advantageEvaluator.js';
 import { evaluateAttackOption, type AttackCandidate } from './evaluators/combatEvaluator.js';
-import { evaluateSpellActivation, evaluateSpellTrapSet } from './evaluators/spellTrapEvaluator.js';
+import { evaluateSpellActivation, evaluateSpellTrapSet, evaluateBoardDominance } from './evaluators/spellTrapEvaluator.js';
 import { resolveArchetypePlan } from './strategies/archetypeStrategy.js';
 import { assertAiStateSanitized } from './antiCheatAssert.js';
 import { getExecutorForDeck } from './executors/index.js';
@@ -28,6 +28,12 @@ import { llmDuelService, type ProviderConfig } from './LLMDuelService.js';
 import type { AiProviderType } from '../../shared/types/character.js';
 
 export class AIController {
+  /**
+   * Tracks the currently chosen attacker during battle commands so that subsequent
+   * SELECT_CARD prompts accurately evaluate combat targets against the real attacker's ATK.
+   */
+  public currentBattleAttacker: { code: number; sequence: number; atk: number } | null = null;
+
   /**
    * Decide response asynchronously, supporting multi-provider LLM reasoning, authentic dialogue, and error diagnostics.
    */
@@ -95,7 +101,12 @@ export class AIController {
     // 1. Anti-cheat assertion verification
     assertAiStateSanitized(context.boardState, context.aiPlayerId);
 
-    // 2. Route prompt to specialized evaluators with safe fallback
+    // 2. Clear battle attacker tracking if moving away from battle cmd / card selection
+    if (msg.type !== OcgMessageType.SELECT_CARD && msg.type !== OcgMessageType.SELECT_BATTLECMD) {
+      this.currentBattleAttacker = null;
+    }
+
+    // 3. Route prompt to specialized evaluators with safe fallback
     try {
       switch (msg.type) {
       case OcgMessageType.SELECT_IDLECMD:
@@ -358,7 +369,25 @@ export class AIController {
         const atk = detail?.isMonster ? detail.atk : 1000;
         const level = detail?.isMonster ? detail.level : 4;
 
+        const def = detail?.isMonster ? detail.def : 1000;
+        const isFlip = !!detail?.isFlip;
+        const isTurn1 = context.boardState.turnNumber === 1;
+
         let score = 2200 + atk * 0.8 * personality.aggression * archetypePlan.beatdownWeight;
+
+        // HEAVY PENALTY FOR NORMAL SUMMONING FLIP MONSTERS:
+        // (Cyber Jar, Morphing Jar, Man-Eater Bug, Magician of Faith, etc.)
+        // Normal Summoning in attack position exposes weak stats, misses flip trigger, and invites destruction!
+        if (isFlip) {
+          score -= 15000;
+        }
+
+        // TURN 1 DEFENSIVE PRESERVATION:
+        // On Turn 1, attacks cannot be declared. If a monster has higher DEF than ATK (e.g. Clayman, Mystical Elf, Big Shield Gardna),
+        // Normal Summoning it in Attack position is a blunder compared to setting it in Defense position.
+        if (isTurn1 && def > atk) {
+          score -= 4000;
+        }
 
         // Suicidal summon penalty against Slifer / King Tiger Wanghu
         if (hasOppSlifer && atk <= 2000) {
@@ -372,6 +401,9 @@ export class AIController {
         const oppMaxAtk = Math.max(0, ...oppFaceUpMonsters.map((m) => m?.atk ?? 0));
         if (oppMaxAtk >= 1900 && atk < oppMaxAtk && atk <= 1600) {
           score -= 3500;
+        }
+        if (oppMaxAtk > atk && def >= atk) {
+          score -= 3000;
         }
 
         // Tribute summon reward or wall preservation / downgrade prevention
@@ -504,7 +536,16 @@ export class AIController {
         }
 
         if (detail?.isFlip) {
-          score += 450; // Flip monsters love being set
+          score += 3500; // Flip monsters love being set
+        }
+
+        const isTurn1 = context.boardState.turnNumber === 1;
+        if (isTurn1 && def > atk) {
+          score += 2500; // Turn 1 high-DEF wall set
+        }
+
+        if (oppMaxAtk > atk && def >= atk) {
+          score += 2000; // Absorb attacks from superior opponent monsters
         }
 
         candidates.push({
@@ -606,10 +647,18 @@ export class AIController {
 
     // 7. Evaluate Transition to Battle Phase
     if (msg.to_bp) {
+      const dominance = evaluateBoardDominance(context);
       const hasAttackMonsters = board.aiTotalAtk > 0 && board.aiMonsterCount > 0;
       let score = 0;
+      let reason = '';
 
-      if (hasAttackMonsters) {
+      if (dominance.isLethalOnBoard) {
+        score = 25000;
+        reason = `[LETHAL RUSH] Enter Battle Phase to deliver lethal damage! (${dominance.reason})`;
+      } else if (dominance.isDominating) {
+        score = 5500 + board.aiTotalAtk * 0.4 * (personality.aggression + 0.5);
+        reason = `[DOMINANCE ATTACK] Enter Battle Phase with dominant field (${dominance.reason})`;
+      } else if (hasAttackMonsters) {
         const oppFaceUpAttack = oppField.monsterZones.filter(
           (m) => m && m.position === 'faceup_attack' && (m.atk ?? 0) > 0,
         );
@@ -620,12 +669,15 @@ export class AIController {
         // If opponent has only stronger face-up attack monsters, do not enter BP to commit suicide
         if (oppFaceUpAttack.length > 0 && oppStrongerCount === oppFaceUpAttack.length && board.oppMonsterCount === oppFaceUpAttack.length) {
           score = -2500;
+          reason = 'Hold in Main Phase (opposing field is superior)';
         } else {
           // If opponent field is open or weaker: high score to prioritize attacking
-          score = 1200 + (board.aiTotalAtk - board.oppVisibleTotalAtk) * 0.25 * personality.aggression;
+          score = 1400 + (board.aiTotalAtk - board.oppVisibleTotalAtk) * 0.25 * personality.aggression;
+          reason = `Enter Battle Phase with ${board.aiMonsterCount} monster(s) (${board.aiTotalAtk} total ATK)`;
         }
       } else {
         score = -500; // Low score if no attack monsters
+        reason = 'Hold in Main Phase (no attack monsters)';
       }
 
       candidates.push({
@@ -635,22 +687,30 @@ export class AIController {
           index: null,
         },
         score,
-        reason: score < 0
-          ? 'Hold in Main Phase (opposing field is superior)'
-          : `Enter Battle Phase with ${board.aiMonsterCount} monster(s) (${board.aiTotalAtk} total ATK)`,
+        reason,
       });
     }
 
     // 8. Evaluate Transition to End Phase / M2
     if (msg.to_ep) {
+      const dominance = evaluateBoardDominance(context);
+      const isMainPhase2 = context.boardState.currentPhase === 'M2' || context.boardState.currentPhase === 'MAIN2';
+      let score = 100; // Baseline pass
+      let reason = 'Pass to End Phase';
+
+      if (isMainPhase2 && dominance.isDominating) {
+        score = 1500;
+        reason = `[DISCIPLINE PASS] End turn in MP2 while controlling dominant board (${dominance.aiTotalAtk} ATK)`;
+      }
+
       candidates.push({
         action: {
           type: OcgResponseType.SELECT_IDLECMD,
           action: SelectIdleCMDAction.TO_EP,
           index: null,
         },
-        score: 100, // Baseline pass
-        reason: `Pass to End Phase`,
+        score,
+        reason,
       });
     }
 
@@ -684,7 +744,27 @@ export class AIController {
       console.error(`[AIController] Error in executor.onBattleCmd (${executor.name}):`, err);
     }
     if (executorActions && executorActions.length > 0) {
-      return this.selectWeightedAction(executorActions, context);
+      const chosen = this.selectWeightedAction(executorActions, context);
+      if (
+        chosen.type === OcgResponseType.SELECT_BATTLECMD &&
+        (chosen as any).action === SelectBattleCMDAction.SELECT_BATTLE &&
+        typeof (chosen as any).index === 'number' &&
+        msg.attacks &&
+        msg.attacks[(chosen as any).index]
+      ) {
+        const att = msg.attacks[(chosen as any).index];
+        const code = att.code ?? 0;
+        const detail = code > 0 ? context.cardReader.getCardDetail(code) : null;
+        const atk = typeof att.atk === 'number' ? att.atk : (detail?.isMonster ? detail.atk : 1500);
+        this.currentBattleAttacker = {
+          code,
+          sequence: att.sequence ?? 0,
+          atk,
+        };
+      } else {
+        this.currentBattleAttacker = null;
+      }
+      return chosen;
     }
 
     const candidates: ScoredAction[] = [];
@@ -757,7 +837,27 @@ export class AIController {
       });
     }
 
-    return this.selectWeightedAction(candidates, context);
+    const chosen = this.selectWeightedAction(candidates, context);
+    if (
+      chosen.type === OcgResponseType.SELECT_BATTLECMD &&
+      (chosen as any).action === SelectBattleCMDAction.SELECT_BATTLE &&
+      typeof (chosen as any).index === 'number' &&
+      msg.attacks &&
+      msg.attacks[(chosen as any).index]
+    ) {
+      const att = msg.attacks[(chosen as any).index];
+      const code = att.code ?? 0;
+      const detail = code > 0 ? context.cardReader.getCardDetail(code) : null;
+      const atk = typeof att.atk === 'number' ? att.atk : (detail?.isMonster ? detail.atk : 1500);
+      this.currentBattleAttacker = {
+        code,
+        sequence: att.sequence ?? 0,
+        atk,
+      };
+    } else {
+      this.currentBattleAttacker = null;
+    }
+    return chosen;
   }
 
   // ===========================================================================
@@ -793,12 +893,29 @@ export class AIController {
     const aiAttackers = aiField.monsterZones.filter(
       (m): m is FieldCard => !!m && m.position === 'faceup_attack' && (m.atk ?? 0) > 0,
     );
-    const aiAttackerAtk = aiAttackers.length > 0 ? Math.max(...aiAttackers.map((m) => m.atk ?? 0)) : 2000;
+    const aiAttackerAtk =
+      isBattlePhase && this.currentBattleAttacker
+        ? this.currentBattleAttacker.atk
+        : (aiAttackers.length > 0 ? Math.max(...aiAttackers.map((m) => m.atk ?? 0)) : 2000);
 
     // Check if AI controls or holds a Graveyard revival card (Monster Reborn, Premature Burial, Call of the Haunted)
     const hasRevivalEnabler =
       aiField.hand.some((c: any) => c === 83764719 || c?.code === 83764719 || c === 70828912 || c?.code === 70828912 || c === 97077563 || c?.code === 97077563) ||
       aiField.spellTrapZones.some((s) => s && (s.code === 83764719 || s.code === 70828912 || s.code === 97077563));
+
+    const hasOpponentCandidates = msg.selects.some((c: any) => c.controller !== aiPlayerId);
+    const activeChainCode =
+      context.activeChainCards && context.activeChainCards.length > 0
+        ? context.activeChainCards[context.activeChainCards.length - 1]
+        : 0;
+    const isSelfBuffEquip =
+      activeChainCode === 40619825 || // Axe of Despair
+      activeChainCode === 56747793 || // United We Stand
+      activeChainCode === 83746708 || // Mage Power
+      activeChainCode === 65169794 || // Malevolent Nuzzler
+      activeChainCode === 3405259 ||  // Black Pendant
+      activeChainCode === 22046459 || // Megamorph
+      activeChainCode === 66088382;   // Horn of the Unicorn
 
     // Score each candidate in msg.selects
     const scoredCandidates = msg.selects.map((c: any, index: number) => {
@@ -904,9 +1021,16 @@ export class AIController {
           code === 31305911 || // Marshmallon
           code === 23205979 || // Spirit Reaper
           code === 37412656 || // Arcana Force 0
-          code === 78371393;   // Yubel
+          code === 78371393; // Yubel
 
-        if (isStolenMonster) {
+        if (isSelfBuffEquip) {
+          score = 8000 + atk; // Equip to AI's strongest monster
+        } else if (hasOpponentCandidates) {
+          // AVOID SELF-TARGETING BLUNDER:
+          // If prompt allows selecting opponent cards (e.g. Tribute to the Doomed, Compulsory Evacuation Device,
+          // Book of Moon, Caius the Shadow Monarch), NEVER target our own monster!
+          score = -50000;
+        } else if (isStolenMonster) {
           score = 100000; // Prioritize sacrificing opponent's stolen monster
         } else if (isIndestructibleWall) {
           score = -50000; // Never sacrifice indestructible stall walls
@@ -917,12 +1041,27 @@ export class AIController {
         } else {
           score = 5000 - atk; // Sacrifice lower ATK fodder first
         }
+      } else if (isSzone && isAiCard) {
+        if (hasOpponentCandidates) {
+          score = -50000; // Never pop own backrow when opponent cards are selectable
+        } else {
+          score = -10000;
+        }
       } else if (isSzone && !isAiCard) {
         // =========================================================================
         // OPPONENT BACKROW TARGETING (MST, Dust Tornado, etc.):
         // =========================================================================
         const isFacedown = c.position === 8 || c.position === 2 || (c.position !== undefined && (c.position & 0xa) !== 0);
-        if (isFacedown) {
+        const isResolvingNormalSpell =
+          context.activeChainCards &&
+          context.activeChainCards.includes(code) &&
+          detail?.type &&
+          ((detail.type & 0x20002) !== 0 || (detail.type & 0x10002) !== 0 || (detail.type & 0x10004) !== 0);
+
+        if (isResolvingNormalSpell) {
+          // Do NOT target a normal spell/trap currently resolving on chain (it goes to GY anyway and destroying does not negate)
+          score = -20000;
+        } else if (isFacedown) {
           score = 3500; // Prioritize popping face-down backrow
         } else {
           score = 2800; // Pop face-up continuous / field / equip cards
@@ -1033,6 +1172,16 @@ export class AIController {
       let sacrificePriority = 5000 - atk;
       if (isIndestructibleWall) {
         sacrificePriority -= 50000; // Never sacrifice indestructible stall wall unless forced
+      }
+
+      // If candidate is a token: MAXIMUM SACRIFICE PRIORITY
+      const isToken =
+        !!(c.type && (c.type & 0x4000) !== 0) ||
+        !!(detail?.type && (detail.type & 0x4000) !== 0) ||
+        code === 0 ||
+        (detail?.name && detail.name.includes('Token'));
+      if (isToken) {
+        sacrificePriority += 200000;
       }
 
       // If monster is stolen from opponent:
@@ -1192,10 +1341,13 @@ export class AIController {
     } catch (err) {
       console.error(`[AIController] Error in executor.onSelectOption (${executor.name}):`, err);
     }
+    const maxOptionIndex = Math.max(0, (msg.options?.length ?? 1) - 1);
+
     if (customOption !== null && customOption !== undefined) {
+      const safeIndex = Math.max(0, Math.min(customOption, maxOptionIndex));
       return {
         type: OcgResponseType.SELECT_OPTION,
-        index: customOption,
+        index: safeIndex,
       };
     }
 
@@ -1221,7 +1373,7 @@ export class AIController {
       if (aiMonsters.length >= 1 && hasExpendableTribute && oppBossMonster) {
         return {
           type: OcgResponseType.SELECT_OPTION,
-          index: 1, // Take control of opponent's boss monster!
+          index: Math.min(1, maxOptionIndex), // Take control of opponent's boss monster!
         };
       }
       return {
@@ -1240,7 +1392,7 @@ export class AIController {
       for (let i = 0; i < resolvedOptions.length; i++) {
         const optText = resolvedOptions[i];
         if (optText.includes('take control') && oppField.monsterZones.some(Boolean)) {
-          return { type: OcgResponseType.SELECT_OPTION, index: i };
+          return { type: OcgResponseType.SELECT_OPTION, index: Math.min(i, maxOptionIndex) };
         }
       }
     }
@@ -1274,12 +1426,27 @@ export class AIController {
     // If it's AI's turn during Main Phase 1 and opponent has no monsters or weaker monsters,
     // choose Attack Position so the monster can declare direct attacks / battle attacks!
     const isAiTurn = (boardState.turnNumber % 2 !== 0 && aiPlayerId === 0) || (boardState.turnNumber % 2 === 0 && aiPlayerId === 1);
-    const canAttackFreely = isAiTurn && (currentPhase === 'MAIN1' || currentPhase === 'DP' || currentPhase === 'SP') && (oppMonsters.length === 0 || atk >= oppMaxAtk);
+    const canAttackFreely = isAiTurn && (currentPhase === 'M1' || currentPhase === 'MAIN1' || currentPhase === 'DP' || currentPhase === 'SP') && (oppMonsters.length === 0 || atk >= oppMaxAtk);
 
     if (canAttackFreely && positions.includes(OcgPosition.FACEUP_ATTACK) && atk >= 1000) {
       return {
         type: OcgResponseType.SELECT_POSITION,
         position: OcgPosition.FACEUP_ATTACK,
+      };
+    }
+
+    // When facing superior opponent ATK, choosing Attack Position invites massive combat damage next turn.
+    // Prioritize Defense Position (facedown defense or faceup defense) to protect AI LP.
+    if (oppMaxAtk > atk && (positions.includes(OcgPosition.FACEDOWN_DEFENSE) || positions.includes(OcgPosition.FACEUP_DEFENSE))) {
+      if (positions.includes(OcgPosition.FACEDOWN_DEFENSE)) {
+        return {
+          type: OcgResponseType.SELECT_POSITION,
+          position: OcgPosition.FACEDOWN_DEFENSE,
+        };
+      }
+      return {
+        type: OcgResponseType.SELECT_POSITION,
+        position: OcgPosition.FACEUP_DEFENSE,
       };
     }
 

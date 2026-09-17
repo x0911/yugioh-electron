@@ -6,14 +6,14 @@ import { OcgMessageType, OcgResponseType, OcgPosition } from 'ocgcore-wasm';
 import type { DecodedDuelEvent } from '../src/main/engine/messageDecoder.js';
 
 async function testOcgcorePatchIntegrity() {
-  console.log('Test 1: Verify ocgcore-wasm dist/index.js contains the length: e.u8() patch...');
+  console.log('Test 1: Verify ocgcore-wasm dist/index.js contains the sequential from/to e.u8() patch...');
   const indexJsPath = path.resolve(process.cwd(), 'node_modules/ocgcore-wasm/dist/index.js');
   assert.ok(fs.existsSync(indexJsPath), 'node_modules/ocgcore-wasm/dist/index.js must exist');
 
   const content = fs.readFileSync(indexJsPath, 'utf8');
   assert.ok(
-    content.includes('case 36:return{type:t,location:e.u8(),cards:Array.from({length:e.u8()}'),
-    'case 36 must decode count as e.u8() to prevent EOF desync',
+    content.includes('case 36:{let l=e.u8(),n=e.u8(),f=Array.from({length:n},()=>p(e)),o=Array.from({length:n},()=>p(e));return{type:t,location:l,cards:f.map((k,i)=>({from:k,to:o[i]}))}};'),
+    'case 36 must decode sequential from and to arrays with count as e.u8()',
   );
   assert.ok(
     !content.includes('case 36:return{type:t,location:e.u8(),cards:Array.from({length:e.u32()}'),
@@ -106,6 +106,12 @@ async function testCyberJarShuffleSetCardResolution() {
   assert.ok(chainSolvedReceived, 'CHAIN_SOLVED must be emitted after Cyber Jar resolution');
   assert.ok(chainEndReceived, 'CHAIN_END must be emitted after Cyber Jar resolution');
   assert.strictEqual(engine.state.isActive, true, 'Duel must remain active and not frozen');
+
+  const board = engine.getBoardState();
+  const userMonsters = board.userField.monsterZones.filter(Boolean);
+  const oppMonsters = board.opponentField.monsterZones.filter(Boolean);
+  assert.strictEqual(userMonsters.length, 2, 'User must have 2 face-down monsters on field after Cyber Jar');
+  assert.strictEqual(oppMonsters.length, 1, 'Opponent must have 1 face-up monster on field after Cyber Jar');
 
   console.log('  ✓ Cyber Jar flip summon and SHUFFLE_SET_CARD resolved successfully without freeze.');
 }

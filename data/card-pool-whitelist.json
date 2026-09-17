@@ -53271,6 +53271,16 @@
     "def": 0,
     "race": "Normal"
   },
+  "89900001": {
+    "id": 89900001,
+    "name": "Kindred Summoning",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal",
+    "hasScript": true
+  },
   "89914395": {
     "id": 89914395,
     "name": "Divine Relic Mjollnir",
@@ -58806,6 +58816,16 @@
     "atk": 1500,
     "def": 1800,
     "race": "4"
+  },
+  "99990001": {
+    "id": 99990001,
+    "name": "Kindred Summoning",
+    "era": "DM",
+    "type": "Spell Card",
+    "atk": 0,
+    "def": 0,
+    "race": "Normal",
+    "hasScript": true
   },
   "99995595": {
     "id": 99995595,

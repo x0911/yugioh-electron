@@ -90,6 +90,7 @@
             :card="slot"
             :target-info="getSlotTarget(opponentPlayerId, 8, idx)"
             :is-prompt-active="isPromptActive"
+            :is-disabled="isZoneDisabled('ai', 'spell-trap', idx)"
             @hover-card="$emit('hover-card', $event)"
             @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
             @click-target="$emit('click-target', $event)"
@@ -151,6 +152,7 @@
             :card="slot"
             :target-info="getSlotTarget(opponentPlayerId, 4, idx)"
             :is-prompt-active="isPromptActive"
+            :is-disabled="isZoneDisabled('ai', 'monster', idx)"
             @hover-card="$emit('hover-card', $event)"
             @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
             @click-target="$emit('click-target', $event)"
@@ -187,6 +189,7 @@
           :player="extraMonsterZones[0]?.controller === opponentState.playerId ? 'ai' : 'user'"
           :card="extraMonsterZones[0] || null"
           :is-inert="false"
+          :is-disabled="isZoneDisabled('user', 'extra-monster', 0)"
           @hover-card="$emit('hover-card', $event)"
           @click-card="$emit('click-card', $event)"
         />
@@ -205,6 +208,7 @@
           :player="extraMonsterZones[1]?.controller === opponentState.playerId ? 'ai' : 'user'"
           :card="extraMonsterZones[1] || null"
           :is-inert="false"
+          :is-disabled="isZoneDisabled('user', 'extra-monster', 1)"
           @hover-card="$emit('hover-card', $event)"
           @click-card="$emit('click-card', $event)"
         />
@@ -244,6 +248,7 @@
             :card="slot"
             :target-info="getSlotTarget(userPlayerId, 4, idx)"
             :is-prompt-active="isPromptActive"
+            :is-disabled="isZoneDisabled('user', 'monster', idx)"
             @hover-card="$emit('hover-card', $event)"
             @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
             @click-target="$emit('click-target', $event)"
@@ -309,6 +314,7 @@
             :card="slot"
             :target-info="getSlotTarget(userPlayerId, 8, idx)"
             :is-prompt-active="isPromptActive"
+            :is-disabled="isZoneDisabled('user', 'spell-trap', idx)"
             @hover-card="$emit('hover-card', $event)"
             @click-card="(card, ev, targetInfo) => $emit('click-card', card, ev, targetInfo)"
             @click-target="$emit('click-target', $event)"
@@ -413,6 +419,24 @@ function getSlotTarget(controller: number, location: number, sequence: number): 
     return props.getTargetInfo(controller, location, sequence);
   }
   return null;
+}
+
+function isZoneDisabled(
+  player: 'user' | 'ai',
+  zoneType: 'monster' | 'spell-trap' | 'field' | 'extra-monster',
+  index: number,
+): boolean {
+  if (zoneType === 'extra-monster') {
+    return !!duelStore.boardState?.disabledExtraMonsterZones?.includes(index);
+  }
+  const state = player === 'user' ? props.userState : props.opponentState;
+  if (zoneType === 'monster') {
+    return !!state?.disabledMonsterZones?.includes(index);
+  }
+  if (zoneType === 'spell-trap') {
+    return !!state?.disabledSpellTrapZones?.includes(index);
+  }
+  return false;
 }
 
 function onStackClick(stackType: string, controller: number): void {

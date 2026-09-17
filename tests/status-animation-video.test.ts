@@ -4,6 +4,7 @@ import path from 'node:path';
 import { ViewFilterService } from '../src/main/engine/viewFilter.js';
 import { DuelEngineService } from '../src/main/engine/DuelEngineService.js';
 import type { FieldCard, PlayerFieldState } from '../src/shared/types/field.js';
+import { OcgMessageType } from 'ocgcore-wasm';
 import type { CardVideoEntry, CardVideoPayload } from '../src/shared/types/duel.js';
 
 console.log('=== Running Phase 12 Status Icons, Animations, & Video Engine Tests ===\n');
@@ -161,6 +162,30 @@ const viewFilter = new ViewFilterService();
   assert.equal(engine.getState().isVideoPlaying, false);
 
   console.log('  ✓ Video pause engine synchronization logic passes.');
+}
+
+// -----------------------------------------------------------------------------
+// Test 4b: Holactie the Creator of Light Victory Video Trigger
+// -----------------------------------------------------------------------------
+{
+  console.log('\nTest 4b: Holactie the Creator of Light victory video trigger...');
+
+  const engine = new DuelEngineService();
+
+  const winMsg = {
+    type: OcgMessageType.WIN,
+    player: 0,
+    reason: 0x13,
+  };
+
+  const payload = (engine as any).checkVideoTrigger(winMsg);
+  assert.ok(payload, 'Holactie victory video payload must be generated for reason 0x13');
+  assert.equal(payload.code, 10000040);
+  assert.equal(payload.cardName, 'Holactie the Creator of Light');
+  assert.equal(payload.videoType, 'victory');
+  assert.ok(payload.videoPath.includes('10000040.mp4'));
+
+  console.log('  ✓ Holactie the Creator of Light victory video trigger verified successfully.');
 }
 
 // -----------------------------------------------------------------------------

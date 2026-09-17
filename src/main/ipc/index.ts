@@ -120,7 +120,11 @@ export function registerIpcHandlers(): void {
       await duelEngineService.init();
       isServiceInitialized = true;
     }
-    return duelEngineService.startNewDuel(options);
+    return duelEngineService.startNewDuel({
+      ...options,
+      interactiveSort: options.interactiveSort ?? true,
+      interactiveDisfield: options.interactiveDisfield ?? true,
+    });
   });
 
   ipcMain.handle(IPC_CHANNELS.DUEL_COMMAND, async (_event, response: OcgResponse) => {

@@ -197,7 +197,7 @@ export const useSettingsStore = defineStore('settings', {
       await this.persist();
     },
 
-    async setSelectedSeriesFilter(filter: 'ALL' | 'DM' | 'GX'): Promise<void> {
+    async setSelectedSeriesFilter(filter: 'ALL' | 'DM' | 'GX' | '5Ds' | 'Legends'): Promise<void> {
       this.selectedSeriesFilter = filter;
       await this.persist();
     },

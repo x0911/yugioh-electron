@@ -43,7 +43,7 @@
                   v-model="searchQuery"
                   type="text"
                   class="deck-search-input"
-                  :placeholder="`Search ${opponent?.decks.length || 10} decks, archetypes...`"
+                  :placeholder="isDash ? 'Search 700+ decks across custom, popular, and anime...' : `Search ${opponent?.decks.length || 10} decks, archetypes...`"
                   spellcheck="false"
                 />
                 <button
@@ -54,6 +54,42 @@
                   @click="searchQuery = ''"
                 >
                   ✕
+                </button>
+              </div>
+
+              <!-- Dash Universal Deck Category Tabs -->
+              <div v-if="isDash" class="dash-category-tabs" role="tablist">
+                <button
+                  type="button"
+                  class="dash-tab"
+                  :class="{ 'dash-tab--active': dashActiveCategory === 'all' }"
+                  @click="dashActiveCategory = 'all'"
+                >
+                  All ({{ allCandidateDecks.length }})
+                </button>
+                <button
+                  type="button"
+                  class="dash-tab dash-tab--custom"
+                  :class="{ 'dash-tab--active': dashActiveCategory === 'custom' }"
+                  @click="dashActiveCategory = 'custom'"
+                >
+                  ⭐ My Decks ({{ customDecksCount }})
+                </button>
+                <button
+                  type="button"
+                  class="dash-tab dash-tab--popular"
+                  :class="{ 'dash-tab--active': dashActiveCategory === 'popular' }"
+                  @click="dashActiveCategory = 'popular'"
+                >
+                  🏆 Popular ({{ popularDecksCount }})
+                </button>
+                <button
+                  type="button"
+                  class="dash-tab dash-tab--character"
+                  :class="{ 'dash-tab--active': dashActiveCategory === 'character' }"
+                  @click="dashActiveCategory = 'character'"
+                >
+                  ⚔️ Characters ({{ characterDecksCount }})
                 </button>
               </div>
 
@@ -86,11 +122,11 @@
 
                     <div class="deck-item-meta">
                       <span class="series-pill series-pill--gold"> DYNAMIC </span>
-                      <span class="archetype-label"> Surprise Matchup </span>
+                      <span class="archetype-label"> {{ isDash ? 'Any Deck in Game' : 'Surprise Matchup' }} </span>
                     </div>
 
                     <div class="deck-item-counts">
-                      <span>🎲 Rotates every match from authentic pool</span>
+                      <span>{{ isDash ? '🎲 Dash will wield a surprise deck from the entire arena' : '🎲 Rotates every match from authentic pool' }}</span>
                     </div>
                   </div>
 
@@ -101,7 +137,7 @@
                 </div>
 
                 <div class="deck-list-divider">
-                  <span>OR CHOOSE SPECIFIC SIGNATURE DECK</span>
+                  <span>{{ isDash ? 'OR CHOOSE ANY SPECIFIC DECK IN THE GAME' : 'OR CHOOSE SPECIFIC SIGNATURE DECK' }}</span>
                 </div>
 
                 <!-- 2. Specific Decks List -->
@@ -460,8 +496,84 @@ interface GroupedCard {
 
 const hoveredCard = ref<GroupedCard | null>(null);
 
+const isDash = computed(() => props.opponent?.id === 'dash');
+const dashActiveCategory = ref<'all' | 'custom' | 'popular' | 'character'>('all');
+
+function toCharacterDeck(d: any): CharacterDeckData {
+  const main = d.mainCards || d.main || [];
+  const extra = d.extraCards || d.extra || [];
+  const signature = d.signatureCardIds || (extra.length > 0 ? [extra[0]] : main.length > 0 ? [main[0]] : []);
+  let arch = d.archetype || d.characterName;
+  if (!arch) {
+    arch = d.category === 'custom' ? 'User Custom' : 'Community Popular';
+  }
+  let desc = d.description;
+  if (!desc) {
+    if (d.category === 'custom') {
+      desc = `Player-constructed custom deck: "${d.name}".`;
+    } else if (d.characterName) {
+      desc = `Authentic tournament deck piloted by ${d.characterName}.`;
+    } else {
+      desc = `Community tournament deck: "${d.name}".`;
+    }
+  }
+  return {
+    id: d.id,
+    name: d.name,
+    archetype: arch,
+    description: desc,
+    ydkPath: d.ydkPath || `resources/decks/${d.id}.ydk`,
+    mainCards: [...main],
+    extraCards: [...extra],
+    signatureCardIds: signature,
+  };
+}
+
+const isUserCustomDeck = (d: CharacterDeckData) => {
+  const raw = deckEditStore.customDecks.find((c) => c.id === d.id);
+  if (!raw) return false;
+  return raw.category === 'custom' || raw.id.startsWith('deck-') || (!raw.characterId && !raw.id.startsWith('pop-'));
+};
+
+const isPopularDeck = (d: CharacterDeckData) => {
+  const raw = deckEditStore.customDecks.find((c) => c.id === d.id);
+  if (!raw) return d.id.startsWith('pop-');
+  return raw.category?.startsWith('popular') || raw.id.startsWith('pop-') || raw.characterName === 'Community Popular';
+};
+
+const allCandidateDecks = computed<CharacterDeckData[]>(() => {
+  if (!isDash.value) {
+    return props.opponent?.decks || [];
+  }
+  const map = new Map<string, CharacterDeckData>();
+  // 1. Dash signature master decks first
+  for (const d of props.opponent?.decks || []) {
+    map.set(d.id, d);
+  }
+  // 2. All decks from deckEditStore
+  for (const cd of deckEditStore.customDecks) {
+    if (!map.has(cd.id) && cd.main && cd.main.length >= 40) {
+      map.set(cd.id, toCharacterDeck(cd));
+    }
+  }
+  return Array.from(map.values());
+});
+
+const customDecksCount = computed(() => allCandidateDecks.value.filter(isUserCustomDeck).length);
+const popularDecksCount = computed(() => allCandidateDecks.value.filter(isPopularDeck).length);
+const characterDecksCount = computed(() => allCandidateDecks.value.filter((d) => !isUserCustomDeck(d) && !isPopularDeck(d)).length);
+
 const filteredDecks = computed(() => {
-  const list = props.opponent?.decks || [];
+  let list = allCandidateDecks.value;
+  if (isDash.value) {
+    if (dashActiveCategory.value === 'custom') {
+      list = list.filter(isUserCustomDeck);
+    } else if (dashActiveCategory.value === 'popular') {
+      list = list.filter(isPopularDeck);
+    } else if (dashActiveCategory.value === 'character') {
+      list = list.filter((d) => !isUserCustomDeck(d) && !isPopularDeck(d));
+    }
+  }
   const query = searchQuery.value.trim().toLowerCase();
   if (!query) return list;
   return list.filter((d) => {
@@ -819,6 +931,42 @@ onUnmounted(() => {
 
       &:hover {
         color: #f8fafc;
+      }
+    }
+  }
+
+  .dash-category-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    padding: 0 16px 12px;
+
+    .dash-tab {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      &:hover {
+        background: rgba(139, 92, 246, 0.15);
+        border-color: rgba(139, 92, 246, 0.4);
+        color: #f8fafc;
+      }
+
+      &--active {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.4) 0%, rgba(201, 162, 39, 0.25) 100%);
+        border-color: #a855f7;
+        color: #f5d0fe;
+        box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
       }
     }
   }

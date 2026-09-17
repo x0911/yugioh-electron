@@ -19,6 +19,16 @@
         </button>
         <button
           type="button"
+          class="opponent-carousel__filter-pill opponent-carousel__filter-pill--legends"
+          :class="{ 'opponent-carousel__filter-pill--active': activeSeries === 'Legends' }"
+          role="tab"
+          :aria-selected="activeSeries === 'Legends'"
+          @click="setFilter('Legends')"
+        >
+          👑 Legends ({{ legendsCount }})
+        </button>
+        <button
+          type="button"
           class="opponent-carousel__filter-pill opponent-carousel__filter-pill--dm"
           :class="{ 'opponent-carousel__filter-pill--active': activeSeries === 'DM' }"
           role="tab"
@@ -111,7 +121,7 @@ import CharacterCard from './CharacterCard.vue';
 interface Props {
   characters: CharacterData[];
   selectedId: string;
-  seriesFilter?: 'ALL' | 'DM' | 'GX' | '5Ds';
+  seriesFilter?: 'ALL' | 'DM' | 'GX' | '5Ds' | 'Legends';
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -120,12 +130,14 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'select', id: string): void;
-  (e: 'update:seriesFilter', filter: 'ALL' | 'DM' | 'GX' | '5Ds'): void;
+  (e: 'update:seriesFilter', filter: 'ALL' | 'DM' | 'GX' | '5Ds' | 'Legends'): void;
 }>();
 
-const activeSeries = ref<'ALL' | 'DM' | 'GX' | '5Ds'>(props.seriesFilter);
+const activeSeries = ref<'ALL' | 'DM' | 'GX' | '5Ds' | 'Legends'>(props.seriesFilter);
 const trackRef = ref<HTMLElement | null>(null);
 const cardElements = ref<HTMLElement[]>([]);
+
+const LEGENDS_CHARACTER_IDS = ['yami-yugi', 'jaden-yuki', 'yusei-fudo', 'dash'];
 
 function setCardRef(el: unknown, index: number): void {
   if (el) {
@@ -134,12 +146,31 @@ function setCardRef(el: unknown, index: number): void {
 }
 
 const allCount = computed(() => props.characters.length);
+const legendsCount = computed(() => {
+  return props.characters.filter(
+    (c) => c.series === 'Legends' || LEGENDS_CHARACTER_IDS.includes(c.id),
+  ).length;
+});
 const dmCount = computed(() => props.characters.filter((c) => c.series === 'DM').length);
 const gxCount = computed(() => props.characters.filter((c) => c.series === 'GX').length);
 const fiveDsCount = computed(() => props.characters.filter((c) => c.series === '5Ds').length);
 
 const filteredCharacters = computed(() => {
   if (activeSeries.value === 'ALL') return props.characters;
+  if (activeSeries.value === 'Legends') {
+    const map = new Map(props.characters.map((c) => [c.id, c]));
+    const legendsOrdered: CharacterData[] = [];
+    for (const id of LEGENDS_CHARACTER_IDS) {
+      const found = map.get(id);
+      if (found) legendsOrdered.push(found);
+    }
+    for (const char of props.characters) {
+      if (char.series === 'Legends' && !LEGENDS_CHARACTER_IDS.includes(char.id)) {
+        legendsOrdered.push(char);
+      }
+    }
+    return legendsOrdered;
+  }
   return props.characters.filter((c) => c.series === activeSeries.value);
 });
 
@@ -148,7 +179,7 @@ const selectedIndex = computed(() => {
   return idx >= 0 ? idx : 0;
 });
 
-function setFilter(filter: 'ALL' | 'DM' | 'GX' | '5Ds'): void {
+function setFilter(filter: 'ALL' | 'DM' | 'GX' | '5Ds' | 'Legends'): void {
   activeSeries.value = filter;
   emit('update:seriesFilter', filter);
   nextTick(() => {
@@ -274,6 +305,13 @@ watch(
       border-color: #f4e4b8;
       font-weight: 700;
       box-shadow: 0 0 12px rgba(201, 162, 39, 0.4);
+    }
+
+    &--legends.opponent-carousel__filter-pill--active {
+      background: linear-gradient(135deg, #a855f7 0%, #c9a227 100%);
+      border-color: #f5d0fe;
+      color: #1e1b4b;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.45);
     }
 
     &--dm.opponent-carousel__filter-pill--active {

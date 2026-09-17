@@ -973,7 +973,7 @@ function handleSelectOpponent(id: string): void {
   settingsStore.setSelectedOpponent(id);
 }
 
-function handleFilterChange(filter: 'ALL' | 'DM' | 'GX'): void {
+function handleFilterChange(filter: 'ALL' | 'DM' | 'GX' | '5Ds' | 'Legends'): void {
   settingsStore.setSelectedSeriesFilter(filter);
 }
 

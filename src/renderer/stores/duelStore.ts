@@ -22,6 +22,12 @@ import type {
   AnnounceRacePayload,
   AnnounceAttribPayload,
   AnnounceNumberPayload,
+  SelectCounterPayload,
+  RockPaperScissorsPayload,
+  SortCardPayload,
+  SortChainPayload,
+  SelectDisfieldPayload,
+  SelectFieldPlace,
 } from '../../shared/types/duel.js';
 import type {
   DuelBoardState,
@@ -109,6 +115,11 @@ export interface DuelStoreState {
   activeAnnounceRace: AnnounceRacePayload | null;
   activeAnnounceAttrib: AnnounceAttribPayload | null;
   activeAnnounceNumber: AnnounceNumberPayload | null;
+  activeSelectCounter: SelectCounterPayload | null;
+  activeRockPaperScissors: RockPaperScissorsPayload | null;
+  activeSortCard: SortCardPayload | null;
+  activeSortChain: SortChainPayload | null;
+  activeSelectDisfield: SelectDisfieldPayload | null;
 
   // Card Database Cache
   cardMap: Map<number, CardDetail>;
@@ -222,6 +233,11 @@ export const useDuelStore = defineStore('duel', {
     activeAnnounceRace: null,
     activeAnnounceAttrib: null,
     activeAnnounceNumber: null,
+    activeSelectCounter: null,
+    activeRockPaperScissors: null,
+    activeSortCard: null,
+    activeSortChain: null,
+    activeSelectDisfield: null,
     cardMap: new Map(),
     isCardsLoaded: false,
     selectedTargetIndices: [],
@@ -643,7 +659,7 @@ export const useDuelStore = defineStore('duel', {
         this.selectedOpponentDeck = customOpponentDeck;
         this.selectedOpponentDeckIndex = 0;
         this.isOpponentDeckManual = true;
-      } else if (!this.isOpponentDeckManual || !this.selectedOpponentDeck || !opponent?.decks.some((d) => d.id === this.selectedOpponentDeck?.id)) {
+      } else if (!this.isOpponentDeckManual || !this.selectedOpponentDeck || (!opponent?.decks.some((d) => d.id === this.selectedOpponentDeck?.id) && opponent?.id !== 'dash')) {
         if (opponent && opponent.decks.length > 0) {
           const idx = Math.floor(Math.random() * opponent.decks.length);
           this.selectedOpponentDeck = opponent.decks[idx];
@@ -1129,6 +1145,11 @@ export const useDuelStore = defineStore('duel', {
       this.activeAnnounceRace = null;
       this.activeAnnounceAttrib = null;
       this.activeAnnounceNumber = null;
+      this.activeSelectCounter = null;
+      this.activeRockPaperScissors = null;
+      this.activeSortCard = null;
+      this.activeSortChain = null;
+      this.activeSelectDisfield = null;
       this.selectedTargetIndices = [];
       this.isPromptWaiting = false;
       this.isCardSelectionModalOpen = false;
@@ -1432,7 +1453,7 @@ export const useDuelStore = defineStore('duel', {
         this.lastDeclinedChainFingerprint = null;
       }
       if (event.type === 'WIN') {
-        this.boardState.winner = (event.player as 0 | 1) ?? null;
+        this.boardState.winner = event.player === 2 || (event as any).winner === 'draw' ? 'draw' : ((event.player as 0 | 1) ?? null);
         this.boardState.winReason = event.reason ?? null;
         this.clearPrompts();
         await this.fetchBoardState();
@@ -1462,6 +1483,47 @@ export const useDuelStore = defineStore('duel', {
       // Incremental board state updates for non-prompt events
       if (event.type === 'MOVE') {
         this.applyCardMoveToBoard(event as any);
+      } else if (event.type === 'SWAP') {
+        const c1 = (event as any).card1;
+        const c2 = (event as any).card2;
+        if (c1 && c2) {
+          const pf1 = c1.controller === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+          const pf2 = c2.controller === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
+          const list1 = c1.location === 4 ? pf1.monsterZones : pf1.spellTrapZones;
+          const list2 = c2.location === 4 ? pf2.monsterZones : pf2.spellTrapZones;
+          const obj1 = list1[c1.sequence];
+          const obj2 = list2[c2.sequence];
+          if (obj1) {
+            obj1.controller = c2.controller;
+            obj1.sequence = c2.sequence;
+          }
+          if (obj2) {
+            obj2.controller = c1.controller;
+            obj2.sequence = c1.sequence;
+          }
+          list2[c2.sequence] = obj1 || null;
+          list1[c1.sequence] = obj2 || null;
+        }
+      } else if (event.type === 'CONFIRM_CARDS' && Array.isArray((event as any).cards)) {
+        const cards = (event as any).cards;
+        for (const c of cards) {
+          if (c.controller === this.opponentPlayerId && c.location === 2 /* HAND */) {
+            const handCard = this.boardState.opponentField.hand[c.sequence];
+            if (handCard && c.code > 0) {
+              handCard.code = c.code;
+              const detail = this.cardMap.get(c.code);
+              handCard.name = detail?.name || c.cardName || handCard.name;
+              if (detail?.isMonster) {
+                handCard.atk = detail.atk;
+                handCard.def = detail.def;
+                handCard.level = detail.level;
+                handCard.attribute = detail.attributeName;
+                handCard.race = detail.raceName;
+              }
+              handCard.description = detail?.desc || handCard.description;
+            }
+          }
+        }
       } else if (event.type === 'SHUFFLE_HAND' && event.player !== undefined) {
         const p = event.player as 0 | 1;
         const pf = p === this.userPlayerId ? this.boardState.userField : this.boardState.opponentField;
@@ -1486,7 +1548,16 @@ export const useDuelStore = defineStore('duel', {
           pf.hand = newHand;
         } else {
           for (let i = 0; i < pf.hand.length; i++) {
-            if (pf.hand[i]) pf.hand[i].sequence = i;
+            if (pf.hand[i]) {
+              pf.hand[i].sequence = i;
+              if (p === this.opponentPlayerId) {
+                pf.hand[i].code = 0;
+                pf.hand[i].name = 'Card Back';
+                pf.hand[i].atk = undefined;
+                pf.hand[i].def = undefined;
+                pf.hand[i].level = undefined;
+              }
+            }
           }
         }
       } else if (event.type === 'DRAW' && event.player !== undefined) {
@@ -1754,6 +1825,16 @@ export const useDuelStore = defineStore('duel', {
           this.activeAnnounceAttrib = event.promptData as AnnounceAttribPayload;
         } else if (event.promptType === 'ANNOUNCE_NUMBER') {
           this.activeAnnounceNumber = event.promptData as AnnounceNumberPayload;
+        } else if (event.promptType === 'SELECT_COUNTER') {
+          this.activeSelectCounter = event.promptData as SelectCounterPayload;
+        } else if (event.promptType === 'ROCK_PAPER_SCISSORS') {
+          this.activeRockPaperScissors = event.promptData as RockPaperScissorsPayload;
+        } else if (event.promptType === 'SORT_CARD') {
+          this.activeSortCard = event.promptData as SortCardPayload;
+        } else if (event.promptType === 'SORT_CHAIN') {
+          this.activeSortChain = event.promptData as SortChainPayload;
+        } else if (event.promptType === 'SELECT_DISFIELD') {
+          this.activeSelectDisfield = event.promptData as SelectDisfieldPayload;
         }
 
         // Snapshot synchronization is intentionally NOT called here.
@@ -2542,7 +2623,7 @@ export const useDuelStore = defineStore('duel', {
     async executeAnnounceRace(races: bigint[] | number[]): Promise<boolean> {
       return this.sendCommand({
         type: 16, // ANNOUNCE_RACE
-        races,
+        races: races.map((r) => (typeof r === 'bigint' ? Number(r) : r)),
       });
     },
 
@@ -2561,6 +2642,48 @@ export const useDuelStore = defineStore('duel', {
       });
     },
 
+    async executeSelectCounter(counters: number[]): Promise<boolean> {
+      return this.sendCommand({
+        type: 13, // SELECT_COUNTER (OcgResponseType.SELECT_COUNTER)
+        counters,
+      });
+    },
+
+    async executeRockPaperScissors(value: 1 | 2 | 3): Promise<boolean> {
+      return this.sendCommand({
+        type: 20, // ROCK_PAPER_SCISSORS (OcgResponseType.ROCK_PAPER_SCISSORS)
+        value,
+      });
+    },
+
+    async executeSortCard(order: number[] | null): Promise<boolean> {
+      return this.sendCommand({
+        type: 15, // SORT_CARD (OcgResponseType.SORT_CARD)
+        order,
+      });
+    },
+
+    async executeSortChain(order: number[] | null): Promise<boolean> {
+      return this.sendCommand({
+        type: 15, // SORT_CHAIN responds with SORT_CARD (OcgResponseType.SORT_CARD)
+        order,
+      });
+    },
+
+    async executeSelectDisfield(places: SelectFieldPlace[]): Promise<boolean> {
+      return this.sendCommand({
+        type: 9, // SELECT_DISFIELD (OcgResponseType.SELECT_DISFIELD)
+        places,
+      });
+    },
+
+    async executeSelectPlace(places: SelectFieldPlace[]): Promise<boolean> {
+      return this.sendCommand({
+        type: 10, // SELECT_PLACE (OcgResponseType.SELECT_PLACE)
+        places,
+      });
+    },
+
     async sendCommand(command: unknown): Promise<boolean> {
       this.clearPrompts();
 
@@ -2574,7 +2697,9 @@ export const useDuelStore = defineStore('duel', {
 
       if (window.duelAPI) {
         try {
-          const plainCommand = JSON.parse(JSON.stringify(command));
+          const plainCommand = JSON.parse(
+            JSON.stringify(command, (_key, val) => (typeof val === 'bigint' ? Number(val) : val))
+          );
           const res = await window.duelAPI.sendCommand(plainCommand);
           // NOTE: Do NOT call fetchBoardState() here. The engine will emit incremental
           // events (MOVE, DRAW, etc.) that update the board state through the animation

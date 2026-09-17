@@ -52,6 +52,9 @@ export interface FieldCard {
   counters?: number;
   turnCounter?: number;
   statuses?: CardStatusType[];
+  cardHints?: string[];
+  equippedTo?: { location: FieldZoneType; sequence: number; controller: number; code?: number };
+  equippedCards?: Array<{ location: FieldZoneType; sequence: number; controller: number; code?: number }>;
 }
 
 export interface PlayerFieldState {
@@ -75,6 +78,10 @@ export interface PlayerFieldState {
   deckCount: number; // Count of cards in deck
   extraDeckCount: number; // Count of cards in extra deck
   hand: FieldCard[]; // Cards in hand
+
+  // Disabled / Locked Zone Indices (FIELD_DISABLED = 56)
+  disabledMonsterZones?: number[];
+  disabledSpellTrapZones?: number[];
 }
 
 export function createEmptyPlayerField(playerId: 0 | 1, name: string): PlayerFieldState {
@@ -93,6 +100,8 @@ export function createEmptyPlayerField(playerId: 0 | 1, name: string): PlayerFie
     deckCount: 40,
     extraDeckCount: 0,
     hand: [],
+    disabledMonsterZones: [],
+    disabledSpellTrapZones: [],
   };
 }
 
@@ -100,6 +109,7 @@ export interface DuelBoardState {
   userField: PlayerFieldState;
   opponentField: PlayerFieldState;
   extraMonsterZones: (FieldCard | null)[]; // 2 slots between players
+  disabledExtraMonsterZones?: number[];
   turnNumber: number;
   currentPhase: 'DP' | 'SP' | 'M1' | 'BP' | 'M2' | 'EP';
   activePrompt: string | null;

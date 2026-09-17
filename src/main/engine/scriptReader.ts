@@ -78,7 +78,10 @@ export class ScriptReaderService {
 
   private preprocessScript(rawContent: string): string {
     // 1. Replace bitwise OR on uppercase constants: e.g. REASON_EFFECT|REASON_DISCARD -> REASON_EFFECT+REASON_DISCARD
-    let content = rawContent.replace(/([A-Z_0-9]+)\s*\|\s*([A-Z_0-9]+)/g, '$1+$2');
+    let content = rawContent;
+    while (/([A-Z_0-9]+)\s*\|\s*([A-Z_0-9]+)/.test(content)) {
+      content = content.replace(/([A-Z_0-9]+)\s*\|\s*([A-Z_0-9]+)/g, '$1+$2');
+    }
     // 2. Replace `#variable` length operator on userdata groups with `Auxiliary.GetCount(variable)`
     content = content.replace(/#([a-zA-Z0-9_]+)/g, 'Auxiliary.GetCount($1)');
     // 3. Polyfill modern methods IsSpellTrap and IsMonster for ocgcore 11.0
@@ -97,6 +100,49 @@ export class ScriptReaderService {
       const boot = [
         'Duel.LoadScript("constant.lua")',
         'Duel.LoadScript("utility.lua")',
+        '-- Defensive polyfills in bootstrap in case of older utility.lua',
+        'Auxiliary = Auxiliary or aux or {}',
+        'aux = Auxiliary',
+        'if not Auxiliary.GetCount then',
+        '  function Auxiliary.GetCount(g)',
+        '    if not g then return 0 end',
+        '    local t = type(g)',
+        '    if t == "userdata" then',
+        '      local ok, count = pcall(function() return g:GetCount() end)',
+        '      if ok and type(count) == "number" then return count end',
+        '    elseif t == "table" or t == "string" then',
+        '      return #g',
+        '    end',
+        '    return 0',
+        '  end',
+        '  Auxiliary.GetLen = Auxiliary.GetCount',
+        'end',
+        'if not Auxiliary.GetValueType then',
+        '  function Auxiliary.GetValueType(v)',
+        '    local t = type(v)',
+        '    if t == "userdata" then',
+        '      if v.GetFirst or v.GetCount or v.Filter then return "Group"',
+        '      elseif v.GetCode or v.IsLocation then return "Card"',
+        '      elseif v.SetType or v.SetCategory then return "Effect" end',
+        '    end',
+        '    return t',
+        '  end',
+        '  Auxiliary.getValueType = Auxiliary.GetValueType',
+        'end',
+        'if Card and not Card.IsSpellTrap then',
+        '  function Card.IsSpellTrap(c) return c:IsType(TYPE_SPELL+TYPE_TRAP) end',
+        'end',
+        'if Card and not Card.IsMonster then',
+        '  function Card.IsMonster(c) return c:IsType(TYPE_MONSTER) end',
+        'end',
+        'if Effect and not Effect.GetChainData then',
+        '  local _cd = setmetatable({}, { __mode = "k" })',
+        '  function Effect.GetChainData(e)',
+        '    if not _cd[e] then _cd[e] = {} end',
+        '    return _cd[e]',
+        '  end',
+        '  function Effect.SetChainData(e, d) _cd[e] = d end',
+        'end',
       ].join('\n');
       this.scriptCache.set(name, boot);
       return boot;

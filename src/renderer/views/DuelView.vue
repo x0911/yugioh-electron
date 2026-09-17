@@ -200,6 +200,11 @@
       :announce-race="duelStore.activeAnnounceRace"
       :announce-attrib="duelStore.activeAnnounceAttrib"
       :announce-number="duelStore.activeAnnounceNumber"
+      :select-counter="duelStore.activeSelectCounter"
+      :rock-paper-scissors="duelStore.activeRockPaperScissors"
+      :sort-card="duelStore.activeSortCard"
+      :sort-chain="duelStore.activeSortChain"
+      :select-disfield="duelStore.activeSelectDisfield"
       :all-cards="allCardsList"
       @select-position="(p) => { isObservingPrompt = false; duelStore.executeSelectPosition(p); }"
       @select-chain="(idx) => { isObservingPrompt = false; duelStore.executeSelectChain(idx); }"
@@ -209,6 +214,11 @@
       @announce-race="(r) => { isObservingPrompt = false; duelStore.executeAnnounceRace(r); }"
       @announce-attrib="(a) => { isObservingPrompt = false; duelStore.executeAnnounceAttrib(a); }"
       @announce-number="(n) => { isObservingPrompt = false; duelStore.executeAnnounceNumber(n); }"
+      @select-counter="(c) => { isObservingPrompt = false; duelStore.executeSelectCounter(c); }"
+      @rock-paper-scissors="(r) => { isObservingPrompt = false; duelStore.executeRockPaperScissors(r); }"
+      @sort-card="(order) => { isObservingPrompt = false; duelStore.executeSortCard(order); }"
+      @sort-chain="(order) => { isObservingPrompt = false; duelStore.executeSortChain(order); }"
+      @select-disfield="(places) => { isObservingPrompt = false; duelStore.executeSelectDisfield(places); }"
       @observe-field="isObservingPrompt = true"
       @hover-card="onCardHover"
       @mute-phase="duelStore.muteChainsForCurrentPhase()"
@@ -304,6 +314,7 @@
     <PostDuelOverlay
       v-if="duelStore.isGameOver"
       :is-winner="isUserWinner"
+      :is-draw="isDuelDraw"
       :user-lp="duelStore.boardState.userField.currentLp"
       :opponent-lp="duelStore.boardState.opponentField.currentLp"
       :turn-count="duelStore.boardState.turnNumber"
@@ -312,6 +323,21 @@
       @review="onOpenPostMatchReview"
       @exit="returnToCharacters"
     />
+
+    <!-- Battle & Chain Negation Floating Banner -->
+    <Transition name="feedback-banner-anim">
+      <div
+        v-if="activeFeedbackBanner"
+        class="feedback-banner glass-panel"
+        :class="`feedback-banner--${activeFeedbackBanner.type}`"
+      >
+        <span class="feedback-banner__icon">{{ activeFeedbackBanner.icon }}</span>
+        <div class="feedback-banner__content">
+          <div class="feedback-banner__title">{{ activeFeedbackBanner.title }}</div>
+          <div class="feedback-banner__subtitle">{{ activeFeedbackBanner.subtitle }}</div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Side Card Previewer Popup (Persistent Hover-driven) -->
     <CardPreviewPopup
@@ -515,7 +541,12 @@ const hasAnyActivePrompt = computed(() => {
     !!duelStore.activeAnnounceCard ||
     !!duelStore.activeAnnounceRace ||
     !!duelStore.activeAnnounceAttrib ||
-    !!duelStore.activeAnnounceNumber
+    !!duelStore.activeAnnounceNumber ||
+    !!duelStore.activeSelectCounter ||
+    !!duelStore.activeRockPaperScissors ||
+    !!duelStore.activeSortCard ||
+    !!duelStore.activeSortChain ||
+    !!duelStore.activeSelectDisfield
   );
 });
 
@@ -648,13 +679,38 @@ const menuAnchorPos = ref<{ x: number; y: number } | null>(null);
 // Reactive board state selector
 const currentBoardState = computed<DuelBoardState>(() => duelStore.boardState);
 
+const isDuelDraw = computed(() => {
+  return duelStore.boardState.winner === 'draw';
+});
+
 const isUserWinner = computed(() => {
   return duelStore.boardState.winner === duelStore.userPlayerId;
 });
 
 const gameOverSubtitle = computed(() => {
+  if (isDuelDraw.value) {
+    return 'The duel ended in a draw with both duelists tied!';
+  }
   return getGameOverSubtitle(isUserWinner.value, duelStore.boardState.winReason ?? null);
 });
+
+interface FeedbackBanner {
+  type: 'negate' | 'barrier' | 'missed';
+  title: string;
+  subtitle: string;
+  icon: string;
+}
+const activeFeedbackBanner = ref<FeedbackBanner | null>(null);
+let feedbackBannerTimer: any = null;
+
+function triggerFeedbackBanner(banner: FeedbackBanner) {
+  if (feedbackBannerTimer) clearTimeout(feedbackBannerTimer);
+  activeFeedbackBanner.value = banner;
+  feedbackBannerTimer = setTimeout(() => {
+    activeFeedbackBanner.value = null;
+    feedbackBannerTimer = null;
+  }, 2400);
+}
 
 const allCardsList = computed(() => {
   return Array.from(duelStore.cardMap.values());
@@ -853,7 +909,9 @@ function saveCurrentDuelLog(overrideOutcome?: 'victory' | 'defeat' | 'draw' | 's
 
   let outcome: 'victory' | 'defeat' | 'draw' | 'surrender' = overrideOutcome || 'draw';
   if (!overrideOutcome) {
-    if (winnerId === duelStore.userPlayerId) {
+    if (winnerId === 'draw') {
+      outcome = 'draw';
+    } else if (winnerId === duelStore.userPlayerId) {
       outcome = 'victory';
     } else if (winnerId !== null) {
       outcome = 'defeat';
@@ -1469,6 +1527,68 @@ async function setupEngineEventListener(): Promise<void> {
         activeTossPayload.value = null;
       }
 
+      else if (event.type === 'SWAP') {
+        const c1 = (event as any).card1;
+        const c2 = (event as any).card2;
+        if (c1 && c2) {
+          const fromRect1 = getZoneRect(toDomOwner(c1.controller), c1.location === 4 ? 'monster' : 'spell', c1.sequence);
+          const toRect1 = getZoneRect(toDomOwner(c2.controller), c2.location === 4 ? 'monster' : 'spell', c2.sequence);
+          const fromRect2 = toRect1;
+          const toRect2 = fromRect1;
+          audioManager.playSfx('position-change');
+          await Promise.all([
+            playCardFlight({
+              code: c1.code || 0,
+              cardName: c1.cardName || 'Card',
+              fromRect: fromRect1,
+              toRect: toRect1,
+              type: 'summon',
+              durationMs: 440,
+            }),
+            playCardFlight({
+              code: c2.code || 0,
+              cardName: c2.cardName || 'Card',
+              fromRect: fromRect2,
+              toRect: toRect2,
+              type: 'summon',
+              durationMs: 440,
+            }),
+          ]);
+        }
+      }
+
+      else if (event.type === 'CHAIN_NEGATED' || event.type === 'CHAIN_DISABLED') {
+        audioManager.playSfx('negate');
+        triggerFeedbackBanner({
+          type: 'negate',
+          title: event.type === 'CHAIN_NEGATED' ? 'ACTIVATION NEGATED!' : 'EFFECT NEGATED!',
+          subtitle: event.description || 'A card activation or effect was negated!',
+          icon: '💥',
+        });
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      }
+
+      else if (event.type === 'ATTACK_DISABLED') {
+        audioManager.playSfx('barrier');
+        triggerFeedbackBanner({
+          type: 'barrier',
+          title: 'ATTACK NEGATED!',
+          subtitle: 'The declared battle attack was blocked by a barrier!',
+          icon: '🛡️',
+        });
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      else if (event.type === 'MISSED_EFFECT') {
+        triggerFeedbackBanner({
+          type: 'missed',
+          title: 'MISSED TIMING',
+          subtitle: event.description || 'Optional "When... you can" effect missed the timing.',
+          icon: '⚠️',
+        });
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+
       else if (event.type === 'SHUFFLE_DECK' || event.type === 'SHUFFLE_HAND') {
         audioManager.playSfx('deck-shuffle');
       }
@@ -1492,10 +1612,13 @@ async function setupEngineEventListener(): Promise<void> {
       }
 
       if (event.type === 'WIN') {
-        const isWin = duelStore.boardState.winner === duelStore.userPlayerId ||
+        const isDraw = duelStore.boardState.winner === 'draw' || event.player === 2;
+        const isWin = !isDraw && (
+          duelStore.boardState.winner === duelStore.userPlayerId ||
           event.player === duelStore.userPlayerId ||
-          (event as any).winner === duelStore.userPlayerId;
-        if (isWin) {
+          (event as any).winner === duelStore.userPlayerId
+        );
+        if (isDraw || isWin) {
           audioManager.playSfx('match-victory');
         } else {
           audioManager.playSfx('match-defeat');
@@ -2243,5 +2366,88 @@ onUnmounted(() => {
 .dialogue-pop-leave-to {
   opacity: 0;
   transform: translate(-50%, -5px) scale(0.98);
+}
+
+// Floating Feedback Banner (Negation, Attack Barrier, Missed Timing)
+.feedback-banner {
+  position: fixed;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 28px;
+  border-radius: 16px;
+  pointer-events: none;
+
+  &__icon {
+    font-size: 2.2rem;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__title {
+    font-family: var(--font-header, sans-serif);
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  &__subtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  &--negate {
+    background: linear-gradient(135deg, rgba(40, 10, 20, 0.95), rgba(20, 5, 10, 0.98));
+    border: 2px solid rgba(255, 60, 100, 0.8);
+    box-shadow: 0 0 35px rgba(255, 40, 80, 0.55), 0 10px 30px rgba(0, 0, 0, 0.8);
+
+    .feedback-banner__title {
+      color: #ff3366;
+      text-shadow: 0 0 12px rgba(255, 51, 102, 0.8);
+    }
+  }
+
+  &--barrier {
+    background: linear-gradient(135deg, rgba(10, 30, 45, 0.95), rgba(5, 15, 25, 0.98));
+    border: 2px solid rgba(0, 200, 255, 0.8);
+    box-shadow: 0 0 35px rgba(0, 200, 255, 0.55), 0 10px 30px rgba(0, 0, 0, 0.8);
+
+    .feedback-banner__title {
+      color: #00e5ff;
+      text-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
+    }
+  }
+
+  &--missed {
+    background: linear-gradient(135deg, rgba(40, 30, 10, 0.95), rgba(20, 15, 5, 0.98));
+    border: 2px solid rgba(255, 180, 0, 0.8);
+    box-shadow: 0 0 35px rgba(255, 180, 0, 0.55), 0 10px 30px rgba(0, 0, 0, 0.8);
+
+    .feedback-banner__title {
+      color: #ffc107;
+      text-shadow: 0 0 12px rgba(255, 193, 7, 0.8);
+    }
+  }
+}
+
+.feedback-banner-anim-enter-active,
+.feedback-banner-anim-leave-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.feedback-banner-anim-enter-from,
+.feedback-banner-anim-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px) scale(0.9);
 }
 </style>

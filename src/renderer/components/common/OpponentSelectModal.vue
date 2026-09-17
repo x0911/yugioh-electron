@@ -66,6 +66,14 @@
               </button>
               <button
                 type="button"
+                class="series-tab series-tab--legends"
+                :class="{ 'series-tab--active': activeSeries === 'Legends' }"
+                @click="setSeries('Legends')"
+              >
+                👑 Legends ({{ legendsCount }})
+              </button>
+              <button
+                type="button"
                 class="series-tab series-tab--dm"
                 :class="{ 'series-tab--active': activeSeries === 'DM' }"
                 @click="setSeries('DM')"
@@ -110,6 +118,7 @@
                   'opponent-card--dm': char.series === 'DM',
                   'opponent-card--gx': char.series === 'GX',
                   'opponent-card--5ds': char.series === '5Ds',
+                  'opponent-card--legends': char.series === 'Legends' || char.id === 'dash',
                 }"
                 :style="{ '--char-theme-color': char.themeColor || '#c9a227' }"
                 tabindex="0"
@@ -247,18 +256,45 @@ const activeSeries = ref<'ALL' | CharacterSeries>('ALL');
 const failedImages = ref<Set<string>>(new Set());
 const gridScrollRef = ref<HTMLElement | null>(null);
 
+const LEGENDS_CHARACTER_IDS = ['yami-yugi', 'jaden-yuki', 'yusei-fudo', 'dash'];
+
 const allCount = computed(() => props.characters.length);
+const legendsCount = computed(() => {
+  return props.characters.filter(
+    (c) => c.series === 'Legends' || LEGENDS_CHARACTER_IDS.includes(c.id),
+  ).length;
+});
 const dmCount = computed(() => props.characters.filter((c) => c.series === 'DM').length);
 const gxCount = computed(() => props.characters.filter((c) => c.series === 'GX').length);
 const fiveDsCount = computed(() => props.characters.filter((c) => c.series === '5Ds').length);
 
 const filteredCharacters = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
-  return props.characters.filter((char) => {
-    if (activeSeries.value !== 'ALL' && char.series !== activeSeries.value) {
-      return false;
+  let list = props.characters;
+
+  if (activeSeries.value === 'Legends') {
+    const map = new Map(props.characters.map((c) => [c.id, c]));
+    const legendsOrdered: CharacterData[] = [];
+    for (const id of LEGENDS_CHARACTER_IDS) {
+      const found = map.get(id);
+      if (found) legendsOrdered.push(found);
     }
-    if (!query) return true;
+    for (const char of props.characters) {
+      if (char.series === 'Legends' && !LEGENDS_CHARACTER_IDS.includes(char.id)) {
+        legendsOrdered.push(char);
+      }
+    }
+    list = legendsOrdered;
+  } else if (activeSeries.value === 'DM') {
+    list = props.characters.filter((c) => c.series === 'DM');
+  } else if (activeSeries.value === 'GX') {
+    list = props.characters.filter((c) => c.series === 'GX');
+  } else if (activeSeries.value === '5Ds') {
+    list = props.characters.filter((c) => c.series === '5Ds');
+  }
+
+  if (!query) return list;
+  return list.filter((char) => {
     return (
       char.name?.toLowerCase().includes(query) ||
       char.title?.toLowerCase().includes(query) ||
@@ -531,6 +567,13 @@ onUnmounted(() => {
           box-shadow: 0 0 12px rgba(201, 162, 39, 0.3);
         }
 
+        &--legends.series-tab--active {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.45) 0%, rgba(201, 162, 39, 0.25) 100%);
+          border-color: #a855f7;
+          color: #f5d0fe;
+          box-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+        }
+
         &--dm.series-tab--active {
           background: linear-gradient(135deg, rgba(234, 179, 8, 0.35) 0%, rgba(234, 179, 8, 0.15) 100%);
           border-color: #facc15;
@@ -635,6 +678,17 @@ onUnmounted(() => {
     }
   }
 
+  &--legends {
+    border-color: rgba(168, 85, 247, 0.4);
+    &:hover,
+    &:focus-visible {
+      border-color: #a855f7;
+      box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.75),
+        0 0 24px rgba(168, 85, 247, 0.45);
+    }
+  }
+
   &--selected {
     border-color: $color-gold-500 !important;
     background: linear-gradient(180deg, rgba(38, 48, 70, 0.95) 0%, rgba(20, 26, 40, 0.98) 100%);
@@ -668,6 +722,13 @@ onUnmounted(() => {
       padding: 2px 8px;
       border-radius: 6px;
       border: 1px solid rgba(255, 255, 255, 0.15);
+
+      &--legends {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(201, 162, 39, 0.25) 100%);
+        border-color: rgba(168, 85, 247, 0.65);
+        color: #f5d0fe;
+        text-shadow: 0 0 4px rgba(168, 85, 247, 0.6);
+      }
 
       &--dm {
         background: rgba(234, 179, 8, 0.2);

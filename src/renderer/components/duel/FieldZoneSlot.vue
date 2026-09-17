@@ -12,7 +12,9 @@
         'field-zone-slot--targeted': isTargeted,
         'field-zone-slot--selectable': targetInfo?.isSelectable || isSelectable,
         'field-zone-slot--selected': targetInfo?.isSelected,
-        'field-zone-slot--ineligible': isPromptActive && (!targetInfo || !targetInfo.isSelectable) && !!card,
+        'field-zone-slot--ineligible':
+          isPromptActive && (!targetInfo || !targetInfo.isSelectable) && !!card,
+        'field-zone-slot--disabled': isDisabled,
       },
     ]"
     @mouseenter="onMouseEnter"
@@ -26,6 +28,13 @@
       class="slot-tooltip-wrapper"
     >
       <div class="slot-frame">
+        <!-- Disabled / Locked Zone Overlay (FIELD_DISABLED = 56) -->
+        <div v-if="isDisabled" class="slot-disabled-overlay">
+          <div class="slot-disabled-hazard-stripes"></div>
+          <div class="slot-disabled-icon">🚫</div>
+          <div class="slot-disabled-label">LOCKED</div>
+        </div>
+
         <!-- Empty Slot Watermark Label -->
         <div v-if="!card" class="slot-empty-content">
           <div class="slot-label">{{ zoneLabel }}</div>
@@ -106,7 +115,13 @@
 
         <!-- 2. Level / Rank Stars Badge (Monster zones only) -->
         <div
-          v-if="card && isFaceUpMonster && card.level && card.level > 0 && (!targetInfo || !targetInfo.isSelectable)"
+          v-if="
+            card &&
+            isFaceUpMonster &&
+            card.level &&
+            card.level > 0 &&
+            (!targetInfo || !targetInfo.isSelectable)
+          "
           class="slot-level-badge"
         >
           ★{{ card.level }}
@@ -128,6 +143,32 @@
           :title="`Turn Count: ${activeTurnCounter}`"
         >
           ⏳ {{ activeTurnCounter }}
+        </div>
+
+        <!-- 5. Card Hint / Declared Trait Badge -->
+        <div
+          v-if="card && card.cardHints && card.cardHints.length > 0"
+          class="slot-counter-badge slot-counter-badge--hint"
+          :title="card.cardHints.join(' • ')"
+        >
+          {{ card.cardHints[0].replace('Type: ', '') }}
+        </div>
+
+        <!-- 6. Equip Link Badges -->
+        <div
+          v-if="card && card.equippedCards && card.equippedCards.length > 0"
+          class="slot-counter-badge slot-counter-badge--equip"
+          :title="`Equipped with ${card.equippedCards.length} card(s)`"
+        >
+          🔗 {{ card.equippedCards.length }}
+        </div>
+
+        <div
+          v-if="card && card.equippedTo"
+          class="slot-counter-badge slot-counter-badge--equipped-to"
+          :title="`Equipped to ${card.equippedTo.location} slot ${card.equippedTo.sequence + 1}`"
+        >
+          ⚔️🔗
         </div>
       </div>
     </Tooltip>
@@ -157,6 +198,7 @@ const props = withDefaults(
     isSelectable?: boolean;
     targetInfo?: TargetInfo | null;
     isPromptActive?: boolean;
+    isDisabled?: boolean;
   }>(),
   {
     zoneIndex: 0,
@@ -168,12 +210,18 @@ const props = withDefaults(
     isSelectable: false,
     targetInfo: null,
     isPromptActive: false,
+    isDisabled: false,
   },
 );
 
 const emit = defineEmits<{
   (e: 'hover-card', card: FieldCard | null): void;
-  (e: 'click-card', card: FieldCard | null, event: MouseEvent, targetInfo?: TargetInfo | null): void;
+  (
+    e: 'click-card',
+    card: FieldCard | null,
+    event: MouseEvent,
+    targetInfo?: TargetInfo | null,
+  ): void;
   (e: 'click-target', targetInfo: TargetInfo): void;
 }>();
 
@@ -259,6 +307,9 @@ const tooltipText = computed(() => {
   if (props.targetInfo && props.targetInfo.isSelectable) {
     return props.targetInfo.tooltipText;
   }
+  if (props.isDisabled) {
+    return 'This zone is currently locked and cannot be used.';
+  }
   if (props.card && isFaceDown.value) {
     return props.card.position === 'facedown_defense'
       ? 'Face-down Defense Monster (Set)'
@@ -294,6 +345,7 @@ function onMouseLeave(): void {
 
 function onClick(event: MouseEvent): void {
   if (props.isInert) return;
+  if (props.isDisabled && (!props.targetInfo || !props.targetInfo.isSelectable)) return;
   if (props.targetInfo && props.targetInfo.isSelectable) {
     emit('click-target', props.targetInfo);
     return;
@@ -411,7 +463,9 @@ function onClick(event: MouseEvent): void {
   &--ineligible {
     opacity: 0.45;
     filter: grayscale(0.25) brightness(0.75);
-    transition: opacity 0.25s ease, filter 0.25s ease;
+    transition:
+      opacity 0.25s ease,
+      filter 0.25s ease;
   }
 
   .slot-target-overlay {
@@ -669,6 +723,103 @@ function onClick(event: MouseEvent): void {
       color: #f2c94c;
       box-shadow: 0 0 10px rgba(242, 201, 76, 0.5);
       text-shadow: 0 0 6px rgba(242, 201, 76, 0.8);
+    }
+
+    &--hint {
+      top: 3px;
+      left: 3px;
+      right: auto;
+      max-width: 82px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      background: rgba(25, 10, 35, 0.92);
+      border: 1px solid rgba(187, 134, 252, 0.8);
+      color: #d7b3ff;
+      box-shadow: 0 0 8px rgba(187, 134, 252, 0.4);
+      text-shadow: 0 0 6px rgba(187, 134, 252, 0.7);
+    }
+
+    &--equip {
+      top: auto;
+      bottom: 22px;
+      right: 3px;
+      background: rgba(10, 25, 20, 0.92);
+      border: 1px solid rgba(0, 230, 150, 0.8);
+      color: #00e696;
+      box-shadow: 0 0 8px rgba(0, 230, 150, 0.4);
+      text-shadow: 0 0 6px rgba(0, 230, 150, 0.7);
+    }
+
+    &--equipped-to {
+      top: auto;
+      bottom: 22px;
+      left: 3px;
+      right: auto;
+      background: rgba(25, 10, 10, 0.92);
+      border: 1px solid rgba(255, 100, 100, 0.8);
+      color: #ff8888;
+      box-shadow: 0 0 8px rgba(255, 100, 100, 0.4);
+      text-shadow: 0 0 6px rgba(255, 100, 100, 0.7);
+    }
+  }
+
+  // Disabled Zone Overlay (FIELD_DISABLED = 56)
+  &--disabled {
+    pointer-events: none !important;
+    opacity: 0.85;
+
+    .slot-frame {
+      border-color: rgba(239, 68, 68, 0.6) !important;
+      background: rgba(30, 10, 10, 0.75) !important;
+    }
+  }
+
+  .slot-disabled-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(20, 5, 5, 0.85);
+    border-radius: 6px;
+    overflow: hidden;
+    pointer-events: none;
+    backdrop-filter: blur(2px);
+    box-shadow: inset 0 0 16px rgba(239, 68, 68, 0.4);
+
+    .slot-disabled-hazard-stripes {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      background: repeating-linear-gradient(
+        45deg,
+        #ef4444,
+        #ef4444 10px,
+        transparent 10px,
+        transparent 20px
+      );
+    }
+
+    .slot-disabled-icon {
+      font-size: 1.4rem;
+      line-height: 1;
+      filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8));
+      z-index: 1;
+    }
+
+    .slot-disabled-label {
+      font-family: 'Oxanium', monospace, sans-serif;
+      font-size: 0.65rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      color: #ef4444;
+      text-transform: uppercase;
+      text-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+      z-index: 1;
     }
   }
 }

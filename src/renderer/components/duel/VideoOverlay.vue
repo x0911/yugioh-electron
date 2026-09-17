@@ -30,7 +30,13 @@
             class="video-overlay__type-badge"
             :class="`video-overlay__type-badge--${video.videoType}`"
           >
-            {{ video.videoType === 'summon' ? '⚡ SPECIAL SUMMON ⚡' : video.videoType === 'victory' ? '👑 SPECIAL VICTORY: EXODIA OBLITERATE! 👑' : '⚔️ BATTLE ATTACK ⚔️' }}
+            {{
+              video.videoType === 'summon'
+                ? '⚡ SPECIAL SUMMON ⚡'
+                : video.videoType === 'victory'
+                  ? (video.code === 10000040 ? '👑 SUPREME VICTORY: CREATOR OF LIGHT! 👑' : '👑 SPECIAL VICTORY: EXODIA OBLITERATE! 👑')
+                  : '⚔️ BATTLE ATTACK ⚔️'
+            }}
           </span>
           <h1 class="video-overlay__card-name">{{ video.cardName || 'Iconic Card' }}</h1>
         </header>

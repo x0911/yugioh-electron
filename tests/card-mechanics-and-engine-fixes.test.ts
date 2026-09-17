@@ -65,7 +65,7 @@ async function runTestSuite() {
     // 2. Harpie's Feather Duster
     console.log("▶ Test 2: Harpie's Feather Duster (Destroy all opponent Spell/Traps)");
     service.startNewDuel({
-      player0Deck: Array(40).fill(18144506),
+      player0Deck: [...Array(35).fill(25652259), 18144506, 18144506, 18144506, 18144506, 18144506],
       player1Deck: Array(40).fill(25652259),
       player1SpellTraps: [
         { code: 44095762, sequence: 0, position: OcgPosition.FACEDOWN }, // Set Mirror Force
@@ -74,6 +74,7 @@ async function runTestSuite() {
       noShuffle: true,
       humanPlayerId: 0,
       startingLP: 8000,
+      seed: [1n, 2n, 3n, 4n],
     });
 
     const prompt2 = (service as any).lastPromptMessage;
@@ -692,6 +693,72 @@ async function runTestSuite() {
     assert(hunterOnField, 'The Hunter with 7 Weapons must be summoned and on field without freeze');
     service.destroyCurrentDuel();
     console.log('  ✓ The Hunter with 7 Weapons & ANNOUNCE_RACE passed!\n');
+
+    // 11b. DNA Surgery & Human ANNOUNCE_RACE Prompt Execution
+    console.log('▶ Test 11b: DNA Surgery & Human ANNOUNCE_RACE Declaration Flow');
+    service.startNewDuel({
+      player0Deck: [74701381, ...Array(39).fill(83764719)],
+      player0Monsters: [
+        { code: 33508719, sequence: 0, position: 0x1, controller: 0 }, // Morphing Jar (Rock)
+      ],
+      player0SpellTraps: [
+        { code: 74701381, sequence: 0, position: 0x8 }, // DNA Surgery Set
+      ],
+      player1Deck: [...Array(40).fill(83764719)],
+      noShuffle: true,
+      humanPlayerId: 0,
+      startingLP: 8000,
+    });
+
+    // Check for activation prompt on draw/standby/main phase chain
+    let surgeryPrompt = (service as any).lastPromptMessage;
+    if (surgeryPrompt?.type === OcgMessageType.SELECT_CHAIN) {
+      service.sendResponse({
+        type: OcgResponseType.SELECT_CHAIN,
+        index: 0, // Activate DNA Surgery
+      });
+      service.processStep();
+    } else {
+      // Main Phase 1: Activate from SZONE
+      service.sendResponse({
+        type: OcgResponseType.SELECT_IDLECMD,
+        action: SelectIdleCMDAction.ACTIVATE,
+        index: 0,
+      });
+      service.processStep();
+    }
+
+    // Process any chain prompts if opponent or player can chain
+    surgeryPrompt = (service as any).lastPromptMessage;
+    while (surgeryPrompt?.type === OcgMessageType.SELECT_CHAIN) {
+      service.sendResponse({
+        type: OcgResponseType.SELECT_CHAIN,
+        index: -1, // Pass chain
+      });
+      service.processStep();
+      surgeryPrompt = (service as any).lastPromptMessage;
+    }
+
+    // Now ANNOUNCE_RACE prompt should be active
+    assert.equal(surgeryPrompt?.type, OcgMessageType.ANNOUNCE_RACE, 'Prompt must be ANNOUNCE_RACE');
+    assert.equal(surgeryPrompt.count, 1, 'DNA Surgery must request declaring 1 race');
+    assert(surgeryPrompt.available !== undefined, 'Available race bitmask must be present');
+
+    // Respond with Dragon (0x2000)
+    service.sendResponse({
+      type: OcgResponseType.ANNOUNCE_RACE,
+      races: [0x2000],
+    });
+    service.processStep();
+
+    // Verify DNA Surgery is faceup and resolved on field
+    const surgeryBoard = service.getBoardState();
+    const surgeryCard = surgeryBoard.userField.spellTrapZones.find((st) => st?.code === 74701381);
+    assert(surgeryCard, 'DNA Surgery must be present in user Spell/Trap zone');
+    assert(surgeryCard.position === 'faceup' || surgeryCard.position === 'faceup_attack', 'DNA Surgery must be faceup on field');
+
+    service.destroyCurrentDuel();
+    console.log('  ✓ DNA Surgery & Human ANNOUNCE_RACE passed!\n');
 
     // 12. Comprehensive Announcement & Prompt Response Normalization
     console.log('▶ Test 12: Comprehensive Prompt Normalization & AI Responses');

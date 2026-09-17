@@ -184,7 +184,25 @@ export function evaluateAttackOption(
   }
 
   // Weight final score by character personality aggression
-  const finalScore = bestTargetScore < 0 ? bestTargetScore : bestTargetScore * (0.5 + personality.aggression * 0.8);
+  let finalScore = bestTargetScore < 0 ? bestTargetScore : bestTargetScore * (0.5 + personality.aggression * 0.8);
+
+  // Backrow trap baiting heuristic:
+  // If opponent controls face-down backrow (potential Mirror Force, Sakuretsu Armor, Dimensional Prison)
+  // and attacker is NOT dealing lethal game, prioritize attacking with secondary/mid-range attackers (1500-2100 ATK)
+  // before committing high-ATK boss monsters (>= 2400 ATK).
+  const oppSetBackrow = oppField.spellTrapZones.filter(
+    (s) => s && s.position !== 'faceup_spell' && s.position !== 'faceup_attack',
+  ).length;
+
+  if (oppSetBackrow > 0 && finalScore > 0 && attacker.attackerAtk < oppLp) {
+    if (attacker.attackerAtk >= 2400) {
+      // High-tier boss monster: hold back slightly if AI has other viable attackers
+      finalScore -= 300;
+    } else if (attacker.attackerAtk >= 1500 && attacker.attackerAtk <= 2100) {
+      // Solid probe / bait attacker
+      finalScore += 250;
+    }
+  }
 
   return {
     action: {

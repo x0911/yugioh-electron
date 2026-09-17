@@ -2,10 +2,7 @@
   <div v-if="hasActivePrompt" class="prompt-modal-backdrop" @click.self="handleBackdropClick">
     <div
       class="prompt-modal"
-      :class="[
-        `prompt-modal--${activePromptType}`,
-        { 'prompt-modal--forced': isForcedPrompt }
-      ]"
+      :class="[`prompt-modal--${activePromptType}`, { 'prompt-modal--forced': isForcedPrompt }]"
     >
       <!-- Ambient Glow Orb -->
       <div class="prompt-modal__ambient-glow" />
@@ -38,7 +35,9 @@
           </div>
           <h3 class="prompt-header__title">Select Battle Position</h3>
           <p class="prompt-header__subtitle">
-            Choose the tactical combat stance for <strong class="highlight-text">{{ selectPosition.cardName || 'your monster' }}</strong>.
+            Choose the tactical combat stance for
+            <strong class="highlight-text">{{ selectPosition.cardName || 'your monster' }}</strong
+            >.
           </p>
         </div>
 
@@ -69,7 +68,9 @@
                 <span class="stance-icon">⚔️</span>
                 <span class="stance-name">ATTACK POSITION</span>
               </div>
-              <span class="stance-desc">Face-up upright orientation. Ready to attack or defend in combat.</span>
+              <span class="stance-desc"
+                >Face-up upright orientation. Ready to attack or defend in combat.</span
+              >
             </div>
             <div class="stance-card__glow-border" />
           </button>
@@ -100,7 +101,9 @@
                 <span class="stance-icon">🛡️</span>
                 <span class="stance-name">DEFENSE POSITION</span>
               </div>
-              <span class="stance-desc">Face-up horizontal orientation. Defends Life Points against attacks.</span>
+              <span class="stance-desc"
+                >Face-up horizontal orientation. Defends Life Points against attacks.</span
+              >
             </div>
             <div class="stance-card__glow-border" />
           </button>
@@ -116,11 +119,7 @@
           >
             <div class="stance-card__preview">
               <div class="stance-card__art stance-card__art--horizontal">
-                <img
-                  :src="getCardBackUrl()"
-                  alt="Card Back"
-                  class="stance-img"
-                />
+                <img :src="getCardBackUrl()" alt="Card Back" class="stance-img" />
                 <div class="stance-sheen" />
               </div>
               <div class="stance-aura stance-aura--set" />
@@ -130,7 +129,9 @@
                 <span class="stance-icon">🃏</span>
                 <span class="stance-name">SET (FACE-DOWN DEF)</span>
               </div>
-              <span class="stance-desc">Placed face-down in defense. Conceals stats and effects from opponent.</span>
+              <span class="stance-desc"
+                >Placed face-down in defense. Conceals stats and effects from opponent.</span
+              >
             </div>
             <div class="stance-card__glow-border" />
           </button>
@@ -146,11 +147,7 @@
           >
             <div class="stance-card__preview">
               <div class="stance-card__art stance-card__art--vertical">
-                <img
-                  :src="getCardBackUrl()"
-                  alt="Card Back"
-                  class="stance-img"
-                />
+                <img :src="getCardBackUrl()" alt="Card Back" class="stance-img" />
                 <div class="stance-sheen" />
               </div>
               <div class="stance-aura stance-aura--set" />
@@ -160,7 +157,9 @@
                 <span class="stance-icon">🃏</span>
                 <span class="stance-name">SET (FACE-DOWN ATK)</span>
               </div>
-              <span class="stance-desc">Placed face-down in attack. Conceals stats and effects from opponent.</span>
+              <span class="stance-desc"
+                >Placed face-down in attack. Conceals stats and effects from opponent.</span
+              >
             </div>
             <div class="stance-card__glow-border" />
           </button>
@@ -175,7 +174,9 @@
           <div class="prompt-header__top-row">
             <div class="prompt-header__badge prompt-header__badge--chain">
               <span class="badge-icon">⛓️</span>
-              <span class="badge-label">{{ selectChain.forced ? 'MANDATORY CHAIN TRIGGER' : 'CHAIN OPPORTUNITY' }}</span>
+              <span class="badge-label">{{
+                selectChain.forced ? 'MANDATORY CHAIN TRIGGER' : 'CHAIN OPPORTUNITY'
+              }}</span>
             </div>
             <button
               type="button"
@@ -273,10 +274,30 @@
           <div class="prompt-header__top-row">
             <div
               class="prompt-header__badge"
-              :class="selectEffectYn.isMaintenanceCost ? 'prompt-header__badge--maintenance' : selectEffectYn.isDirectAttack || selectEffectYn.isReplay ? 'prompt-header__badge--battle' : 'prompt-header__badge--effect'"
+              :class="
+                selectEffectYn.isMaintenanceCost
+                  ? 'prompt-header__badge--maintenance'
+                  : selectEffectYn.isDirectAttack || selectEffectYn.isReplay
+                    ? 'prompt-header__badge--battle'
+                    : 'prompt-header__badge--effect'
+              "
             >
-              <span class="badge-icon">{{ selectEffectYn.badgeIcon || (selectEffectYn.isMaintenanceCost ? '🪙' : selectEffectYn.isDirectAttack ? '⚔️' : '✨') }}</span>
-              <span class="badge-label">{{ selectEffectYn.badgeLabel || (selectEffectYn.isMaintenanceCost ? 'MAINTENANCE COST' : selectEffectYn.isDirectAttack ? 'DIRECT ATTACK CHOICE' : 'CARD EFFECT TRIGGER') }}</span>
+              <span class="badge-icon">{{
+                selectEffectYn.badgeIcon ||
+                (selectEffectYn.isMaintenanceCost
+                  ? '🪙'
+                  : selectEffectYn.isDirectAttack
+                    ? '⚔️'
+                    : '✨')
+              }}</span>
+              <span class="badge-label">{{
+                selectEffectYn.badgeLabel ||
+                (selectEffectYn.isMaintenanceCost
+                  ? 'MAINTENANCE COST'
+                  : selectEffectYn.isDirectAttack
+                    ? 'DIRECT ATTACK CHOICE'
+                    : 'CARD EFFECT TRIGGER')
+              }}</span>
             </div>
             <button
               type="button"
@@ -289,24 +310,33 @@
             </button>
           </div>
           <h3 class="prompt-header__title">
-            {{ selectEffectYn.promptTitle || (selectEffectYn.isDirectAttack ? 'Declare Direct Attack' : 'Optional Card Effect') }}
+            {{
+              selectEffectYn.promptTitle ||
+              (selectEffectYn.isDirectAttack ? 'Declare Direct Attack' : 'Optional Card Effect')
+            }}
           </h3>
           <p class="prompt-header__subtitle">
             <template v-if="selectEffectYn.isMaintenanceCost">
-              Choose whether to pay the maintenance cost for <strong class="highlight-text">{{ effectiveCardName || 'this card' }}</strong> or allow it to be destroyed.
+              Choose whether to pay the maintenance cost for
+              <strong class="highlight-text">{{ effectiveCardName || 'this card' }}</strong> or
+              allow it to be destroyed.
             </template>
             <template v-else-if="selectEffectYn.isDirectAttack">
-              Do you wish to declare a direct attack on opponent Life Points with <strong class="highlight-text">{{ effectiveCardName || 'your monster' }}</strong>?
+              Do you wish to declare a direct attack on opponent Life Points with
+              <strong class="highlight-text">{{ effectiveCardName || 'your monster' }}</strong
+              >?
             </template>
             <template v-else-if="selectEffectYn.isReplay">
-              A battle replay occurred. Do you want to continue the attack with <strong class="highlight-text">{{ effectiveCardName || 'your monster' }}</strong>?
+              A battle replay occurred. Do you want to continue the attack with
+              <strong class="highlight-text">{{ effectiveCardName || 'your monster' }}</strong
+              >?
             </template>
             <template v-else-if="effectiveCardName">
-              Do you wish to activate the effect of <strong class="highlight-text">{{ effectiveCardName }}</strong>?
+              Do you wish to activate the effect of
+              <strong class="highlight-text">{{ effectiveCardName }}</strong
+              >?
             </template>
-            <template v-else>
-              Do you wish to proceed with this action?
-            </template>
+            <template v-else> Do you wish to proceed with this action? </template>
           </p>
         </div>
 
@@ -325,8 +355,14 @@
             />
             <div class="spotlight-sheen" />
           </div>
-          <div v-else class="effect-spotlight__icon-card" :class="{ 'effect-spotlight__icon-card--battle': selectEffectYn.isDirectAttack }">
-            <span class="spotlight-fallback-icon">{{ selectEffectYn.isDirectAttack ? '⚔️' : '✨' }}</span>
+          <div
+            v-else
+            class="effect-spotlight__icon-card"
+            :class="{ 'effect-spotlight__icon-card--battle': selectEffectYn.isDirectAttack }"
+          >
+            <span class="spotlight-fallback-icon">{{
+              selectEffectYn.isDirectAttack ? '⚔️' : '✨'
+            }}</span>
           </div>
 
           <div class="effect-spotlight__content">
@@ -347,13 +383,27 @@
         </div>
 
         <div class="prompt-footer prompt-footer--center">
-          <button type="button" class="action-btn action-btn--secondary" @click="$emit('select-effect-yn', false)">
+          <button
+            type="button"
+            class="action-btn action-btn--secondary"
+            @click="$emit('select-effect-yn', false)"
+          >
             <span class="btn-icon">✕</span>
-            <span>{{ selectEffectYn.noText || (selectEffectYn.isDirectAttack ? 'Attack Opponent Monster' : 'No, Decline') }}</span>
+            <span>{{
+              selectEffectYn.noText ||
+              (selectEffectYn.isDirectAttack ? 'Attack Opponent Monster' : 'No, Decline')
+            }}</span>
           </button>
-          <button type="button" class="action-btn action-btn--confirm-emerald" @click="$emit('select-effect-yn', true)">
+          <button
+            type="button"
+            class="action-btn action-btn--confirm-emerald"
+            @click="$emit('select-effect-yn', true)"
+          >
             <span class="btn-icon">✓</span>
-            <span>{{ selectEffectYn.yesText || (selectEffectYn.isDirectAttack ? 'Attack Directly' : 'Yes, Activate Effect') }}</span>
+            <span>{{
+              selectEffectYn.yesText ||
+              (selectEffectYn.isDirectAttack ? 'Attack Directly' : 'Yes, Activate Effect')
+            }}</span>
           </button>
         </div>
       </template>
@@ -379,7 +429,9 @@
             </button>
           </div>
           <h3 class="prompt-header__title">Choose an Effect Option</h3>
-          <p class="prompt-header__subtitle">Select one of the following activation modes to resolve this card.</p>
+          <p class="prompt-header__subtitle">
+            Select one of the following activation modes to resolve this card.
+          </p>
         </div>
 
         <div class="option-choices-list">
@@ -467,7 +519,9 @@
               v-for="card in filteredDeclaredCards.slice(0, 50)"
               :key="`dec-${card.id}`"
               class="declare-card-item"
-              :class="{ 'declare-card-item--selected': selectedDeclaredCode === (card.code || card.id) }"
+              :class="{
+                'declare-card-item--selected': selectedDeclaredCode === (card.code || card.id),
+              }"
               @mouseenter="onCardHoverByCode(card.code || card.id)"
               @mouseleave="onCardHoverByCode(null)"
               @click="selectDeclaredCard(card.code || card.id)"
@@ -483,10 +537,21 @@
               <div class="declare-card-item__info">
                 <span class="declare-card-item__name">{{ card.name }}</span>
                 <span class="declare-card-item__type">
-                  {{ card.isMonster ? `Monster ★${card.level} • ${card.attributeName || ''} • ${card.raceName || ''}` : card.isSpell ? 'Spell Card' : 'Trap Card' }}
+                  {{
+                    card.isMonster
+                      ? `Monster ★${card.level} • ${card.attributeName || ''} • ${card.raceName || ''}`
+                      : card.isSpell
+                        ? 'Spell Card'
+                        : 'Trap Card'
+                  }}
                 </span>
               </div>
-              <div v-if="selectedDeclaredCode === (card.code || card.id)" class="declare-card-item__check">✓</div>
+              <div
+                v-if="selectedDeclaredCode === (card.code || card.id)"
+                class="declare-card-item__check"
+              >
+                ✓
+              </div>
             </div>
 
             <div v-if="filteredDeclaredCards.length === 0" class="declare-empty">
@@ -509,7 +574,94 @@
       </template>
 
       <!-- ================================================================= -->
-      <!-- 6. ATTRIBUTE ANNOUNCEMENT PROMPT (ANNOUNCE_ATTRIB) -->
+      <!-- 6. RACE / MONSTER TYPE ANNOUNCEMENT PROMPT (ANNOUNCE_RACE)        -->
+      <!-- ================================================================= -->
+      <template v-else-if="announceRace">
+        <div class="prompt-header">
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--announce">
+              <span class="badge-icon">🧬</span>
+              <span class="badge-label">MONSTER TYPE DECLARATION</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
+          </div>
+          <h3 class="prompt-header__title">
+            {{
+              announceRace.count > 1
+                ? `Declare ${announceRace.count} Monster Types`
+                : 'Declare a Monster Type'
+            }}
+          </h3>
+          <p class="prompt-header__subtitle">
+            Choose
+            {{
+              announceRace.count > 1 ? `${announceRace.count} monster types` : 'a monster type'
+            }}
+            for this effect.
+          </p>
+        </div>
+
+        <div v-if="availableRaces.length > 8" class="race-search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            v-model="raceSearchQuery"
+            type="text"
+            class="race-search-input"
+            placeholder="Filter monster types (e.g. Dragon, Warrior, Spellcaster)..."
+          />
+          <button
+            v-if="raceSearchQuery"
+            type="button"
+            class="clear-search-btn"
+            @click="raceSearchQuery = ''"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="race-grid">
+          <button
+            v-for="race in filteredRaces"
+            :key="race.value"
+            type="button"
+            class="race-btn"
+            :class="{
+              'race-btn--selected': isRaceSelected(race.value),
+            }"
+            @click="handleRaceClick(race.value)"
+          >
+            <span class="race-icon">{{ race.icon }}</span>
+            <span class="race-name">{{ race.name }}</span>
+            <span v-if="isRaceSelected(race.value)" class="race-check">✓</span>
+          </button>
+          <div v-if="filteredRaces.length === 0" class="race-empty">
+            No matching monster type found.
+          </div>
+        </div>
+
+        <div v-if="announceRace.count > 1" class="prompt-footer">
+          <button
+            type="button"
+            class="action-btn action-btn--confirm-emerald"
+            :disabled="selectedRaces.length !== announceRace.count"
+            @click="confirmRaceDeclaration"
+          >
+            <span class="btn-icon">✓</span>
+            <span>Confirm Declaration ({{ selectedRaces.length }}/{{ announceRace.count }})</span>
+          </button>
+        </div>
+      </template>
+
+      <!-- ================================================================= -->
+      <!-- 7. ATTRIBUTE ANNOUNCEMENT PROMPT (ANNOUNCE_ATTRIB) -->
       <!-- ================================================================= -->
       <template v-else-if="announceAttrib">
         <div class="prompt-header">
@@ -568,7 +720,9 @@
             </button>
           </div>
           <h3 class="prompt-header__title">Declare a Number</h3>
-          <p class="prompt-header__subtitle">Choose one of the specified numbers for this effect.</p>
+          <p class="prompt-header__subtitle">
+            Choose one of the specified numbers for this effect.
+          </p>
         </div>
 
         <div class="number-grid">
@@ -583,12 +737,440 @@
           </button>
         </div>
       </template>
+
+      <!-- ================================================================= -->
+      <!-- 9. SELECT COUNTER PROMPT (SELECT_COUNTER)                         -->
+      <!-- ================================================================= -->
+      <template v-else-if="selectCounter">
+        <div class="prompt-header">
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--counter">
+              <span class="badge-icon">⚡</span>
+              <span class="badge-label">REMOVE COUNTERS</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
+          </div>
+          <h3 class="prompt-header__title">
+            Select {{ selectCounter.count }} Counter{{ selectCounter.count > 1 ? 's' : '' }} to Remove
+          </h3>
+          <p class="prompt-header__subtitle">
+            Choose the cards from which to remove the required counters ({{ totalAllocatedCounters }} / {{ selectCounter.count }} selected).
+          </p>
+        </div>
+
+        <div class="counter-stepper-list">
+          <div
+            v-for="(card, idx) in selectCounter.cards"
+            :key="`cnt-card-${card.code}-${card.sequence}-${idx}`"
+            class="counter-card-row"
+            :class="{ 'counter-card-row--active': (allocatedCounters[idx] || 0) > 0 }"
+            @mouseenter="onCardHoverByCode(card.code)"
+            @mouseleave="onCardHoverByCode(null)"
+          >
+            <div class="counter-card-row__art">
+              <img
+                :src="getCardImageUrl(card.code, 'mini')"
+                :alt="card.cardName || 'Card'"
+                class="counter-art-img"
+                @error="handleArtFallback"
+              />
+            </div>
+            <div class="counter-card-row__info">
+              <span class="counter-card-row__name">{{ card.cardName || `Card #${card.code}` }}</span>
+              <span class="counter-card-row__avail">
+                Available counters on card: <strong>{{ card.count }}</strong>
+              </span>
+            </div>
+            <div class="counter-stepper">
+              <button
+                type="button"
+                class="counter-stepper__btn"
+                :disabled="!canDecrementCounter(idx)"
+                @click="decrementCounter(idx)"
+              >
+                −
+              </button>
+              <span class="counter-stepper__val">{{ allocatedCounters[idx] || 0 }}</span>
+              <button
+                type="button"
+                class="counter-stepper__btn"
+                :disabled="!canIncrementCounter(idx)"
+                @click="incrementCounter(idx)"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="prompt-footer prompt-footer--center">
+          <button
+            type="button"
+            class="action-btn action-btn--confirm-emerald"
+            :disabled="totalAllocatedCounters !== selectCounter.count"
+            @click="confirmSelectCounter"
+          >
+            <span class="btn-icon">✓</span>
+            <span>Confirm Removal ({{ totalAllocatedCounters }} / {{ selectCounter.count }})</span>
+          </button>
+        </div>
+      </template>
+
+      <!-- ================================================================= -->
+      <!-- 10. ROCK-PAPER-SCISSORS PROMPT (ROCK_PAPER_SCISSORS)              -->
+      <!-- ================================================================= -->
+      <template v-else-if="rockPaperScissors">
+        <div class="prompt-header">
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--rps">
+              <span class="badge-icon">✊</span>
+              <span class="badge-label">ROCK-PAPER-SCISSORS</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
+          </div>
+          <h3 class="prompt-header__title">Play Rock-Paper-Scissors!</h3>
+          <p class="prompt-header__subtitle">
+            Choose your hand against the opponent.
+          </p>
+        </div>
+
+        <div class="rps-grid">
+          <button
+            type="button"
+            class="rps-choice-btn rps-choice-btn--rock"
+            @click="$emit('rock-paper-scissors', 2)"
+          >
+            <div class="rps-choice-btn__icon">🪨</div>
+            <div class="rps-choice-btn__label">ROCK</div>
+            <div class="rps-choice-btn__hint">Beats Scissors</div>
+          </button>
+
+          <button
+            type="button"
+            class="rps-choice-btn rps-choice-btn--paper"
+            @click="$emit('rock-paper-scissors', 3)"
+          >
+            <div class="rps-choice-btn__icon">📄</div>
+            <div class="rps-choice-btn__label">PAPER</div>
+            <div class="rps-choice-btn__hint">Beats Rock</div>
+          </button>
+
+          <button
+            type="button"
+            class="rps-choice-btn rps-choice-btn--scissors"
+            @click="$emit('rock-paper-scissors', 1)"
+          >
+            <div class="rps-choice-btn__icon">✂️</div>
+            <div class="rps-choice-btn__label">SCISSORS</div>
+            <div class="rps-choice-btn__hint">Beats Paper</div>
+          </button>
+        </div>
+      </template>
+
+      <!-- ================================================================= -->
+      <!-- 11. SORT CARD PROMPT (SORT_CARD)                                  -->
+      <!-- ================================================================= -->
+      <template v-else-if="sortCard">
+        <div class="prompt-header">
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--sort">
+              <span class="badge-icon">📑</span>
+              <span class="badge-label">CARD SEQUENCING</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
+          </div>
+          <h3 class="prompt-header__title">Arrange Card Order</h3>
+          <p class="prompt-header__subtitle">
+            Reorder the cards below. The card in position #1 will be placed at the top.
+          </p>
+        </div>
+
+        <div class="sort-card-track">
+          <div
+            v-for="(origIdx, currentPos) in sortCardIndices"
+            :key="origIdx"
+            class="sort-card-slot"
+            @mouseenter="onCardHoverByCode(sortCard.cards[origIdx]?.code)"
+            @mouseleave="onCardHoverByCode(null)"
+          >
+            <div class="sort-card-slot__pos-badge" :class="{ 'sort-card-slot__pos-badge--top': currentPos === 0 }">
+              <span v-if="currentPos === 0">#1 (TOP)</span>
+              <span v-else>#{{ currentPos + 1 }}</span>
+            </div>
+
+            <div class="sort-card-slot__art">
+              <img
+                :src="getCardImageUrl(sortCard.cards[origIdx]?.code, 'mini')"
+                :alt="sortCard.cards[origIdx]?.cardName || 'Card'"
+                class="sort-card-img"
+                @error="handleArtFallback"
+              />
+            </div>
+
+            <div class="sort-card-slot__name" :title="sortCard.cards[origIdx]?.cardName">
+              {{ sortCard.cards[origIdx]?.cardName || 'Unknown Card' }}
+            </div>
+
+            <div class="sort-card-slot__arrows">
+              <button
+                type="button"
+                class="sort-arrow-btn"
+                :disabled="currentPos === 0"
+                title="Move Left / Towards Top"
+                @click="moveSortCardLeft(currentPos)"
+              >
+                ◀
+              </button>
+              <button
+                type="button"
+                class="sort-arrow-btn"
+                :disabled="currentPos === sortCardIndices.length - 1"
+                title="Move Right / Towards Bottom"
+                @click="moveSortCardRight(currentPos)"
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sort-card-actions">
+          <button
+            type="button"
+            class="sort-action-btn sort-action-btn--default"
+            @click="$emit('sort-card', null)"
+          >
+            ⚡ Default Order
+          </button>
+          <button
+            type="button"
+            class="sort-action-btn sort-action-btn--reset"
+            @click="resetSortCardOrder"
+          >
+            ↺ Reset
+          </button>
+          <button
+            type="button"
+            class="sort-action-btn sort-action-btn--confirm"
+            @click="confirmSortCardOrder"
+          >
+            ✓ Confirm Order
+          </button>
+        </div>
+      </template>
+
+      <!-- ================================================================= -->
+      <!-- 12. SORT CHAIN PROMPT (SORT_CHAIN)                                -->
+      <!-- ================================================================= -->
+      <template v-else-if="sortChain">
+        <div class="prompt-header">
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--chain">
+              <span class="badge-icon">🔗</span>
+              <span class="badge-label">SIMULTANEOUS EFFECTS (SEGOC)</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
+          </div>
+          <h3 class="prompt-header__title">Select Chain Resolution Order</h3>
+          <p class="prompt-header__subtitle">
+            Multiple effects triggered simultaneously. Chain Link 1 resolves last; the highest Chain Link resolves first.
+          </p>
+        </div>
+
+        <div class="sort-chain-list">
+          <div
+            v-for="(origIdx, currentPos) in sortChainIndices"
+            :key="origIdx"
+            class="sort-chain-item"
+            @mouseenter="onCardHoverByCode(sortChain.cards[origIdx]?.code)"
+            @mouseleave="onCardHoverByCode(null)"
+          >
+            <div class="sort-chain-item__link-badge" :class="`sort-chain-item__link-badge--cl${currentPos + 1}`">
+              CL {{ currentPos + 1 }}
+            </div>
+
+            <div class="sort-chain-item__art">
+              <img
+                :src="getCardImageUrl(sortChain.cards[origIdx]?.code, 'mini')"
+                :alt="sortChain.cards[origIdx]?.cardName || 'Card'"
+                class="sort-chain-img"
+                @error="handleArtFallback"
+              />
+            </div>
+
+            <div class="sort-chain-item__details">
+              <div class="sort-chain-item__name">
+                {{ sortChain.cards[origIdx]?.cardName || 'Card Effect' }}
+              </div>
+              <div v-if="sortChain.cards[origIdx]?.desc" class="sort-chain-item__desc">
+                {{ sortChain.cards[origIdx]?.desc }}
+              </div>
+            </div>
+
+            <div class="sort-chain-item__controls">
+              <button
+                type="button"
+                class="sort-chain-arrow-btn"
+                :disabled="currentPos === 0"
+                title="Move Up (Earlier Chain Link)"
+                @click="moveSortChainUp(currentPos)"
+              >
+                ▲
+              </button>
+              <button
+                type="button"
+                class="sort-chain-arrow-btn"
+                :disabled="currentPos === sortChainIndices.length - 1"
+                title="Move Down (Later Chain Link)"
+                @click="moveSortChainDown(currentPos)"
+              >
+                ▼
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sort-card-actions">
+          <button
+            type="button"
+            class="sort-action-btn sort-action-btn--default"
+            @click="$emit('sort-chain', null)"
+          >
+            ⚡ Default Sequence
+          </button>
+          <button
+            type="button"
+            class="sort-action-btn sort-action-btn--reset"
+            @click="resetSortChainOrder"
+          >
+            ↺ Reset
+          </button>
+          <button
+            type="button"
+            class="sort-action-btn sort-action-btn--confirm"
+            @click="confirmSortChainOrder"
+          >
+            ✓ Confirm Chain Links
+          </button>
+        </div>
+      </template>
+
+      <!-- ================================================================= -->
+      <!-- 13. SELECT DISFIELD PROMPT (SELECT_DISFIELD)                       -->
+      <!-- ================================================================= -->
+      <template v-else-if="selectDisfield">
+        <div class="prompt-header">
+          <div class="prompt-header__top-row">
+            <div class="prompt-header__badge prompt-header__badge--disfield">
+              <span class="badge-icon">🚫</span>
+              <span class="badge-label">ZONE LOCKDOWN</span>
+            </div>
+            <button
+              type="button"
+              class="prompt-header__observe-btn"
+              title="Temporarily minimize prompt to observe field and cards"
+              @click="$emit('observe-field')"
+            >
+              <span class="btn-icon">👁️</span>
+              <span>Observe Field</span>
+            </button>
+          </div>
+          <h3 class="prompt-header__title">Select Zones to Disable</h3>
+          <p class="prompt-header__subtitle">
+            Choose {{ selectDisfield.count }} zone{{ selectDisfield.count > 1 ? 's' : '' }} on the field to lock down.
+          </p>
+        </div>
+
+        <div class="disfield-selection-status">
+          <span class="disfield-counter">
+            Selected: <strong>{{ selectedDisfieldPlaces.length }} / {{ selectDisfield.count }}</strong>
+          </span>
+        </div>
+
+        <div class="disfield-grid">
+          <button
+            v-for="(place, pIdx) in selectDisfield.availablePlaces || []"
+            :key="pIdx"
+            type="button"
+            class="disfield-zone-btn"
+            :class="[
+              `disfield-zone-btn--${getPlaceZoneType(place)}`,
+              { 'disfield-zone-btn--selected': isDisfieldPlaceSelected(place) }
+            ]"
+            @click="toggleDisfieldPlace(place)"
+          >
+            <div class="disfield-zone-btn__icon">
+              <span v-if="isDisfieldPlaceSelected(place)">🚫</span>
+              <span v-else-if="getPlaceZoneType(place) === 'emz'">💠</span>
+              <span v-else-if="getPlaceZoneType(place) === 'monster'">⚔️</span>
+              <span v-else-if="getPlaceZoneType(place) === 'spell'">📜</span>
+              <span v-else>🌐</span>
+            </div>
+            <div class="disfield-zone-btn__label">
+              {{ getPlaceZoneName(place) }}
+            </div>
+            <div class="disfield-zone-btn__status">
+              {{ isDisfieldPlaceSelected(place) ? 'LOCKED' : 'AVAILABLE' }}
+            </div>
+          </button>
+        </div>
+
+        <div class="sort-card-actions">
+          <button
+            type="button"
+            class="sort-action-btn sort-action-btn--default"
+            @click="autoSelectDisfield"
+          >
+            ⚡ Auto Select
+          </button>
+          <button
+            type="button"
+            class="sort-action-btn sort-action-btn--confirm"
+            :disabled="selectedDisfieldPlaces.length !== selectDisfield.count"
+            @click="confirmDisfield"
+          >
+            ✓ Confirm Zones ({{ selectedDisfieldPlaces.length }}/{{ selectDisfield.count }})
+          </button>
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type {
   SelectChainPayload,
   SelectPositionPayload,
@@ -598,6 +1180,12 @@ import type {
   AnnounceRacePayload,
   AnnounceAttribPayload,
   AnnounceNumberPayload,
+  SelectCounterPayload,
+  RockPaperScissorsPayload,
+  SortCardPayload,
+  SortChainPayload,
+  SelectDisfieldPayload,
+  SelectFieldPlace,
 } from '../../../shared/types/duel.js';
 import type { CardDetail } from '../../../shared/types/card.js';
 import type { FieldCard } from '../../../shared/types/field.js';
@@ -613,6 +1201,11 @@ interface Props {
   announceRace?: AnnounceRacePayload | null;
   announceAttrib?: AnnounceAttribPayload | null;
   announceNumber?: AnnounceNumberPayload | null;
+  selectCounter?: SelectCounterPayload | null;
+  rockPaperScissors?: RockPaperScissorsPayload | null;
+  sortCard?: SortCardPayload | null;
+  sortChain?: SortChainPayload | null;
+  selectDisfield?: SelectDisfieldPayload | null;
   allCards?: CardDetail[];
 }
 
@@ -625,6 +1218,11 @@ const props = withDefaults(defineProps<Props>(), {
   announceRace: null,
   announceAttrib: null,
   announceNumber: null,
+  selectCounter: null,
+  rockPaperScissors: null,
+  sortCard: null,
+  sortChain: null,
+  selectDisfield: null,
   allCards: () => [],
 });
 
@@ -637,6 +1235,11 @@ const emit = defineEmits<{
   (e: 'announce-race', races: bigint[]): void;
   (e: 'announce-attrib', attributes: number[]): void;
   (e: 'announce-number', value: number): void;
+  (e: 'select-counter', counters: number[]): void;
+  (e: 'rock-paper-scissors', choice: 1 | 2 | 3): void;
+  (e: 'sort-card', order: number[] | null): void;
+  (e: 'sort-chain', order: number[] | null): void;
+  (e: 'select-disfield', places: SelectFieldPlace[]): void;
   (e: 'observe-field'): void;
   (e: 'hover-card', card: FieldCard | null): void;
   (e: 'mute-phase'): void;
@@ -648,7 +1251,9 @@ function hasPosition(pos: number): boolean {
   if (!props.selectPosition?.positions) return false;
   const positions = props.selectPosition.positions;
   if (Array.isArray(positions)) {
-    return positions.includes(pos) || positions.some((p) => typeof p === 'number' && (p & pos) === pos);
+    return (
+      positions.includes(pos) || positions.some((p) => typeof p === 'number' && (p & pos) === pos)
+    );
   }
   const numericPos = Number(positions);
   return !isNaN(numericPos) && (numericPos & pos) === pos;
@@ -737,7 +1342,12 @@ const hasActivePrompt = computed(() => {
     !!props.announceCard ||
     !!props.announceRace ||
     !!props.announceAttrib ||
-    !!props.announceNumber
+    !!props.announceNumber ||
+    !!props.selectCounter ||
+    !!props.rockPaperScissors ||
+    !!props.sortCard ||
+    !!props.sortChain ||
+    !!props.selectDisfield
   );
 });
 
@@ -750,7 +1360,13 @@ const activePromptType = computed(() => {
   if (props.selectPosition) return 'position';
   if (props.selectEffectYn) return 'effect';
   if (props.selectOption) return 'option';
-  if (props.announceCard || props.announceRace || props.announceAttrib || props.announceNumber) return 'announce';
+  if (props.announceCard || props.announceRace || props.announceAttrib || props.announceNumber)
+    return 'announce';
+  if (props.selectCounter) return 'counter';
+  if (props.rockPaperScissors) return 'rps';
+  if (props.sortCard) return 'sort-card';
+  if (props.sortChain) return 'sort-chain';
+  if (props.selectDisfield) return 'disfield';
   return 'default';
 });
 
@@ -777,10 +1393,7 @@ const filteredDeclaredCards = computed(() => {
   }
   return props.allCards.filter((c) => {
     const code = c.code || c.id;
-    return (
-      c.name.toLowerCase().includes(query) ||
-      String(code).includes(query)
-    );
+    return c.name.toLowerCase().includes(query) || String(code).includes(query);
   });
 });
 
@@ -802,8 +1415,101 @@ function confirmCardDeclaration(): void {
   }
 }
 
+// Races for ANNOUNCE_RACE
+const ALL_RACES = [
+  { key: 'warrior', name: 'Warrior', value: 0x1, icon: '⚔️' },
+  { key: 'spellcaster', name: 'Spellcaster', value: 0x2, icon: '🧙' },
+  { key: 'fairy', name: 'Fairy', value: 0x4, icon: '🧚' },
+  { key: 'fiend', name: 'Fiend', value: 0x8, icon: '😈' },
+  { key: 'zombie', name: 'Zombie', value: 0x10, icon: '🧟' },
+  { key: 'machine', name: 'Machine', value: 0x20, icon: '🤖' },
+  { key: 'aqua', name: 'Aqua', value: 0x40, icon: '💧' },
+  { key: 'pyro', name: 'Pyro', value: 0x80, icon: '🔥' },
+  { key: 'rock', name: 'Rock', value: 0x100, icon: '🪨' },
+  { key: 'wingedbeast', name: 'Winged Beast', value: 0x200, icon: '🦅' },
+  { key: 'plant', name: 'Plant', value: 0x400, icon: '🌿' },
+  { key: 'insect', name: 'Insect', value: 0x800, icon: '🦗' },
+  { key: 'thunder', name: 'Thunder', value: 0x1000, icon: '⚡' },
+  { key: 'dragon', name: 'Dragon', value: 0x2000, icon: '🐉' },
+  { key: 'beast', name: 'Beast', value: 0x4000, icon: '🐺' },
+  { key: 'beastwarrior', name: 'Beast-Warrior', value: 0x8000, icon: '🐯' },
+  { key: 'dinosaur', name: 'Dinosaur', value: 0x10000, icon: '🦖' },
+  { key: 'fish', name: 'Fish', value: 0x20000, icon: '🐟' },
+  { key: 'seaserpent', name: 'Sea Serpent', value: 0x40000, icon: '🐍' },
+  { key: 'reptile', name: 'Reptile', value: 0x80000, icon: '🦎' },
+  { key: 'psychic', name: 'Psychic', value: 0x100000, icon: '🧠' },
+  { key: 'divine', name: 'Divine-Beast', value: 0x200000, icon: '👑' },
+  { key: 'creatorgod', name: 'Creator-God', value: 0x400000, icon: '✨' },
+  { key: 'wyrm', name: 'Wyrm', value: 0x800000, icon: '🐲' },
+  { key: 'cyberse', name: 'Cyberse', value: 0x1000000, icon: '🌐' },
+  { key: 'illusion', name: 'Illusion', value: 0x2000000, icon: '👁️' },
+];
+
+const raceSearchQuery = ref('');
+const selectedRaces = ref<number[]>([]);
+
+const availableRaces = computed(() => {
+  const avail = props.announceRace?.available;
+  if (!avail) return ALL_RACES;
+  try {
+    const availBig = BigInt(avail);
+    if (availBig === 0n) return ALL_RACES;
+    return ALL_RACES.filter((r) => (availBig & BigInt(r.value)) !== 0n);
+  } catch {
+    return ALL_RACES;
+  }
+});
+
+const filteredRaces = computed(() => {
+  const q = raceSearchQuery.value.trim().toLowerCase();
+  if (!q) return availableRaces.value;
+  return availableRaces.value.filter((r) => r.name.toLowerCase().includes(q));
+});
+
+function isRaceSelected(val: number): boolean {
+  return selectedRaces.value.includes(val);
+}
+
+function handleRaceClick(val: number): void {
+  const count = props.announceRace?.count || 1;
+  if (count <= 1) {
+    emit('announce-race', [BigInt(val)]);
+    selectedRaces.value = [];
+    raceSearchQuery.value = '';
+    return;
+  }
+
+  // Multi-select mode
+  const idx = selectedRaces.value.indexOf(val);
+  if (idx >= 0) {
+    selectedRaces.value.splice(idx, 1);
+  } else if (selectedRaces.value.length < count) {
+    selectedRaces.value.push(val);
+  }
+}
+
+function confirmRaceDeclaration(): void {
+  const count = props.announceRace?.count || 1;
+  if (selectedRaces.value.length === count) {
+    emit(
+      'announce-race',
+      selectedRaces.value.map((r) => BigInt(r)),
+    );
+    selectedRaces.value = [];
+    raceSearchQuery.value = '';
+  }
+}
+
+watch(
+  () => props.announceRace,
+  () => {
+    selectedRaces.value = [];
+    raceSearchQuery.value = '';
+  },
+);
+
 // Attributes for ANNOUNCE_ATTRIB
-const availableAttributes = [
+const ALL_ATTRIBUTES = [
   { key: 'dark', name: 'DARK', value: 0x20, icon: '🌑' },
   { key: 'light', name: 'LIGHT', value: 0x10, icon: '☀️' },
   { key: 'earth', name: 'EARTH', value: 0x01, icon: '⛰️' },
@@ -812,6 +1518,176 @@ const availableAttributes = [
   { key: 'wind', name: 'WIND', value: 0x08, icon: '🌪️' },
   { key: 'divine', name: 'DIVINE', value: 0x40, icon: '✨' },
 ];
+
+const availableAttributes = computed(() => {
+  const avail = props.announceAttrib?.available;
+  if (!avail || avail === 0) return ALL_ATTRIBUTES;
+  return ALL_ATTRIBUTES.filter((a) => (avail & a.value) !== 0);
+});
+
+// -----------------------------------------------------------------------------
+// Sort Card State & Helpers
+// -----------------------------------------------------------------------------
+const sortCardIndices = ref<number[]>([]);
+
+watch(
+  () => props.sortCard,
+  (val) => {
+    if (val?.cards) {
+      sortCardIndices.value = val.cards.map((_, i) => i);
+    } else {
+      sortCardIndices.value = [];
+    }
+  },
+  { immediate: true },
+);
+
+function moveSortCardLeft(pos: number): void {
+  if (pos <= 0) return;
+  const arr = [...sortCardIndices.value];
+  const temp = arr[pos - 1];
+  arr[pos - 1] = arr[pos];
+  arr[pos] = temp;
+  sortCardIndices.value = arr;
+}
+
+function moveSortCardRight(pos: number): void {
+  if (pos >= sortCardIndices.value.length - 1) return;
+  const arr = [...sortCardIndices.value];
+  const temp = arr[pos + 1];
+  arr[pos + 1] = arr[pos];
+  arr[pos] = temp;
+  sortCardIndices.value = arr;
+}
+
+function resetSortCardOrder(): void {
+  if (props.sortCard?.cards) {
+    sortCardIndices.value = props.sortCard.cards.map((_, i) => i);
+  }
+}
+
+function confirmSortCardOrder(): void {
+  emit('sort-card', sortCardIndices.value);
+}
+
+// -----------------------------------------------------------------------------
+// Sort Chain State & Helpers
+// -----------------------------------------------------------------------------
+const sortChainIndices = ref<number[]>([]);
+
+watch(
+  () => props.sortChain,
+  (val) => {
+    if (val?.cards) {
+      sortChainIndices.value = val.cards.map((_, i) => i);
+    } else {
+      sortChainIndices.value = [];
+    }
+  },
+  { immediate: true },
+);
+
+function moveSortChainUp(pos: number): void {
+  if (pos <= 0) return;
+  const arr = [...sortChainIndices.value];
+  const temp = arr[pos - 1];
+  arr[pos - 1] = arr[pos];
+  arr[pos] = temp;
+  sortChainIndices.value = arr;
+}
+
+function moveSortChainDown(pos: number): void {
+  if (pos >= sortChainIndices.value.length - 1) return;
+  const arr = [...sortChainIndices.value];
+  const temp = arr[pos + 1];
+  arr[pos + 1] = arr[pos];
+  arr[pos] = temp;
+  sortChainIndices.value = arr;
+}
+
+function resetSortChainOrder(): void {
+  if (props.sortChain?.cards) {
+    sortChainIndices.value = props.sortChain.cards.map((_, i) => i);
+  }
+}
+
+function confirmSortChainOrder(): void {
+  emit('sort-chain', sortChainIndices.value);
+}
+
+// -----------------------------------------------------------------------------
+// Select Disfield State & Helpers
+// -----------------------------------------------------------------------------
+const selectedDisfieldPlaces = ref<SelectFieldPlace[]>([]);
+
+watch(
+  () => props.selectDisfield,
+  () => {
+    selectedDisfieldPlaces.value = [];
+  },
+  { immediate: true },
+);
+
+function isDisfieldPlaceSelected(p: SelectFieldPlace): boolean {
+  return selectedDisfieldPlaces.value.some(
+    (sp) => sp.player === p.player && sp.location === p.location && sp.sequence === p.sequence,
+  );
+}
+
+function toggleDisfieldPlace(p: SelectFieldPlace): void {
+  const max = props.selectDisfield?.count ?? 1;
+  const idx = selectedDisfieldPlaces.value.findIndex(
+    (sp) => sp.player === p.player && sp.location === p.location && sp.sequence === p.sequence,
+  );
+  if (idx >= 0) {
+    selectedDisfieldPlaces.value.splice(idx, 1);
+  } else {
+    if (selectedDisfieldPlaces.value.length < max) {
+      selectedDisfieldPlaces.value.push(p);
+    }
+  }
+}
+
+function autoSelectDisfield(): void {
+  const count = props.selectDisfield?.count ?? 1;
+  const avail = props.selectDisfield?.availablePlaces ?? [];
+  const chosen = avail.slice(0, count);
+  selectedDisfieldPlaces.value = chosen;
+  emit('select-disfield', chosen);
+}
+
+function confirmDisfield(): void {
+  emit('select-disfield', selectedDisfieldPlaces.value);
+}
+
+function getPlaceZoneName(place: SelectFieldPlace): string {
+  const owner = place.player === 0 ? 'Your' : "Opponent's";
+  if (place.location === 4) {
+    if (place.sequence === 5) return `${owner} Left EMZ`;
+    if (place.sequence === 6) return `${owner} Right EMZ`;
+    return `${owner} Monster Zone ${place.sequence + 1}`;
+  }
+  if (place.location === 8) {
+    if (place.sequence === 5) return `${owner} Field Zone`;
+    return `${owner} Spell/Trap Zone ${place.sequence + 1}`;
+  }
+  if (place.location === 256) {
+    return `${owner} Field Zone`;
+  }
+  return `${owner} Zone (Seq ${place.sequence})`;
+}
+
+function getPlaceZoneType(place: SelectFieldPlace): string {
+  if (place.location === 4) {
+    if (place.sequence >= 5) return 'emz';
+    return 'monster';
+  }
+  if (place.location === 8) {
+    if (place.sequence === 5) return 'field';
+    return 'spell';
+  }
+  return 'field';
+}
 
 function handleBackdropClick(): void {
   // Chain opportunity allows clicking outside to pass priority if not forced
@@ -840,6 +1716,62 @@ function toRomanNumeral(num: number): string {
   };
   return map[num] || String(num);
 }
+
+// =========================================================================
+// Counter Selection Logic (SELECT_COUNTER)
+// =========================================================================
+const allocatedCounters = ref<number[]>([]);
+
+const totalAllocatedCounters = computed(() => {
+  return allocatedCounters.value.reduce((sum, val) => sum + (val || 0), 0);
+});
+
+const remainingNeededCounters = computed(() => {
+  return (props.selectCounter?.count || 0) - totalAllocatedCounters.value;
+});
+
+function canIncrementCounter(idx: number): boolean {
+  if (remainingNeededCounters.value <= 0) return false;
+  const cardMax = props.selectCounter?.cards[idx]?.count || 0;
+  return (allocatedCounters.value[idx] || 0) < cardMax;
+}
+
+function canDecrementCounter(idx: number): boolean {
+  return (allocatedCounters.value[idx] || 0) > 0;
+}
+
+function incrementCounter(idx: number): void {
+  if (canIncrementCounter(idx)) {
+    allocatedCounters.value[idx] = (allocatedCounters.value[idx] || 0) + 1;
+  }
+}
+
+function decrementCounter(idx: number): void {
+  if (canDecrementCounter(idx)) {
+    allocatedCounters.value[idx] = (allocatedCounters.value[idx] || 0) - 1;
+  }
+}
+
+function confirmSelectCounter(): void {
+  if (totalAllocatedCounters.value === (props.selectCounter?.count || 0)) {
+    emit('select-counter', [...allocatedCounters.value]);
+  }
+}
+
+watch(
+  () => props.selectCounter,
+  (newVal) => {
+    if (newVal && newVal.cards && newVal.cards.length > 0) {
+      allocatedCounters.value = newVal.cards.map(() => 0);
+      if (newVal.cards.length === 1 && newVal.cards[0].count >= newVal.count) {
+        allocatedCounters.value[0] = newVal.count;
+      }
+    } else {
+      allocatedCounters.value = [];
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <style scoped lang="scss">
@@ -901,8 +1833,20 @@ function toRomanNumeral(num: number): string {
     background: radial-gradient(ellipse at center, rgba(39, 174, 96, 0.22) 0%, transparent 70%);
   }
 
-  &--announce .prompt-modal__ambient-glow {
-    background: radial-gradient(ellipse at center, rgba(86, 204, 242, 0.22) 0%, transparent 70%);
+  &--counter .prompt-modal__ambient-glow {
+    background: radial-gradient(ellipse at center, rgba(242, 201, 76, 0.22) 0%, transparent 70%);
+  }
+
+  &--rps .prompt-modal__ambient-glow {
+    background: radial-gradient(ellipse at center, rgba(187, 107, 217, 0.22) 0%, transparent 70%);
+  }
+
+  &--announce {
+    max-width: 680px;
+
+    .prompt-modal__ambient-glow {
+      background: radial-gradient(ellipse at center, rgba(86, 204, 242, 0.22) 0%, transparent 70%);
+    }
   }
 }
 
@@ -1011,6 +1955,18 @@ function toRomanNumeral(num: number): string {
       color: #b7f4cc;
     }
 
+    &--counter {
+      background: rgba(242, 201, 76, 0.2);
+      border-color: rgba(242, 201, 76, 0.5);
+      color: #ffe89e;
+    }
+
+    &--rps {
+      background: rgba(187, 107, 217, 0.2);
+      border-color: rgba(187, 107, 217, 0.5);
+      color: #f2c7ff;
+    }
+
     &--maintenance {
       background: rgba(242, 153, 74, 0.2);
       border-color: rgba(242, 153, 74, 0.5);
@@ -1032,7 +1988,9 @@ function toRomanNumeral(num: number): string {
     font-weight: 700;
     color: $color-gold-100;
     letter-spacing: 0.04em;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 16px rgba(201, 162, 39, 0.3);
+    text-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.8),
+      0 0 16px rgba(201, 162, 39, 0.3);
   }
 
   &__subtitle {
@@ -1150,19 +2108,25 @@ function toRomanNumeral(num: number): string {
     &.stance-card--atk {
       border-color: #eb5757;
       background: rgba(235, 87, 87, 0.15);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75), 0 0 20px rgba(235, 87, 87, 0.35);
+      box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.75),
+        0 0 20px rgba(235, 87, 87, 0.35);
     }
 
     &.stance-card--def {
       border-color: #2f80ed;
       background: rgba(47, 128, 237, 0.15);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75), 0 0 20px rgba(47, 128, 237, 0.35);
+      box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.75),
+        0 0 20px rgba(47, 128, 237, 0.35);
     }
 
     &.stance-card--set {
       border-color: $color-gold-500;
       background: rgba(201, 162, 39, 0.15);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75), 0 0 20px rgba(201, 162, 39, 0.35);
+      box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.75),
+        0 0 20px rgba(201, 162, 39, 0.35);
     }
   }
 }
@@ -1282,7 +2246,9 @@ function toRomanNumeral(num: number): string {
     background: rgba(34, 42, 58, 0.95);
     border-color: $color-gold-300;
     transform: translateX(4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(155, 81, 224, 0.3);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.6),
+      0 0 16px rgba(155, 81, 224, 0.3);
 
     .chain-activate-btn {
       background: linear-gradient(135deg, $color-gold-500, #9b51e0);
@@ -1469,7 +2435,9 @@ function toRomanNumeral(num: number): string {
     background: rgba(34, 42, 58, 0.95);
     border-color: $color-gold-300;
     transform: translateX(4px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 14px rgba(201, 162, 39, 0.3);
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.6),
+      0 0 14px rgba(201, 162, 39, 0.3);
 
     .option-choice-item__num {
       background: $color-gold-500;
@@ -1667,7 +2635,136 @@ function toRomanNumeral(num: number): string {
   font-size: 0.85rem;
 }
 
-// 6. Attributes Grid
+// 6. Race / Monster Type Declaration
+.race-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(10, 13, 18, 0.8);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+
+  .search-icon {
+    font-size: 0.95rem;
+    opacity: 0.7;
+  }
+
+  .race-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f5f1e6;
+    font-family: $font-body;
+    font-size: 0.9rem;
+
+    &::placeholder {
+      color: rgba(245, 241, 230, 0.4);
+    }
+  }
+
+  .clear-search-btn {
+    background: transparent;
+    border: none;
+    color: rgba(245, 241, 230, 0.6);
+    cursor: pointer;
+    font-size: 0.9rem;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+}
+
+.race-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 4px 4px 4px 0;
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: rgba(10, 13, 18, 0.5);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(201, 162, 39, 0.3);
+    border-radius: 3px;
+    &:hover {
+      background: rgba(201, 162, 39, 0.6);
+    }
+  }
+}
+
+.race-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(22, 28, 40, 0.85);
+  border: 1.5px solid rgba(201, 162, 39, 0.3);
+  color: $color-gold-100;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+
+  .race-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .race-name {
+    font-family: $font-mono;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+  }
+
+  .race-check {
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: #2ecc71;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: rgba(201, 162, 39, 0.2);
+    border-color: $color-gold-300;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(201, 162, 39, 0.3);
+  }
+
+  &--selected {
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.4), rgba(46, 204, 113, 0.25));
+    border-color: #2ecc71;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.5);
+  }
+}
+
+.race-empty {
+  grid-column: 1 / -1;
+  padding: 24px;
+  text-align: center;
+  color: rgba(245, 241, 230, 0.5);
+  font-size: 0.85rem;
+}
+
+// 7. Attributes Grid
 .attrib-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
@@ -1851,9 +2948,565 @@ function toRomanNumeral(num: number): string {
   }
 }
 
+// Counter Stepper Prompt Styling
+.counter-stepper-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.counter-card-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(16, 20, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 8px 14px;
+  transition: all 180ms ease;
+
+  &--active {
+    border-color: rgba(242, 201, 76, 0.6);
+    background: rgba(242, 201, 76, 0.08);
+    box-shadow: 0 0 12px rgba(242, 201, 76, 0.15);
+  }
+
+  &__art {
+    width: 38px;
+    height: 52px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__avail {
+    font-size: 0.78rem;
+    color: #94a3b8;
+
+    strong {
+      color: #facc15;
+    }
+  }
+}
+
+.counter-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &__btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 150ms ease;
+
+    &:hover:not(:disabled) {
+      background: rgba(242, 201, 76, 0.3);
+      border-color: #facc15;
+      color: #fff;
+      transform: scale(1.05);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+  }
+
+  &__val {
+    min-width: 24px;
+    text-align: center;
+    font-family: $font-mono;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #facc15;
+  }
+}
+
+// Rock-Paper-Scissors Styling
+.rps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.rps-choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(20, 26, 38, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 24px 12px;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.2, 0.9, 0.3, 1);
+
+  &__icon {
+    font-size: 3rem;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+    transition: transform 200ms ease;
+  }
+
+  &__label {
+    font-family: $font-display;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #f8fafc;
+  }
+
+  &__hint {
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+
+  &:hover {
+    transform: translateY(-4px) scale(1.03);
+
+    .rps-choice-btn__icon {
+      transform: scale(1.15);
+    }
+  }
+
+  &--rock:hover {
+    border-color: #f59e0b;
+    box-shadow: 0 10px 24px rgba(245, 158, 11, 0.3);
+  }
+
+  &--paper:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.3);
+  }
+
+  &--scissors:hover {
+    border-color: #ec4899;
+    box-shadow: 0 10px 24px rgba(236, 72, 153, 0.3);
+  }
+}
+
+// Card Sorting Track & Controls
+.sort-card-track {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: wrap;
+  padding: 12px 0 16px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.sort-card-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px;
+  width: 130px;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    border-color: rgba(56, 189, 248, 0.6);
+    background: rgba(15, 23, 42, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  &__pos-badge {
+    font-family: $font-display;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(100, 116, 139, 0.3);
+    color: #cbd5e1;
+
+    &--top {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+  }
+
+  &__art {
+    width: 90px;
+    height: 130px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #020617;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .sort-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__name {
+    font-family: $font-body;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    text-align: center;
+    max-width: 115px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__arrows {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sort-arrow-btn {
+    flex: 1;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #94a3b8;
+    padding: 6px 0;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 120ms ease;
+
+    &:hover:not(:disabled) {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: #38bdf8;
+      color: #fff;
+      transform: scale(1.06);
+    }
+
+    &:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Action Bar for Sort & Disfield Modals
+.sort-card-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.sort-action-btn {
+  font-family: $font-display;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 150ms ease;
+
+  &--default {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1.5px solid rgba(148, 163, 184, 0.3);
+    color: #cbd5e1;
+
+    &:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: #94a3b8;
+      color: #fff;
+    }
+  }
+
+  &--reset {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1.5px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+      color: #fff;
+    }
+  }
+
+  &--confirm {
+    background: linear-gradient(135deg, #059669, #10b981);
+    border: 1.5px solid #34d399;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+      transform: translateY(-2px);
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+  }
+}
+
+// Chain Link Sequencing List (SEGOC)
+.sort-chain-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 8px 4px;
+}
+
+.sort-chain-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  transition: all 160ms ease;
+
+  &:hover {
+    border-color: rgba(168, 85, 247, 0.6);
+    background: rgba(15, 23, 42, 0.95);
+  }
+
+  &__link-badge {
+    font-family: $font-display;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(168, 85, 247, 0.2);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    color: #d8b4fe;
+    white-space: nowrap;
+
+    &--cl1 {
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      border-color: #fbbf24;
+      color: #000;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+  }
+
+  &__art {
+    width: 44px;
+    height: 64px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .sort-chain-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-family: $font-display;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__desc {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-top: 2px;
+  }
+
+  &__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .sort-chain-arrow-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    color: #94a3b8;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 120ms ease;
+
+    &:hover:not(:disabled) {
+      background: rgba(168, 85, 247, 0.3);
+      border-color: #c084fc;
+      color: #fff;
+    }
+
+    &:disabled {
+      opacity: 0.2;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Zone Lockdown (SELECT_DISFIELD)
+.disfield-selection-status {
+  text-align: center;
+  margin-bottom: 12px;
+
+  .disfield-counter {
+    font-family: $font-display;
+    font-size: 0.95rem;
+    color: #e2e8f0;
+
+    strong {
+      color: #ef4444;
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.disfield-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.disfield-zone-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 10px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &__icon {
+    font-size: 1.5rem;
+  }
+
+  &__label {
+    font-family: $font-display;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    text-align: center;
+  }
+
+  &__status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #64748b;
+  }
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(30, 41, 59, 0.9);
+    transform: translateY(-2px);
+  }
+
+  &--selected {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.2) !important;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+
+    .disfield-zone-btn__status {
+      color: #f87171 !important;
+    }
+  }
+}
+
+.prompt-header__badge {
+  &--sort {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #38bdf8;
+  }
+
+  &--disfield {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+  }
+}
+
 @keyframes fadeInBackdrop {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalScalePop {

@@ -14,6 +14,7 @@ import {
   ocgPhaseString,
 } from 'ocgcore-wasm';
 import { CardReaderService } from './cardReader.js';
+import { RACE_NAME_MAP, ATTRIBUTE_NAME_MAP } from '../../shared/types/card.js';
 
 export interface DecodedDuelEvent {
   type: string;
@@ -49,6 +50,28 @@ export interface DecodedDuelEvent {
     baseAtk?: number;
     baseDef?: number;
   }>;
+  fieldMask?: number;
+  disabledZones?: {
+    p0Monster: number[];
+    p0SpellTrap: number[];
+    p1Monster: number[];
+    p1SpellTrap: number[];
+    extraMonster: number[];
+  };
+  equipCard?: { controller: number; location: number; sequence: number; position: number; cardName?: string };
+  targetCard?: { controller: number; location: number; sequence: number; position: number; cardName?: string };
+  hintType?: number;
+  hintText?: string;
+  turnCounter?: number;
+  chainSize?: number;
+  deckSize?: number;
+  returnedToExtra?: number[];
+  name?: string;
+  descriptionText?: string;
+  hintVal?: any;
+  card?: any;
+  card1?: any;
+  card2?: any;
   isPrompt: boolean;
   promptPlayer?: number;
   promptType?: string;
@@ -286,7 +309,7 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
       const places = parseFieldMask(msg.player, msg.field_mask, minCount);
       if (!places || places.length < minCount) return null;
       return {
-        type: OcgResponseType.SELECT_PLACE,
+        type: msg.type === OcgMessageType.SELECT_DISFIELD ? OcgResponseType.SELECT_DISFIELD : OcgResponseType.SELECT_PLACE,
         places,
       };
     }
@@ -775,6 +798,32 @@ export class MessageDecoder {
         return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
       }
 
+      case OcgMessageType.CHAIN_NEGATED: {
+        type = 'CHAIN_NEGATED';
+        description = `💥 Chain link (${msg.chain_size}) activation was NEGATED!`;
+        return {
+          type,
+          rawType,
+          chainSize: msg.chain_size,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.CHAIN_DISABLED: {
+        type = 'CHAIN_DISABLED';
+        description = `⚡ Chain link (${msg.chain_size}) effect was NEGATED!`;
+        return {
+          type,
+          rawType,
+          chainSize: msg.chain_size,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
       case OcgMessageType.ATTACK: {
         type = 'ATTACK';
         const cardSeq = msg.card?.sequence ?? 0;
@@ -798,6 +847,18 @@ export class MessageDecoder {
           controller: cardCtrl,
           sequence: cardSeq,
           target: msg.target,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.ATTACK_DISABLED: {
+        type = 'ATTACK_DISABLED';
+        description = `🛡️ The declared attack was NEGATED!`;
+        return {
+          type,
+          rawType,
           isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),
@@ -871,12 +932,64 @@ export class MessageDecoder {
 
       case OcgMessageType.WIN: {
         type = 'WIN';
-        description = `Duel ended! Winner: Player ${msg.player} (Reason: ${msg.reason}).`;
+        const isDraw = msg.player === 2;
+        description = isDraw
+          ? `⚖️ Duel ended in a DRAW! (Reason: ${msg.reason}).`
+          : `👑 Duel ended! Winner: Player ${msg.player} (Reason: ${msg.reason}).`;
         return {
           type,
           rawType,
           player: msg.player,
           reason: msg.reason,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.MISSED_EFFECT: {
+        type = 'MISSED_EFFECT';
+        const cardName = msg.code > 0 ? this.cardReader.getCardName(msg.code) : 'Card';
+        description = `⚠️ Effect of [${cardName}] missed the timing ("When... you can") and could not activate.`;
+        return {
+          type,
+          rawType,
+          code: msg.code,
+          cardName,
+          controller: msg.controller,
+          location: msg.location,
+          sequence: msg.sequence,
+          position: msg.position,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SWAP: {
+        type = 'SWAP';
+        const name1 = msg.card1?.code > 0 ? this.cardReader.getCardName(msg.card1.code) : 'Card';
+        const name2 = msg.card2?.code > 0 ? this.cardReader.getCardName(msg.card2.code) : 'Card';
+        description = `🔄 Control of [${name1}] and [${name2}] was swapped!`;
+        return {
+          type,
+          rawType,
+          card1: {
+            code: msg.card1?.code,
+            controller: msg.card1?.controller,
+            location: msg.card1?.location,
+            sequence: msg.card1?.sequence,
+            position: msg.card1?.position,
+            cardName: name1,
+          },
+          card2: {
+            code: msg.card2?.code,
+            controller: msg.card2?.controller,
+            location: msg.card2?.location,
+            sequence: msg.card2?.sequence,
+            position: msg.card2?.position,
+            cardName: name2,
+          },
           isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),
@@ -951,17 +1064,52 @@ export class MessageDecoder {
 
       case OcgMessageType.CARD_HINT: {
         type = 'CARD_HINT';
-        const hintVal = Number(msg.description);
-        description = `Card hint (${msg.card_hint === 1 ? 'Turn Count' : `Type ${msg.card_hint}`}): ${hintVal}`;
+        const hintType = (msg as any).card_hint;
+        const hintVal = Number((msg as any).description ?? (msg as any).value ?? 0);
+        const HINT_TYPE_MAP: Record<number, string> = {
+          1: 'TURN',
+          2: 'CARD',
+          3: 'RACE',
+          4: 'ATTRIBUTE',
+          5: 'NUMBER',
+          6: 'DESC_ADD',
+          7: 'DESC_REMOVE',
+        };
+        const hintCategory = HINT_TYPE_MAP[hintType] || 'UNKNOWN';
+        let hintText = '';
+
+        if (hintType === 1) {
+          hintText = `Turn: ${hintVal}`;
+        } else if (hintType === 2) {
+          hintText = `Declared Card: ${this.cardReader.getCardName(hintVal) || hintVal}`;
+        } else if (hintType === 3) {
+          hintText = `Declared Type: ${RACE_NAME_MAP[hintVal] || `0x${hintVal.toString(16)}`}`;
+        } else if (hintType === 4) {
+          hintText = `Declared Attribute: ${ATTRIBUTE_NAME_MAP[hintVal] || `0x${hintVal.toString(16)}`}`;
+        } else if (hintType === 5) {
+          hintText = `Declared Number: ${hintVal}`;
+        } else if (hintType === 6) {
+          const resolved = this.cardReader.resolveString((msg as any).description ?? (msg as any).value);
+          hintText = resolved && !resolved.startsWith('Option #') ? resolved : 'Granted Ability';
+        } else if (hintType === 7) {
+          hintText = 'Effect Expired';
+        } else {
+          hintText = `Hint: ${hintVal}`;
+        }
+
+        description = `Card hint (${hintText})`;
         return {
           type,
           rawType,
-          controller: msg.controller,
-          location: msg.location,
-          sequence: msg.sequence,
-          hintType: msg.card_hint,
-          turnCounter: msg.card_hint === 1 ? hintVal : undefined,
-          value: msg.description,
+          controller: (msg as any).controller ?? (msg as any).player,
+          location: (msg as any).location,
+          sequence: (msg as any).sequence,
+          hintType,
+          hintCategory,
+          hintText,
+          resolvedText: RACE_NAME_MAP[hintVal] || ATTRIBUTE_NAME_MAP[hintVal] || hintText,
+          turnCounter: hintType === 1 ? hintVal : undefined,
+          value: (msg as any).description ?? (msg as any).value,
           isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),
@@ -1460,8 +1608,7 @@ export class MessageDecoder {
         };
       }
 
-      case OcgMessageType.SELECT_PLACE:
-      case OcgMessageType.SELECT_DISFIELD: {
+      case OcgMessageType.SELECT_PLACE: {
         isPrompt = true;
         type = 'SELECT_PLACE';
         promptType = 'SELECT_PLACE';
@@ -1472,6 +1619,34 @@ export class MessageDecoder {
           player: msg.player,
           count: msg.count,
           field_mask: msg.field_mask,
+          availablePlaces: parseFieldMask(msg.player, msg.field_mask, 999),
+        };
+
+        return {
+          type,
+          rawType,
+          isPrompt,
+          promptPlayer,
+          promptType,
+          promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SELECT_DISFIELD: {
+        isPrompt = true;
+        type = 'SELECT_DISFIELD';
+        promptType = 'SELECT_DISFIELD';
+        promptPlayer = msg.player;
+        const count = msg.count ?? 1;
+        description = `Select ${count} zone${count > 1 ? 's' : ''} to disable.`;
+
+        promptData = {
+          player: msg.player,
+          count,
+          field_mask: msg.field_mask,
+          availablePlaces: parseFieldMask(msg.player, msg.field_mask, 999),
         };
 
         return {
@@ -1642,6 +1817,7 @@ export class MessageDecoder {
           cards: (msg.cards || []).map((c: any) => ({
             ...c,
             cardName: this.cardReader.getCardName(c.code),
+            desc: this.cardReader.getCardTextsRow(c.code)?.desc,
           })),
         };
 
@@ -1670,6 +1846,7 @@ export class MessageDecoder {
           cards: (msg.cards || []).map((c: any) => ({
             ...c,
             cardName: this.cardReader.getCardName(c.code),
+            desc: this.cardReader.getCardTextsRow(c.code)?.desc,
           })),
         };
 
@@ -1735,6 +1912,33 @@ export class MessageDecoder {
           promptPlayer,
           promptType,
           promptData,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.HAND_RES: {
+        type = 'HAND_RES';
+        const r0 = msg.results?.[0] ?? 0;
+        const r1 = msg.results?.[1] ?? 0;
+        const rpsName = (v: number) => {
+          if (v === 1) return 'Scissors ✂️';
+          if (v === 2) return 'Rock 🪨';
+          if (v === 3) return 'Paper 📄';
+          return 'None';
+        };
+        let outcome = 'Tie! Replaying...';
+        if ((r0 === 2 && r1 === 1) || (r0 === 1 && r1 === 3) || (r0 === 3 && r1 === 2)) {
+          outcome = 'Player 0 won the round!';
+        } else if ((r1 === 2 && r0 === 1) || (r1 === 1 && r0 === 3) || (r1 === 3 && r0 === 2)) {
+          outcome = 'Player 1 won the round!';
+        }
+        description = `Rock-Paper-Scissors: Player 0 chose ${rpsName(r0)}, Player 1 chose ${rpsName(r1)}. ${outcome}`;
+        return {
+          type,
+          rawType,
+          results: [r0, r1],
+          isPrompt: false,
           description,
           raw: sanitizeBigInts(msg),
         };
@@ -1831,8 +2035,88 @@ export class MessageDecoder {
 
       case OcgMessageType.EQUIP: {
         type = 'EQUIP';
+        const cardLoc = (msg as any).card ?? (msg as any).equipCard;
+        const targetLoc = (msg as any).target ?? (msg as any).targetCard;
+        const equipCard = cardLoc
+          ? {
+              controller: cardLoc.controller,
+              location: cardLoc.location,
+              sequence: cardLoc.sequence,
+              position: cardLoc.position,
+            }
+          : undefined;
+        const targetCard = targetLoc
+          ? {
+              controller: targetLoc.controller,
+              location: targetLoc.location,
+              sequence: targetLoc.sequence,
+              position: targetLoc.position,
+            }
+          : undefined;
+
         description = `Card equipped.`;
-        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+        return {
+          type,
+          rawType,
+          equipCard,
+          targetCard,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.FIELD_DISABLED: {
+        type = 'FIELD_DISABLED';
+        const mask = (msg as any).field_mask ?? (msg as any).bitmask ?? 0;
+        const p0Monster: number[] = [];
+        const p0SpellTrap: number[] = [];
+        const p1Monster: number[] = [];
+        const p1SpellTrap: number[] = [];
+        const extraMonster: number[] = [];
+
+        // P0 Monster: bits 0..4
+        for (let i = 0; i < 5; i++) {
+          if ((mask & (1 << i)) !== 0) p0Monster.push(i);
+        }
+        // EMZ 0: bit 5, EMZ 1: bit 6
+        if ((mask & (1 << 5)) !== 0) extraMonster.push(0);
+        if ((mask & (1 << 6)) !== 0) extraMonster.push(1);
+
+        // P0 Spell/Trap: bits 8..12
+        for (let i = 0; i < 5; i++) {
+          if ((mask & (1 << (i + 8))) !== 0) p0SpellTrap.push(i);
+        }
+
+        // P1 Monster: bits 16..20
+        for (let i = 0; i < 5; i++) {
+          if ((mask & (1 << (i + 16))) !== 0) p1Monster.push(i);
+        }
+        // Opponent EMZ perspective: bits 21, 22
+        if ((mask & (1 << 21)) !== 0 && !extraMonster.includes(0)) extraMonster.push(0);
+        if ((mask & (1 << 22)) !== 0 && !extraMonster.includes(1)) extraMonster.push(1);
+
+        // P1 Spell/Trap: bits 24..28
+        for (let i = 0; i < 5; i++) {
+          if ((mask & (1 << (i + 24))) !== 0) p1SpellTrap.push(i);
+        }
+
+        description = `Zone disabled update (mask: 0x${mask.toString(16)}).`;
+        return {
+          type,
+          rawType,
+          fieldMask: mask,
+          disabledZones: {
+            p0Monster,
+            p0SpellTrap,
+            p1Monster,
+            p1SpellTrap,
+            extraMonster,
+          },
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
       }
 
       case OcgMessageType.BECOME_TARGET: {
@@ -1859,10 +2143,294 @@ export class MessageDecoder {
         return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
       }
 
-      case OcgMessageType.CARD_HINT: {
-        type = 'CARD_HINT';
-        description = `Card update / hint.`;
+      case OcgMessageType.RETRY: {
+        type = 'RETRY';
+        description = 'Duel engine requested command retry.';
         return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.HINT: {
+        type = 'HINT';
+        const hintType = (msg as any).hint_type;
+        const hintVal = (msg as any).hint;
+        let hintText = '';
+        if (hintType === 3) {
+          // SELECTMSG
+          const resolved = this.cardReader.resolveString(hintVal);
+          hintText = resolved || `Select instruction #${hintVal}`;
+        } else if (hintType === 8 || hintType === 10) {
+          // CODE / CARD
+          hintText = this.cardReader.getCardName(Number(hintVal)) || `Card #${hintVal}`;
+        } else if (hintType === 6) {
+          hintText = `Type: ${RACE_NAME_MAP[Number(hintVal)] || hintVal}`;
+        } else if (hintType === 7) {
+          hintText = `Attribute: ${ATTRIBUTE_NAME_MAP[Number(hintVal)] || hintVal}`;
+        } else {
+          const resolved = this.cardReader.resolveString(hintVal);
+          hintText = resolved || `Hint #${hintVal}`;
+        }
+        description = hintText ? `Hint: ${hintText}` : 'Engine hint';
+        return {
+          type,
+          rawType,
+          hintType,
+          hintVal: sanitizeBigInts(hintVal),
+          hintText,
+          player: (msg as any).player,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.REQUEST_DECK: {
+        type = 'REQUEST_DECK';
+        description = 'Engine requested deck validation.';
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.REFRESH_DECK: {
+        type = 'REFRESH_DECK';
+        description = 'Deck state refreshed.';
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.SWAP_GRAVE_DECK: {
+        type = 'SWAP_GRAVE_DECK';
+        const p = (msg as any).player ?? 0;
+        const deckSize = (msg as any).deck_size ?? 0;
+        description = `Player ${p} swapped Graveyard and Deck (New Deck Size: ${deckSize}).`;
+        return {
+          type,
+          rawType,
+          player: p,
+          deckSize,
+          returnedToExtra: sanitizeBigInts((msg as any).returned_to_extra || []),
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.REVERSE_DECK: {
+        type = 'REVERSE_DECK';
+        description = 'Decks were reversed face-up.';
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.DECK_TOP: {
+        type = 'DECK_TOP';
+        const p = (msg as any).player ?? 0;
+        const code = (msg as any).code ?? 0;
+        const cardName = code > 0 ? this.cardReader.getCardName(code) : 'Card';
+        description = `Card placed on top of Player ${p}'s Deck (${cardName}).`;
+        return {
+          type,
+          rawType,
+          player: p,
+          code,
+          cardName,
+          position: (msg as any).position,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SHUFFLE_EXTRA: {
+        type = 'SHUFFLE_EXTRA';
+        const p = (msg as any).player ?? 0;
+        description = `Player ${p} shuffled Extra Deck.`;
+        return {
+          type,
+          rawType,
+          player: p,
+          cards: sanitizeBigInts((msg as any).cards || []),
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.CHAIN_SOLVING: {
+        type = 'CHAIN_SOLVING';
+        const chainSize = (msg as any).chain_size ?? 1;
+        description = `Resolving Chain Link ${chainSize}...`;
+        return {
+          type,
+          rawType,
+          chainSize,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.CHAIN_END: {
+        type = 'CHAIN_END';
+        description = 'Chain finished resolving.';
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.CARD_SELECTED: {
+        type = 'CARD_SELECTED';
+        const cards = ((msg as any).cards || []).map((c: any) => ({
+          controller: c.controller,
+          location: c.location,
+          sequence: c.sequence,
+          position: c.position,
+        }));
+        description = `Card(s) selected (${cards.length}).`;
+        return {
+          type,
+          rawType,
+          cards,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.CANCEL_TARGET: {
+        type = 'CANCEL_TARGET';
+        const cardLoc = (msg as any).card;
+        const targetLoc = (msg as any).target;
+        description = 'Card target cancelled.';
+        return {
+          type,
+          rawType,
+          card: cardLoc ? sanitizeBigInts(cardLoc) : undefined,
+          target: targetLoc ? sanitizeBigInts(targetLoc) : undefined,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.BE_CHAIN_TARGET: {
+        type = 'BE_CHAIN_TARGET';
+        description = 'Card targeted by chain effect.';
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.CREATE_RELATION: {
+        type = 'CREATE_RELATION';
+        description = 'Card relation established.';
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.RELEASE_RELATION: {
+        type = 'RELEASE_RELATION';
+        description = 'Card relation released.';
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.TAG_SWAP: {
+        type = 'TAG_SWAP';
+        const p = (msg as any).player ?? 0;
+        description = `Player ${p} swapped with Tag Partner.`;
+        return {
+          type,
+          rawType,
+          player: p,
+          deckSize: (msg as any).deck_size,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.RELOAD_FIELD: {
+        type = 'RELOAD_FIELD';
+        description = 'Field state reloaded.';
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.AI_NAME: {
+        type = 'AI_NAME';
+        const name = (msg as any).name || 'AI Opponent';
+        description = `Opponent engine: ${name}`;
+        return {
+          type,
+          rawType,
+          name,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.SHOW_HINT: {
+        type = 'SHOW_HINT';
+        const hintText = (msg as any).hint || '';
+        description = hintText ? `Hint: ${hintText}` : 'Hint displayed.';
+        return {
+          type,
+          rawType,
+          hintText,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.PLAYER_HINT: {
+        type = 'PLAYER_HINT';
+        const p = (msg as any).player ?? 0;
+        const descRaw = (msg as any).description ?? 0;
+        const resolved = this.cardReader.resolveString(descRaw);
+        description = resolved ? `Player ${p} Hint: ${resolved}` : `Player ${p} Hint displayed.`;
+        return {
+          type,
+          rawType,
+          player: p,
+          hintType: (msg as any).player_hint,
+          descriptionText: resolved,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.MATCH_KILL: {
+        type = 'MATCH_KILL';
+        const cardCode = (msg as any).card ?? 0;
+        const cardName = cardCode > 0 ? this.cardReader.getCardName(cardCode) : 'Card';
+        description = `Match victory! "${cardName}" won the match!`;
+        return {
+          type,
+          rawType,
+          card: cardCode,
+          cardName,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
+      }
+
+      case OcgMessageType.CUSTOM_MSG: {
+        type = 'CUSTOM_MSG';
+        description = 'Custom script message.';
+        return { type, rawType, isPrompt: false, description, raw: sanitizeBigInts(msg) };
+      }
+
+      case OcgMessageType.REMOVE_CARDS: {
+        type = 'REMOVE_CARDS';
+        const cards = ((msg as any).cards || []).map((c: any) => ({
+          controller: c.controller,
+          location: c.location,
+          sequence: c.sequence,
+          position: c.position,
+        }));
+        description = `${cards.length} card(s) removed from duel.`;
+        return {
+          type,
+          rawType,
+          cards,
+          isPrompt: false,
+          description,
+          raw: sanitizeBigInts(msg),
+        };
       }
 
       default: {

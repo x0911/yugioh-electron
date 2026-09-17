@@ -75,6 +75,9 @@ export const CARD_RACES = {
   PSYCHIC: 0x100000,
   DIVINE: 0x200000,
   CREATORGOD: 0x400000,
+  WYRM: 0x800000,
+  CYBERSE: 0x1000000,
+  ILLUSION: 0x2000000,
 } as const;
 
 export const RACE_NAME_MAP: Record<number, string> = {
@@ -101,6 +104,9 @@ export const RACE_NAME_MAP: Record<number, string> = {
   0x100000: 'Psychic',
   0x200000: 'Divine-Beast',
   0x400000: 'Creator-God',
+  0x800000: 'Wyrm',
+  0x1000000: 'Cyberse',
+  0x2000000: 'Illusion',
 };
 
 // Full Enriched Card Model used across Deck Edit and Duel UI

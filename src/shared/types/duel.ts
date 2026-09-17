@@ -138,6 +138,8 @@ export interface DuelInitOptions {
   isPvPMode?: boolean;
   player0Name?: string;
   player1Name?: string;
+  interactiveSort?: boolean;
+  interactiveDisfield?: boolean;
 }
 
 export type CoinChoice = 'heads' | 'tails';
@@ -292,7 +294,7 @@ export interface AnnounceCardPayload {
 export interface AnnounceRacePayload {
   player: number;
   count: number;
-  available: number | bigint;
+  available: number | bigint | string;
 }
 
 export interface AnnounceAttribPayload {
@@ -304,6 +306,66 @@ export interface AnnounceAttribPayload {
 export interface AnnounceNumberPayload {
   player: number;
   options: (number | bigint)[];
+}
+
+export interface CounterCardOption {
+  code: number;
+  controller: number;
+  location: number;
+  sequence: number;
+  count: number;
+  cardName?: string;
+}
+
+export interface SelectCounterPayload {
+  player: number;
+  counter_type: number;
+  count: number;
+  cards: CounterCardOption[];
+}
+
+export interface SelectFieldPlace {
+  player: number;
+  location: number;
+  sequence: number;
+}
+
+export interface SortCardItem {
+  code: number;
+  controller: number;
+  location: number;
+  sequence: number;
+  position?: number;
+  cardName?: string;
+  desc?: string;
+}
+
+export interface SortCardPayload {
+  player: number;
+  cards: SortCardItem[];
+}
+
+export interface SortChainPayload {
+  player: number;
+  cards: SortCardItem[];
+}
+
+export interface SelectDisfieldPayload {
+  player: number;
+  count: number;
+  field_mask: number;
+  availablePlaces?: SelectFieldPlace[];
+  disabledZones?: {
+    p0Monster: number[];
+    p0SpellTrap: number[];
+    p1Monster: number[];
+    p1SpellTrap: number[];
+    extraMonster: number[];
+  };
+}
+
+export interface RockPaperScissorsPayload {
+  player: number;
 }
 
 export interface DuelEventPayload {
@@ -344,6 +406,11 @@ export interface DuelEventPayload {
   hintType?: number;
   turnCounter?: number;
   value?: number | bigint;
+  order?: number[] | null;
+  places?: SelectFieldPlace[];
+  chainSize?: number;
+  card1?: any;
+  card2?: any;
   isPrompt: boolean;
   promptPlayer?: number;
   promptType?: string;

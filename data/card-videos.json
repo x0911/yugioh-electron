@@ -1,51 +1,79 @@
 {
-  "46986414": {
-    "cardName": "Dark Magician",
+  "102380": {
+    "cardName": "Lava Golem",
     "series": "DM",
-    "summon": "resources/videos/cards/summon_46986414.mp4",
-    "attack": "resources/videos/cards/attack_46986414.mp4",
-    "isPlaceholder": false
-  },
-  "89631139": {
-    "cardName": "Blue-Eyes White Dragon",
-    "series": "DM",
-    "summon": "resources/videos/cards/summon_89631139.mp4",
-    "attack": "resources/videos/cards/attack_89631139.mp4",
-    "isPlaceholder": false
-  },
-  "70781052": {
-    "cardName": "Summoned Skull",
-    "series": "DM",
-    "summon": "resources/videos/cards/summon_70781052.mp4",
-    "attack": "resources/videos/cards/attack_70781052.mp4",
+    "summon": "resources/videos/cards/summon_102380.mp4",
+    "attack": "resources/videos/cards/attack_102380.mp4",
     "isPlaceholder": true
   },
-  "74677422": {
-    "cardName": "Red-Eyes Black Dragon",
+  "423705": {
+    "cardName": "Gearfried the Iron Knight",
     "series": "DM",
-    "summon": "resources/videos/cards/summon_74677422.mp4",
-    "attack": "resources/videos/cards/attack_74677422.mp4",
+    "summon": "resources/videos/cards/summon_423705.mp4",
+    "attack": "resources/videos/cards/attack_423705.mp4",
     "isPlaceholder": true
   },
-  "89943723": {
-    "cardName": "Elemental HERO Neos",
+  "1546123": {
+    "cardName": "Cyber End Dragon",
     "series": "GX",
-    "summon": "resources/videos/cards/summon_89943723.mp4",
-    "attack": "resources/videos/cards/attack_89943723.mp4",
+    "summon": "resources/videos/cards/summon_1546123.mp4",
+    "attack": "resources/videos/cards/attack_1546123.mp4",
     "isPlaceholder": true
   },
-  "70095154": {
-    "cardName": "Cyber Dragon",
-    "series": "GX",
-    "summon": "resources/videos/cards/summon_70095154.mp4",
-    "attack": "resources/videos/cards/attack_70095154.mp4",
+  "2403771": {
+    "cardName": "Power Tool Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_2403771.mp4",
+    "attack": "resources/videos/cards/attack_2403771.mp4",
     "isPlaceholder": true
   },
-  "45231177": {
-    "cardName": "Flame Swordsman",
+  "3643300": {
+    "cardName": "The Legendary Fisherman",
     "series": "DM",
-    "summon": "resources/videos/cards/summon_45231177.mp4",
-    "attack": "resources/videos/cards/attack_45231177.mp4",
+    "summon": "resources/videos/cards/summon_3643300.mp4",
+    "attack": "resources/videos/cards/attack_3643300.mp4",
+    "isPlaceholder": true
+  },
+  "3897065": {
+    "cardName": "Super Vehicroid - Stealth Union",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_3897065.mp4",
+    "attack": "resources/videos/cards/attack_3897065.mp4",
+    "isPlaceholder": true
+  },
+  "5405694": {
+    "cardName": "Black Luster Soldier",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_5405694.mp4",
+    "attack": "resources/videos/cards/attack_5405694.mp4",
+    "isPlaceholder": true
+  },
+  "5861892": {
+    "cardName": "Arcana Force EX - The Light Ruler",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_5861892.mp4",
+    "attack": "resources/videos/cards/attack_5861892.mp4",
+    "isPlaceholder": true
+  },
+  "7391448": {
+    "cardName": "Goyo Guardian",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_7391448.mp4",
+    "attack": "resources/videos/cards/attack_7391448.mp4",
+    "isPlaceholder": true
+  },
+  "8967776": {
+    "cardName": "Sephylon, the Ultimate Timelord",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_8967776.mp4",
+    "attack": "resources/videos/cards/attack_8967776.mp4",
+    "isPlaceholder": true
+  },
+  "9012916": {
+    "cardName": "Black-Winged Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_9012916.mp4",
+    "attack": "resources/videos/cards/attack_9012916.mp4",
     "isPlaceholder": true
   },
   "10000000": {
@@ -69,80 +97,53 @@
     "attack": "resources/videos/cards/attack_10000020.mp4",
     "isPlaceholder": false
   },
-  "33396948": {
-    "cardName": "Exodia the Forbidden One",
+  "10000040": {
+    "cardName": "Holactie the Creator of Light",
     "series": "DM",
-    "victory": "resources/videos/cards/victory_33396948.mp4",
-    "isPlaceholder": true
+    "summon": "resources/videos/cards/summon_10000040.mp4",
+    "victory": "resources/videos/cards/victory_10000040.mp4",
+    "isPlaceholder": false
   },
-  "99900001": {
-    "cardName": "Elemental HERO Egyxos",
+  "10248389": {
+    "cardName": "Cyber Blader",
     "series": "GX",
-    "summon": "resources/videos/cards/summon_99900001.mp4",
-    "attack": "resources/videos/cards/attack_99900001.mp4",
-    "isPlaceholder": false
+    "summon": "resources/videos/cards/summon_10248389.mp4",
+    "attack": "resources/videos/cards/attack_10248389.mp4",
+    "isPlaceholder": true
   },
-  "78193831": {
-    "cardName": "Buster Blader",
+  "10875327": {
+    "cardName": "Earthbound Immortal Aslla piscu",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_10875327.mp4",
+    "attack": "resources/videos/cards/attack_10875327.mp4",
+    "isPlaceholder": true
+  },
+  "12206212": {
+    "cardName": "Harpie Lady Sisters",
     "series": "DM",
-    "summon": "resources/videos/cards/summon_78193831.mp4",
-    "attack": "resources/videos/cards/attack_78193831.mp4",
-    "isPlaceholder": false
-  },
-  "44508094": {
-    "cardName": "Stardust Dragon",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_44508094.mp4",
-    "attack": "resources/videos/cards/attack_44508094.mp4",
-    "isPlaceholder": false
-  },
-  "70902743": {
-    "cardName": "Red Dragon Archfiend",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_70902743.mp4",
-    "attack": "resources/videos/cards/attack_70902743.mp4",
-    "isPlaceholder": false
-  },
-  "73580471": {
-    "cardName": "Black Rose Dragon",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_73580471.mp4",
-    "attack": "resources/videos/cards/attack_73580471.mp4",
+    "summon": "resources/videos/cards/summon_12206212.mp4",
+    "attack": "resources/videos/cards/attack_12206212.mp4",
     "isPlaceholder": true
   },
-  "25862681": {
-    "cardName": "Ancient Fairy Dragon",
+  "15187079": {
+    "cardName": "Earthbound Immortal Uru",
     "series": "5Ds",
-    "summon": "resources/videos/cards/summon_25862681.mp4",
-    "attack": "resources/videos/cards/attack_25862681.mp4",
+    "summon": "resources/videos/cards/summon_15187079.mp4",
+    "attack": "resources/videos/cards/attack_15187079.mp4",
     "isPlaceholder": true
   },
-  "2403771": {
-    "cardName": "Power Tool Dragon",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_2403771.mp4",
-    "attack": "resources/videos/cards/attack_2403771.mp4",
+  "15894048": {
+    "cardName": "Ultimate Tyranno",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_15894048.mp4",
+    "attack": "resources/videos/cards/attack_15894048.mp4",
     "isPlaceholder": true
   },
-  "69031175": {
-    "cardName": "Blackwing Armor Master",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_69031175.mp4",
-    "attack": "resources/videos/cards/attack_69031175.mp4",
-    "isPlaceholder": true
-  },
-  "60800381": {
-    "cardName": "Junk Warrior",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_60800381.mp4",
-    "attack": "resources/videos/cards/attack_60800381.mp4",
-    "isPlaceholder": true
-  },
-  "74860293": {
-    "cardName": "Junk Destroyer",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_74860293.mp4",
-    "attack": "resources/videos/cards/attack_74860293.mp4",
+  "23995346": {
+    "cardName": "Blue-Eyes Ultimate Dragon",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_23995346.mp4",
+    "attack": "resources/videos/cards/attack_23995346.mp4",
     "isPlaceholder": true
   },
   "24696097": {
@@ -152,18 +153,206 @@
     "attack": "resources/videos/cards/attack_24696097.mp4",
     "isPlaceholder": true
   },
-  "97489701": {
-    "cardName": "Red Nova Dragon",
+  "25165047": {
+    "cardName": "Life Stream Dragon",
     "series": "5Ds",
-    "summon": "resources/videos/cards/summon_97489701.mp4",
-    "attack": "resources/videos/cards/attack_97489701.mp4",
+    "summon": "resources/videos/cards/summon_25165047.mp4",
+    "attack": "resources/videos/cards/attack_25165047.mp4",
     "isPlaceholder": true
   },
-  "7391448": {
-    "cardName": "Goyo Guardian",
+  "25862681": {
+    "cardName": "Ancient Fairy Dragon",
     "series": "5Ds",
-    "summon": "resources/videos/cards/summon_7391448.mp4",
-    "attack": "resources/videos/cards/attack_7391448.mp4",
+    "summon": "resources/videos/cards/summon_25862681.mp4",
+    "attack": "resources/videos/cards/attack_25862681.mp4",
+    "isPlaceholder": true
+  },
+  "30208479": {
+    "cardName": "Magician of Black Chaos",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_30208479.mp4",
+    "attack": "resources/videos/cards/attack_30208479.mp4",
+    "isPlaceholder": true
+  },
+  "30604579": {
+    "cardName": "Thor, Lord of the Aesir",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_30604579.mp4",
+    "attack": "resources/videos/cards/attack_30604579.mp4",
+    "isPlaceholder": true
+  },
+  "31829185": {
+    "cardName": "Dark Necrofear",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_31829185.mp4",
+    "attack": "resources/videos/cards/attack_31829185.mp4",
+    "isPlaceholder": true
+  },
+  "32543380": {
+    "cardName": "Volcanic Doomfire",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_32543380.mp4",
+    "attack": "resources/videos/cards/attack_32543380.mp4",
+    "isPlaceholder": true
+  },
+  "33396948": {
+    "cardName": "Exodia the Forbidden One",
+    "series": "DM",
+    "victory": "resources/videos/cards/victory_33396948.mp4",
+    "isPlaceholder": false
+  },
+  "35809262": {
+    "cardName": "Elemental HERO Flame Wingman",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_35809262.mp4",
+    "attack": "resources/videos/cards/attack_35809262.mp4",
+    "isPlaceholder": true
+  },
+  "37115575": {
+    "cardName": "Malefic Truth Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_37115575.mp4",
+    "attack": "resources/videos/cards/attack_37115575.mp4",
+    "isPlaceholder": true
+  },
+  "38033120": {
+    "cardName": "Dark Magician Girl",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_38033120.mp4",
+    "attack": "resources/videos/cards/attack_38033120.mp4",
+    "isPlaceholder": true
+  },
+  "39618799": {
+    "cardName": "Cyber Angel Dakini",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_39618799.mp4",
+    "attack": "resources/videos/cards/attack_39618799.mp4",
+    "isPlaceholder": true
+  },
+  "39823987": {
+    "cardName": "Sun Dragon Inti",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_39823987.mp4",
+    "attack": "resources/videos/cards/attack_39823987.mp4",
+    "isPlaceholder": true
+  },
+  "41181774": {
+    "cardName": "Earthbound Immortal Wiraqocha Rasca",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_41181774.mp4",
+    "attack": "resources/videos/cards/attack_41181774.mp4",
+    "isPlaceholder": true
+  },
+  "44508094": {
+    "cardName": "Stardust Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_44508094.mp4",
+    "attack": "resources/videos/cards/attack_44508094.mp4",
+    "isPlaceholder": false
+  },
+  "45037489": {
+    "cardName": "Chevalier de Fleur",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_45037489.mp4",
+    "attack": "resources/videos/cards/attack_45037489.mp4",
+    "isPlaceholder": true
+  },
+  "45231177": {
+    "cardName": "Flame Swordsman",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_45231177.mp4",
+    "attack": "resources/videos/cards/attack_45231177.mp4",
+    "isPlaceholder": true
+  },
+  "46263076": {
+    "cardName": "Earthbound Immortal Ccapac Apu",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_46263076.mp4",
+    "attack": "resources/videos/cards/attack_46263076.mp4",
+    "isPlaceholder": true
+  },
+  "46986414": {
+    "cardName": "Dark Magician",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_46986414.mp4",
+    "attack": "resources/videos/cards/attack_46986414.mp4",
+    "isPlaceholder": false
+  },
+  "51447164": {
+    "cardName": "T.G. Blade Blaster",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_51447164.mp4",
+    "attack": "resources/videos/cards/attack_51447164.mp4",
+    "isPlaceholder": true
+  },
+  "52687916": {
+    "cardName": "Trishula, Dragon of the Ice Barrier",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_52687916.mp4",
+    "attack": "resources/videos/cards/attack_52687916.mp4",
+    "isPlaceholder": true
+  },
+  "59464593": {
+    "cardName": "Armed Dragon LV10",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_59464593.mp4",
+    "attack": "resources/videos/cards/attack_59464593.mp4",
+    "isPlaceholder": true
+  },
+  "60800381": {
+    "cardName": "Junk Warrior",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_60800381.mp4",
+    "attack": "resources/videos/cards/attack_60800381.mp4",
+    "isPlaceholder": true
+  },
+  "63468625": {
+    "cardName": "Meklord Astro Mekanikle",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_63468625.mp4",
+    "attack": "resources/videos/cards/attack_63468625.mp4",
+    "isPlaceholder": true
+  },
+  "64631466": {
+    "cardName": "Relinquished",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_64631466.mp4",
+    "attack": "resources/videos/cards/attack_64631466.mp4",
+    "isPlaceholder": true
+  },
+  "66818682": {
+    "cardName": "Moon Dragon Quilla",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_66818682.mp4",
+    "attack": "resources/videos/cards/attack_66818682.mp4",
+    "isPlaceholder": true
+  },
+  "67098114": {
+    "cardName": "Loki, Lord of the Aesir",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_67098114.mp4",
+    "attack": "resources/videos/cards/attack_67098114.mp4",
+    "isPlaceholder": true
+  },
+  "69031175": {
+    "cardName": "Blackwing Armor Master",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_69031175.mp4",
+    "attack": "resources/videos/cards/attack_69031175.mp4",
+    "isPlaceholder": true
+  },
+  "69931927": {
+    "cardName": "Earthbound Immortal Chacu Challhua",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_69931927.mp4",
+    "attack": "resources/videos/cards/attack_69931927.mp4",
+    "isPlaceholder": true
+  },
+  "70095154": {
+    "cardName": "Cyber Dragon",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_70095154.mp4",
+    "attack": "resources/videos/cards/attack_70095154.mp4",
     "isPlaceholder": true
   },
   "70780151": {
@@ -173,6 +362,27 @@
     "attack": "resources/videos/cards/attack_70780151.mp4",
     "isPlaceholder": true
   },
+  "70781052": {
+    "cardName": "Summoned Skull",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_70781052.mp4",
+    "attack": "resources/videos/cards/attack_70781052.mp4",
+    "isPlaceholder": true
+  },
+  "70902743": {
+    "cardName": "Red Dragon Archfiend",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_70902743.mp4",
+    "attack": "resources/videos/cards/attack_70902743.mp4",
+    "isPlaceholder": false
+  },
+  "71625222": {
+    "cardName": "Time Wizard",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_71625222.mp4",
+    "attack": "resources/videos/cards/attack_71625222.mp4",
+    "isPlaceholder": true
+  },
   "72896720": {
     "cardName": "Infernity Doom Dragon",
     "series": "5Ds",
@@ -180,32 +390,11 @@
     "attack": "resources/videos/cards/attack_72896720.mp4",
     "isPlaceholder": true
   },
-  "51447164": {
-    "cardName": "T.G. Blade Blaster",
+  "73580471": {
+    "cardName": "Black Rose Dragon",
     "series": "5Ds",
-    "summon": "resources/videos/cards/summon_51447164.mp4",
-    "attack": "resources/videos/cards/attack_51447164.mp4",
-    "isPlaceholder": true
-  },
-  "97836203": {
-    "cardName": "T.G. Halberd Cannon",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_97836203.mp4",
-    "attack": "resources/videos/cards/attack_97836203.mp4",
-    "isPlaceholder": true
-  },
-  "45037489": {
-    "cardName": "Chevalier de Fleur",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_45037489.mp4",
-    "attack": "resources/videos/cards/attack_45037489.mp4",
-    "isPlaceholder": true
-  },
-  "84815190": {
-    "cardName": "Baronne de Fleur",
-    "series": "5Ds",
-    "summon": "resources/videos/cards/summon_84815190.mp4",
-    "attack": "resources/videos/cards/attack_84815190.mp4",
+    "summon": "resources/videos/cards/summon_73580471.mp4",
+    "attack": "resources/videos/cards/attack_73580471.mp4",
     "isPlaceholder": true
   },
   "74530899": {
@@ -215,11 +404,116 @@
     "attack": "resources/videos/cards/attack_74530899.mp4",
     "isPlaceholder": true
   },
-  "8967776": {
-    "cardName": "Sephylon, the Ultimate Timelord",
+  "74677422": {
+    "cardName": "Red-Eyes Black Dragon",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_74677422.mp4",
+    "attack": "resources/videos/cards/attack_74677422.mp4",
+    "isPlaceholder": true
+  },
+  "74860293": {
+    "cardName": "Junk Destroyer",
     "series": "5Ds",
-    "summon": "resources/videos/cards/summon_8967776.mp4",
-    "attack": "resources/videos/cards/attack_8967776.mp4",
+    "summon": "resources/videos/cards/summon_74860293.mp4",
+    "attack": "resources/videos/cards/attack_74860293.mp4",
+    "isPlaceholder": true
+  },
+  "75347539": {
+    "cardName": "Valkyrion the Magna Warrior",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_75347539.mp4",
+    "attack": "resources/videos/cards/attack_75347539.mp4",
+    "isPlaceholder": true
+  },
+  "77585513": {
+    "cardName": "Jinzo",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_77585513.mp4",
+    "attack": "resources/videos/cards/attack_77585513.mp4",
+    "isPlaceholder": true
+  },
+  "78193831": {
+    "cardName": "Buster Blader",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_78193831.mp4",
+    "attack": "resources/videos/cards/attack_78193831.mp4",
+    "isPlaceholder": false
+  },
+  "78371393": {
+    "cardName": "Yubel",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_78371393.mp4",
+    "attack": "resources/videos/cards/attack_78371393.mp4",
+    "isPlaceholder": true
+  },
+  "79798060": {
+    "cardName": "Earthbound Immortal Ccarayhua",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_79798060.mp4",
+    "attack": "resources/videos/cards/attack_79798060.mp4",
+    "isPlaceholder": true
+  },
+  "79856792": {
+    "cardName": "Rainbow Dragon",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_79856792.mp4",
+    "attack": "resources/videos/cards/attack_79856792.mp4",
+    "isPlaceholder": true
+  },
+  "82301904": {
+    "cardName": "Chaos Emperor Dragon - Envoy of the End",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_82301904.mp4",
+    "attack": "resources/videos/cards/attack_82301904.mp4",
+    "isPlaceholder": true
+  },
+  "83104731": {
+    "cardName": "Ancient Gear Golem",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_83104731.mp4",
+    "attack": "resources/videos/cards/attack_83104731.mp4",
+    "isPlaceholder": true
+  },
+  "83965310": {
+    "cardName": "Destiny HERO - Plasma",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_83965310.mp4",
+    "attack": "resources/videos/cards/attack_83965310.mp4",
+    "isPlaceholder": true
+  },
+  "84815190": {
+    "cardName": "Baronne de Fleur",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_84815190.mp4",
+    "attack": "resources/videos/cards/attack_84815190.mp4",
+    "isPlaceholder": true
+  },
+  "85066822": {
+    "cardName": "Water Dragon",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_85066822.mp4",
+    "attack": "resources/videos/cards/attack_85066822.mp4",
+    "isPlaceholder": true
+  },
+  "89631139": {
+    "cardName": "Blue-Eyes White Dragon",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_89631139.mp4",
+    "attack": "resources/videos/cards/attack_89631139.mp4",
+    "isPlaceholder": false
+  },
+  "89943723": {
+    "cardName": "Elemental HERO Neos",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_89943723.mp4",
+    "attack": "resources/videos/cards/attack_89943723.mp4",
+    "isPlaceholder": true
+  },
+  "90140980": {
+    "cardName": "Ojama King",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_90140980.mp4",
+    "attack": "resources/videos/cards/attack_90140980.mp4",
     "isPlaceholder": true
   },
   "93483212": {
@@ -228,5 +522,33 @@
     "summon": "resources/videos/cards/summon_93483212.mp4",
     "attack": "resources/videos/cards/attack_93483212.mp4",
     "isPlaceholder": true
+  },
+  "97489701": {
+    "cardName": "Red Nova Dragon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_97489701.mp4",
+    "attack": "resources/videos/cards/attack_97489701.mp4",
+    "isPlaceholder": true
+  },
+  "97836203": {
+    "cardName": "T.G. Halberd Cannon",
+    "series": "5Ds",
+    "summon": "resources/videos/cards/summon_97836203.mp4",
+    "attack": "resources/videos/cards/attack_97836203.mp4",
+    "isPlaceholder": true
+  },
+  "98502113": {
+    "cardName": "Dark Paladin",
+    "series": "DM",
+    "summon": "resources/videos/cards/summon_98502113.mp4",
+    "attack": "resources/videos/cards/attack_98502113.mp4",
+    "isPlaceholder": true
+  },
+  "99900001": {
+    "cardName": "Elemental HERO Egyxos",
+    "series": "GX",
+    "summon": "resources/videos/cards/summon_99900001.mp4",
+    "attack": "resources/videos/cards/attack_99900001.mp4",
+    "isPlaceholder": false
   }
 }

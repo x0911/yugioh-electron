@@ -432,6 +432,22 @@ export const SFX_CATALOG: Record<string, SfxDefinition> = {
     synthFallback: 'attack-direct',
     volumeMultiplier: 1.0,
   },
+  'negate': {
+    id: 'negate',
+    name: 'Effect Negation Shatter',
+    category: 'combat',
+    src: 'app-resource://audio/sfx/combat/destroy_spell.mp3',
+    synthFallback: 'card-destroy-spell',
+    volumeMultiplier: 0.95,
+  },
+  'barrier': {
+    id: 'barrier',
+    name: 'Attack Negated Barrier Shield',
+    category: 'combat',
+    src: 'app-resource://audio/sfx/combat/attack_clash.mp3',
+    synthFallback: 'attack-clash',
+    volumeMultiplier: 0.9,
+  },
 
   // ── Life Points (LP) ───────────────────────────────────────────────────────
   'lp-tick': {

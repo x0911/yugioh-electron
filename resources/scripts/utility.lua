@@ -30,6 +30,22 @@ if Effect and not Effect.IsMonsterEffect then
 	end
 end
 
+local effect_chain_data = setmetatable({}, { __mode = "k" })
+if Effect and not Effect.GetChainData then
+	function Effect.GetChainData(e)
+		if not effect_chain_data[e] then
+			effect_chain_data[e] = {}
+		end
+		return effect_chain_data[e]
+	end
+end
+
+if Effect and not Effect.SetChainData then
+	function Effect.SetChainData(e, data)
+		effect_chain_data[e] = data
+	end
+end
+
 -- Group __len polyfill for modern card scripts (#group)
 if Group then
 	local test_group = Group.CreateGroup and Group.CreateGroup()

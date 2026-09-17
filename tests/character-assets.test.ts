@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-test('Character Asset Integrity: All 40 duelists have valid portrait and avatar assets on disk', () => {
+test('Character Asset Integrity: All 61 duelists have valid portrait and avatar assets on disk', () => {
   const charactersJsonPath = path.resolve(process.cwd(), 'data/characters.json');
   const characters = JSON.parse(fs.readFileSync(charactersJsonPath, 'utf-8'));
 
-  assert.strictEqual(characters.length, 40, 'Must have exactly 40 characters in roster');
+  assert.strictEqual(characters.length, 61, 'Must have exactly 61 characters in roster');
 
   for (const char of characters) {
     // 1. Check avatar

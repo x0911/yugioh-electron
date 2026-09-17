@@ -86,25 +86,59 @@ export class HeroFusionExecutor extends DefaultExecutor {
   }
 
   public override onSelectOption(msg: OcgMessage, context: EvaluatorContext): number | null {
-    const { activeChainCards } = context;
+    const { activeChainCards, cardReader } = context;
     const { aiField, oppField } = getAiAndOpponentFields(context);
 
     // Stratos (40044918):
-    // Option 0: Destroy Spells/Traps on the field up to the number of other HERO monsters you control.
-    // Option 1: Add 1 "HERO" monster from your Deck to your hand.
+    // Option desc 1: Destroy Spells/Traps on the field up to the number of other HERO monsters you control.
+    // Option desc 2: Add 1 "HERO" monster from your Deck to your hand.
     const isStratos = activeChainCards?.includes(40044918);
     if (isStratos) {
+      const options = msg.options || [];
+      // If only 1 option is offered (e.g. 0 other HEROs on field, so only search effect is valid), must return index 0!
+      if (options.length <= 1) {
+        return 0;
+      }
+
       const oppBackrow = oppField.spellTrapZones.filter(Boolean);
       const aiHeroes = aiField.monsterZones.filter(
         (m) => m && m.name && (m.name.includes('HERO') || m.name.includes('Hero')),
       );
 
-      // If opponent has dangerous backrow and AI controls at least 2 HEROs, destroy backrow!
-      if (oppBackrow.length > 0 && aiHeroes.length >= 2) {
-        return 0; // Destroy Spell/Traps
+      // If opponent has dangerous backrow and AI controls at least 2 HEROs (Stratos + another HERO), destroy backrow!
+      const wantsDestroy = oppBackrow.length > 0 && aiHeroes.length >= 2;
+
+      // Check resolved string descriptions
+      for (let i = 0; i < options.length; i++) {
+        const text = (cardReader?.resolveString(options[i]) || '').toLowerCase();
+        if (wantsDestroy && (text.includes('destroy') || text.includes('spell') || text.includes('trap'))) {
+          return i;
+        }
+        if (!wantsDestroy && (text.includes('hand') || text.includes('deck') || text.includes('add') || text.includes('hero'))) {
+          return i;
+        }
       }
-      // Default & primary choice: Add 1 HERO from Deck to Hand
-      return 1;
+
+      // Check string IDs ((40044918 << 20) | strIdx or (40044918 << 4) | strIdx)
+      const targetStrIdx = wantsDestroy ? 1 : 2;
+      for (let i = 0; i < options.length; i++) {
+        const raw = options[i];
+        if (typeof raw === 'number' || typeof raw === 'bigint' || typeof raw === 'string') {
+          try {
+            const val = BigInt(raw);
+            if (val > 1000n) {
+              const strIdx20 = Number(val & 0xfffffn);
+              const strIdx4 = Number(val & 0xfn);
+              if (strIdx20 === targetStrIdx || strIdx4 === targetStrIdx) {
+                return i;
+              }
+            }
+          } catch {}
+        }
+      }
+
+      // Fallback for mock environments (e.g. [0, 1])
+      return wantsDestroy ? 0 : Math.min(1, options.length - 1);
     }
 
     return null;

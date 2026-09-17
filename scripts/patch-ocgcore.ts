@@ -16,16 +16,23 @@ export function patchOcgcore(): boolean {
   let code = fs.readFileSync(targetFile, 'utf8');
   let modified = false;
 
-  // 1. Fix MSG_SHUFFLE_SET_CARD (case 36) to use length: e.u8() instead of length: e.u32()
+  // 1. Fix MSG_SHUFFLE_SET_CARD (case 36):
+  // Upstream ocgcore-wasm bugs:
+  // - count is serialized as e.u8(), not e.u32()
+  // - ocgcore writes all `from` records (count * 10 bytes) followed by all `to` records (count * 10 bytes) in two separate loops, NOT interleaved!
   const originalCase36 = 'case 36:return{type:t,location:e.u8(),cards:Array.from({length:e.u32()},()=>({from:p(e),to:p(e)}))};';
-  const desiredCase36 = 'case 36:return{type:t,location:e.u8(),cards:Array.from({length:e.u8()},()=>({from:p(e),to:p(e)}))};';
+  const intermediateCase36 = 'case 36:return{type:t,location:e.u8(),cards:Array.from({length:e.u8()},()=>({from:p(e),to:p(e)}))};';
+  const desiredCase36 = 'case 36:{let l=e.u8(),n=e.u8(),f=Array.from({length:n},()=>p(e)),o=Array.from({length:n},()=>p(e));return{type:t,location:l,cards:f.map((k,i)=>({from:k,to:o[i]}))}};';
 
   if (!code.includes(desiredCase36)) {
-    if (code.includes(originalCase36)) {
+    if (code.includes(intermediateCase36)) {
+      code = code.replace(intermediateCase36, desiredCase36);
+      modified = true;
+    } else if (code.includes(originalCase36)) {
       code = code.replace(originalCase36, desiredCase36);
       modified = true;
     } else {
-      console.warn('[patch-ocgcore] Could not find exact original case 36 in index.js');
+      console.warn('[patch-ocgcore] Could not find exact original or intermediate case 36 in index.js');
     }
   }
 
