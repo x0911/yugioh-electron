@@ -58,8 +58,10 @@ export class CardReaderService {
   private cardCache = new Map<number, OcgCardData | null>();
   private nameCache = new Map<number, string>();
   private textsCache = new Map<number, CardTextsRecord | null>();
+  private customDbPath?: string;
 
   constructor(customDbPath?: string) {
+    this.customDbPath = customDbPath;
     this.initDatabase(customDbPath);
   }
 
@@ -103,11 +105,18 @@ export class CardReaderService {
     );
   }
 
+  public ensureDatabase(): void {
+    if (!this.db || !this.stmtGetCardData) {
+      this.initDatabase(this.customDbPath);
+    }
+  }
+
   public readCard(code: number): OcgCardData | null {
     if (this.cardCache.has(code)) {
       return this.cardCache.get(code) ?? null;
     }
 
+    this.ensureDatabase();
     if (!this.stmtGetCardData) return null;
 
     try {
@@ -156,6 +165,7 @@ export class CardReaderService {
       return this.nameCache.get(code)!;
     }
 
+    this.ensureDatabase();
     if (!this.stmtGetCardName) return `[Card #${code}]`;
 
     try {
@@ -169,6 +179,7 @@ export class CardReaderService {
   }
 
   public getCardRecord(code: number): CardRecord | null {
+    this.ensureDatabase();
     if (!this.stmtGetCardData) return null;
     try {
       return this.stmtGetCardData.get(code) ?? null;
@@ -182,6 +193,7 @@ export class CardReaderService {
       return this.textsCache.get(code) ?? null;
     }
 
+    this.ensureDatabase();
     if (!this.stmtGetCardTexts) return null;
 
     try {

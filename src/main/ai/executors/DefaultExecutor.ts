@@ -51,70 +51,58 @@ export class DefaultExecutor implements DeckExecutor {
         const code = act.code ?? 0;
         const name = act.cardName || (code > 0 ? cardReader.getCardName(code) : 'Effect');
         const detail = code > 0 ? cardReader.getCardDetail(code) : null;
-        let score = 500;
-        let reason = `Activate ${name}`;
+        
+        // 1. Evaluate via universal spellTrapEvaluator
+        const evalResult = evaluateSpellActivation(code, name, context);
+        let score = evalResult.score;
+        let reason = evalResult.reason;
 
-        // 1.1 Draw Power (Pot of Greed, Graceful Charity, Upstart, Allure, Trade-In, Cards of Consonance, Destiny Draw)
-        if (
-          code === 55144522 || // Pot of Greed
-          code === 79571449 || // Graceful Charity
-          code === 70368879 || // Upstart Goblin
-          code === 1475311 ||  // Allure of Darkness
-          code === 38120068 || // Trade-In
-          code === 39701395 || // Cards of Consonance
-          code === 76218313    // Destiny Draw
-        ) {
-          score = 5000 * cardAdvWeight;
-          reason = `[PRIORITY DRAW] Activate draw accelerator ${name} (+card advantage)`;
-        }
-        // 1.2 Backrow Wipes (Harpie's Feather Duster, Heavy Storm, Mystical Space Typhoon)
-        else if (code === 18144506 || code === 19613556 || code === 5318639) {
-          const evalResult = evaluateSpellActivation(code, name, context);
-          score = evalResult.score;
-          reason = evalResult.reason;
-        }
-        // 1.3 Monster Board Wipes (Raigeki, Dark Hole, Lightning Vortex)
-        else if (code === 12580477 || code === 53129443 || code === 63590062) {
-          const evalResult = evaluateSpellActivation(code, name, context);
-          score = evalResult.score;
-          reason = evalResult.reason;
-        }
-        // 1.3b Monster Stealers (Change of Heart, Snatch Steal, Brain Control, Mind Control)
-        else if (code === 4031928 || code === 45986603 || code === 87910978 || code === 37576645) {
-          const evalResult = evaluateSpellActivation(code, name, context);
-          score = evalResult.score;
-          reason = evalResult.reason;
-        }
-        // 1.4 Searchers & Deck Thinners (Reinforcement of the Army, E - Emergency Call, Terraforming, Sangan)
-        else if (code === 32807846 || code === 75043725 || code === 73628505) {
-          score = 4200 * comboFocus;
-          reason = `[SEARCH] Activate search card ${name} to fetch combo pieces`;
-        }
-        // 1.5 Special Summons & Graveyard Revivals (Monster Reborn, Premature Burial, Call of the Haunted)
-        else if (code === 83764719 || code === 70828912 || code === 97077563) {
-          const hasSurvivingGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
-            (c) => c && c.atk && c.atk > 2000,
-          );
-          if (hasOppSlifer && !hasSurvivingGraveTarget) {
-            score = -2000;
-            reason = `Hold ${name} (opponent has active Slifer that would instantly destroy revived monster)`;
-          } else {
-            const powerfulGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
-              (c) => c && c.atk && c.atk >= 1800,
-            );
-            score = powerfulGraveTarget ? 1900 : 800;
-            reason = `Activate ${name} to revive monster from GY`;
+        // If evaluator severely vetoes (e.g. suicidal plays, dominance veto, self-chain loop), respect the veto!
+        if (score > -2000) {
+          // 1.1 Priority Draw Power (Pot of Greed, Graceful Charity, Upstart, Allure, Trade-In, Cards of Consonance, Destiny Draw)
+          if (
+            code === 55144522 || // Pot of Greed
+            code === 79571449 || // Graceful Charity
+            code === 70368879 || // Upstart Goblin
+            code === 1475311 ||  // Allure of Darkness
+            code === 38120068 || // Trade-In
+            code === 39701395 || // Cards of Consonance
+            code === 76218313    // Destiny Draw
+          ) {
+            score = 5000 * cardAdvWeight;
+            reason = `[PRIORITY DRAW] Activate draw accelerator ${name} (+card advantage)`;
           }
-        }
-        // 1.6 Fusion & Ritual Spells (Polymerization, Power Bond, Miracle Fusion, Black Luster Ritual)
-        else if (code === 24094653 || code === 37630732 || code === 45906428 || code === 55761792) {
-          score = 2100 * comboFocus;
-          reason = `[FUSION/RITUAL] Activate ${name} for boss monster summon`;
-        }
-        // 1.7 Signature Cards
-        else if (signatureCardIds.includes(code)) {
-          score = 1200 * sigFavoritism;
-          reason = `Activate signature effect ${name}`;
+          // 1.4 Searchers & Deck Thinners (Reinforcement of the Army, E - Emergency Call, Terraforming, Sangan)
+          else if (code === 32807846 || code === 75043725 || code === 73628505) {
+            score = 4200 * comboFocus;
+            reason = `[SEARCH] Activate search card ${name} to fetch combo pieces`;
+          }
+          // 1.5 Special Summons & Graveyard Revivals (Monster Reborn, Premature Burial, Call of the Haunted)
+          else if (code === 83764719 || code === 70828912 || code === 97077563) {
+            const hasSurvivingGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
+              (c) => c && c.atk && c.atk > 2000,
+            );
+            if (hasOppSlifer && !hasSurvivingGraveTarget) {
+              score = -2000;
+              reason = `Hold ${name} (opponent has active Slifer that would instantly destroy revived monster)`;
+            } else {
+              const powerfulGraveTarget = [...aiField.graveyard, ...oppField.graveyard].some(
+                (c) => c && c.atk && c.atk >= 1800,
+              );
+              score = powerfulGraveTarget ? 1900 : 800;
+              reason = `Activate ${name} to revive monster from GY`;
+            }
+          }
+          // 1.6 Fusion & Ritual Spells (Polymerization, Power Bond, Miracle Fusion, Black Luster Ritual)
+          else if (code === 24094653 || code === 37630732 || code === 45906428 || code === 55761792) {
+            score = 2100 * comboFocus;
+            reason = `[FUSION/RITUAL] Activate ${name} for boss monster summon`;
+          }
+          // 1.7 Signature Cards
+          else if (signatureCardIds.includes(code)) {
+            score = Math.max(score, 1200 * sigFavoritism);
+            reason = `Activate signature effect ${name}`;
+          }
         }
 
         candidates.push({
@@ -273,7 +261,17 @@ export class DefaultExecutor implements DeckExecutor {
             });
             continue;
           }
-          score += 500; // Tribute boss monster bonus
+          // Tribute boss monster upgrade bonuses:
+          score += 1200; // Base tribute upgrade bonus
+          if (atk >= 2400) {
+            score += 800; // Powerhouse boss (Monarchs, Dark Magician, Blue-Eyes, Jinzo)
+          }
+          if (aiMonsters.length >= neededTributes + 1) {
+            score += 600; // Surplus tribute fodder available!
+          }
+          if (oppMaxAtk > highestTributeAtk && atk > oppMaxAtk) {
+            score += 1500; // Boss monster breaks opponent's board superiority!
+          }
         }
         if (signatureCardIds.includes(code)) {
           score += 800 * sigFavoritism;
@@ -329,6 +327,11 @@ export class DefaultExecutor implements DeckExecutor {
         }
         if (oppMaxAtk >= 1900 && atk < oppMaxAtk) {
           score += 1200; // Prefer setting defensively when opponent controls a boss monster
+        }
+
+        const level = detail?.level ?? 4;
+        if (level >= 5 && atk > def && !isFlip) {
+          score -= 3500; // Heavily penalize Tribute Setting beatsticks in defense
         }
 
         candidates.push({
@@ -439,8 +442,17 @@ export class DefaultExecutor implements DeckExecutor {
               score = 1200 + atk * 0.4 * aggression;
               reason = `Switch/Flip Summon ${name} (${atk} ATK) to Attack Position for combat`;
             } else if (isFlip) {
-              score = 1500;
-              reason = `Flip Summon ${name} to activate flip effect`;
+              const dominance = evaluateBoardDominance(context);
+              if (
+                (code === 33508719 || code === 79106360 || code === 34124316 || name.includes('Jar')) &&
+                (oppField.currentLp <= 2000 || dominance.isDominating || dominance.isLethalOnBoard)
+              ) {
+                score = -12000;
+                reason = `[DOMINANCE/LP VETO] Keep ${name} face-down: flipping would wipe field or refresh opponent hand while having lethal/dominance`;
+              } else {
+                score = 1500;
+                reason = `Flip Summon ${name} to activate flip effect`;
+              }
             } else {
               score = -1000;
               reason = `Keep low-ATK ${name} in Defense Position`;
@@ -557,9 +569,20 @@ export class DefaultExecutor implements DeckExecutor {
     // Direct Attack Lethal Push
     if (oppMonsters.length === 0 && readyAttackers.length > 0) {
       const totalDirectAtk = readyAttackers.reduce((acc, a) => acc + a.atk, 0);
+      const oppBackrow = oppField.spellTrapZones.filter(
+        (s) => s && s.position !== 'faceup_spell' && s.position !== 'faceup_attack',
+      ).length;
+      const minAtk = Math.min(...readyAttackers.map((a) => a.atk));
+
       for (const att of readyAttackers) {
         const isLethalAttacker = att.atk >= oppLp || totalDirectAtk >= oppLp;
-        const score = att.atk * 1.5 + (isLethalAttacker ? 15000 : 1000);
+        let score = att.atk * 1.5 + (isLethalAttacker ? 15000 : 1000);
+
+        // Gorz / Tragoedia / Battle Fader & Trap baiting:
+        if ((oppField.hand.length > 0 || oppBackrow > 0) && readyAttackers.length > 1 && att.atk === minAtk) {
+          score += 1200; // Attack with lowest ATK first to test backrow and minimize Gorz token size
+        }
+
         candidates.push({
           action: {
             type: OcgResponseType.SELECT_BATTLECMD,

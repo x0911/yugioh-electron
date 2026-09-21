@@ -406,16 +406,38 @@ export function getAutoResponse(msg: OcgMessage): OcgResponse | null {
     }
 
     case OcgMessageType.ANNOUNCE_RACE: {
+      const avail = (msg as any).available !== undefined && (msg as any).available !== null ? BigInt((msg as any).available) : 0n;
+      const count = (msg as any).count ?? 1;
+      const validRaces: bigint[] = [];
+      if (avail > 0n) {
+        for (const raceVal of Object.values(OcgRace)) {
+          if (typeof raceVal === 'bigint' && (avail & raceVal) !== 0n) {
+            validRaces.push(raceVal);
+            if (validRaces.length >= count) break;
+          }
+        }
+      }
       return {
         type: OcgResponseType.ANNOUNCE_RACE,
-        races: [OcgRace.WARRIOR],
+        races: validRaces.length > 0 ? validRaces : [OcgRace.WARRIOR],
       };
     }
 
     case OcgMessageType.ANNOUNCE_ATTRIB: {
+      const avail = typeof (msg as any).available === 'number' ? (msg as any).available : ((msg as any).available ? Number((msg as any).available) : 0);
+      const count = (msg as any).count ?? 1;
+      const validAttrs: number[] = [];
+      if (avail > 0) {
+        for (const attrVal of Object.values(OcgAttribute)) {
+          if (typeof attrVal === 'number' && (avail & attrVal) !== 0) {
+            validAttrs.push(attrVal);
+            if (validAttrs.length >= count) break;
+          }
+        }
+      }
       return {
         type: OcgResponseType.ANNOUNCE_ATTRIB,
-        attributes: [OcgAttribute.DARK],
+        attributes: validAttrs.length > 0 ? validAttrs : [OcgAttribute.DARK],
       };
     }
 

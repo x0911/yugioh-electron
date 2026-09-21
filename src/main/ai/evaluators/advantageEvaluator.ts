@@ -29,9 +29,12 @@ export function evaluateAdvantage(context: EvaluatorContext): AdvantageEvaluatio
   const oppHandSize = oppField.hand.length;
   const handSizeAdvantage = aiHandSize - oppHandSize;
 
-  const handScore = aiHandSize * 150 * personality.cardAdvantageWeight;
+  const cardAdvWeight = personality?.cardAdvantageWeight ?? 1.0;
+  const aggression = personality?.aggression ?? 0.5;
+
+  const handScore = aiHandSize * 150 * cardAdvWeight;
   const fieldScore = (aiField.monsterZones.filter(Boolean).length + aiField.spellTrapZones.filter(Boolean).length) * 200;
-  const lpScore = (lpDifferential / 40) * (personality.aggression + 0.5);
+  const lpScore = (lpDifferential / 40) * (aggression + 0.5);
 
   const totalCardAdvantageScore = handScore + fieldScore + lpScore;
 

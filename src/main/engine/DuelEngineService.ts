@@ -12,6 +12,7 @@ import createCore, {
   SelectBattleCMDAction,
   type OcgMessage,
   type OcgResponse,
+  cardMatchesOpcode,
 } from 'ocgcore-wasm';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -68,7 +69,10 @@ export interface DuelOptions {
   startingDrawCount?: number;
   drawCountPerTurn?: number;
   autoPlay?: boolean;
+  instantAi?: boolean;
   humanPlayerId?: number; // 0 or 1, default 0
+  player0CharacterId?: string;
+  player0DeckArchetype?: string;
   aiCharacterId?: string;
   aiDeckArchetype?: string;
   aiEngineType?: 'builtin' | 'gemini';
@@ -103,6 +107,11 @@ export class DuelEngineService {
   private lastPromptMessage: OcgMessage | null = null;
   private priorPromptMessage: OcgMessage | null = null;
   private humanPlayerId = 0;
+  private player0CharacterId?: string;
+  private player0DeckArchetype = '';
+  private player0Personality: CharacterPersonality = DEFAULT_PERSONALITY;
+  private player0SignatureCards: number[] = [];
+  private player0DeckCards: number[] = [];
   private aiCharacterId = 'yugi-muto';
   private aiCharacterName = 'Yugi Muto';
   private aiDeckArchetype = '';
@@ -142,6 +151,7 @@ export class DuelEngineService {
   };
 
   private autoPlay = false;
+  private instantAi = false;
   public interactiveSort = false;
   public interactiveDisfield = true;
   private isVideoPlaying = false;
@@ -307,6 +317,7 @@ export class DuelEngineService {
     }
 
     this.autoPlay = options.autoPlay ?? false;
+    this.instantAi = options.instantAi ?? false;
     this.interactiveSort = options.interactiveSort ?? false;
     this.interactiveDisfield = options.interactiveDisfield ?? true;
     this.humanPlayerId = options.humanPlayerId ?? 0;
@@ -322,6 +333,12 @@ export class DuelEngineService {
     const aiDeck = this.humanPlayerId === 0 ? options.player1Deck : options.player0Deck;
     this.aiDeckCards = [...(aiDeck || [])];
 
+    this.player0CharacterId = options.player0CharacterId;
+    this.player0DeckArchetype = options.player0DeckArchetype ?? '';
+    this.player0Personality = getPersonalityForCharacter(this.player0CharacterId);
+    this.player0SignatureCards = [];
+    this.player0DeckCards = [...(options.player0Deck || [])];
+
     try {
       const jsonPath = getResourcePath('data/characters.json');
       if (fs.existsSync(jsonPath)) {
@@ -333,9 +350,16 @@ export class DuelEngineService {
             this.aiSignatureCards = found.signatureCards;
           }
         }
+        if (this.player0CharacterId) {
+          const found0 = chars.find((c: any) => c.id === this.player0CharacterId);
+          if (found0 && Array.isArray(found0.signatureCards)) {
+            this.player0SignatureCards = found0.signatureCards;
+          }
+        }
       }
     } catch {
       this.aiSignatureCards = [];
+      this.player0SignatureCards = [];
     }
 
     const startingLP = options.startingLP ?? 8000;
@@ -758,6 +782,9 @@ export class DuelEngineService {
   }
 
   private checkVideoTrigger(msg: OcgMessage): CardVideoPayload | null {
+    if (this.instantAi) {
+      return null;
+    }
     const rawType = msg.type;
 
     // 1. Summon / Special Summon Video Trigger
@@ -1721,12 +1748,28 @@ export class DuelEngineService {
           type: OcgResponseType.SELECT_POSITION,
           position: (msg as any).positions?.[0] ?? 1,
         };
+      case OcgMessageType.ANNOUNCE_CARD: {
+        const opcodes = (msg as any).opcodes;
+        if (Array.isArray(opcodes) && opcodes.length > 0) {
+          const candidates = [70095154, 5318639, 44095762, 55144522, 91152256];
+          for (const code of candidates) {
+            const cardData = this.cardReader.readCard(code);
+            if (cardData && cardMatchesOpcode(cardData, opcodes)) {
+              return { type: OcgResponseType.ANNOUNCE_CARD, card: code };
+            }
+          }
+        }
+        return { type: OcgResponseType.ANNOUNCE_CARD, card: 70095154 };
+      }
       default:
         return { type: OcgResponseType.SELECT_CHAIN, index: -1 };
     }
   }
 
   private scheduleAiResponse(handle: OcgDuelHandle, response: OcgResponse, delayMs?: number): void {
+    if (this.instantAi) {
+      return;
+    }
     if (this.aiStepTimer) {
       clearTimeout(this.aiStepTimer);
     }
@@ -1789,17 +1832,22 @@ export class DuelEngineService {
       // Assert anti-cheat verification: throws loudly if unrevealed human cards leaked
       assertAiStateSanitized(aiBoardState, aiPlayerId);
 
+      const personality = aiPlayerId === 0 && this.player0CharacterId ? this.player0Personality : this.aiPersonality;
+      const signatureCardIds = aiPlayerId === 0 && this.player0CharacterId ? this.player0SignatureCards : this.aiSignatureCards;
+      const aiDeckCards = aiPlayerId === 0 && this.player0CharacterId ? this.player0DeckCards : this.aiDeckCards;
+      const deckArchetype = aiPlayerId === 0 && this.player0CharacterId ? this.player0DeckArchetype : this.aiDeckArchetype;
+
       const context: EvaluatorContext = {
         aiPlayerId,
         humanPlayerId,
         boardState: aiBoardState,
-        personality: this.aiPersonality,
+        personality,
         cardReader: this.cardReader,
         currentPhase: this.state.currentPhase,
         currentTurn: this.state.currentTurn,
-        signatureCardIds: this.aiSignatureCards,
-        deckArchetype: this.aiDeckArchetype,
-        aiDeckCards: this.aiDeckCards,
+        signatureCardIds,
+        deckArchetype,
+        aiDeckCards,
         activeChainCards: [...this.activeChainCards],
       };
 
@@ -1807,7 +1855,7 @@ export class DuelEngineService {
       const delayMs = this.aiController.getThinkDelay(this.aiPersonality, OcgMessageType[msg.type]);
       return { response, delayMs };
     } catch (err) {
-      console.error('[DuelEngineService] Emergency recovery in getAiResponse:', err);
+      console.error(`[DuelEngineService] Emergency recovery in getAiResponse for ${OcgMessageType[msg.type] || msg.type}:`, err);
       const auto = getAutoResponse(msg) ?? { type: OcgResponseType.SELECT_CHAIN, index: null };
       return { response: auto, delayMs: 200 };
     }
@@ -1949,8 +1997,12 @@ export class DuelEngineService {
       const promptPlayer = 'player' in this.lastPromptMessage ? (this.lastPromptMessage.player as number) : 0;
       const isOpponent = promptPlayer !== this.humanPlayerId;
       if (isOpponent || this.autoPlay) {
+        if (this.aiStepTimer) {
+          clearTimeout(this.aiStepTimer);
+          this.aiStepTimer = null;
+        }
         const { response } = this.getAiResponse(this.lastPromptMessage, promptPlayer);
-        this.lib.duelSetResponse(handle, response);
+        this.lib.duelSetResponse(handle, this.normalizeResponse(response));
         this.state.isWaitingResponse = false;
         this.state.waitingPlayer = null;
         this.priorPromptMessage = this.lastPromptMessage;
@@ -1961,11 +2013,22 @@ export class DuelEngineService {
     }
 
     // Process engine steps
-    let maxSubSteps = 100;
+    let maxSubSteps = this.instantAi ? 2500 : 100;
     let pendingVideoPayload: CardVideoPayload | null = null;
+    let lastLogTime = Date.now();
     while (this.state.isActive && !this.isVideoPlaying && maxSubSteps > 0) {
       maxSubSteps--;
+      const now = Date.now();
+      if (now - lastLogTime > 2000) {
+        console.log(`[InstantAI Heartbeat] subSteps=${maxSubSteps}, turn=${this.state.currentTurn} ${this.state.currentPhase}`);
+        lastLogTime = now;
+      }
+      const tStartProcess = Date.now();
       const status = this.lib.duelProcess(handle);
+      const tProcess = Date.now() - tStartProcess;
+      if (tProcess > 500) {
+        console.warn(`[SLOW duelProcess] took ${tProcess}ms at turn ${this.state.currentTurn} ${this.state.currentPhase}`);
+      }
       const rawMessages = this.lib.duelGetMessage(handle);
 
       for (const msg of rawMessages) {
@@ -2110,6 +2173,16 @@ export class DuelEngineService {
 
           // RETRY Circuit Breaker: If consecutive RETRYs occur >= 2 for AI/Auto, inject guaranteed safe fallback
           if (isAiOrAuto && this.consecutiveRetryCount >= 2) {
+            if (this.consecutiveRetryCount >= 5) {
+              console.error(
+                `[DuelEngineService] Unresolvable RETRY loop (${this.consecutiveRetryCount}) for prompt ${OcgMessageType[lastMsg.type]}. Forcing duel conclusion to prevent engine lockup.`,
+              );
+              this.state.isActive = false;
+              this.state.isWaitingResponse = false;
+              this.state.winner = 1 - promptPlayer;
+              this.state.winReason = 1;
+              return allDecodedEvents;
+            }
             console.warn(
               `[DuelEngineService] RETRY Circuit Breaker triggered (retryCount=${this.consecutiveRetryCount}) for prompt ${OcgMessageType[lastMsg.type]}. Submitting safe emergency fallback response.`,
             );
@@ -2119,7 +2192,10 @@ export class DuelEngineService {
             this.state.waitingPlayer = null;
             this.priorPromptMessage = this.lastPromptMessage;
             this.lastPromptMessage = null;
-            return events;
+            if (this.instantAi) {
+              continue;
+            }
+            return allDecodedEvents;
           }
 
           // Auto-resolve SORT_CARD and SORT_CHAIN with default order for AI or when not interactive
@@ -2231,6 +2307,30 @@ export class DuelEngineService {
                     this.scheduleAiResponse(handle, auto, 200);
                   }
                 });
+            } else if (this.instantAi) {
+              try {
+                const tStartAi = Date.now();
+                const { response } = this.getAiResponse(lastMsg, promptPlayer);
+                const tAi = Date.now() - tStartAi;
+                if (tAi > 200) {
+                  console.warn(`[SLOW getAiResponse] took ${tAi}ms for ${OcgMessageType[lastMsg.type] || lastMsg.type} (P${promptPlayer})`);
+                }
+                this.lib.duelSetResponse(handle, this.normalizeResponse(response));
+                this.state.isWaitingResponse = false;
+                this.state.waitingPlayer = null;
+                this.priorPromptMessage = this.lastPromptMessage;
+                this.lastPromptMessage = null;
+                continue;
+              } catch (err) {
+                console.error('[DuelEngineService] Critical error in instant AI prompt handling, sending auto-response:', err);
+                const auto = getAutoResponse(lastMsg) ?? { type: OcgResponseType.SELECT_CHAIN, index: null };
+                this.lib.duelSetResponse(handle, this.normalizeResponse(auto));
+                this.state.isWaitingResponse = false;
+                this.state.waitingPlayer = null;
+                this.priorPromptMessage = this.lastPromptMessage;
+                this.lastPromptMessage = null;
+                continue;
+              }
             } else {
               try {
                 const { response, delayMs } = this.getAiResponse(lastMsg, promptPlayer);
@@ -2581,6 +2681,10 @@ export class DuelEngineService {
   }
 
   public close(): void {
+    this.destroyCurrentDuel();
+  }
+
+  public dispose(): void {
     this.destroyCurrentDuel();
     this.cardReader.close();
     this.scriptReader.close();

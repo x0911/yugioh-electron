@@ -10,6 +10,7 @@ import {
   ocgPositionParse,
   type OcgMessage,
   type OcgResponse,
+  cardMatchesOpcode,
 } from 'ocgcore-wasm';
 import type { EvaluatorContext, ScoredAction } from './types.js';
 import { getAiAndOpponentFields } from './types.js';
@@ -156,7 +157,7 @@ export class AIController {
 
         let targetRace: bigint | null = null;
         if (oppMonsters.length > 0) {
-          const strongestOpp = oppMonsters.reduce((prev, curr) => (curr.atk > prev.atk ? curr : prev), oppMonsters[0]);
+          const strongestOpp = oppMonsters.reduce((prev, curr) => ((curr.atk ?? 0) > (prev.atk ?? 0) ? curr : prev), oppMonsters[0]);
           if (strongestOpp && strongestOpp.code) {
             const detail = cardReader.getCardDetail(strongestOpp.code);
             if (detail && detail.race !== undefined && detail.race !== null) {
@@ -176,11 +177,38 @@ export class AIController {
         }
 
         const archetype = resolveArchetypePlan(deckArchetype);
-        const rawRace = targetRace ?? (archetype.preferredRaces[0] ?? OcgRace.WARRIOR);
-        const race = typeof rawRace === 'bigint' ? rawRace : BigInt(rawRace);
+        const prefRaceRaw = archetype.preferredRaces[0] ?? OcgRace.WARRIOR;
+        const prefRace = typeof prefRaceRaw === 'bigint' ? prefRaceRaw : BigInt(prefRaceRaw);
+        const desiredRace = targetRace ?? prefRace;
+
+        // Check against msg.available bitmask if present
+        const available = msg.available !== undefined && msg.available !== null ? BigInt(msg.available) : 0n;
+        const count = msg.count ?? 1;
+
+        let selectedRaces: bigint[] = [];
+        if (available > 0n) {
+          if (desiredRace > 0n && (available & desiredRace) !== 0n) {
+            selectedRaces.push(desiredRace);
+          }
+          if (selectedRaces.length < count) {
+            for (const raceVal of Object.values(OcgRace)) {
+              if (typeof raceVal === 'bigint' && (available & raceVal) !== 0n) {
+                if (!selectedRaces.includes(raceVal)) {
+                  selectedRaces.push(raceVal);
+                }
+                if (selectedRaces.length >= count) break;
+              }
+            }
+          }
+        }
+
+        if (selectedRaces.length === 0) {
+          selectedRaces = [desiredRace];
+        }
+
         return {
           type: OcgResponseType.ANNOUNCE_RACE,
-          races: [race],
+          races: selectedRaces.slice(0, count),
         };
       }
 
@@ -193,7 +221,7 @@ export class AIController {
 
         let targetAttr: number | null = null;
         if (oppMonsters.length > 0) {
-          const strongestOpp = oppMonsters.reduce((prev, curr) => (curr.atk > prev.atk ? curr : prev), oppMonsters[0]);
+          const strongestOpp = oppMonsters.reduce((prev, curr) => ((curr.atk ?? 0) > (prev.atk ?? 0) ? curr : prev), oppMonsters[0]);
           if (strongestOpp && strongestOpp.code) {
             const detail = context.cardReader.getCardDetail(strongestOpp.code);
             if (detail && detail.attribute) {
@@ -203,19 +231,95 @@ export class AIController {
         }
 
         const archetype = resolveArchetypePlan(context.deckArchetype);
-        const rawAttr = targetAttr ?? (archetype.preferredAttributes[0] ?? OcgAttribute.DARK);
-        const attr = typeof rawAttr === 'number' ? rawAttr : Number(rawAttr);
+        const prefAttr = archetype.preferredAttributes[0] ?? OcgAttribute.DARK;
+        const desiredAttr = targetAttr ?? prefAttr;
+
+        // Check against msg.available bitmask if present
+        const available = typeof msg.available === 'number' ? msg.available : (msg.available ? Number(msg.available) : 0);
+        const count = msg.count ?? 1;
+
+        let selectedAttrs: number[] = [];
+        if (available > 0) {
+          if (desiredAttr > 0 && (available & desiredAttr) !== 0) {
+            selectedAttrs.push(desiredAttr);
+          }
+          if (selectedAttrs.length < count) {
+            for (const attrVal of Object.values(OcgAttribute)) {
+              if (typeof attrVal === 'number' && (available & attrVal) !== 0) {
+                if (!selectedAttrs.includes(attrVal)) {
+                  selectedAttrs.push(attrVal);
+                }
+                if (selectedAttrs.length >= count) break;
+              }
+            }
+          }
+        }
+
+        if (selectedAttrs.length === 0) {
+          selectedAttrs = [desiredAttr];
+        }
+
         return {
           type: OcgResponseType.ANNOUNCE_ATTRIB,
-          attributes: [attr],
+          attributes: selectedAttrs.slice(0, count),
         };
       }
 
       case OcgMessageType.ANNOUNCE_CARD: {
-        const defaultCard = context.signatureCardIds[0] ?? 91152256;
+        const { cardReader, signatureCardIds, aiPlayerId, boardState } = context;
+        const oppField = boardState.userField.playerId === aiPlayerId ? boardState.opponentField : boardState.userField;
+        const opcodes = (msg as any).opcodes;
+        const checkOpcode = (code: number): boolean => {
+          if (!opcodes || !Array.isArray(opcodes) || opcodes.length === 0) return true;
+          try {
+            const rawCard = cardReader.readCard(code);
+            return rawCard ? cardMatchesOpcode(rawCard, opcodes) : false;
+          } catch {
+            return false;
+          }
+        };
+
+        let chosenCard = 0;
+
+        // 1. If opponent has revealed cards in hand, declare that if valid!
+        const oppRevealed = oppField.hand.filter((c: any) => c && c.revealed && c.code > 0);
+        for (const rev of oppRevealed) {
+          const detail = cardReader.getCardDetail(rev.code);
+          if (detail && !detail.isExtraDeck && checkOpcode(rev.code)) {
+            chosenCard = rev.code;
+            break;
+          }
+        }
+
+        // 2. Check character signature cards for a valid Main Deck card matching filter
+        if (!chosenCard && signatureCardIds) {
+          for (const sigId of signatureCardIds) {
+            const detail = cardReader.getCardDetail(sigId);
+            if (detail && !detail.isExtraDeck && checkOpcode(sigId)) {
+              chosenCard = sigId;
+              break;
+            }
+          }
+        }
+
+        // 3. Fallback to universally valid staples matching opcode filter
+        if (!chosenCard) {
+          const staples = [70095154, 5318639, 44095762, 55144522, 91152256];
+          for (const code of staples) {
+            if (checkOpcode(code)) {
+              chosenCard = code;
+              break;
+            }
+          }
+        }
+
+        if (!chosenCard) {
+          chosenCard = 70095154; // Cyber Dragon
+        }
+
         return {
           type: OcgResponseType.ANNOUNCE_CARD,
-          card: typeof defaultCard === 'number' ? defaultCard : Number(defaultCard),
+          card: chosenCard,
         };
       }
 
@@ -430,11 +534,24 @@ export class AIController {
 
           if (highestTributeAtk >= atk && !signatureCardIds.includes(code)) {
             score -= 8000; // Major blunder to downgrade field ATK
-          } else if (highestTributeAtk > 0) {
-            const netGain = atk - highestTributeAtk;
-            score += netGain * 0.5;
           } else {
-            score += 400 * personality.riskTolerance;
+            // Tribute upgrade bonuses:
+            score += 1200; // Base tribute upgrade bonus
+            if (atk >= 2400) {
+              score += 800; // Powerhouse boss
+            }
+            if (aiMonsters.length >= neededTributes + 1) {
+              score += 600; // Surplus tribute fodder
+            }
+            if (oppMaxAtk > highestTributeAtk && atk > oppMaxAtk) {
+              score += 1500; // Overcomes opponent superior monster!
+            }
+            if (highestTributeAtk > 0) {
+              const netGain = atk - highestTributeAtk;
+              score += netGain * 0.5;
+            } else {
+              score += 400 * personality.riskTolerance;
+            }
           }
         }
 
@@ -548,6 +665,10 @@ export class AIController {
           score += 2000; // Absorb attacks from superior opponent monsters
         }
 
+        if (level >= 5 && atk > def && !detail?.isFlip) {
+          score -= 3500; // Heavily penalize tribute setting beatsticks in defense
+        }
+
         candidates.push({
           action: {
             type: OcgResponseType.SELECT_IDLECMD,
@@ -622,8 +743,17 @@ export class AIController {
               score = 900 + atk * 0.4 * personality.aggression;
               reason = `Switch/Flip Summon ${name} (${atk} ATK) to Attack Position for combat`;
             } else if (detail?.isFlip) {
-              score = 700;
-              reason = `Flip Summon ${name} to activate flip effect`;
+              const dominance = evaluateBoardDominance(context);
+              if (
+                (code === 33508719 || code === 79106360 || code === 34124316 || name.includes('Jar')) &&
+                (oppField.currentLp <= 2000 || dominance.isDominating || dominance.isLethalOnBoard)
+              ) {
+                score = -12000;
+                reason = `[DOMINANCE/LP VETO] Keep ${name} face-down: flipping would wipe field or refresh opponent hand while having lethal/dominance`;
+              } else {
+                score = 700;
+                reason = `Flip Summon ${name} to activate flip effect`;
+              }
             } else {
               score = -1000;
               reason = `Keep low-ATK ${name} in Defense Position`;
@@ -1102,8 +1232,9 @@ export class AIController {
             score = 2200 - def * 0.5;
           }
         } else if (isFacedownDefense) {
-          // Unknown face-down card: moderate score if healthy, heavily penalized if low LP
-          score = aiLp <= 2000 ? -2000 : 900;
+          // Unknown face-down card: moderate score if healthy, heavily penalized if low LP unless late-game urgency is active
+          const isDeckOutUrgent = (aiField.deckCount ?? 20) <= 10 || boardState.turnNumber >= 20;
+          score = (aiLp <= 2000 && !isDeckOutUrgent) ? -2000 : 1200;
         } else if (isFaceupAttack) {
           if (isBattlePhase && targetAtk > aiAttackerAtk) {
             // SUICIDAL ATTACK: Target is stronger than our attacker!

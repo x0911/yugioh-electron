@@ -19,15 +19,24 @@ export function evaluateAttackOption(
   const aiField: PlayerFieldState = boardState.userField.playerId === aiPlayerId ? boardState.userField : boardState.opponentField;
   const oppLp = oppField.currentLp;
   const aiLp = aiField.currentLp;
+  const aggression = personality?.aggression ?? 0.5;
+  const riskTolerance = personality?.riskTolerance ?? 0.5;
+  const defensiveness = personality?.defensiveness ?? 0.5;
 
   const oppMonsters = oppField.monsterZones.filter((m): m is FieldCard => m !== null);
 
   // 1. Direct Attack case (Opponent has no monsters on field)
   if (oppMonsters.length === 0) {
-    let score = attacker.attackerAtk * 1.5 * (personality.aggression + 0.3);
+    const aiReadyAttackers = aiField.monsterZones
+      .filter((m) => !!m && (m.position === 'faceup_attack' || m.position === 'attack'))
+      .map((m) => m?.atk ?? 0);
+    const totalAiAtk = aiReadyAttackers.reduce((acc, a) => acc + a, 0);
+    const isDirectLethalOnBoard = totalAiAtk >= oppLp && totalAiAtk > 0;
 
-    // Lethal direct attack check
-    if (attacker.attackerAtk >= oppLp) {
+    let score = attacker.attackerAtk * 1.5 * (aggression + 0.3);
+
+    // Lethal direct attack check (single monster or combined team lethal)
+    if (attacker.attackerAtk >= oppLp || isDirectLethalOnBoard) {
       score += 15000;
       return {
         action: {
@@ -36,13 +45,28 @@ export function evaluateAttackOption(
           index: attacker.attackerIndex,
         },
         score,
-        reason: `[LETHAL] Direct attack with ${attacker.attackerName} (${attacker.attackerAtk} ATK) for game!`,
+        reason: attacker.attackerAtk >= oppLp
+          ? `[LETHAL] Direct attack with ${attacker.attackerName} (${attacker.attackerAtk} ATK) for game!`
+          : `[COMBINED LETHAL] Direct attack with ${attacker.attackerName} (${attacker.attackerAtk} ATK) contributing to ${totalAiAtk} team lethal!`,
         cardName: attacker.attackerName,
       };
     }
 
     if (oppLp - attacker.attackerAtk <= 1500) {
       score += 3000;
+    }
+
+    // Gorz / Tragoedia / Battle Fader / Trap mitigation:
+    // If opponent has cards in hand or set backrow and not on-board lethal, attack with lowest ATK monster first
+    // to minimize the size of any spawned Gorz token or test for Mirror Force/Dimensional Prison!
+    const oppSetBackrow = oppField.spellTrapZones.filter(
+      (s) => s && s.position !== 'faceup_spell' && s.position !== 'faceup_attack',
+    ).length;
+    if ((oppField.hand.length > 0 || oppSetBackrow > 0) && aiReadyAttackers.length > 1) {
+      const minAtk = Math.min(...aiReadyAttackers);
+      if (attacker.attackerAtk === minAtk) {
+        score += 1200;
+      }
     }
 
     return {
@@ -144,13 +168,22 @@ export function evaluateAttackOption(
       // Defensive walls (e.g., Labyrinth Wall, Big Shield Gardna, Millennium Shield) have up to 3000 DEF
       const maxPotentialRecoil = Math.max(0, 3000 - attacker.attackerAtk);
       const isLethalRisk = maxPotentialRecoil >= aiLp && maxPotentialRecoil > 0;
+      const aiDeck = aiField.deckCount ?? 20;
+      const oppDeck = oppField.deckCount ?? 20;
+      const isDeckOutUrgent = aiDeck <= 10 || boardState.turnNumber >= 20 || (aiDeck < oppDeck && aiDeck <= 15);
 
       if (isDefenseDestroyer) {
         targetScore = 800;
         targetReason = `Attack face-down monster with defense-destroying effect (${attacker.attackerName})`;
-      } else if (isLethalRisk || (aiLp <= 1200 && attacker.attackerAtk < 3000)) {
+      } else if (isLethalRisk || (aiLp <= 1000 && attacker.attackerAtk < 2400)) {
         targetScore = -9000;
         targetReason = `[AVOID LETHAL RECOIL] Do not attack unknown face-down defense with ${attacker.attackerName} (${attacker.attackerAtk} ATK) when AI LP is only ${aiLp}`;
+      } else if (isDeckOutUrgent && attacker.attackerAtk >= 1200 && aiLp > 1200) {
+        // Late-Game Deck-Out Urgency & Probing Clock:
+        // When running low on cards (<= 10) or turns >= 20 or decking out faster than opponent,
+        // actively break stalemates and probe face-downs instead of passively passing into a deck-out loss!
+        targetScore = 750 + (attacker.attackerAtk - 1200) * 0.3;
+        targetReason = `[CLOCK URGENCY] Probe face-down defense before decking out (${attacker.attackerName}: ${attacker.attackerAtk} ATK, Deck: ${aiDeck} vs Opp: ${oppDeck}, Turn: ${boardState.turnNumber})`;
       } else if (aiLp <= 2000 && attacker.attackerAtk < 2400) {
         targetScore = -3500;
         targetReason = `[HOLD] Low LP (${aiLp}) prevents probing face-down defense with sub-2400 ATK attacker (${attacker.attackerName}: ${attacker.attackerAtk} ATK)`;

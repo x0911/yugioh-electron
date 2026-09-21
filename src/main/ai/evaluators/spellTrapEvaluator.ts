@@ -75,6 +75,18 @@ export function evaluateBoardDominance(context: EvaluatorContext): DominanceStat
     };
   }
 
+  // Condition 5: Critical Opponent LP with Threatening Attackers
+  if (oppLp <= 2000 && aiReadyAttackers.length > 0 && aiTotalAtk >= oppLp) {
+    return {
+      isDominating: true,
+      isLethalOnBoard: oppMonsterCount === 0,
+      aiTotalAtk,
+      oppVisibleAtk,
+      oppMonsterCount,
+      reason: `Opponent in critical LP danger (${oppLp} LP) facing AI team of ${aiReadyAttackers.length} attackers (${aiTotalAtk} ATK)`,
+    };
+  }
+
   return {
     isDominating: false,
     isLethalOnBoard: false,
@@ -90,7 +102,16 @@ export function evaluateSpellActivation(
   cardName: string,
   context: EvaluatorContext,
 ): { score: number; reason: string } {
-  const { boardState, personality, signatureCardIds } = context;
+  const { boardState, personality: rawPersonality, signatureCardIds } = context;
+  const personality = {
+    aggression: 0.5,
+    defensiveness: 0.5,
+    riskTolerance: 0.5,
+    comboFocus: 0.5,
+    cardAdvantageWeight: 1.0,
+    signatureFavoritism: 0.5,
+    ...rawPersonality,
+  };
   const { aiField, oppField } = getAiAndOpponentFields(context);
 
   const oppMonsterCount = oppField.monsterZones.filter(Boolean).length;
@@ -161,6 +182,13 @@ export function evaluateSpellActivation(
 
   // 1b. Hand Refresh & Disruption: Card Destruction (72892420 / 72892473)
   if (code === 72892420 || code === 72892473 || cardName.includes('Card Destruction')) {
+    if (oppField.currentLp <= 2000) {
+      return {
+        score: -15000,
+        reason: `[LOW OPPONENT LP GATEKEEPER] Hold ${cardName}: Opponent is clinging to life at ${oppField.currentLp} LP. Refuse to give them fresh cards or answers!`,
+      };
+    }
+
     const dominance = evaluateBoardDominance(context);
     if (dominance.isDominating || dominance.isLethalOnBoard) {
       return {
@@ -211,6 +239,13 @@ export function evaluateSpellActivation(
 
   // 1c. Symmetrical Hand Disruption: Hand Destruction (74519184)
   if (code === 74519184 || cardName.includes('Hand Destruction')) {
+    if (oppField.currentLp <= 2000) {
+      return {
+        score: -15000,
+        reason: `[LOW OPPONENT LP GATEKEEPER] Hold ${cardName}: Opponent is clinging to life at ${oppField.currentLp} LP. Refuse to give them fresh cards or answers!`,
+      };
+    }
+
     const dominance = evaluateBoardDominance(context);
     if (dominance.isDominating || dominance.isLethalOnBoard) {
       return {
@@ -240,6 +275,13 @@ export function evaluateSpellActivation(
 
   // 1d. Hand Reshuffle Spells: Reload (22589918) & Magical Mallet (85852291)
   if (code === 22589918 || code === 85852291 || cardName.includes('Reload') || cardName.includes('Magical Mallet')) {
+    if (oppField.currentLp <= 2000 && aiMonsterCount > 0) {
+      return {
+        score: -8000,
+        reason: `[LOW OPPONENT LP GATEKEEPER] Hold ${cardName}: Opponent is at ${oppField.currentLp} LP; focus on attacking to finish the duel rather than reshuffling hand`,
+      };
+    }
+
     const dominance = evaluateBoardDominance(context);
     if (dominance.isDominating || dominance.isLethalOnBoard) {
       return {
@@ -269,6 +311,13 @@ export function evaluateSpellActivation(
 
   // 1e. Symmetrical Flip Draw: Morphing Jar (33508719 / 79106360)
   if (code === 33508719 || code === 79106360 || cardName.includes('Morphing Jar')) {
+    if (oppField.currentLp <= 2000) {
+      return {
+        score: -15000,
+        reason: `[LOW OPPONENT LP GATEKEEPER] Hold ${cardName}: Opponent is clinging to life at ${oppField.currentLp} LP. Refuse to give them 5 fresh cards!`,
+      };
+    }
+
     const dominance = evaluateBoardDominance(context);
     if (dominance.isDominating || dominance.isLethalOnBoard) {
       return {
@@ -499,6 +548,70 @@ export function evaluateSpellActivation(
       score: 600,
       reason: `Activate Ring of Destruction`,
     };
+  }
+
+  // 3g. Targeted Spot Disruption Gatekeepers: Book of Moon, Compulsory, Enemy Controller, MST, Breaker, Mind Crush
+  const oppFaceupMonsters = oppField.monsterZones.filter(
+    (m) => !!m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'),
+  );
+  const oppBackrowCount = oppField.spellTrapZones.filter(Boolean).length + (oppField.fieldZone ? 1 : 0);
+
+  // Book of Moon (14087893) & Compulsory Evacuation Device (94145021)
+  if (code === 14087893 || cardName.includes('Book of Moon') || code === 94145021 || cardName.includes('Compulsory Evacuation')) {
+    if (oppFaceupMonsters.length === 0) {
+      return {
+        score: -8000,
+        reason: `[NO OPPONENT TARGET] Hold ${cardName}: Opponent controls no face-up monsters to target`,
+      };
+    }
+    return {
+      score: 1800 * (personality.defensiveness + 0.5),
+      reason: `Disrupt opponent face-up monster with ${cardName}`,
+    };
+  }
+
+  // Enemy Controller (98045062)
+  if (code === 98045062 || cardName.includes('Enemy Controller')) {
+    if (oppFaceupMonsters.length === 0) {
+      return {
+        score: -8000,
+        reason: `[NO OPPONENT TARGET] Hold Enemy Controller: Opponent controls no face-up monsters to target`,
+      };
+    }
+    return {
+      score: 1600 * (personality.defensiveness + 0.5),
+      reason: `Disrupt opponent monster with Enemy Controller`,
+    };
+  }
+
+  // Targeted S/T Removal: Mystical Space Typhoon (5318639), Dust Tornado (99518961), Breaker the Magical Warrior (71413901)
+  if (code === 5318639 || code === 99518961 || code === 71413901 || cardName.includes('Mystical Space Typhoon') || cardName.includes('Dust Tornado')) {
+    if (oppBackrowCount === 0) {
+      return {
+        score: -8000,
+        reason: `[NO OPPONENT TARGET] Hold ${cardName}: Opponent controls no Spell/Trap cards to destroy`,
+      };
+    }
+  }
+
+  // Targeted/Single Monster Destruction: Smashing Ground (97169186), Fissure (66788016), Soul Exchange (68005187)
+  if (code === 97169186 || code === 66788016 || code === 68005187 || cardName.includes('Smashing Ground') || cardName.includes('Fissure')) {
+    if (oppMonsterCount === 0) {
+      return {
+        score: -8000,
+        reason: `[NO OPPONENT TARGET] Hold ${cardName}: Opponent controls no monsters to target/destroy`,
+      };
+    }
+  }
+
+  // Hand Announcement Disruption: Mind Crush (15800838)
+  if (code === 15800838 || cardName.includes('Mind Crush')) {
+    if (oppField.hand.length === 0) {
+      return {
+        score: -8000,
+        reason: `[NO OPPONENT HAND] Hold Mind Crush: Opponent has no cards in hand`,
+      };
+    }
   }
 
   // 4. Monster Reborn (83764719) / Special Summon Spells
@@ -891,7 +1004,16 @@ export function evaluateSpellTrapSet(
   cardName: string,
   context: EvaluatorContext,
 ): { score: number; reason: string } {
-  const { personality } = context;
+  const { personality: rawPersonality } = context;
+  const personality = {
+    aggression: 0.5,
+    defensiveness: 0.5,
+    riskTolerance: 0.5,
+    comboFocus: 0.5,
+    cardAdvantageWeight: 1.0,
+    signatureFavoritism: 0.5,
+    ...rawPersonality,
+  };
   const { aiField } = getAiAndOpponentFields(context);
 
   const currentBackrowCount = aiField.spellTrapZones.filter(Boolean).length;

@@ -58,6 +58,7 @@ const testFiles = [
   'tests/spell-trap-activation-and-lua-polyfills.test.ts',
   'tests/stratos-single-option-retry.test.ts',
   'tests/message-types-comprehensive-audit.test.ts',
+  'tests/ai-lethal-dominance-gatekeeper.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);

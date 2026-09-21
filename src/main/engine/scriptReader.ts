@@ -9,7 +9,10 @@ export class ScriptReaderService {
   private db: DatabaseType | null = null;
   private stmtGetAlias: Statement<[number], { alias: number }> | null = null;
 
+  private customDbPath?: string;
+
   constructor(customScriptsDir?: string, customDbPath?: string) {
+    this.customDbPath = customDbPath;
     this.scriptsDir = this.resolveScriptsDir(customScriptsDir);
     this.officialScriptsDir = path.join(this.scriptsDir, 'official');
     this.initDatabase(customDbPath);
@@ -60,7 +63,14 @@ export class ScriptReaderService {
     }
   }
 
+  public ensureDatabase(): void {
+    if (!this.db || !this.stmtGetAlias) {
+      this.initDatabase(this.customDbPath);
+    }
+  }
+
   private resolveAliasScriptPath(cardId: number): string | null {
+    this.ensureDatabase();
     if (!this.stmtGetAlias) return null;
     try {
       const row = this.stmtGetAlias.get(cardId);
@@ -76,17 +86,23 @@ export class ScriptReaderService {
     return null;
   }
 
-  private preprocessScript(rawContent: string): string {
+  private preprocessScript(rawContent: string, isBaseRuntime = false): string {
     // 1. Replace bitwise OR on uppercase constants: e.g. REASON_EFFECT|REASON_DISCARD -> REASON_EFFECT+REASON_DISCARD
     let content = rawContent;
     while (/([A-Z_0-9]+)\s*\|\s*([A-Z_0-9]+)/.test(content)) {
       content = content.replace(/([A-Z_0-9]+)\s*\|\s*([A-Z_0-9]+)/g, '$1+$2');
     }
     // 2. Replace `#variable` length operator on userdata groups with `Auxiliary.GetCount(variable)`
-    content = content.replace(/#([a-zA-Z0-9_]+)/g, 'Auxiliary.GetCount($1)');
+    // IMPORTANT: Skip in base runtime scripts (utility.lua) where `#g` operates on native Lua tables/strings
+    // and would cause infinite recursion inside Auxiliary.GetCount itself!
+    if (!isBaseRuntime) {
+      content = content.replace(/#([a-zA-Z0-9_]+)/g, 'Auxiliary.GetCount($1)');
+    }
     // 3. Polyfill modern methods IsSpellTrap and IsMonster for ocgcore 11.0
     content = content.replace(/:IsSpellTrap\(\)/g, ':IsType(TYPE_SPELL+TYPE_TRAP)');
     content = content.replace(/:IsMonster\(\)/g, ':IsType(TYPE_MONSTER)');
+    // 4. Guard against nil target when card is removed from target location before effect resolution
+    content = content.replace(/if tc:IsRelateToEffect\(([a-zA-Z0-9_]+)\)/g, 'if tc and tc:IsRelateToEffect($1)');
     return content;
   }
 
@@ -98,8 +114,6 @@ export class ScriptReaderService {
     // Special bootstrap script
     if (name === 'c0.lua') {
       const boot = [
-        'Duel.LoadScript("constant.lua")',
-        'Duel.LoadScript("utility.lua")',
         '-- Defensive polyfills in bootstrap in case of older utility.lua',
         'Auxiliary = Auxiliary or aux or {}',
         'aux = Auxiliary',
@@ -143,6 +157,38 @@ export class ScriptReaderService {
         '  end',
         '  function Effect.SetChainData(e, d) _cd[e] = d end',
         'end',
+        'Duel.LoadScript("constant.lua")',
+        'Duel.LoadScript("utility.lua")',
+        '-- Ensure procedure scripts and core tables exist unconditionally',
+        'if not aux.AddNormalSummonProcedure then',
+        '  pcall(function() Duel.LoadScript("proc_normal.lua") end)',
+        'end',
+        'if not aux.SynchroProcedure or not Synchro then',
+        '  pcall(function() Duel.LoadScript("proc_synchro.lua") end)',
+        'end',
+        'Synchro = aux.SynchroProcedure or Synchro or {}',
+        'if not Synchro.AddProcedure then',
+        '  function Synchro.AddProcedure(c,f1,min1,max1,f2,min2,max2) end',
+        'end',
+        'if not Synchro.NonTuner then',
+        '  function Synchro.NonTuner(f) return function(target,scard,sumtype,tp) return target:IsNotTuner(scard,tp) and (not f or f(target)) end end',
+        'end',
+        'if not aux.AddNormalSummonProcedure then',
+        '  function Auxiliary.AddNormalSummonProcedure(c,ns,opt,min,max,val,desc,f,sumop)',
+        '    val = val or SUMMON_TYPE_TRIBUTE',
+        '    local e1=Effect.CreateEffect(c)',
+        '    if desc then e1:SetDescription(desc) end',
+        '    e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)',
+        '    e1:SetType(EFFECT_TYPE_SINGLE)',
+        '    e1:SetCode(EFFECT_SUMMON_PROC)',
+        '    e1:SetValue(val)',
+        '    c:RegisterEffect(e1)',
+        '    return e1',
+        '  end',
+        'end',
+        'if not aux.AddNormalSetProcedure then',
+        '  Auxiliary.AddNormalSetProcedure = Auxiliary.AddNormalSummonProcedure',
+        'end',
       ].join('\n');
       this.scriptCache.set(name, boot);
       return boot;
@@ -180,6 +226,12 @@ export class ScriptReaderService {
             console.warn(`[ScriptReaderService] Failed reading alias script for ${name}:`, err);
           }
         }
+
+        // Fallback for vanilla tokens or normal monsters without dedicated lua script:
+        // Provide empty initial_effect stub so ocgcore doesn't abort with "CallCardFunction attempt to call an error function"
+        const stub = `${preamble}function self_table.initial_effect(c)\nend\n`;
+        this.scriptCache.set(name, stub);
+        return stub;
       }
     }
 
@@ -187,7 +239,8 @@ export class ScriptReaderService {
     const basePath = path.join(this.scriptsDir, name);
     if (fs.existsSync(basePath)) {
       try {
-        const content = fs.readFileSync(basePath, 'utf-8');
+        const rawContent = fs.readFileSync(basePath, 'utf-8');
+        const content = this.preprocessScript(rawContent, true);
         this.scriptCache.set(name, content);
         return content;
       } catch (err) {
