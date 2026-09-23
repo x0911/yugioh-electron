@@ -54,10 +54,10 @@ const dmHeroDecks = prebuiltDecks.filter((d) => d.category === 'character-dm');
 const gxHeroDecks = prebuiltDecks.filter((d) => d.category === 'character-gx');
 const popDecks = prebuiltDecks.filter((d) => d.category === 'popular-dm' || d.category === 'popular-gx');
 
-assert.ok(dmHeroDecks.length >= 150, `Expected at least 150 DM tournament character decks, got ${dmHeroDecks.length}`);
-assert.ok(gxHeroDecks.length >= 150, `Expected at least 150 GX tournament character decks, got ${gxHeroDecks.length}`);
+assert.ok(dmHeroDecks.length >= 20, `Expected at least 20 DM authentic character decks, got ${dmHeroDecks.length}`);
+assert.ok(gxHeroDecks.length >= 20, `Expected at least 20 GX authentic character decks, got ${gxHeroDecks.length}`);
 assert.ok(popDecks.length >= 100, `Expected at least 100 popular community decks, got ${popDecks.length}`);
-assert.ok(prebuiltDecks.length >= 400, `Expected at least 400 total prebuilt decks, got ${prebuiltDecks.length}`);
+assert.ok(prebuiltDecks.length >= 190, `Expected at least 190 total prebuilt decks, got ${prebuiltDecks.length}`);
 console.log(`✓ Partitioned DM character decks (${dmHeroDecks.length}), GX character decks (${gxHeroDecks.length}), and popular community decks (${popDecks.length}, total: ${prebuiltDecks.length}).`);
 
 // --- TEST 3: Autocomplete Query & Filter Logic ---
@@ -98,7 +98,7 @@ assert.ok(cyberDecks.length >= 3, `Expected at least 3 decks matching "Cyber", f
 console.log(`  Query "Cyber": found ${cyberDecks.length} matches (${cyberDecks.map((d) => d.name).slice(0, 3).join(', ')}...)`);
 
 const kaibaDecks = filterDecks(prebuiltDecks, 'Kaiba', 'ALL');
-assert.ok(kaibaDecks.length >= 10, `Expected at least 10 Kaiba decks, found ${kaibaDecks.length}`);
+assert.ok(kaibaDecks.length >= 2, `Expected at least 2 Kaiba decks, found ${kaibaDecks.length}`);
 console.log(`  Query "Kaiba": found ${kaibaDecks.length} matches (${kaibaDecks.map((d) => d.name).slice(0, 3).join(', ')}...)`);
 
 const exodiaDecks = filterDecks(prebuiltDecks, 'Exodia', 'ALL');

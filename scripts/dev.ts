@@ -44,18 +44,20 @@ async function startDev() {
     });
   };
 
+  let canRestart = false;
   let reloadTimeout: NodeJS.Timeout | null = null;
   const triggerRestart = () => {
+    if (!canRestart) return;
     if (reloadTimeout) clearTimeout(reloadTimeout);
     reloadTimeout = setTimeout(() => {
       if (electronProcess) {
         console.log('[dev] Main/preload code changed. Restarting Electron...');
         isRestarting = true;
-        electronProcess.kill('SIGTERM');
-        setTimeout(() => {
+        electronProcess.once('exit', () => {
           isRestarting = false;
           spawnElectron();
-        }, 500);
+        });
+        electronProcess.kill('SIGTERM');
       }
     }, 200);
   };
@@ -63,12 +65,8 @@ async function startDev() {
   const createReloaderPlugin = (name: string) => ({
     name: `reloader-${name}`,
     setup(build: any) {
-      let isFirst = true;
       build.onEnd((result: any) => {
-        if (isFirst) {
-          isFirst = false;
-          return;
-        }
+        if (!canRestart) return;
         if (!result.errors || result.errors.length === 0) {
           triggerRestart();
         }
@@ -106,6 +104,9 @@ async function startDev() {
   await preloadCtx.watch();
 
   spawnElectron();
+  setTimeout(() => {
+    canRestart = true;
+  }, 1000);
 }
 
 startDev().catch((err) => {

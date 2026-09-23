@@ -1,28 +1,28 @@
 {
   "version": "0.1.15",
-  "releaseDate": "2026-09-11T23:06:28.654Z",
+  "releaseDate": "2026-09-22T00:19:28.751Z",
   "releaseNotes": "Yu-Gi-Oh! Duel Arena v0.1.15\n- Complete 5D's Monster Cutscenes: Integrated Stardust Dragon and Red Dragon Archfiend summon and attack animations into installer and patch bundles\n- Automated Asset Verification: Added pre-flight and CI asset validation pipeline (npm run verify:assets) to prevent missing binaries\n- Dynamic Dev Port Selection: Resolved port 5173 collisions by defaulting to 5174 with non-strict automatic port discovery\n- Cloud Media Mirror Sync: Updated assets-v1 mirror with latest game media archives\n- 100% test verification across all 45 test suites",
   "remoteBaseUrl": "https://raw.githubusercontent.com/x0911/yugioh-electron/main",
   "files": {
     "data/card-pool-whitelist.json": {
       "path": "data/card-pool-whitelist.json",
-      "size": 1150969,
-      "sha256": "e0ef76a99531f3e9de0e609e3aaa9cdf8220defdeeac684e6fb347d86cfd658d"
+      "size": 1151347,
+      "sha256": "fc3f38222cc6df2ac11bd06ea5e390f8adf5901bfd7d8a66cea7df427dbbd08b"
     },
     "data/card-videos.json": {
       "path": "data/card-videos.json",
-      "size": 7410,
-      "sha256": "afb0bf6ce15b0edc850741cb8d029b6ece55e632a598c438cba5f277e3ce3fd4"
+      "size": 17877,
+      "sha256": "653a48333103ddef6538e30de6db8e90b5b9a395d9bee9678d2bd043dac508f2"
     },
     "data/characters.json": {
       "path": "data/characters.json",
-      "size": 901093,
-      "sha256": "614edb62acaeb32d6bf5103a260051379c202bc4a08f28aadf515037bc1b3f12"
+      "size": 178108,
+      "sha256": "c8862c8bc63798351fcc7de3850f3b12dbecb6cdb640bba7f141a1f791b7547f"
     },
     "data/prebuilt-decks.json": {
       "path": "data/prebuilt-decks.json",
-      "size": 907031,
-      "sha256": "523e2f37c864c13bbd4f7061fda66850f55ab7a6814606bc86016ec798f01738"
+      "size": 258254,
+      "sha256": "a4e475869301507f64a5bfe78d9731015ec3d0f2838be4216baa6d8d7ca926f5"
     },
     "data/set-code-whitelist.json": {
       "path": "data/set-code-whitelist.json",
@@ -31,8 +31,8 @@
     },
     "resources/cards.cdb": {
       "path": "resources/cards.cdb",
-      "size": 2113536,
-      "sha256": "c3060d79055508b2c889af6a774cf9a1fd047501b52a93e30d41c675d6fbd7cb"
+      "size": 2117632,
+      "sha256": "f0215bdd51899354109306368b47ddb0fcd9221c22157e91de21b097c3b58c83"
     },
     "resources/scripts/archetype_setcode_constants.lua": {
       "path": "resources/scripts/archetype_setcode_constants.lua",
@@ -22809,6 +22809,11 @@
       "size": 1265,
       "sha256": "69bd87221ab981c61cdcd416e5e12a865768e45adbb8e4ea319cbd044c57175c"
     },
+    "resources/scripts/official/c89900001.lua": {
+      "path": "resources/scripts/official/c89900001.lua",
+      "size": 2191,
+      "sha256": "9539ddc8955844c9d0d7b8b91a29994e7097dcc7c51e9942977bce0f6c8f8a7b"
+    },
     "resources/scripts/official/c89914395.lua": {
       "path": "resources/scripts/official/c89914395.lua",
       "size": 1462,
@@ -25566,8 +25571,8 @@
     },
     "resources/scripts/utility.lua": {
       "path": "resources/scripts/utility.lua",
-      "size": 94261,
-      "sha256": "6561836f8c764af52d2ff6d2253aa0134435bb438c144374d2672c9b5cc957d1"
+      "size": 94630,
+      "sha256": "212970f208565b63584049fdc1573a3aaf1600f0f7d85c25e94906d7b334f253"
     },
     "resources/cards/full/0.jpg": {
       "path": "resources/cards/full/0.jpg",

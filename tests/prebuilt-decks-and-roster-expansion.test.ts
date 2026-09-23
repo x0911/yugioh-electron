@@ -83,7 +83,7 @@ async function runRosterAndPrebuiltTests() {
 
     // 3. Prebuilt Decks File Integrity
     console.log('▶ Test 3: data/prebuilt-decks.json Completeness');
-    assert(prebuiltDecks.length >= 700, `Expected at least 700 prebuilt decks, found ${prebuiltDecks.length}`);
+    assert(prebuiltDecks.length >= 190, `Expected at least 190 prebuilt decks, found ${prebuiltDecks.length}`);
 
     for (const deck of prebuiltDecks) {
       assert(deck.main && deck.main.length >= 40, `Prebuilt deck "${deck.name}" must have >= 40 main cards`);

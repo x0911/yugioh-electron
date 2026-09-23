@@ -63,7 +63,7 @@ function createWindow(): void {
     minWidth: APP_CONFIG.MIN_WIDTH,
     minHeight: APP_CONFIG.MIN_HEIGHT,
     backgroundColor: '#0a0c10',
-    fullscreen: !isWindowed,
+    fullscreen: false,
     show: false,
     webPreferences: {
       preload: preloadPath,
@@ -82,9 +82,12 @@ function createWindow(): void {
     }
   });
 
-  // Show window once ready to prevent visual flickering
+  // Show window once ready to prevent visual flickering and macOS black-screen bug
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
+    if (!isWindowed) {
+      mainWindow?.setFullScreen(true);
+    }
   });
 
   // Security: deny new window popups / external links outside app
@@ -113,6 +116,23 @@ function createWindow(): void {
     }
   });
 
+  mainWindow.webContents.on('console-message', (event: any, ...args: any[]) => {
+    // In Electron 30+, event has properties level, message, sourceId, lineNumber.
+    // In older Electron, arguments are (event, level, message, line, sourceId).
+    const msg = typeof event?.message === 'string' ? event.message : (typeof args[1] === 'string' ? args[1] : JSON.stringify(event));
+    const src = event?.sourceId || args[3] || '';
+    const line = event?.lineNumber || args[2] || '';
+    console.log(`[Renderer Console] (${path.basename(String(src))}:${line}) ${msg}`);
+  });
+
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    console.error(`[Renderer did-fail-load] Code ${errorCode}: ${errorDescription} (${validatedURL})`);
+  });
+
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error('[Renderer Process Gone]', details);
+  });
+
   // Load URL or production build file
   if (isDev && process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
@@ -126,18 +146,37 @@ function createWindow(): void {
       console.log('[Main] Booting patched renderer from:', patchHtml);
       mainWindow.loadFile(patchHtml);
     } else {
+      console.log('[Main] Booting default renderer from:', defaultHtml);
       mainWindow.loadFile(defaultHtml);
+    }
+    if (!app.isPackaged && !isGuest) {
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
     }
   }
 
   mainWindow.on('closed', () => {
+    console.log('[Main] mainWindow closed event fired');
     mainWindow = null;
   });
 }
 
+app.on('before-quit', (e) => {
+  console.log('[Main] app before-quit fired');
+});
+app.on('will-quit', (e) => {
+  console.log('[Main] app will-quit fired');
+});
+app.on('quit', (e, exitCode) => {
+  console.log('[Main] app quit fired with exitCode:', exitCode);
+});
+process.on('exit', (code) => {
+  console.log('[Main] process exit fired with code:', code);
+});
+
 // Single instance lock (bypassed if explicitly running multi-instance / guest instance for development testing)
 const gotTheLock = (isMultiInstance || isGuest) ? true : app.requestSingleInstanceLock();
 if (!gotTheLock) {
+  console.log('[Main] Could not get single instance lock! Calling app.quit().');
   app.quit();
 } else {
   app.on('second-instance', () => {
