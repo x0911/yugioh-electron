@@ -11,6 +11,7 @@ import { getAiAndOpponentFields } from '../types.js';
 import type { PlayerFieldState, FieldCard } from '../../../shared/types/field.js';
 import { evaluateAttackOption, type AttackCandidate } from '../evaluators/combatEvaluator.js';
 import { evaluateSpellTrapSet, evaluateSpellActivation, evaluateBoardDominance } from '../evaluators/spellTrapEvaluator.js';
+import { evaluateSynchroOpportunities } from '../evaluators/synchroSolver.js';
 
 /**
  * Universal Competitive AI Executor.
@@ -349,9 +350,12 @@ export class DefaultExecutor implements DeckExecutor {
     }
 
     // =========================================================================
-    // 3b. EVALUATE SPECIAL SUMMONS (Cyber Dragon, Chaos Sorcerer, BLS, etc.)
+    // 3b. EVALUATE SPECIAL SUMMONS (Cyber Dragon, Chaos Sorcerer, BLS, Synchros, etc.)
     // =========================================================================
     if (msg.special_summons && msg.special_summons.length > 0) {
+      const synchroOpps = evaluateSynchroOpportunities(context);
+      const topSynchro = synchroOpps.length > 0 ? synchroOpps[0] : null;
+
       for (let i = 0; i < msg.special_summons.length; i++) {
         const sp = msg.special_summons[i];
         const code = sp.code ?? 0;
@@ -361,6 +365,13 @@ export class DefaultExecutor implements DeckExecutor {
         const name = detail?.name || (code > 0 ? cardReader.getCardName(code) : 'Monster');
 
         let score = 2600 + atk * 0.5 * (aggression + 0.5);
+        let reason = `Special Summon boss monster ${name} (${atk} ATK, Lv${level})`;
+
+        if (topSynchro && code === topSynchro.synchroCode) {
+          score += topSynchro.scoreBonus;
+          reason = `[SYNCHRO SOLVER] Tune field materials into ${topSynchro.synchroName} (Level ${topSynchro.synchroLevel})!`;
+        }
+
         if (signatureCardIds.includes(code)) {
           score += 1000 * sigFavoritism;
         }
@@ -372,7 +383,7 @@ export class DefaultExecutor implements DeckExecutor {
             index: i,
           },
           score,
-          reason: `Special Summon boss monster ${name} (${atk} ATK, Lv${level})`,
+          reason,
           cardCode: code,
           cardName: name,
         });
@@ -599,6 +610,11 @@ export class DefaultExecutor implements DeckExecutor {
       }
     } else if (msg.attacks && msg.attacks.length > 0) {
       // Monster combat evaluation
+      const oppFaceDownMonsters = oppMonsters.filter(
+        (m) => m && (m.position === 'facedown_defense' || m.position === 'facedown'),
+      );
+      const minAttackerAtk = Math.min(...readyAttackers.map((a) => a.atk));
+
       for (const att of readyAttackers) {
         const candidate: AttackCandidate = {
           attackerIndex: att.index,
@@ -607,7 +623,18 @@ export class DefaultExecutor implements DeckExecutor {
           attackerName: att.name,
           attackerCode: att.code,
         };
-        candidates.push(evaluateAttackOption(candidate, context));
+        const evaluated = evaluateAttackOption(candidate, context);
+
+        // WindBot Probe Rule: When opponent controls face-down monster(s), prioritize lowest-ATK attacker
+        // to safely bait Flip effects (Man-Eater Bug, Ryko, Cyber Jar) without risking boss monsters!
+        if (oppFaceDownMonsters.length > 0 && readyAttackers.length > 1 && att.atk === minAttackerAtk) {
+          evaluated.score += 1500;
+          evaluated.reason += ` [WINDBOT PROBE: Safely probe face-down with lowest ATK ${att.name}]`;
+        }
+
+        evaluated.cardCode = att.code;
+        evaluated.cardName = att.name;
+        candidates.push(evaluated);
       }
     }
 
@@ -688,7 +715,51 @@ export class DefaultExecutor implements DeckExecutor {
         score = 3000;
         reason = `[CHAIN DRAW] Resolve draw power ${name}`;
       }
-      // Comprehensive Evaluator for Traps & Spells (Removal, Battle Traps, MST, Torrential, etc.)
+      // Battle Traps (Mirror Force: 44095762, Dimensional Prison: 80678380, Sakuretsu Armor: 30531530)
+      else if (code === 44095762 || code === 80678380 || code === 30531530 || name.includes('Mirror Force') || name.includes('Dimensional Prison')) {
+        const { aiField } = getAiAndOpponentFields(context);
+        const aiFaceUpMonsters = (aiField.monsterZones || []).filter(
+          (m) => m && (m.position === 'faceup_attack' || m.position === 'faceup_defense'),
+        );
+        const aiMaxAtk = Math.max(0, ...aiFaceUpMonsters.map((m) => m?.atk ?? 0));
+        const attackingMonsterAtk = (context as any).currentBattleAttacker?.atk ?? 1800;
+
+        // WindBot Rule: If AI controls a monster stronger than the attacking monster, save the trap!
+        if (aiFaceUpMonsters.length > 0 && aiMaxAtk > attackingMonsterAtk) {
+          score = -3000;
+          reason = `[WINDBOT TRAP HOLD] Hold ${name} (AI controls ${aiMaxAtk} ATK monster that overpowers attacker)`;
+        } else {
+          score = 4200 * (defensiveness + 0.5);
+          reason = `[WINDBOT BATTLE TRAP] Activate ${name} against threatening attacker!`;
+        }
+      }
+      // Torrential Tribute (53582587)
+      else if (code === 53582587 || name.includes('Torrential Tribute')) {
+        const { aiField, oppField } = getAiAndOpponentFields(context);
+        const aiMonsterCount = (aiField.monsterZones || []).filter(Boolean).length;
+        const oppMonsterCount = (oppField.monsterZones || []).filter(Boolean).length;
+
+        // WindBot Rule: Don't self-wipe if AI controls more monsters than opponent
+        if (aiMonsterCount > oppMonsterCount) {
+          score = -3500;
+          reason = `[WINDBOT HOLD] Hold Torrential Tribute (AI has more monsters on field: ${aiMonsterCount} vs ${oppMonsterCount})`;
+        } else {
+          score = 3600;
+          reason = `[WINDBOT TORRENTIAL] Wash away opponent swarm with Torrential Tribute!`;
+        }
+      }
+      // End-Phase Removal (Mystical Space Typhoon: 5318639, Dust Tornado: 98319530)
+      else if (code === 5318639 || code === 98319530 || name.includes('Mystical Space Typhoon') || name.includes('Dust Tornado')) {
+        const currentPhase = context.currentPhase || context.boardState.currentPhase;
+        if (currentPhase === 'EP') {
+          score = 3800;
+          reason = `[WINDBOT END-PHASE POP] Snipe opponent backrow at End Phase before it can be activated!`;
+        } else {
+          score = 1500;
+          reason = `Activate ${name} to remove spell/trap`;
+        }
+      }
+      // Comprehensive Evaluator for Traps & Spells (Removal, Board Wipes, etc.)
       else {
         const evalResult = evaluateSpellActivation(code, name, context);
         score = evalResult.score;
@@ -760,5 +831,17 @@ export class DefaultExecutor implements DeckExecutor {
 
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, minCount).map((s) => s.index);
+  }
+
+  public onSelectCard(_msg: OcgMessage, _context: EvaluatorContext): number[] | null {
+    return null;
+  }
+
+  public onSelectYesNo(_msg: OcgMessage, _context: EvaluatorContext): boolean | null {
+    return null;
+  }
+
+  public onSelectOption(_msg: OcgMessage, _context: EvaluatorContext): number | null {
+    return null;
   }
 }

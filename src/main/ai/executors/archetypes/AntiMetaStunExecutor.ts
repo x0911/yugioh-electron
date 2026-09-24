@@ -17,7 +17,9 @@ export class AntiMetaStunExecutor extends DefaultExecutor {
     const isNamed =
       arch.includes('stun') ||
       arch.includes('anti-meta') ||
-      arch.includes('control');
+      arch.includes('control') ||
+      arch.includes('bounce') ||
+      arch.includes('position');
     const cards = deckCards || [];
     const hasCards =
       cards.includes(98954124) || // Fossil Dyna

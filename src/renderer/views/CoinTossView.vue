@@ -18,7 +18,17 @@
         <div class="coin-toss-view__vs-badge">VS</div>
 
         <div class="coin-toss-view__rival coin-toss-view__rival--opponent">
-          <span class="coin-toss-view__rival-name">{{ opponentName }}</span>
+          <div class="coin-toss-view__rival-name-block">
+            <span class="coin-toss-view__rival-name">{{ opponentName }}</span>
+            <span
+              v-if="hasOpponentExecutorDecks"
+              class="ai-smart-chip"
+              title="Opponent features specialized WindBot AI combat executors for their decks"
+            >
+              <span class="ai-smart-chip__pulse" />
+              <span class="ai-smart-chip__text">SMART AI</span>
+            </span>
+          </div>
           <span class="coin-toss-view__rival-tag">{{ opponentSeries }}</span>
         </div>
       </div>
@@ -209,6 +219,11 @@
           @click="showDeckSelectModal = true"
         >
           Select Opponent Deck ({{ opponentDeckLabel }})
+          <span
+            v-if="selectedOpponentDeckExecutor?.hasCustomExecutor"
+            class="ai-smart-dot-inline"
+            :title="`AI Smart Deck: ${selectedOpponentDeckExecutor.name}`"
+          />
         </YugiButton>
       </div>
 
@@ -217,6 +232,14 @@
           Deck: <strong>{{ duelStore.selectedUserDeck?.name || 'Starter Deck' }}</strong>
           vs
           <strong>{{ duelStore.selectedOpponentDeck?.name || 'Random Deck' }}</strong>
+          <span
+            v-if="selectedOpponentDeckExecutor?.hasCustomExecutor"
+            class="deck-executor-pill deck-executor-pill--inline"
+            :title="`WindBot AI Strategy: ${selectedOpponentDeckExecutor.name}`"
+          >
+            <span class="ai-pulse-dot" />
+            <span class="executor-name">{{ selectedOpponentDeckExecutor.name }}</span>
+          </span>
         </span>
       </div>
     </footer>
@@ -279,6 +302,19 @@ const opponentDeckLabel = computed(() => {
     return duelStore.selectedOpponentDeck.name;
   }
   return `Random: ${duelStore.selectedOpponentDeck?.name || 'Default'}`;
+});
+
+const selectedOpponentDeckExecutor = computed(() => {
+  return duelStore.selectedOpponentDeck?.executor;
+});
+
+const hasOpponentExecutorDecks = computed(() => {
+  const opp = duelStore.selectedOpponent;
+  if (!opp) return false;
+  if (opp.hasCustomExecutorDecks !== undefined) {
+    return opp.hasCustomExecutorDecks;
+  }
+  return Boolean(opp.decks?.some((d) => d.executor?.hasCustomExecutor));
 });
 
 async function handleSelectOpponent(character: CharacterData): Promise<void> {

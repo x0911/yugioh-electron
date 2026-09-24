@@ -4,6 +4,13 @@
 
 export type CharacterSeries = 'DM' | 'GX' | '5Ds' | 'Legends';
 
+export interface DeckExecutorInfo {
+  id: string;
+  name: string;
+  description: string;
+  hasCustomExecutor: boolean;
+}
+
 export interface CharacterDeckData {
   id: string;
   name: string;
@@ -13,6 +20,7 @@ export interface CharacterDeckData {
   mainCards: number[];
   extraCards: number[];
   signatureCardIds: number[];
+  executor?: DeckExecutorInfo;
 }
 
 export interface CharacterPersonality {
@@ -40,6 +48,7 @@ export interface CharacterData {
   signatureCards: number[];
   themeColor: string;
   personality?: CharacterPersonality;
+  hasCustomExecutorDecks?: boolean;
 }
 
 export type AiProviderType =

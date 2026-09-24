@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { CharacterData, CharacterDeckData } from '../../shared/types/character.js';
+import { resolveDeckExecutor } from '../ai/executors/registry.js';
 
 import { createRequire } from 'node:module';
 
@@ -110,7 +111,16 @@ export function loadCharacters(): CharacterData[] {
 
   try {
     const raw = fs.readFileSync(jsonPath, 'utf-8');
-    cachedCharacters = JSON.parse(raw) as CharacterData[];
+    const parsed = JSON.parse(raw) as CharacterData[];
+    for (const char of parsed) {
+      if (char.decks && Array.isArray(char.decks)) {
+        for (const deck of char.decks) {
+          deck.executor = resolveDeckExecutor(deck.archetype || '', deck.mainCards || []);
+        }
+        char.hasCustomExecutorDecks = char.decks.some((d) => d.executor?.hasCustomExecutor);
+      }
+    }
+    cachedCharacters = parsed;
     return cachedCharacters;
   } catch (err) {
     console.error('[DeckLoader] Failed to parse characters.json:', err);

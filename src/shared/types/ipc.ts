@@ -36,6 +36,7 @@ export const IPC_CHANNELS = {
   DECK_LIST: 'deck:list',
   DECK_SAVE: 'deck:save',
   DECK_DELETE: 'deck:delete',
+  DECK_RESOLVE_EXECUTOR: 'deck:resolve-executor',
 
   // Settings & Characters (Phase 6)
   SETTINGS_GET: 'settings:get',
@@ -117,6 +118,7 @@ export interface DeckAPI {
   listDecks: () => Promise<string[]>;
   saveDeck: (deckName: string, deckData: unknown) => Promise<boolean>;
   deleteDeck: (deckName: string) => Promise<boolean>;
+  resolveDeckExecutor: (payload: { archetype?: string; mainCards?: number[] }) => Promise<import('./character.js').DeckExecutorInfo>;
 }
 
 export interface RandomOpponentDeckPayload {

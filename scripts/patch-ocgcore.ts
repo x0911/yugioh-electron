@@ -65,6 +65,24 @@ export function patchOcgcore(): boolean {
     }
   }
 
+  // 4. Fix SORT_CARD (case 15) response serialization:
+  // Upstream ocgcore-wasm bug:
+  // - In ce(), case 15 serializes `order` with a leading length byte: `t.i8(e.order.length)`.
+  // - However, `field::sort_card` in ygopro-core C++ reads `returns.bvalue[i]` directly
+  //   without a length byte header. The extra length byte causes `returns.bvalue[0] == m`,
+  //   which triggers `v >= m` bounds check failure and emits `MSG_RETRY` every time the player confirms!
+  const originalCase15 = 'case 15:if(!e.order){t.i8(-1);break}t.i8(e.order.length);for(let r of e.order)t.i8(r);break;';
+  const desiredCase15 = 'case 15:if(!e.order){t.i8(-1);break}for(let r of e.order)t.i8(r);break;';
+
+  if (!code.includes(desiredCase15)) {
+    if (code.includes(originalCase15)) {
+      code = code.replace(originalCase15, desiredCase15);
+      modified = true;
+    } else {
+      console.warn('[patch-ocgcore] Could not find exact original case 15 in index.js');
+    }
+  }
+
   if (modified) {
     fs.writeFileSync(targetFile, code, 'utf8');
     console.log('[patch-ocgcore] Successfully patched ocgcore-wasm.');

@@ -1,0 +1,131 @@
+@use '../abstracts' as *;
+
+// =============================================================================
+// Smart AI & Deck Executor Badges (Ancient Duel Arena Theme)
+// =============================================================================
+
+.ai-pulse-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #00f2fe;
+  box-shadow: 0 0 6px #00f2fe;
+  animation: ai-pulse 2s ease-in-out infinite alternate;
+  flex-shrink: 0;
+}
+
+.ai-smart-dot-inline {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #00f2fe;
+  box-shadow: 0 0 6px #00f2fe;
+  animation: ai-pulse 2s ease-in-out infinite alternate;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.ai-smart-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.22) 0%, rgba(16, 185, 129, 0.18) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.65);
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.25);
+  cursor: default;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(16, 185, 129, 0.28) 100%);
+    border-color: rgba(6, 182, 212, 0.9);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.45);
+  }
+
+  &__pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #00f2fe;
+    box-shadow: 0 0 6px #00f2fe;
+    animation: ai-pulse 2s ease-in-out infinite alternate;
+    flex-shrink: 0;
+  }
+
+  &__text {
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #e0f2fe;
+    text-shadow: 0 0 4px rgba(0, 242, 254, 0.7);
+  }
+}
+
+.deck-executor-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.22) 0%, rgba(16, 185, 129, 0.18) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.6);
+  box-shadow: 0 0 6px rgba(6, 182, 212, 0.2);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  vertical-align: middle;
+
+  .executor-name {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #cffafe;
+    text-shadow: 0 0 4px rgba(0, 242, 254, 0.6);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &--inline {
+    max-width: none;
+    margin-left: 8px;
+    padding: 1px 8px;
+
+    .executor-name {
+      font-size: 0.68rem;
+    }
+  }
+}
+
+.badge-smart-executor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25) 0%, rgba(16, 185, 129, 0.2) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.65);
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
+
+  &__label {
+    font-family: $font-mono;
+    font-size: 0.66rem;
+    font-weight: 800;
+    color: #38bdf8;
+    letter-spacing: 0.05em;
+  }
+
+  &__name {
+    font-family: $font-mono;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #f0fdf4;
+    text-shadow: 0 0 4px rgba(6, 182, 212, 0.6);
+  }
+}

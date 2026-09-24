@@ -2,6 +2,8 @@
 // Deck Types and Deck Validation Rules
 // =============================================================================
 
+import type { DeckExecutorInfo } from './character.js';
+
 export interface CustomDeck {
   id: string;
   name: string;
@@ -16,6 +18,7 @@ export interface CustomDeck {
   avatar?: string;
   portrait?: string;
   category?: 'character-dm' | 'character-gx' | 'character-5ds' | 'popular-dm' | 'popular-gx' | 'popular-5ds' | 'custom' | string;
+  executor?: DeckExecutorInfo;
 }
 
 export interface DeckValidity {

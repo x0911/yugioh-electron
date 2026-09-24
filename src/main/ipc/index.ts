@@ -212,6 +212,11 @@ export function registerIpcHandlers(): void {
     return false;
   });
 
+  ipcMain.handle(IPC_CHANNELS.DECK_RESOLVE_EXECUTOR, async (_event, payload: { archetype?: string; mainCards?: number[] }) => {
+    const { resolveDeckExecutor } = await import('../ai/executors/registry.js');
+    return resolveDeckExecutor(payload?.archetype || '', payload?.mainCards || []);
+  });
+
   // Settings & Characters (Phase 6)
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, async () => {
     return getPersistedSettings();

@@ -36,6 +36,17 @@ There are 2 Extra Monster Zones between the players:
     : (controller === this.userPlayerId ? 1 : 0);
   ```
 
+### 1.3 `SORT_CARD` Response Serialization (Confirm Order Retry Loop)
+- **Problem**: In cards that reorder deck top cards (e.g., *Dark Magical Circle*, *Goddess Skuld's Oracle*), clicking "Confirm Order" caused ocgcore to emit `MSG_RETRY` and repeatedly prompt `Select the order for the cards.`
+- **Root Cause**:
+  - Upstream `ocgcore-wasm` serialized `OcgResponseType.SORT_CARD` (case 15) with a leading count byte: `t.i8(e.order.length)` followed by elements `t.i8(r)`.
+  - In `ygopro-core` C++ (`playerop.cpp`, `field::sort_card`), the engine reads `returns.bvalue[i]` directly without a length header.
+  - The leading length byte placed `order.length` (`m`) at `returns.bvalue[0]`. Because `returns.bvalue[0] == m`, the bounds check `v >= m` evaluated to true on the very first card, causing `field::sort_card` to reject the response and emit `MSG_RETRY` every time.
+  - "Default Order" passed only because it sent `order: null`, which wrote `t.i8(-1)` (`0xff`), hitting `if(returns.bvalue[0] == 0xff) return TRUE;`.
+- **Resolution**:
+  - In `scripts/patch-ocgcore.ts`, patched case 15 in `ocgcore-wasm` to write only `for(let r of e.order) t.i8(r);` without `t.i8(e.order.length)`.
+  - Added regression test `tests/sort-card-order-resolution.test.ts`.
+
 ---
 
 ## 2. Deck Counts & Board Synchronization

@@ -131,12 +131,22 @@
               >
                 <!-- Top Row: Series & Selection Badges -->
                 <div class="opponent-card__top">
-                  <span
-                    class="series-pill"
-                    :class="`series-pill--${char.series.toLowerCase()}`"
-                  >
-                    {{ char.series }}
-                  </span>
+                  <div class="opponent-card__badges-group">
+                    <span
+                      class="series-pill"
+                      :class="`series-pill--${char.series.toLowerCase()}`"
+                    >
+                      {{ char.series }}
+                    </span>
+                    <span
+                      v-if="hasExecutorDecks(char)"
+                      class="ai-smart-chip"
+                      :title="`${char.name} has ${getExecutorDeckCount(char)} deck(s) powered by WindBot AI combat executors`"
+                    >
+                      <span class="ai-smart-chip__pulse" />
+                      <span class="ai-smart-chip__text">SMART AI</span>
+                    </span>
+                  </div>
 
                   <span v-if="char.id === selectedId" class="equipped-badge">
                     ✓ CURRENT OPPONENT
@@ -307,6 +317,18 @@ const filteredCharacters = computed(() => {
 function setSeries(series: 'ALL' | CharacterSeries) {
   audioManager.playSfx('ui-click');
   activeSeries.value = series;
+}
+
+function hasExecutorDecks(char: CharacterData): boolean {
+  if (char.hasCustomExecutorDecks !== undefined) {
+    return char.hasCustomExecutorDecks;
+  }
+  return Boolean(char.decks?.some((d) => d.executor?.hasCustomExecutor));
+}
+
+function getExecutorDeckCount(char: CharacterData): number {
+  if (!char.decks) return 0;
+  return char.decks.filter((d) => d.executor?.hasCustomExecutor).length;
 }
 
 function handleImageError(id: string) {
@@ -713,6 +735,51 @@ onUnmounted(() => {
     justify-content: space-between;
     margin-bottom: 10px;
     min-height: 22px;
+    gap: 8px;
+
+    .opponent-card__badges-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .ai-smart-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.22) 0%, rgba(16, 185, 129, 0.18) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.65);
+      box-shadow: 0 0 8px rgba(6, 182, 212, 0.25);
+      cursor: default;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(16, 185, 129, 0.28) 100%);
+        border-color: rgba(6, 182, 212, 0.9);
+        box-shadow: 0 0 12px rgba(6, 182, 212, 0.45);
+      }
+
+      &__pulse {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #00f2fe;
+        box-shadow: 0 0 6px #00f2fe;
+        animation: ai-pulse 2s ease-in-out infinite alternate;
+      }
+
+      &__text {
+        font-family: $font-mono;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        color: #e0f2fe;
+        text-shadow: 0 0 4px rgba(0, 242, 254, 0.7);
+      }
+    }
 
     .series-pill {
       font-family: $font-mono;

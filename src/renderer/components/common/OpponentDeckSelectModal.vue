@@ -181,6 +181,14 @@
                       <span class="archetype-label" :title="deck.archetype">
                         {{ deck.archetype }}
                       </span>
+                      <span
+                        v-if="deck.executor?.hasCustomExecutor"
+                        class="deck-executor-pill"
+                        :title="`WindBot AI Strategy: ${deck.executor.name}`"
+                      >
+                        <span class="ai-pulse-dot" />
+                        <span class="executor-name">{{ deck.executor.name }}</span>
+                      </span>
                     </div>
 
                     <div class="deck-item-counts">
@@ -244,6 +252,11 @@
                         class="pool-chip"
                         @click="handleSelectDeckPreview(d)"
                       >
+                        <span
+                          v-if="d.executor?.hasCustomExecutor"
+                          class="pool-chip__dot"
+                          :title="`WindBot AI Strategy: ${d.executor.name}`"
+                        />
                         <span class="chip-name">{{ d.name }}</span>
                         <span class="chip-arch">({{ d.archetype }})</span>
                       </div>
@@ -279,6 +292,15 @@
                           {{ previewDeck.archetype }}
                         </span>
                         <span
+                          v-if="previewDeck.executor?.hasCustomExecutor"
+                          class="badge-smart-executor"
+                          :title="previewDeck.executor.description"
+                        >
+                          <span class="ai-pulse-dot" />
+                          <span class="badge-smart-executor__label">WINDBOT AI:</span>
+                          <span class="badge-smart-executor__name">{{ previewDeck.executor.name }}</span>
+                        </span>
+                        <span
                           v-if="isManual && selectedDeck?.id === previewDeck.id"
                           class="badge-active-equipped"
                         >
@@ -292,6 +314,19 @@
                           `Authentic signature deck wielded by ${opponent?.name || 'this character'}.`
                         }}
                       </p>
+
+                      <!-- Smart AI Combat Protocol Callout -->
+                      <div
+                        v-if="previewDeck.executor?.hasCustomExecutor"
+                        class="inspector-executor-callout"
+                      >
+                        <div class="callout-header">
+                          <span class="callout-icon">⚡</span>
+                          <span class="callout-title">WindBot AI Combat Protocol</span>
+                          <span class="callout-badge">{{ previewDeck.executor.name }}</span>
+                        </div>
+                        <p class="callout-desc">{{ previewDeck.executor.description }}</p>
+                      </div>
                     </div>
 
                     <!-- Equip CTA Button -->
@@ -526,6 +561,7 @@ function toCharacterDeck(d: any): CharacterDeckData {
     mainCards: [...main],
     extraCards: [...extra],
     signatureCardIds: signature,
+    executor: d.executor,
   };
 }
 
@@ -1142,6 +1178,43 @@ onUnmounted(() => {
         overflow: hidden;
         text-overflow: ellipsis;
       }
+
+      .deck-executor-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 1px 6px;
+        border-radius: 4px;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.22) 0%, rgba(16, 185, 129, 0.18) 100%);
+        border: 1px solid rgba(6, 182, 212, 0.6);
+        box-shadow: 0 0 6px rgba(6, 182, 212, 0.2);
+        max-width: 140px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 0;
+
+        .ai-pulse-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background-color: #00f2fe;
+          box-shadow: 0 0 5px #00f2fe;
+          animation: ai-pulse 2s ease-in-out infinite alternate;
+          flex-shrink: 0;
+        }
+
+        .executor-name {
+          font-family: $font-mono;
+          font-size: 0.6rem;
+          font-weight: 700;
+          color: #cffafe;
+          text-shadow: 0 0 4px rgba(0, 242, 254, 0.6);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
     }
 
     .deck-item-counts {
@@ -1304,6 +1377,18 @@ onUnmounted(() => {
             color: $color-gold-100;
           }
 
+          .pool-chip__dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #00f2fe;
+            box-shadow: 0 0 5px #00f2fe;
+            animation: ai-pulse 2s ease-in-out infinite alternate;
+            margin-right: 5px;
+            vertical-align: middle;
+          }
+
           .chip-name {
             font-weight: 700;
             color: #f8fafc;
@@ -1370,6 +1455,43 @@ onUnmounted(() => {
           color: #cbd5e1;
         }
 
+        .badge-smart-executor {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 2px 8px;
+          border-radius: 4px;
+          background: linear-gradient(135deg, rgba(6, 182, 212, 0.25) 0%, rgba(16, 185, 129, 0.2) 100%);
+          border: 1px solid rgba(6, 182, 212, 0.65);
+          box-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
+
+          .ai-pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #00f2fe;
+            box-shadow: 0 0 6px #00f2fe;
+            animation: ai-pulse 2s ease-in-out infinite alternate;
+            flex-shrink: 0;
+          }
+
+          &__label {
+            font-family: $font-mono;
+            font-size: 0.66rem;
+            font-weight: 800;
+            color: #38bdf8;
+            letter-spacing: 0.05em;
+          }
+
+          &__name {
+            font-family: $font-mono;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #f0fdf4;
+            text-shadow: 0 0 4px rgba(6, 182, 212, 0.6);
+          }
+        }
+
         .badge-active-equipped {
           font-family: $font-mono;
           font-size: 0.68rem;
@@ -1394,6 +1516,55 @@ onUnmounted(() => {
         margin: 4px 0 0 0;
         font-size: 0.76rem;
         color: #94a3b8;
+      }
+
+      .inspector-executor-callout {
+        margin-top: 10px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(16, 185, 129, 0.08) 100%);
+        border: 1px solid rgba(6, 182, 212, 0.35);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+
+        .callout-header {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 4px;
+
+          .callout-icon {
+            font-size: 0.85rem;
+            color: #38bdf8;
+          }
+
+          .callout-title {
+            font-family: $font-mono;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            color: #7dd3fc;
+            text-transform: uppercase;
+          }
+
+          .callout-badge {
+            font-family: $font-mono;
+            font-size: 0.64rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(6, 182, 212, 0.2);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            color: #cffafe;
+            margin-left: auto;
+          }
+        }
+
+        .callout-desc {
+          margin: 0;
+          font-size: 0.76rem;
+          line-height: 1.45;
+          color: #94a3b8;
+        }
       }
     }
   }

@@ -59,6 +59,9 @@ const testFiles = [
   'tests/stratos-single-option-retry.test.ts',
   'tests/message-types-comprehensive-audit.test.ts',
   'tests/ai-lethal-dominance-gatekeeper.test.ts',
+  'tests/windbot-ai-executors.test.ts',
+  'tests/sort-card-order-resolution.test.ts',
+  'tests/character-deck-executors-ui.test.ts',
 ];
 
 console.log(`=== Executing ${testFiles.length} Test Suites ===\n`);

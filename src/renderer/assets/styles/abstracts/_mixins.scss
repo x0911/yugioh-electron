@@ -8,6 +8,7 @@
   background: $tint;
   backdrop-filter: blur($blur) saturate(140%);
   -webkit-backdrop-filter: blur($blur) saturate(140%);
+  transform: translateZ(0);
   border: 1px solid $border;
   border-radius: 14px;
   box-shadow:

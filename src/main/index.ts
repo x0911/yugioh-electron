@@ -39,6 +39,12 @@ if (isMultiInstance || isGuest) {
   app.setPath('userData', `${baseUserData}-${instanceId}`);
 }
 
+// Configure Chromium switches for smooth 60fps rendering and low hardware overhead
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('limit-fps', '60');
+
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
@@ -74,10 +80,23 @@ function createWindow(): void {
     },
   });
 
-  // Toggle fullscreen with F11
+  // Toggle fullscreen with F11, toggle DevTools with F12 / Cmd+Alt+I / Ctrl+Shift+I
   mainWindow.webContents.on('before-input-event', (event, input) => {
     if (input.type === 'keyDown' && input.key === 'F11') {
       mainWindow?.setFullScreen(!mainWindow.isFullScreen());
+      event.preventDefault();
+      return;
+    }
+
+    const isDevToolsKey =
+      input.key === 'F12' ||
+      ((input.metaKey || input.controlKey) && (input.altKey || input.shiftKey) && input.key.toLowerCase() === 'i');
+    if (input.type === 'keyDown' && isDevToolsKey) {
+      if (mainWindow?.webContents.isDevToolsOpened()) {
+        mainWindow.webContents.closeDevTools();
+      } else {
+        mainWindow?.webContents.openDevTools({ mode: 'undocked' });
+      }
       event.preventDefault();
     }
   });
@@ -136,9 +155,6 @@ function createWindow(): void {
   // Load URL or production build file
   if (isDev && process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    if (!isGuest) {
-      mainWindow.webContents.openDevTools({ mode: 'detach' });
-    }
   } else {
     const defaultHtml = path.resolve(__dirname, '../renderer/index.html');
     const patchHtml = path.join(app.getPath('userData'), 'patch', 'dist', 'renderer', 'index.html');
@@ -149,9 +165,11 @@ function createWindow(): void {
       console.log('[Main] Booting default renderer from:', defaultHtml);
       mainWindow.loadFile(defaultHtml);
     }
-    if (!app.isPackaged && !isGuest) {
-      mainWindow.webContents.openDevTools({ mode: 'detach' });
-    }
+  }
+
+  // Only open DevTools if explicitly requested via OPEN_DEVTOOLS env var (use F12 to toggle at runtime)
+  if (process.env.OPEN_DEVTOOLS === 'true' && !isGuest) {
+    mainWindow.webContents.openDevTools({ mode: 'undocked' });
   }
 
   mainWindow.on('closed', () => {

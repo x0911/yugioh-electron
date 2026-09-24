@@ -95,6 +95,12 @@
     }
 
     &--opponent {
+      .coin-toss-view__rival-name-block {
+        display: flex;
+        align-items: center;
+        gap: $space-2;
+      }
+
       .coin-toss-view__rival-name {
         color: $color-ai;
       }

@@ -16,6 +16,9 @@
   &__bg {
     position: absolute;
     inset: 0;
+    transform: translateZ(0);
+    will-change: transform;
+    contain: strict;
     background-image:
       radial-gradient(circle at 50% 20%, rgba(201, 162, 39, 0.16) 0%, transparent 65%),
       radial-gradient(circle at 20% 75%, rgba(47, 128, 237, 0.1) 0%, transparent 50%),
@@ -115,10 +118,22 @@
     }
 
     &--alert {
+      position: relative;
       border-color: #eb5757;
       color: #ff8a80;
-      box-shadow: 0 0 14px rgba(235, 87, 87, 0.45);
-      animation: pulseAlert 2s infinite ease-in-out;
+      box-shadow: 0 0 10px rgba(235, 87, 87, 0.4);
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        border: 1px solid rgba(235, 87, 87, 0.75);
+        box-shadow: 0 0 12px rgba(235, 87, 87, 0.5);
+        pointer-events: none;
+        animation: pulseAlertGlow 2s infinite ease-in-out;
+        will-change: transform, opacity;
+      }
     }
   }
 
@@ -132,12 +147,14 @@
     letter-spacing: 0.05em;
   }
 
-  @keyframes pulseAlert {
+  @keyframes pulseAlertGlow {
     0%, 100% {
-      box-shadow: 0 0 8px rgba(235, 87, 87, 0.3);
+      opacity: 0.25;
+      transform: scale(0.98);
     }
     50% {
-      box-shadow: 0 0 18px rgba(235, 87, 87, 0.7);
+      opacity: 0.85;
+      transform: scale(1.03);
     }
   }
 
@@ -233,6 +250,8 @@
     min-height: 290px !important;
     padding: $space-3 !important;
     text-decoration: none;
+    transform: translateZ(0);
+    will-change: transform;
     transition:
       transform 0.3s $ease-snappy,
       border-color 0.3s $ease-snappy,

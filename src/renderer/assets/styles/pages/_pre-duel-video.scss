@@ -209,6 +209,13 @@
     text-transform: uppercase;
   }
 
+  &__deck-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
   &__deck-name {
     font-family: $font-body;
     font-size: $font-size-sm;

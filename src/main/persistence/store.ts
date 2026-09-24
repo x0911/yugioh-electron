@@ -5,6 +5,7 @@ import type { SettingsConfig } from '../../shared/types/character.js';
 import type { CustomDeck } from '../../shared/types/deck.js';
 
 import { getResourcePath } from '../decks/deckLoader.js';
+import { resolveDeckExecutor } from '../ai/executors/registry.js';
 
 export interface AppStoreSchema {
   settings: SettingsConfig;
@@ -155,6 +156,12 @@ export function getPersistedCustomDecks(): CustomDeck[] {
     if (idxB !== -1) return 1;
     return (b.updatedAt || 0) - (a.updatedAt || 0);
   });
+
+  for (const d of allDecks) {
+    if (!d.executor) {
+      d.executor = resolveDeckExecutor(d.archetype || '', d.main || []);
+    }
+  }
 
   return allDecks;
 }

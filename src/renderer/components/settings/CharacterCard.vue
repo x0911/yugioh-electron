@@ -16,12 +16,22 @@
     <div class="character-card__frame">
       <!-- Top Series Badge -->
       <div class="character-card__header">
-        <span
-          class="character-card__series-badge"
-          :class="`character-card__series-badge--${character.series.toLowerCase()}`"
-        >
-          {{ character.series === 'DM' ? 'DM' : 'GX' }}
-        </span>
+        <div class="character-card__header-left">
+          <span
+            class="character-card__series-badge"
+            :class="`character-card__series-badge--${character.series.toLowerCase()}`"
+          >
+            {{ character.series }}
+          </span>
+          <span
+            v-if="hasExecutorDecks"
+            class="ai-smart-chip"
+            :title="`${character.name} features specialized WindBot AI combat executors for their decks`"
+          >
+            <span class="ai-smart-chip__pulse" />
+            <span class="ai-smart-chip__text">SMART AI</span>
+          </span>
+        </div>
         <span v-if="isSelected" class="character-card__selected-indicator">
           <svg
             class="character-card__check-icon"
@@ -142,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type { CharacterData } from '../../../shared/types/character.js';
 
 interface Props {
@@ -150,12 +160,19 @@ interface Props {
   isSelected?: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 defineEmits<{
   (e: 'select', id: string): void;
 }>();
 
 const imageFailed = ref(false);
+
+const hasExecutorDecks = computed(() => {
+  if (props.character.hasCustomExecutorDecks !== undefined) {
+    return props.character.hasCustomExecutorDecks;
+  }
+  return Boolean(props.character.decks?.some((d) => d.executor?.hasCustomExecutor));
+});
 
 function handleImageError(): void {
   imageFailed.value = true;
@@ -203,6 +220,44 @@ function handleImageError(): void {
     justify-content: space-between;
     margin-bottom: 8px;
     min-height: 22px;
+    gap: 6px;
+  }
+
+  &__header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .ai-smart-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.22) 0%, rgba(16, 185, 129, 0.18) 100%);
+    border: 1px solid rgba(6, 182, 212, 0.65);
+    box-shadow: 0 0 6px rgba(6, 182, 212, 0.25);
+    cursor: default;
+
+    &__pulse {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background-color: #00f2fe;
+      box-shadow: 0 0 5px #00f2fe;
+      animation: ai-pulse 2s ease-in-out infinite alternate;
+    }
+
+    &__text {
+      font-family: 'Oxanium', monospace;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: #e0f2fe;
+      text-shadow: 0 0 4px rgba(0, 242, 254, 0.7);
+    }
   }
 
   &__series-badge {
@@ -224,6 +279,18 @@ function handleImageError(): void {
       background: rgba(86, 204, 242, 0.18);
       border: 1px solid rgba(86, 204, 242, 0.5);
       color: #56ccf2;
+    }
+
+    &--5ds {
+      background: rgba(249, 115, 22, 0.2);
+      border: 1px solid rgba(249, 115, 22, 0.5);
+      color: #fdba74;
+    }
+
+    &--legends {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(201, 162, 39, 0.25) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.65);
+      color: #f5d0fe;
     }
   }
 

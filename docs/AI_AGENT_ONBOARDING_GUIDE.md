@@ -103,6 +103,13 @@ The simulator runs `ocgcore-wasm` in **synchronous mode** (`createCore({ sync: t
 ### 3.4 ocgcore C++ `no_action` Lockout Rule
 In ocgcore C++, `check_action_permission()` blocks card actions if `pduel->lua->no_action > 0`. This counter increments during card initialization or function execution. If an unhandled Lua error occurs during card loading or script execution, the engine can enter an invalid state (`Action is not allowed here`). **Always keep card scripts defensively coded and test them thoroughly.**
 
+### 3.5 Upstream `ocgcore-wasm` Patches (`scripts/patch-ocgcore.ts`)
+The project automatically patches `node_modules/ocgcore-wasm/dist/index.js` on every build and test run:
+1. **`MSG_SHUFFLE_SET_CARD` (case 36)**: Fixes `count` reading as `e.u8()` and sequential `from`/`to` array decoding.
+2. **`MSG_SELECT_SUM` (case 23)**: Fixes `selects_must` reading before `selects` and 18-byte card structure with position.
+3. **`duelGetMessage` Guard**: Protects against unexpected parser crashes with a try/catch loop.
+4. **`SORT_CARD` Response Serialization (case 15)**: Strips the erroneous leading `t.i8(e.order.length)` byte from `ce()`. In `ygopro-core` C++, `field::sort_card` expects raw card indices starting directly at `returns.bvalue[0]` without a length header.
+
 ---
 
 ## 4. Card Database, Canonical IDs & Aliases

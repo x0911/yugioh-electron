@@ -69,10 +69,20 @@
 
           <div class="pre-duel-video-view__deck-info">
             <span class="pre-duel-video-view__deck-label">RIVAL ARSENAL</span>
-            <span class="pre-duel-video-view__deck-name">
-              {{ duelStore.selectedOpponentDeck?.name || 'Selected Archetype Deck' }}
-              ({{ duelStore.selectedOpponentDeck?.archetype || 'Custom' }})
-            </span>
+            <div class="pre-duel-video-view__deck-name-row">
+              <span class="pre-duel-video-view__deck-name">
+                {{ duelStore.selectedOpponentDeck?.name || 'Selected Archetype Deck' }}
+                ({{ duelStore.selectedOpponentDeck?.archetype || 'Custom' }})
+              </span>
+              <span
+                v-if="duelStore.selectedOpponentDeck?.executor?.hasCustomExecutor"
+                class="deck-executor-pill deck-executor-pill--inline"
+                :title="`WindBot AI Strategy: ${duelStore.selectedOpponentDeck.executor.name}`"
+              >
+                <span class="ai-pulse-dot" />
+                <span class="executor-name">{{ duelStore.selectedOpponentDeck.executor.name }}</span>
+              </span>
+            </div>
           </div>
 
           <div class="pre-duel-video-view__watermark-badge">

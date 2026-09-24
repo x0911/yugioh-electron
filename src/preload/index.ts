@@ -94,6 +94,10 @@ const deckAPI: DeckAPI = {
   deleteDeck: (deckName: string): Promise<boolean> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DECK_DELETE, deckName);
   },
+  resolveDeckExecutor: (payload: { archetype?: string; mainCards?: number[] }) => {
+    const plainPayload = JSON.parse(JSON.stringify(payload));
+    return ipcRenderer.invoke(IPC_CHANNELS.DECK_RESOLVE_EXECUTOR, plainPayload);
+  },
 };
 
 const settingsAPI: SettingsAPI = {

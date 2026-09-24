@@ -123,15 +123,25 @@
               </div>
             </div>
 
-            <div class="settings-view__dossier-active-badge">
-              <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
-                <path
-                  fill-rule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              ACTIVE DUEL OPPONENT
+            <div class="settings-view__dossier-badges-row">
+              <div class="settings-view__dossier-active-badge">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                ACTIVE DUEL OPPONENT
+              </div>
+              <span
+                v-if="selectedChar.hasCustomExecutorDecks || selectedChar.decks?.some(d => d.executor?.hasCustomExecutor)"
+                class="ai-smart-chip"
+                title="Equipped with specialized WindBot AI combat executors"
+              >
+                <span class="ai-smart-chip__pulse" />
+                <span class="ai-smart-chip__text">SMART AI</span>
+              </span>
             </div>
 
             <h3 class="settings-view__dossier-name">{{ selectedChar.name }}</h3>
@@ -160,9 +170,19 @@
                   :key="deck.id"
                   class="settings-view__deck-card"
                 >
-                  <span class="settings-view__deck-num"
-                    >DECK {{ dIdx + 1 }} • {{ deck.archetype }}</span
-                  >
+                  <div class="settings-view__deck-card-top">
+                    <span class="settings-view__deck-num"
+                      >DECK {{ dIdx + 1 }} • {{ deck.archetype }}</span
+                    >
+                    <span
+                      v-if="deck.executor?.hasCustomExecutor"
+                      class="deck-executor-pill"
+                      :title="`WindBot AI Strategy: ${deck.executor.name}`"
+                    >
+                      <span class="ai-pulse-dot" />
+                      <span class="executor-name">{{ deck.executor.name }}</span>
+                    </span>
+                  </div>
                   <h5 class="settings-view__deck-name">{{ deck.name }}</h5>
                   <p class="settings-view__deck-desc">{{ deck.description }}</p>
                 </div>

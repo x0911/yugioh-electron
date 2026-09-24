@@ -111,6 +111,10 @@ export class CardReaderService {
     }
   }
 
+  public getCardData(code: number): OcgCardData | null {
+    return this.readCard(code);
+  }
+
   public readCard(code: number): OcgCardData | null {
     if (this.cardCache.has(code)) {
       return this.cardCache.get(code) ?? null;
